@@ -39,6 +39,7 @@ import {
   type SelectInitiativesInput,
 } from "../strategyEngine";
 import { getLibraryMeta, getContentLibrary, getAllInitiatives, resolveInitiativeIds } from "../contentLibrary";
+import { VOCAB_BLACKLIST, FORBIDDEN_WORDS_PROMPT } from "../../shared/vocabBlacklist";
 
 import {
   generateCapabilityReport,
@@ -2024,17 +2025,14 @@ Return format: JSON array of exactly 5 strings, no other text.`;
     }))
     .mutation(async ({ input }) => {
       const fmt = (n: number | undefined) => n ? `£${(n / 1000).toFixed(1)}M` : "N/A";
-      const VOCAB_BLACKLIST = [
-        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
-        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
-        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
-      ];
+      // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const systemPrompt = [
         "You are drafting the business case section of an HR AI strategy document, written for the CEO and board.",
         "The case should be 400–600 words. It should reference specific numbers, specific risks, and specific business outcomes.",
         "It should NOT be defensive or hedging. Write in plain, direct English.",
         `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
         "Open with why this matters now, then the approach, then the investment, then the value, then the risks honestly stated. Close with the ask of the board.",
+        "CURRENCY FORMAT: Always express monetary values in the form \u00a3XM (e.g. \u00a32.4M, \u00a312M, \u00a30.8M). Never write out full millions as digits (e.g. never \u00a32,400,000 or \u00a32.4 million). Never use billions unless the figure genuinely exceeds \u00a31,000M.",
         "Return ONLY the narrative text. No headings, no markdown fences, no preamble.",
       ].join(" ");
       const userPrompt = [
@@ -2107,12 +2105,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       if (orgContext?.visionStatement) orgCtxParts.push(`Vision: ${orgContext.visionStatement}`);
       const orgCtxStr = orgCtxParts.join(". ");
 
-      const VOCAB_BLACKLIST = [
-        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
-        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
-        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
-      ];
-
+            // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const systemPrompt = [
         `You are an expert HR strategy consultant helping a CPO refine ${stageDescriptions[stage] ?? "strategic text"}.`,
         orgCtxStr ? `Organisation context: ${orgCtxStr}.` : "",
@@ -2189,11 +2182,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         changeReadiness: "organisational change readiness",
         vendorEcosystem: "vendor and partner ecosystem",
       };
-      const VOCAB_BLACKLIST = [
-        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
-        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
-        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
-      ];
+      // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const gap = input.needed - input.current;
       const dimLabel = DIMENSION_LABELS[input.dimension] ?? input.dimension;
       const ctxParts = [
@@ -2237,11 +2226,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       selectedInitiatives: z.array(z.string()).optional(),
     }))
     .mutation(async ({ input }) => {
-      const VOCAB_BLACKLIST = [
-        "leverage", "synergy", "synergise", "synergize", "strategic imperative",
-        "best-in-class", "cutting-edge", "holistic", "transformative", "game-changing",
-        "ROI", "human capital", "bandwidth", "ecosystem", "deliverables",
-      ];
+      // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const SCALE_LABELS: Record<number, string> = { 1: "significant gap", 2: "below requirement", 3: "adequate", 4: "strong", 5: "exceptional" };
       const dims = [
         { key: "skills", label: "HR team AI skills", data: input.capabilityData.skills },
@@ -2288,14 +2273,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       capabilityJson: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      const VOCAB_BLACKLIST = [
-        "leverage", "synergy", "paradigm shift", "best-in-class", "world-class",
-        "cutting-edge", "state-of-the-art", "game-changing", "revolutionary",
-        "disruptive", "holistic", "robust", "scalable", "agile", "innovative",
-        "transformative", "seamless", "ecosystem", "stakeholder alignment",
-        "value-add", "low-hanging fruit", "move the needle", "boil the ocean",
-        "circle back", "deep dive", "bandwidth", "ideate", "learnings",
-      ];
+      // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const ctxParts = [
         input.strategyStatement ? `Strategy statement: ${input.strategyStatement}` : "",
         input.strategyArchetype ? `Archetype: ${input.strategyArchetype}` : "",

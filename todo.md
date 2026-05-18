@@ -3968,3 +3968,26 @@ test
 - [x] Acme E2E Stage 10: full board report generated, 6 sections, word count 2400, Section 1 staleness banner, PDF export 5 pages
 - [x] TypeScript: 0 errors
 - [x] Final checkpoint
+
+## v3 Manual QA Pass
+
+- [x] Artifact 1: Vocabulary sampling — trigger all AI outputs, paste in full, flag blacklist hits
+- [x] Artifact 2: Full Acme walkthrough — run all 10 stages, capture gate timestamps and outputs
+- [x] Artifact 3: URL bypass tests — verify gate redirect behaviour for 5 protected routes
+- [x] Artifact 4: Board report quality assessment — Acme specificity, positions vs hedging, CEO credibility
+- [x] Compile structured findings report (BLOCKER / HIGH / MEDIUM / LOW severity)
+
+## v3 QA Fixes
+
+- [x] V-2: Create shared/vocabBlacklist.ts with consolidated master blacklist (boardReportStream.ts as source)
+- [x] V-2: Update intelligence.ts — transformText, generateBusinessCaseNarrative, suggestCapabilityTactics, generateCapabilityNarrative, generateReviewTensions — to import shared blacklist
+- [x] V-2: Update boardReportStream.ts to import shared blacklist
+- [x] Q-1: Fix initiative_portfolio section prompt in boardReportStream.ts to include selected initiative IDs and descriptions
+- [x] V-3: Add £XM currency formatting instruction to generateBusinessCaseNarrative system prompt
+- [x] B-3: Update AppShell.tsx sidebar nav — rename "Strategy Draft" to "Board Report", point to /strategy/board-report
+- [x] B-1: Remove StrategyBuilderPage import from App.tsx and delete client/src/pages/strategy/StrategyBuilderPage.tsx
+- [x] Re-run vocab sampler with correct stage values (strategy_statement, principle, wont_do, general)
+- [x] Re-sample V-2 affected procedures to confirm consolidated blacklist holds
+- [x] Re-generate Sarah's board report and confirm initiative_portfolio references actual initiatives
+- [x] TypeScript: 0 errors after all fixes
+- [x] Final v3 checkpoint

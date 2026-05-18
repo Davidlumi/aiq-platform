@@ -26,6 +26,7 @@ import { getDb } from "./db";
 import { ailOrgContext } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { INITIATIVE_LIBRARY } from "../shared/initiativeLibrary";
+import { VOCAB_BLACKLIST } from "../shared/vocabBlacklist";
 
 // ─── Section IDs ─────────────────────────────────────────────────────────────
 export type BoardReportSectionId =
@@ -54,16 +55,7 @@ export const SECTION_TARGET_WORDS: Record<BoardReportSectionId, [number, number]
   governance: [150, 250],
 };
 
-// ─── Vocabulary blacklist (same as other AI procedures) ──────────────────────
-const VOCAB_BLACKLIST = [
-  "synergy", "synergies", "leverage", "leveraging", "paradigm", "paradigm shift",
-  "disruptive", "disruption", "transformative", "game-changer", "game changer",
-  "cutting-edge", "cutting edge", "state-of-the-art", "best-in-class", "best in class",
-  "world-class", "world class", "holistic", "robust", "seamless", "scalable",
-  "agile", "agility", "ecosystem", "stakeholder alignment", "value proposition",
-  "low-hanging fruit", "move the needle", "boil the ocean", "circle back",
-  "deep dive", "bandwidth", "pivot", "ideate", "ideation", "empower", "empowering",
-];
+// ─── Vocabulary blacklist — imported from shared/vocabBlacklist.ts ─────────────
 
 // ─── Build section prompt ─────────────────────────────────────────────────────
 function buildSectionPrompt(
@@ -75,6 +67,7 @@ function buildSectionPrompt(
     hrAmbitionLevel: number;
     businessAmbitionLevel: number;
     selectedInitiatives: string[];
+    selectedInitiativesWithDescriptions: Array<{ label: string; description: string }>;
     outcomesJson: string;
     businessCaseNarrative: string;
     capabilityJson: string;
@@ -85,12 +78,19 @@ function buildSectionPrompt(
   const [minWords, maxWords] = SECTION_TARGET_WORDS[sectionId];
   const blacklistStr = VOCAB_BLACKLIST.join(", ");
 
+  const initiativeList = context.selectedInitiativesWithDescriptions.length > 0
+    ? context.selectedInitiativesWithDescriptions
+        .map((i, idx) => `${idx + 1}. ${i.label} — ${i.description}`)
+        .join("\n")
+    : context.selectedInitiatives.join(", ") || "(none selected)";
+
   const sharedContext = `
 Organisation: ${context.orgName}
 HR Ambition: ${context.businessAmbitionLevel}/4, Business Ambition: ${context.businessAmbitionLevel}/4
 Strategy archetype: ${context.strategyArchetype}
 Strategy statement: ${context.strategyStatement}
-Selected initiatives: ${context.selectedInitiatives.join(", ")}
+Selected initiatives (${context.selectedInitiativesWithDescriptions.length} total):
+${initiativeList}
 Outcomes: ${context.outcomesJson}
 Business case narrative: ${context.businessCaseNarrative}
 Capability assessment: ${context.capabilityJson}
@@ -108,7 +108,7 @@ Write only the section content.`;
   const sectionInstructions: Record<BoardReportSectionId, string> = {
     context: `Write the Context & Mandate section. Explain why the organisation is investing in AI-enabled HR capability now. Cover the business context, the HR function's current state, and the mandate for change. Ground this in the organisation's ambition levels and strategic archetype.`,
     strategic_direction: `Write the Strategic Direction section. Describe the chosen AI strategy archetype and what it means for the HR function. Explain the strategy statement in accessible terms for a board audience. Cover the principles that will guide decision-making and what the organisation has explicitly chosen not to do.`,
-    initiative_portfolio: `Write the Initiative Portfolio section. Describe the selected initiatives as a coherent portfolio, not a list. Explain how they fit together, what sequencing logic underpins them, and how they connect to the strategic direction. Reference the outcomes and success measures.`,
+    initiative_portfolio: `Write the Initiative Portfolio section. You MUST reference each of the selected initiatives by name (they are listed in the context above). Describe them as a coherent portfolio, not a list. Explain how they fit together, what sequencing logic underpins them, and how they connect to the strategic direction. Reference the outcomes and success measures. Do not invent initiatives that are not in the list.`,
     investment_case: `Write the Investment Case section. Summarise the financial and qualitative case for investment. Draw on the business case narrative, value envelope estimates, and risk acknowledgements. Be honest about uncertainty while making a clear recommendation.`,
     capability_readiness: `Write the Capability Readiness section. Describe the current capability gaps across the four dimensions (Skills, Capacity, Change readiness, Vendor ecosystem) and the tactics in place to close them. Assess overall delivery confidence.`,
     governance: `Write the Governance & Next Steps section. Describe the governance model, review cadence, and escalation path. Outline the immediate next steps the board is being asked to approve or note. Include any conditions or dependencies that must be met for the strategy to succeed.`,
@@ -227,6 +227,23 @@ export function registerBoardReportStreamRoute(app: Express): void {
         .limit(1);
       const orgName = tenant?.name ?? "the organisation";
 
+      // Build rich initiative list with descriptions for the portfolio section
+      let selectedInitiativesWithDescriptions: Array<{ label: string; description: string }> = [];
+      try {
+        const selectedJson2 = ctx.selectedInitiativesJson
+          ? JSON.parse(ctx.selectedInitiativesJson)
+          : [];
+        selectedInitiativesWithDescriptions = selectedJson2
+          .map((entry: { initiativeId: string }) => {
+            const lib = INITIATIVE_LIBRARY.find(i => i.id === entry.initiativeId);
+            if (!lib) return null;
+            return { label: lib.label, description: lib.description };
+          })
+          .filter(Boolean);
+      } catch {
+        selectedInitiativesWithDescriptions = [];
+      }
+
       const sectionContext = {
         orgName,
         strategyStatement: ctx.strategyStatement ?? "",
@@ -234,6 +251,7 @@ export function registerBoardReportStreamRoute(app: Express): void {
         hrAmbitionLevel: ctx.businessAmbitionLevel ?? 2,
         businessAmbitionLevel: ctx.businessAmbitionLevel ?? 2,
         selectedInitiatives,
+        selectedInitiativesWithDescriptions,
         outcomesJson: ctx.outcomesJson ?? "[]",
         businessCaseNarrative: ctx.businessCaseNarrative ?? "",
         capabilityJson: ctx.stage8CapabilityJson ?? "{}",

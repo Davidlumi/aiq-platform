@@ -272,9 +272,6 @@ function Router() {
       <Route path="/ai-strategy/assessment">
         <Redirect to="/strategy/ambition" />
       </Route>
-      <Route path="/strategy/builder">
-        <Redirect to="/strategy" />
-      </Route>
       <Route path="/implementation-tracker">
         <ProtectedRoute component={ImplementationTrackerPage} />
       </Route>
