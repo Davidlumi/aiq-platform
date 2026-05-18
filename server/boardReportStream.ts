@@ -26,7 +26,7 @@ import { getDb } from "./db";
 import { ailOrgContext } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { INITIATIVE_LIBRARY } from "../shared/initiativeLibrary";
-import { VOCAB_BLACKLIST } from "../shared/vocabBlacklist";
+import { VOCAB_BLACKLIST, sanitizeOutput } from "../shared/vocabBlacklist";
 
 // ─── Section IDs ─────────────────────────────────────────────────────────────
 export type BoardReportSectionId =
@@ -328,7 +328,9 @@ export function registerBoardReportStreamRoute(app: Express): void {
       }
 
       // ── Persist section to DB ───────────────────────────────────────────────
-      const finalContent = assembled.trim();
+      // Apply deterministic post-processing: replace any blacklisted words that
+      // slipped through the LLM instruction before persisting and emitting done.
+      const finalContent = sanitizeOutput(assembled.trim());
       const wordCount = finalContent.split(/\s+/).filter(Boolean).length;
 
       sectionsMap[sectionId] = {

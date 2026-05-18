@@ -39,7 +39,7 @@ import {
   type SelectInitiativesInput,
 } from "../strategyEngine";
 import { getLibraryMeta, getContentLibrary, getAllInitiatives, resolveInitiativeIds } from "../contentLibrary";
-import { VOCAB_BLACKLIST, FORBIDDEN_WORDS_PROMPT } from "../../shared/vocabBlacklist";
+import { VOCAB_BLACKLIST, FORBIDDEN_WORDS_PROMPT, sanitizeOutput } from "../../shared/vocabBlacklist";
 
 import {
   generateCapabilityReport,
@@ -893,7 +893,7 @@ Return JSON with this exact structure:
       if (!draft || typeof draft !== "string") {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM did not return a vision draft" });
       }
-      return { visionDraft: draft.trim() };
+      return { visionDraft: sanitizeOutput(draft.trim()) };
     }),
 
   /**
@@ -1140,7 +1140,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "LLM did not return a draft" });
       }
 
-      if (input.section === "approachLine") return { draft: raw.trim() };
+      if (input.section === "approachLine") return { draft: sanitizeOutput(raw.trim()) };
 
       // Parse JSON sections
       try {
@@ -2057,7 +2057,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         ],
       });
       const text = (response as any)?.choices?.[0]?.message?.content ?? "";
-      return { text: typeof text === "string" ? text.trim() : "" };
+      return { text: sanitizeOutput(typeof text === "string" ? text.trim() : "") };
     }),
 
   /**
@@ -2123,7 +2123,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       });
 
       const resultText = (response as any)?.choices?.[0]?.message?.content ?? text;
-      return { text: typeof resultText === "string" ? resultText.trim() : text };
+      return { text: sanitizeOutput(typeof resultText === "string" ? resultText.trim() : text) };
     }),
 
   /**
@@ -2205,7 +2205,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       let tactics: string[] = [];
       try {
         const parsed = JSON.parse(typeof raw === "string" ? raw.trim() : "[]");
-        tactics = Array.isArray(parsed) ? parsed.filter((t: unknown) => typeof t === "string") : [];
+        tactics = Array.isArray(parsed) ? parsed.filter((t: unknown) => typeof t === "string").map((t: string) => sanitizeOutput(t)) : [];
       } catch { tactics = []; }
       return { tactics };
     }),
@@ -2257,7 +2257,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         messages: [{ role: "system", content: systemPrompt }, { role: "user", content: "Generate the delivery capability narrative." }],
       });
       const text = (response as any)?.choices?.[0]?.message?.content ?? "";
-      return { text: typeof text === "string" ? text.trim() : "" };
+      return { text: sanitizeOutput(typeof text === "string" ? text.trim() : "") };
     }),
 
   // ─── Stage 9: Review session ──────────────────────────────────────────────────
@@ -2321,7 +2321,13 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       const raw = (response as any)?.choices?.[0]?.message?.content ?? "{}";
       try {
         const parsed = JSON.parse(typeof raw === "string" ? raw : JSON.stringify(raw));
-        return { tensions: (parsed.tensions ?? []) as Array<{ title: string; description: string; talkingPoint: string }> };
+        const rawTensions = (parsed.tensions ?? []) as Array<{ title: string; description: string; talkingPoint: string }>;
+        const sanitizedTensions = rawTensions.map(t => ({
+          title: sanitizeOutput(t.title ?? ""),
+          description: sanitizeOutput(t.description ?? ""),
+          talkingPoint: sanitizeOutput(t.talkingPoint ?? ""),
+        }));
+        return { tensions: sanitizedTensions };
       } catch {
         return { tensions: [] as Array<{ title: string; description: string; talkingPoint: string }> };
       }

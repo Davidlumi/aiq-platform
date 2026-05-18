@@ -3991,3 +3991,14 @@ test
 - [x] Re-generate Sarah's board report and confirm initiative_portfolio references actual initiatives
 - [x] TypeScript: 0 errors after all fixes
 - [x] Final v3 checkpoint
+
+## Deterministic Vocabulary Sanitisation (post-processing pass)
+
+- [x] Design replacement map: each blacklisted word/phrase → approved alternative
+- [x] Implement sanitizeOutput(text) in shared/vocabBlacklist.ts (case-preserving, word-boundary aware)
+- [x] Apply sanitizeOutput in intelligence.ts: transformText, generateBusinessCaseNarrative, suggestCapabilityTactics, generateCapabilityNarrative, generateReviewTensions
+- [x] Apply sanitizeOutput in boardReportStream.ts: per-chunk SSE stream and full section text
+- [x] Vitest: sanitizeOutput unit tests — all blacklisted words replaced, replacements are correct, non-blacklisted text unchanged, case variants handled
+- [x] Re-run vocab sampler — confirm 0 blacklist hits across all 27 samples
+- [x] TypeScript: 0 errors
+- [x] Final checkpoint
