@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
+import StageProgressHeader from "@/components/StageProgressHeader";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -674,6 +675,19 @@ export default function StrategyDiagnosticPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto p-6 space-y-6">
 
+
+          {/* Stage 1 progress header */}
+          <StageProgressHeader
+            stageNumber={1}
+            title="Background Inputs"
+            description="Complete all required sections (A–K) to build your organisation context. Once all sections are done, confirm to unlock Stage 2: Vision."
+            isCleared={preworkDone}
+            canConfirm={preworkDone}
+            isPending={false}
+            onConfirm={() => navigate("/strategy/vision")}
+            nextRoute="/strategy/vision"
+            nextLabel="Vision"
+          />
           {/* Resume prompt */}
           {showResumePrompt && resumeSection && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">

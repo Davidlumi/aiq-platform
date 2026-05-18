@@ -227,6 +227,19 @@ export default function ReviewSessionPage() {
       title="Review Session"
       accentColor="#6366f1"
       icon={<Users className="w-4 h-4 text-white" />}
+      stageProgress={!isDeepDive ? {
+        stageNumber: 9,
+        title: "Leadership Review Session",
+        description: "Hold your strategy review session with leadership stakeholders, capture tensions and notes, then confirm the session took place to unlock the Board Report.",
+        isCleared: !!stage9Cleared,
+        isEdited: false,
+        canConfirm: true,
+        isPending: completeStage9Mutation.isPending,
+        onConfirm: () => stage9Cleared ? navigate("/strategy/board-report") : setConfirmOpen(true),
+        backRoute: "/strategy/capability",
+        nextRoute: "/strategy/board-report",
+        nextLabel: "Board Report",
+      } : undefined}
     >
       <div className="max-w-3xl mx-auto space-y-8">
 

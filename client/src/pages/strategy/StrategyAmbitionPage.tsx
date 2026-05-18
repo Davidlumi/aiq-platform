@@ -26,6 +26,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useGate } from "@/contexts/GateContext";
 import { cn } from "@/lib/utils";
 import { VisionModal, type VisionInputs } from "./VisionModal";
+import StageProgressHeader from "@/components/StageProgressHeader";
 import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1211,9 +1212,28 @@ export default function StrategyAmbitionPage() {
 
   const vision = sections?.vision ?? null;
 
+  const canConfirmStage4 = (principles?.length ?? 0) >= 3 && (exclusions?.length ?? 0) >= 2;
+
   return (
     <TooltipProvider>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+        {/* Stage progress header */}
+        {!isStage4Locked && (
+          <StageProgressHeader
+            stageNumber={4}
+            title="Guiding Principles"
+            description="Define at least 3 guiding principles and 2 won't-dos, then confirm to unlock Stage 5: The Plan."
+            isCleared={!!isStage4Cleared}
+            isEdited={!!isStage4Edited}
+            canConfirm={canConfirmStage4}
+            isPending={completeStage4M.isPending}
+            onConfirm={() => isStage4Cleared && !isStage4Edited ? navigate("/strategy/plan") : handleConfirmStage4()}
+            backRoute="/strategy/strategy"
+            nextRoute="/strategy/plan"
+            nextLabel="The Plan"
+          />
+        )}
+
         {/* Header — Fix 3 */}
         <div>
           {/* Breadcrumb with back navigation */}

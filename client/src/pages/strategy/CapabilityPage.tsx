@@ -508,6 +508,19 @@ export default function CapabilityPage() {
       upstreamStageLabel="Business case"
       isDeepDive={isDeepDive}
       confirmedAt={gate.gateState?.stage8.completedAt}
+      stageProgress={!isDeepDive && !isLocked ? {
+        stageNumber: 8,
+        title: "Capability Assessment",
+        description: "Score your capability across four dimensions, identify gaps, and generate your delivery narrative. Confirm when all dimensions are scored and the narrative is complete.",
+        isCleared: !!gate.stage8Cleared,
+        isEdited: !!gate.stage8EditedAfterClearing,
+        canConfirm,
+        isPending: completeStage8Mut.isPending,
+        onConfirm: () => completeStage8Mut.mutate({ stage8CapabilityJson: JSON.stringify(cap) }),
+        backRoute: "/strategy/business-case",
+        nextRoute: "/strategy/review",
+        nextLabel: "Review Session",
+      } : undefined}
     >
       {/* Intro */}
       <div className="space-y-2">

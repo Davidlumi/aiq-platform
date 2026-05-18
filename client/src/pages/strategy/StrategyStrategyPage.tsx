@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import StageProgressHeader from "@/components/StageProgressHeader";
 
 // ─── Archetype definitions ────────────────────────────────────────────────────
 type ArchetypeKey = "augmentation" | "transformation" | "differentiation" | "efficiency" | "defensive";
@@ -241,6 +242,23 @@ export default function StrategyStrategyPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      {/* Stage progress header */}
+      {!isLocked && (
+        <StageProgressHeader
+          stageNumber={3}
+          title="Strategy Archetype"
+          description="Choose your AI strategy archetype, review the AI-drafted strategy statement, refine it, then confirm to unlock Stage 4: Principles."
+          isCleared={!!gate.stage3Cleared}
+          isEdited={!!gate.stage3EditedAfterClearing}
+          canConfirm={canConfirm}
+          isPending={completeStage3.isPending}
+          onConfirm={() => gate.stage3Cleared && !gate.stage3EditedAfterClearing ? navigate("/strategy/ambition") : handleConfirm()}
+          backRoute="/strategy/vision"
+          nextRoute="/strategy/ambition"
+          nextLabel="Principles"
+        />
+      )}
+
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

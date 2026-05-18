@@ -237,12 +237,7 @@ export default function BoardReportPage() {
   const gate = useGate();
   const { isDeepDive } = useDeepDive();
 
-  // Gate redirect
-  useEffect(() => {
-    if (!gate.isLoading && !gate.isStage10Accessible) {
-      navigate("/strategy");
-    }
-  }, [gate.isLoading, gate.isStage10Accessible, navigate]);
+  // No hard redirect — we show a blocking gate screen instead
 
   // Data
   const reportQ = trpc.intelligence.getBoardReport.useQuery(undefined, {
@@ -474,6 +469,77 @@ export default function BoardReportPage() {
   const isLoading = gate.isLoading || reportQ.isLoading;
   const stage10Cleared = gate.stage10Cleared;
 
+  // Blocking gate screen — shown when Stage 10 is not yet accessible
+  if (!gate.isLoading && !gate.isStage10Accessible) {
+    const stagesNeeded = [
+      { num: 1, label: "Background Inputs", cleared: !!gate.stage1Cleared, route: "/strategy/diagnostic" },
+      { num: 2, label: "Vision Statement", cleared: !!gate.stage2Cleared, route: "/strategy/vision" },
+      { num: 3, label: "Strategy Archetype", cleared: !!gate.stage3Cleared, route: "/strategy/strategy" },
+      { num: 4, label: "Guiding Principles", cleared: !!gate.stage4Cleared, route: "/strategy/ambition" },
+      { num: 5, label: "The Plan", cleared: !!gate.stage5Cleared, route: "/strategy/plan" },
+      { num: 6, label: "Success Measures", cleared: !!gate.stage6Cleared, route: "/strategy/roadmap" },
+      { num: 7, label: "Business Case", cleared: !!gate.stage7Cleared, route: "/strategy/business-case" },
+      { num: 8, label: "Capability Assessment", cleared: !!gate.stage8Cleared, route: "/strategy/capability" },
+      { num: 9, label: "Review Session", cleared: !!gate.stage9Cleared, route: "/strategy/review" },
+    ];
+    const firstIncomplete = stagesNeeded.find(s => !s.cleared);
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 space-y-8">
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+            <Lock className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Board Report is locked</h1>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            Complete all 9 preceding stages before generating your board report. Each stage builds on the last to ensure your report is grounded in a complete strategy.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+          <h2 className="text-sm font-semibold text-foreground mb-4">Stages to complete</h2>
+          {stagesNeeded.map(stage => (
+            <div
+              key={stage.num}
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                stage.cleared
+                  ? "bg-emerald-500/5 border border-emerald-500/20"
+                  : "bg-muted/50 border border-border hover:bg-muted"
+              }`}
+              onClick={() => !stage.cleared && navigate(stage.route)}
+            >
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                stage.cleared ? "bg-emerald-500 text-white" : "bg-muted-foreground/20 text-muted-foreground"
+              }`}>
+                {stage.cleared ? <CheckCircle2 className="w-4 h-4" /> : stage.num}
+              </div>
+              <span className={`text-sm flex-1 ${
+                stage.cleared ? "text-emerald-700 dark:text-emerald-300 line-through opacity-70" : "text-foreground font-medium"
+              }`}>
+                {stage.label}
+              </span>
+              {!stage.cleared && (
+                <span className="text-xs text-primary font-medium">Go →</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {firstIncomplete && (
+          <div className="flex justify-center">
+            <Button
+              size="lg"
+              className="gap-2"
+              onClick={() => navigate(firstIncomplete.route)}
+            >
+              Continue: Stage {firstIncomplete.num} — {firstIncomplete.label}
+              <CheckCircle2 className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <SectionPageLayout sectionNumber="10"
@@ -496,6 +562,16 @@ export default function BoardReportPage() {
       title="Board Report"
       accentColor="#0f172a"
       icon={<FileText className="w-4 h-4 text-white" />}
+      stageProgress={!isDeepDive ? {
+        stageNumber: 10,
+        title: "Board Report",
+        description: "Generate all 6 report sections, review and edit them, then confirm when the total word count is between 1,200 and 4,000 words.",
+        isCleared: !!stage10Cleared,
+        canConfirm,
+        isPending: completeStage10Mutation.isPending,
+        onConfirm: () => stage10Cleared ? setConfirmOpen(true) : setConfirmOpen(true),
+        backRoute: "/strategy/review",
+      } : undefined}
     >
       <div className="max-w-3xl mx-auto space-y-6">
 

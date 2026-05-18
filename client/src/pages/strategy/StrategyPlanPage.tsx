@@ -11,6 +11,7 @@
  *   6. Empty / loading / error states for each block
  */
 import { useGate } from "@/contexts/GateContext";
+import StageProgressHeader from "@/components/StageProgressHeader";
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -854,6 +855,22 @@ export default function StrategyPlanPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* ── Stage 5 progress header ── */}
+        {isStage5Accessible && (
+          <StageProgressHeader
+            stageNumber={5}
+            title="The Plan"
+            description="Review your AI initiative portfolio, adjust phases and priorities, then confirm the plan to unlock Success Measures."
+            isCleared={!!isStage5Cleared}
+            isEdited={!!gate.stage5EditedAfterClearing}
+            canConfirm={enriched.length > 0}
+            isPending={confirmPlanMutation.isPending}
+            onConfirm={() => isStage5Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/roadmap") : setConfirmPlanOpen(true)}
+            backRoute="/strategy/ambition"
+            nextRoute="/strategy/roadmap"
+            nextLabel="Outcomes"
+          />
+        )}
         {/* ── Stage 5 banner: shown after principles confirmed ── */}
         <Stage5PrinciplesBanner />
 

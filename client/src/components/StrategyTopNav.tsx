@@ -1,21 +1,25 @@
 /**
  * StrategyTopNav — persistent top navigation bar for the 10-stage AI strategy flow.
  *
- * Renders a horizontal strip of numbered stage steps.  Each step has one of four
- * visual states derived from the gate.getState query:
+ * Visual states per step:
+ *   locked      — grey padlock, non-clickable
+ *   accessible  — clickable, muted
+ *   current     — primary accent ring, bold label
+ *   cleared     — emerald check, still clickable
+ *   edited      — amber warning dot (cleared but edited since)
  *
- *   locked      — grey, cursor-not-allowed, no click
- *   accessible  — clickable, default accent colour
- *   current     — highlighted with primary ring, bold label
- *   cleared     — green check mark, still clickable
- *
- * On mobile (< 768 px) the strip is horizontally scrollable.
- * The overview route (/strategy) is shown as a "home" step before Stage 1.
+ * Mobile: horizontally scrollable pill strip.
  */
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Lock, ChevronRight } from "lucide-react";
+import { CheckCircle2, Lock, ChevronRight, AlertTriangle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // ─── Stage definitions ────────────────────────────────────────────────────────
 
@@ -24,10 +28,10 @@ interface StageDefinition {
   label: string;
   shortLabel: string;
   route: string;
-  /** Key used to look up isStageNAccessible from gate state */
-  accessibleKey: `isStage${number}Accessible`;
-  /** Key used to look up stageNCleared from gate state */
-  clearedKey: `stage${number}Cleared`;
+  what: string; // tooltip: what this stage is about
+  accessibleKey: string;
+  clearedKey: string;
+  editedKey: string;
 }
 
 const STAGES: StageDefinition[] = [
@@ -36,121 +40,116 @@ const STAGES: StageDefinition[] = [
     label: "Data Input",
     shortLabel: "Data",
     route: "/strategy/diagnostic",
+    what: "Complete the 9 background input sections about your organisation",
     accessibleKey: "isStage1Accessible",
     clearedKey: "stage1Cleared",
+    editedKey: "stage1EditedAfterClearing",
   },
   {
     number: 2,
     label: "Vision",
     shortLabel: "Vision",
     route: "/strategy/vision",
+    what: "Confirm your AI strategy vision statement",
     accessibleKey: "isStage2Accessible",
     clearedKey: "stage2Cleared",
+    editedKey: "stage2EditedAfterClearing",
   },
   {
     number: 3,
     label: "Strategy",
     shortLabel: "Strategy",
     route: "/strategy/strategy",
+    what: "Choose your strategy archetype and confirm your strategy statement",
     accessibleKey: "isStage3Accessible",
     clearedKey: "stage3Cleared",
+    editedKey: "stage3EditedAfterClearing",
   },
   {
     number: 4,
     label: "Principles",
     shortLabel: "Principles",
     route: "/strategy/ambition",
+    what: "Define guiding principles, won't-dos, and outcomes",
     accessibleKey: "isStage4Accessible",
     clearedKey: "stage4Cleared",
+    editedKey: "stage4EditedAfterClearing",
   },
   {
     number: 5,
     label: "The Plan",
     shortLabel: "Plan",
     route: "/strategy/plan",
+    what: "Review and confirm your AI initiative portfolio",
     accessibleKey: "isStage5Accessible",
     clearedKey: "stage5Cleared",
+    editedKey: "stage5EditedAfterClearing",
   },
   {
     number: 6,
     label: "Outcomes",
     shortLabel: "Outcomes",
     route: "/strategy/roadmap",
+    what: "Define success measures and outcomes for each initiative",
     accessibleKey: "isStage6Accessible",
     clearedKey: "stage6Cleared",
+    editedKey: "stage6EditedAfterClearing",
   },
   {
     number: 7,
     label: "Business Case",
     shortLabel: "Biz Case",
     route: "/strategy/business-case",
+    what: "Build the financial narrative and investment case",
     accessibleKey: "isStage7Accessible",
     clearedKey: "stage7Cleared",
+    editedKey: "stage7EditedAfterClearing",
   },
   {
     number: 8,
     label: "Capability",
     shortLabel: "Capability",
     route: "/strategy/capability",
+    what: "Assess capability gaps and define your development plan",
     accessibleKey: "isStage8Accessible",
     clearedKey: "stage8Cleared",
+    editedKey: "stage8EditedAfterClearing",
   },
   {
     number: 9,
     label: "Review",
     shortLabel: "Review",
     route: "/strategy/review",
+    what: "Hold your leadership review session and record tensions",
     accessibleKey: "isStage9Accessible",
     clearedKey: "stage9Cleared",
+    editedKey: "stage9EditedAfterClearing",
   },
   {
     number: 10,
     label: "Board Report",
     shortLabel: "Report",
     route: "/strategy/board-report",
+    what: "Generate and finalise your board-ready strategy report",
     accessibleKey: "isStage10Accessible",
     clearedKey: "stage10Cleared",
+    editedKey: "stage10EditedAfterClearing",
   },
 ];
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-type GateState = {
-  isStage1Accessible: boolean;
-  isStage2Accessible: boolean;
-  isStage3Accessible: boolean;
-  isStage4Accessible: boolean;
-  isStage5Accessible: boolean;
-  isStage6Accessible: boolean;
-  isStage7Accessible: boolean;
-  isStage8Accessible: boolean;
-  isStage9Accessible?: boolean;
-  isStage10Accessible?: boolean;
-  stage1Cleared: boolean;
-  stage2Cleared: boolean;
-  stage3Cleared: boolean;
-  stage4Cleared: boolean;
-  stage5Cleared: boolean;
-  stage6Cleared: boolean;
-  stage7Cleared: boolean;
-  stage8Cleared: boolean;
-  stage9Cleared?: boolean;
-  stage10Cleared?: boolean;
-  [key: string]: boolean | undefined | null | object | string;
-};
+type GateState = Record<string, boolean | undefined | null | object | string>;
+type StepState = "locked" | "accessible" | "current" | "cleared" | "edited";
 
-type StepState = "locked" | "accessible" | "current" | "cleared";
-
-function getStepState(
-  stage: StageDefinition,
-  gateState: GateState,
-  currentPath: string
-): StepState {
-  const isAccessible = gateState[stage.accessibleKey as keyof GateState] as boolean;
-  const isCleared = gateState[stage.clearedKey as keyof GateState] as boolean;
+function getStepState(stage: StageDefinition, gate: GateState, currentPath: string): StepState {
+  const isAccessible = !!(gate[stage.accessibleKey] as boolean);
+  const isCleared = !!(gate[stage.clearedKey] as boolean);
+  const isEdited = !!(gate[stage.editedKey] as boolean);
   const isCurrent = currentPath === stage.route || currentPath.startsWith(stage.route + "?");
 
   if (isCurrent) return "current";
+  if (isEdited) return "edited";   // cleared but modified — needs re-confirmation
   if (isCleared) return "cleared";
   if (isAccessible) return "accessible";
   return "locked";
@@ -171,61 +170,65 @@ function StageStep({
 }) {
   const isClickable = state !== "locked";
 
+  const button = (
+    <button
+      type="button"
+      onClick={isClickable ? onClick : undefined}
+      disabled={!isClickable}
+      aria-current={state === "current" ? "step" : undefined}
+      aria-label={`Stage ${stage.number}: ${stage.label}${state === "locked" ? " (locked)" : state === "cleared" ? " (completed)" : state === "edited" ? " (needs re-confirmation)" : ""}`}
+      className={cn(
+        "relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 select-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+        state === "locked"     && "cursor-not-allowed text-muted-foreground/30 opacity-50",
+        state === "accessible" && "cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/50",
+        state === "current"    && "cursor-pointer text-primary font-semibold bg-primary/12 ring-1 ring-primary/40 shadow-sm",
+        state === "cleared"    && "cursor-pointer text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10",
+        state === "edited"     && "cursor-pointer text-amber-400 hover:text-amber-300 hover:bg-amber-500/10",
+      )}
+    >
+      {/* Number / icon badge */}
+      <span
+        className={cn(
+          "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0 transition-colors",
+          state === "locked"     && "bg-muted-foreground/12 text-muted-foreground/30",
+          state === "accessible" && "bg-muted-foreground/18 text-muted-foreground",
+          state === "current"    && "bg-primary text-primary-foreground shadow-sm",
+          state === "cleared"    && "bg-emerald-500/20 text-emerald-400",
+          state === "edited"     && "bg-amber-500/20 text-amber-400",
+        )}
+      >
+        {state === "cleared" ? (
+          <CheckCircle2 className="w-3.5 h-3.5" />
+        ) : state === "locked" ? (
+          <Lock className="w-2.5 h-2.5" />
+        ) : state === "edited" ? (
+          <AlertTriangle className="w-3 h-3" />
+        ) : (
+          stage.number
+        )}
+      </span>
+
+      {/* Label */}
+      <span className="hidden sm:inline md:hidden">{stage.shortLabel}</span>
+      <span className="hidden md:inline">{stage.label}</span>
+    </button>
+  );
+
   return (
     <div className="flex items-center shrink-0">
-      <button
-        type="button"
-        onClick={isClickable ? onClick : undefined}
-        disabled={!isClickable}
-        aria-current={state === "current" ? "step" : undefined}
-        aria-label={`Stage ${stage.number}: ${stage.label}${state === "locked" ? " (locked)" : state === "cleared" ? " (completed)" : ""}`}
-        className={cn(
-          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 select-none",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-          // locked
-          state === "locked" && "cursor-not-allowed text-muted-foreground/35 opacity-60",
-          // accessible (not current, not cleared)
-          state === "accessible" && "cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/50",
-          // current
-          state === "current" && "cursor-pointer text-primary font-semibold bg-primary/10 ring-1 ring-primary/30",
-          // cleared
-          state === "cleared" && "cursor-pointer text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10",
-        )}
-        title={state === "locked" ? `Stage ${stage.number} is locked` : undefined}
-      >
-        {/* Badge */}
-        <span
-          className={cn(
-            "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0 transition-colors",
-            state === "locked" && "bg-muted-foreground/15 text-muted-foreground/40",
-            state === "accessible" && "bg-muted-foreground/20 text-muted-foreground",
-            state === "current" && "bg-primary text-primary-foreground",
-            state === "cleared" && "bg-emerald-500/20 text-emerald-400",
-          )}
-        >
-          {state === "cleared" ? (
-            <CheckCircle2 className="w-3.5 h-3.5" />
-          ) : state === "locked" ? (
-            <Lock className="w-2.5 h-2.5" />
-          ) : (
-            stage.number
-          )}
-        </span>
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[200px] text-center text-xs">
+          <p className="font-semibold mb-0.5">Stage {stage.number}: {stage.label}</p>
+          <p className="text-muted-foreground">{stage.what}</p>
+          {state === "locked" && <p className="text-amber-400 mt-1">Complete previous stages first</p>}
+          {state === "edited" && <p className="text-amber-400 mt-1">Re-confirm needed — you edited this stage</p>}
+        </TooltipContent>
+      </Tooltip>
 
-        {/* Label — hidden on very small screens, short on sm, full on md+ */}
-        <span className="hidden sm:inline md:hidden">{stage.shortLabel}</span>
-        <span className="hidden md:inline">{stage.label}</span>
-      </button>
-
-      {/* Connector chevron */}
       {!isLast && (
-        <ChevronRight
-          className={cn(
-            "w-3 h-3 shrink-0 mx-0.5",
-            "text-muted-foreground/20"
-          )}
-          aria-hidden="true"
-        />
+        <ChevronRight className="w-3 h-3 shrink-0 mx-0.5 text-muted-foreground/20" aria-hidden="true" />
       )}
     </div>
   );
@@ -236,16 +239,15 @@ function StageStep({
 export default function StrategyTopNav() {
   const [location, setLocation] = useLocation();
   const navigate = setLocation;
+
   const { data: gateState, isLoading } = trpc.gate.getState.useQuery(undefined, {
     staleTime: 30_000,
     refetchOnWindowFocus: true,
   });
 
-  // Determine if we're on the strategy overview page
   const isOverview = location === "/strategy" || location === "/strategy/";
 
-  // Fallback gate state while loading — everything locked except stage 1
-  const effectiveGate: GateState = gateState ?? {
+  const effectiveGate: GateState = (gateState as GateState) ?? {
     isStage1Accessible: true,
     isStage2Accessible: false,
     isStage3Accessible: false,
@@ -256,108 +258,116 @@ export default function StrategyTopNav() {
     isStage8Accessible: false,
     isStage9Accessible: false,
     isStage10Accessible: false,
-    stage1Cleared: false,
-    stage2Cleared: false,
-    stage3Cleared: false,
-    stage4Cleared: false,
-    stage5Cleared: false,
-    stage6Cleared: false,
-    stage7Cleared: false,
-    stage8Cleared: false,
-    stage9Cleared: false,
+    stage1Cleared: false, stage2Cleared: false, stage3Cleared: false,
+    stage4Cleared: false, stage5Cleared: false, stage6Cleared: false,
+    stage7Cleared: false, stage8Cleared: false, stage9Cleared: false,
     stage10Cleared: false,
+    stage1EditedAfterClearing: false, stage2EditedAfterClearing: false,
+    stage3EditedAfterClearing: false, stage4EditedAfterClearing: false,
+    stage5EditedAfterClearing: false, stage6EditedAfterClearing: false,
+    stage7EditedAfterClearing: false, stage8EditedAfterClearing: false,
+    stage9EditedAfterClearing: false, stage10EditedAfterClearing: false,
   };
 
-  // Count cleared stages for the progress indicator
-  const clearedCount = STAGES.filter(
-    (s) => effectiveGate[s.clearedKey as keyof GateState] as boolean
-  ).length;
+  const clearedCount = STAGES.filter(s => !!(effectiveGate[s.clearedKey] as boolean)).length;
+  const editedCount  = STAGES.filter(s => !!(effectiveGate[s.editedKey]  as boolean)).length;
 
   return (
-    <nav
-      aria-label="Strategy stages"
-      className={cn(
-        "sticky top-0 z-30",
-        "border-b border-border/50",
-        "bg-background/80 backdrop-blur-md",
-        "shadow-sm shadow-black/10",
-      )}
-    >
-      <div className="flex items-center gap-2 px-4 md:px-6 h-11">
-        {/* Overview home link */}
-        <button
-          type="button"
-          onClick={() => navigate("/strategy")}
-          className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 shrink-0",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            isOverview
-              ? "text-primary font-semibold bg-primary/10 ring-1 ring-primary/30"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent/50 cursor-pointer",
-          )}
-          aria-current={isOverview ? "page" : undefined}
-          aria-label="Strategy overview"
-        >
-          <span
-            className={cn(
-              "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0",
-              isOverview
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted-foreground/20 text-muted-foreground",
-            )}
+    <TooltipProvider delayDuration={400}>
+      <nav
+        aria-label="Strategy stages"
+        className={cn(
+          "sticky top-0 z-30",
+          "border-b border-border/60",
+          "bg-background/85 backdrop-blur-md",
+          "shadow-sm shadow-black/10",
+        )}
+      >
+        <div className="flex items-center gap-1 px-4 md:px-6 h-12">
+          {/* Overview home pill */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => navigate("/strategy")}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 shrink-0",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                  isOverview
+                    ? "text-primary font-semibold bg-primary/12 ring-1 ring-primary/40 shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50 cursor-pointer",
+                )}
+                aria-current={isOverview ? "page" : undefined}
+              >
+                <span
+                  className={cn(
+                    "flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0",
+                    isOverview ? "bg-primary text-primary-foreground" : "bg-muted-foreground/18 text-muted-foreground",
+                  )}
+                >
+                  ⌂
+                </span>
+                <span className="hidden sm:inline">Overview</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Strategy overview &amp; progress dashboard</TooltipContent>
+          </Tooltip>
+
+          <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground/20 mx-0.5" aria-hidden="true" />
+
+          {/* Scrollable stage steps */}
+          <div
+            className="flex items-center overflow-x-auto flex-1"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            ⌂
-          </span>
-          <span className="hidden sm:inline">Overview</span>
-        </button>
-
-        <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground/20 mx-0.5" aria-hidden="true" />
-
-        {/* Scrollable stage steps */}
-        <div
-          className="flex items-center overflow-x-auto scrollbar-none flex-1"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          <div className="flex items-center">
-            {STAGES.map((stage, idx) => {
-              const state = getStepState(stage, effectiveGate, location);
-              return (
-                <StageStep
-                  key={stage.number}
-                  stage={stage}
-                  state={state}
-                  isLast={idx === STAGES.length - 1}
-                  onClick={() => navigate(stage.route)}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Progress pill — right side */}
-        {!isLoading && (
-          <div className="hidden sm:flex items-center gap-1.5 shrink-0 ml-2">
-            <div className="flex gap-0.5">
-              {STAGES.map((s) => {
-                const cleared = effectiveGate[s.clearedKey as keyof GateState] as boolean;
+            <div className="flex items-center">
+              {STAGES.map((stage, idx) => {
+                const state = getStepState(stage, effectiveGate, location);
                 return (
-                  <div
-                    key={s.number}
-                    className={cn(
-                      "w-1 h-3 rounded-full transition-colors",
-                      cleared ? "bg-emerald-500" : "bg-muted-foreground/15"
-                    )}
-                    aria-hidden="true"
+                  <StageStep
+                    key={stage.number}
+                    stage={stage}
+                    state={state}
+                    isLast={idx === STAGES.length - 1}
+                    onClick={() => navigate(stage.route)}
                   />
                 );
               })}
             </div>
-            <span className="text-[10px] text-muted-foreground/50 font-medium tabular-nums">
-              {clearedCount}/10
-            </span>
           </div>
-        )}
-      </div>
-    </nav>
+
+          {/* Right: progress pill */}
+          {!isLoading && (
+            <div className="hidden sm:flex items-center gap-2 shrink-0 ml-2 pl-2 border-l border-border/40">
+              {/* Mini progress bars */}
+              <div className="flex gap-0.5">
+                {STAGES.map(s => {
+                  const cleared = !!(effectiveGate[s.clearedKey] as boolean);
+                  const edited  = !!(effectiveGate[s.editedKey]  as boolean);
+                  return (
+                    <div
+                      key={s.number}
+                      className={cn(
+                        "w-1 h-3 rounded-full transition-colors",
+                        edited   ? "bg-amber-400"   :
+                        cleared  ? "bg-emerald-500"  :
+                        "bg-muted-foreground/15"
+                      )}
+                      aria-hidden="true"
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-[10px] text-muted-foreground/50 font-medium tabular-nums whitespace-nowrap">
+                {clearedCount}/10
+                {editedCount > 0 && (
+                  <span className="text-amber-400 ml-1">· {editedCount} need re-confirm</span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      </nav>
+    </TooltipProvider>
   );
 }

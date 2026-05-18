@@ -524,6 +524,19 @@ export default function BusinessCasePage() {
       upstreamStageLabel="Success Measures"
       isDeepDive={isDeepDive}
       confirmedAt={gate.gateState?.stage7.completedAt}
+      stageProgress={!isDeepDive && gate.isStage7Accessible ? {
+        stageNumber: 7,
+        title: "Business Case",
+        description: "Generate your investment narrative, review risk factors, and confirm the business case. Requires at least 50 words in the narrative.",
+        isCleared: !!gate.stage7Cleared,
+        isEdited: !!gate.stage7EditedAfterClearing,
+        canConfirm,
+        isPending: confirmMut.isPending,
+        onConfirm: () => gate.stage7Cleared && !gate.stage7EditedAfterClearing ? navigate("/strategy/capability") : setConfirmOpen(true),
+        backRoute: "/strategy/roadmap",
+        nextRoute: "/strategy/capability",
+        nextLabel: "Capability",
+      } : undefined}
       actions={
         <Button
           variant="outline" size="sm"

@@ -31,6 +31,7 @@ import {
   CheckCircle2, ChevronRight, Lock, Lightbulb, Quote,
   RefreshCw, ArrowRight, AlertTriangle, Info,
 } from "lucide-react";
+import StageProgressHeader from "@/components/StageProgressHeader";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -139,6 +140,14 @@ export default function StrategyVisionPage() {
   const [hasEdited, setHasEdited] = useState(false);
   const [inspirationSource, setInspirationSource] = useState<string | undefined>(undefined);
 
+  // Gate redirect — if Stage 1 is not cleared, redirect back
+  useEffect(() => {
+    if (gate.isLoading) return;
+    if (!gate.isStage2Accessible) {
+      navigate("/strategy/diagnostic");
+    }
+  }, [gate.isLoading, gate.isStage2Accessible, navigate]);
+
   // Load existing vision from gate state
   useEffect(() => {
     if (gate.visionStatement && !hasEdited) {
@@ -212,6 +221,23 @@ export default function StrategyVisionPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      {/* Stage progress header */}
+      {!isDeepDive && !isLocked && (
+        <StageProgressHeader
+          stageNumber={2}
+          title="Vision Statement"
+          description="Review your AI-drafted vision statement, refine it to make it yours (at least 10 words), then confirm to unlock Stage 3: Strategy."
+          isCleared={!!gate.stage2Cleared}
+          isEdited={!!gate.stage2EditedAfterClearing}
+          canConfirm={canConfirm}
+          isPending={completeStage2.isPending}
+          onConfirm={() => gate.stage2Cleared && !gate.stage2EditedAfterClearing ? navigate("/strategy/strategy") : handleConfirm()}
+          backRoute="/strategy/diagnostic"
+          nextRoute="/strategy/strategy"
+          nextLabel="Strategy"
+        />
+      )}
+
       {/* Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

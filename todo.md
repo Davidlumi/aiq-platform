@@ -4056,3 +4056,15 @@ test
 - [x] TypeScript: 0 errors
 - [x] Tests: 1313/1313 passing
 - [x] Checkpoint
+
+## Strategy Flow UX Overhaul
+
+- [x] Redesign StrategyTopNav: amber dot for edited-after-clearing, stage tooltip on hover, bolder current-step highlight
+- [x] Create StageProgressHeader component: stage number badge, title, description of what to do, status pill (In Progress / Complete / Needs Review)
+- [x] Add StageProgressHeader to all 10 stage pages
+- [x] Ensure every stage page has a clear disabled-until-ready "Next Step →" CTA and a "← Back" link
+- [x] Lock BoardReportPage behind all 9 prior stages cleared — show blocking gate screen with checklist of incomplete stages
+- [x] Add gate redirect to StrategyVisionPage (Stage 2): redirect to /strategy/diagnostic if Stage 1 not cleared
+- [x] TypeScript: 0 errors
+- [x] Tests: all passing
+- [x] Checkpoint

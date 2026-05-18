@@ -7,6 +7,7 @@
  *  - Page title (h1)
  *  - Optional right-aligned actions slot
  *  - Optional gate banner (locked / edited-after-clearing)
+ *  - Optional StageProgressHeader (stage number, task description, CTA)
  *  - Deep-dive mode banner + "Back to summary" breadcrumb
  *  - Consistent max-width, padding, and block spacing
  */
@@ -14,6 +15,7 @@ import React from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Lock, AlertTriangle, BookOpen } from "lucide-react";
+import StageProgressHeader, { type StageProgressHeaderProps } from "@/components/StageProgressHeader";
 
 interface SectionPageLayoutProps {
   /** Section number, e.g. "06" */
@@ -48,6 +50,8 @@ interface SectionPageLayoutProps {
   isDeepDive?: boolean;
   /** Timestamp (ms) when this stage was confirmed — shown in deep-dive header */
   confirmedAt?: number | null;
+  /** When provided, renders a StageProgressHeader below the breadcrumb */
+  stageProgress?: Omit<StageProgressHeaderProps, "className">;
   children: React.ReactNode;
 }
 
@@ -63,6 +67,7 @@ export default function SectionPageLayout({
   upstreamStageLabel,
   isDeepDive = false,
   confirmedAt,
+  stageProgress,
   children,
 }: SectionPageLayoutProps) {
   const [, navigate] = useLocation();
@@ -111,6 +116,11 @@ export default function SectionPageLayout({
           <span className="text-muted-foreground text-xs" aria-hidden="true">/</span>
           <span className="text-xs font-medium text-foreground">{sectionLabel}</span>
         </nav>
+      )}
+
+      {/* Stage progress header */}
+      {stageProgress && !isDeepDive && (
+        <StageProgressHeader {...stageProgress} />
       )}
 
       {/* Deep-dive mode banner */}
