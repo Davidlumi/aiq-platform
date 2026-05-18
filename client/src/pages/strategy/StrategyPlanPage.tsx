@@ -1174,6 +1174,16 @@ export default function StrategyPlanPage() {
                           </Badge>
                         )}
                       </div>
+                      {/* Principle alignment rationale — one-liner shown below the badge row */}
+                      {(init as any).principleAlignment?.rationale && (
+                        <p className={`text-[11px] mt-1 leading-snug line-clamp-1 ${
+                          (init as any).principleAlignment?.ranking === "violates"
+                            ? "text-red-400/80"
+                            : "text-emerald-500/70"
+                        }`}>
+                          {(init as any).principleAlignment.rationale}
+                        </p>
+                      )}
                     </div>
 
                     {/* Actions */}

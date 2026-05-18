@@ -4026,3 +4026,10 @@ test
 - [x] Vitest: ACME-S-005 — cache hit: second call with same principles/wontDos returns cached result without LLM call
 - [x] TypeScript: 0 errors
 - [x] Final checkpoint
+
+## Stage 4 UI: Principle Alignment Rationale Display
+
+- [ ] StrategyPlanPage.tsx: show rationale one-liner below alignment badge (violates and aligned cases)
+- [ ] InitiativeDrawer.tsx: add Principle Alignment section showing ranking, score, rationale, violatedPrinciples, alignedPrinciples
+- [ ] TypeScript: 0 errors
+- [ ] Checkpoint

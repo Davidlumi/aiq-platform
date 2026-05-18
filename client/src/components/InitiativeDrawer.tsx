@@ -48,6 +48,13 @@ export type DrawerInitiative = {
   notes?: string | null;
   owner?: string | null;
   acceptanceReason?: string | null;
+  principleAlignment?: {
+    ranking: "aligned" | "neutral" | "violates";
+    score: number;
+    rationale?: string | null;
+    alignedPrinciples?: string[];
+    violatedPrinciples?: string[];
+  } | null;
 };
 
 interface InitiativeDrawerProps {
@@ -604,7 +611,66 @@ export default function InitiativeDrawer({
             </Section>
           )}
 
-          {/* ── G. Phase rationale ── */}
+          {/* ── G. Principle alignment ── */}
+          {initiative.principleAlignment && initiative.principleAlignment.ranking !== "neutral" && (
+            <Section
+              title="Principle alignment"
+              accent={
+                initiative.principleAlignment.ranking === "violates" ? "#F87171" : "#4ADE80"
+              }
+              defaultOpen
+            >
+              <div className={`p-3 rounded-lg border ${
+                initiative.principleAlignment.ranking === "violates"
+                  ? "bg-red-500/5 border-red-500/20"
+                  : "bg-emerald-500/5 border-emerald-500/20"
+              }`}>
+                <div className="flex items-start gap-2">
+                  {initiative.principleAlignment.ranking === "violates" ? (
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  )}
+                  <div className="space-y-1.5 min-w-0">
+                    <p className={`text-xs font-medium ${
+                      initiative.principleAlignment.ranking === "violates" ? "text-red-400" : "text-emerald-400"
+                    }`}>
+                      {initiative.principleAlignment.ranking === "violates" ? "Conflicts with stated principles" : "Aligned with stated principles"}
+                    </p>
+                    {initiative.principleAlignment.rationale && (
+                      <p className="text-sm text-foreground/80 leading-relaxed">
+                        {initiative.principleAlignment.rationale}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {(initiative.principleAlignment.violatedPrinciples ?? []).length > 0 && (
+                <div className="mt-3 space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Conflicting principles</p>
+                  {initiative.principleAlignment.violatedPrinciples!.map((p, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-red-400">
+                      <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span>{p}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(initiative.principleAlignment.alignedPrinciples ?? []).length > 0 && (
+                <div className="mt-3 space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Supporting principles</p>
+                  {initiative.principleAlignment.alignedPrinciples!.map((p, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-emerald-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span>{p}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Section>
+          )}
+
+          {/* ── H. Phase rationale ── */}
           {libEntry?.phaseRationale && (
             <Section title="Phase rationale" accent={phaseCfg?.color ?? "#94A3B8"} defaultOpen={false}>
               <div className="p-3 rounded-lg bg-muted/50 border border-border/50">

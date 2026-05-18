@@ -1309,10 +1309,11 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
     }
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    // Get the tenant's strategy context to find selectedInitiativeIds + fitImpactResultsJson
+    // Get the tenant's strategy context to find selectedInitiativeIds + fitImpactResultsJson + semanticAlignmentCacheJson
     const ctxRows = await db.select({
       selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
       fitImpactResultsJson: ailOrgContext.fitImpactResultsJson,
+      semanticAlignmentCacheJson: ailOrgContext.semanticAlignmentCacheJson,
     }).from(ailOrgContext)
       .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
       .limit(1);
@@ -1335,6 +1336,23 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
     try {
       const raw = ctxRows[0].fitImpactResultsJson ? JSON.parse(ctxRows[0].fitImpactResultsJson) : [];
       for (const r of raw as FitCard[]) { fitMap.set(r.id, r); }
+    } catch {}
+    // Parse semantic alignment map (id → { ranking, score, rationale, alignedPrinciples, violatedPrinciples })
+    type AlignmentEntry = {
+      ranking: "aligned" | "neutral" | "violates";
+      score: number;
+      rationale?: string | null;
+      alignedPrinciples?: string[];
+      violatedPrinciples?: string[];
+    };
+    const alignmentMap = new Map<string, AlignmentEntry>();
+    try {
+      const rawAlignment = ctxRows[0].semanticAlignmentCacheJson
+        ? JSON.parse(ctxRows[0].semanticAlignmentCacheJson)
+        : {};
+      for (const [id, entry] of Object.entries(rawAlignment as Record<string, AlignmentEntry>)) {
+        alignmentMap.set(id, entry);
+      }
     } catch {}
     // Fetch all library entries for selected IDs
     const libRows = await db.select().from(strategyInitiativeLibrary);
@@ -1380,6 +1398,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
         scoredFactors: fit?.scoredFactors ?? [],
         hardGatesPassed: fit?.hardGatesPassed ?? [],
         y1CostRange: fit?.y1CostRange ?? null,
+        principleAlignment: alignmentMap.get(id) ?? null,
       };
     });
   }),
