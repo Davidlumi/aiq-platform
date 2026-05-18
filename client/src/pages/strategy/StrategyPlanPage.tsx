@@ -32,7 +32,7 @@ import {
   ArrowLeft, LayoutGrid, List, AlertTriangle, Clock,
   CheckCircle2, Circle, PauseCircle, XCircle, Plus,
   Trash2, ChevronDown, Info, ExternalLink, Loader2, BarChart2,
-  TrendingUp,
+  TrendingUp, RefreshCw,
 } from "lucide-react";
 import InitiativeDrawer, { type DrawerInitiative } from "@/components/InitiativeDrawer";
 
@@ -548,6 +548,17 @@ export default function StrategyPlanPage() {
   const gate = useGate();
   const { isStage5Accessible, stage5Cleared: isStage5Cleared } = gate;
 
+  // Regenerate initiative options
+  const regenerateMutation = trpc.intelligence.regenerateInitiativeOptions.useMutation({
+    onSuccess: (data) => {
+      utils.intelligence.getStrategyInitiatives.invalidate();
+      toast.success(`Initiative options refreshed — ${data.count} initiatives selected based on your latest data`);
+    },
+    onError: (err) => {
+      toast.error(err.message ?? "Failed to regenerate initiative options");
+    },
+  });
+
   // Confirm Plan dialog
   const [confirmPlanOpen, setConfirmPlanOpen] = useState(false);
   const confirmPlanMutation = trpc.gate.completeStage5.useMutation({
@@ -845,6 +856,22 @@ export default function StrategyPlanPage() {
                 <span className="hidden sm:inline">Operational</span>
               </button>
             </div>
+
+            {/* Regenerate initiative options */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs bg-transparent border-border text-muted-foreground hover:text-foreground hover:border-border gap-1"
+              disabled={regenerateMutation.isPending}
+              onClick={() => regenerateMutation.mutate()}
+              title="Re-run the fit engine to refresh initiative recommendations based on your current data"
+            >
+              {regenerateMutation.isPending ? (
+                <><Loader2 className="w-3 h-3 animate-spin" />Regenerating…</>
+              ) : (
+                <><RefreshCw className="w-3 h-3" />Regenerate options</>
+              )}
+            </Button>
 
             {/* Edit selection */}
             <Button

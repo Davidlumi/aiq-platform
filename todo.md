@@ -4074,3 +4074,9 @@ test
 - [x] Fix #2: Value figures orders-of-magnitude too large — valueRange from fit engine is raw GBP; divide by 1000 before applying £k/£M formatter
 - [x] Fix #3: Estimated investment £0k–£0k — replace PHASE_COST fallback with direct sum of y1CostRange (already in £k) from initiatives; also fix valueTotalLow/High to convert raw GBP → £k
 - [x] Confirm #4: Phase distribution all-in-Build is by design — users are expected to drag initiatives between phases; phase assignment logic is working correctly
+
+## Stage 5 Plan Page — Remaining Fixes + Regenerate Feature
+- [x] Fix cost roll-up still showing £0k–£0k (y1CostRange not flowing through to enriched initiatives)
+- [x] Fix HR function bar chart showing all zeros (category→function mapping not applied to enriched data)
+- [x] Add "Regenerate initiative options" button: re-runs fit engine, replaces selectedInitiativeIds with fresh top-fit results, shows loading state
+- [x] TypeScript: 0 errors; tests: all passing; checkpoint

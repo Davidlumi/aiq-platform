@@ -39,6 +39,8 @@ import {
   type SelectInitiativesInput,
 } from "../strategyEngine";
 import { getLibraryMeta, getContentLibrary, getAllInitiatives, resolveInitiativeIds } from "../contentLibrary";
+import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
+import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { VOCAB_BLACKLIST, FORBIDDEN_WORDS_PROMPT, sanitizeOutput } from "../../shared/vocabBlacklist";
 
 import {
@@ -1357,19 +1359,28 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
     // Fetch all library entries for selected IDs
     const libRows = await db.select().from(strategyInitiativeLibrary);
     const libMap = new Map(libRows.map(r => [r.id, r]));
+    // Build a lookup from the shared in-memory initiative library (covers on_, ld_, ta_, fw_ IDs
+    // that may not be in the DB strategyInitiativeLibrary table yet)
+    const sharedLibMap = new Map(INITIATIVE_LIBRARY.map(i => [i.id, i]));
     // Fetch per-initiative state rows for this tenant's users' strategies
     const stateRows = await db.select().from(strategyInitiatives)
       .where(eq(strategyInitiatives.strategyId, ctx.user.tenantId));
     const stateMap = new Map(stateRows.map(r => [r.initiativeId, r]));
     return selectedIds.map(id => {
       const lib = libMap.get(id);
+      const shared = sharedLibMap.get(id);   // shared/initiativeLibrary.ts entry
       const state = stateMap.get(id);
       const fit = fitMap.get(id) ?? null;
+      // category: prefer DB lib, fall back to shared library
+      const category = lib?.category ?? shared?.category ?? null;
+      // y1CostRange: prefer fit engine output (stored in fitImpactResultsJson),
+      // fall back to shared library definition (always present for standard initiatives)
+      const y1CostRange = fit?.y1CostRange ?? shared?.y1CostRange ?? null;
       return {
         id,
-        name: lib?.name ?? id,
-        description: lib?.description ?? null,
-        category: lib?.category ?? null,
+        name: lib?.name ?? shared?.label ?? id,
+        description: lib?.description ?? shared?.description ?? null,
+        category,
         aiType: lib?.aiType ?? null,
         decisionAuthority: lib?.decisionAuthority ?? null,
         regulatoryFlag: lib?.regulatoryFlag ?? null,
@@ -1397,7 +1408,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
         hardGateFailReasons: fit?.hardGateFailReasons ?? [],
         scoredFactors: fit?.scoredFactors ?? [],
         hardGatesPassed: fit?.hardGatesPassed ?? [],
-        y1CostRange: fit?.y1CostRange ?? null,
+        y1CostRange,
         principleAlignment: alignmentMap.get(id) ?? null,
       };
     });
@@ -1458,6 +1469,146 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
         });
       }
       return { success: true };
+    }),
+
+  /**
+   * Regenerate initiative options: re-runs the fit+impact engine with the tenant's current
+   * background inputs and replaces selectedInitiativesJson with the new top-fit results.
+   * Also updates fitImpactResultsJson so scores are fresh.
+   */
+  regenerateInitiativeOptions: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Load the tenant's background inputs JSON
+      const ctxRows = await db.select({
+        backgroundInputsJson: ailOrgContext.backgroundInputsJson,
+        sectionIJson: ailOrgContext.sectionIJson,
+        sectionJJson: ailOrgContext.sectionJJson,
+        sectionKJson: ailOrgContext.sectionKJson,
+        capabilityAssessmentJson: ailOrgContext.capabilityAssessmentJson,
+      }).from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+
+      if (!ctxRows[0]) throw new TRPCError({ code: "NOT_FOUND", message: "No org context found" });
+
+      const parse = (v: string | null | undefined) => { try { return v ? JSON.parse(v) : null; } catch { return null; } };
+      const inputs = parse(ctxRows[0].backgroundInputsJson) ?? {};
+      const sectionI = parse(ctxRows[0].sectionIJson) ?? {};
+      const sectionJ = parse(ctxRows[0].sectionJJson) ?? {};
+      const sectionK = parse(ctxRows[0].sectionKJson) ?? {};
+      const capAssessment = parse(ctxRows[0].capabilityAssessmentJson) ?? {};
+
+      const engineInputs: FitImpactEngineInputs = {
+        sectionA: {
+          totalHeadcount: inputs.sectionA?.totalHeadcount ?? (() => {
+            const bandMap: Record<string, number> = { lt500: 250, "500_5k": 2750, "5k_25k": 15000, "25k_plus": 50000 };
+            return bandMap[inputs.sectionA?.headcountBand ?? ""] ?? 0;
+          })(),
+          ukSitesCount: inputs.sectionA?.ukSitesCount,
+          sectorSpecificRegulation: inputs.sectionA?.sectorSpecificRegulations ?? [],
+          sectorSpecificRegulations: inputs.sectionA?.sectorSpecificRegulations ?? [],
+          ownershipStructure: inputs.sectionA?.ownershipStructure ?? inputs.sectionA?.orgType,
+          sector: inputs.sectionA?.sector,
+        },
+        sectionB: { hrSubFunctions: inputs.sectionB?.hrSubFunctions ?? [] },
+        sectionC: {
+          hrisSystem: inputs.sectionC?.hrisSystem,
+          atsSystem: inputs.sectionC?.atsSystem,
+          lmsSystem: inputs.sectionC?.lmsSystem,
+          dataQualityRating: inputs.sectionC?.dataQualityRating,
+          hrSystemIntegrationMaturity: inputs.sectionC?.hrSystemIntegrationMaturity,
+          yearsOfHrisData: inputs.sectionC?.yearsOfHrisData,
+          workforceDigitalAccess: inputs.sectionC?.workforceDigitalAccess,
+          engagementSurveyTool: inputs.sectionC?.engagementSurveyTool,
+        },
+        sectionD: {
+          annualHires: inputs.sectionD?.annualHiresLow,
+          annualHiresHigh: inputs.sectionD?.annualHiresHigh,
+          adminTimePerHire: inputs.sectionD?.adminTimePerHireHours,
+          adminTimePerHireIsEstimate: inputs.sectionD?.adminTimeIsEstimate,
+          totalHrBudget: inputs.sectionD?.hrBudgetGbp,
+          totalHrBudgetIsEstimate: inputs.sectionD?.hrBudgetIsEstimate,
+          attritionRate: inputs.sectionD?.voluntaryAttritionPct,
+          attritionRateIsEstimate: inputs.sectionD?.attritionIsEstimate,
+          annualApplicationVolume: inputs.sectionD?.annualApplicationVolumeLow ?? inputs.sectionD?.annualApplicationVolumeHigh,
+          annualApplicationVolumeHigh: inputs.sectionD?.annualApplicationVolumeHigh,
+          costPerExternalHire: inputs.sectionD?.costPerExternalHire,
+          costPerExternalHireIsEstimate: inputs.sectionD?.costPerExternalHireIsEstimate,
+          annualContractorSpend: inputs.sectionD?.annualContractorSpend,
+          annualContractorSpendIsEstimate: inputs.sectionD?.annualContractorSpendIsEstimate,
+          monthlyHrQueryVolume: inputs.sectionD?.monthlyHrQueryVolumeLow ?? inputs.sectionD?.monthlyHrQueryVolumeHigh,
+          monthlyHrQueryVolumeHigh: inputs.sectionD?.monthlyHrQueryVolumeHigh,
+          internalHirePercent: inputs.sectionD?.internalHirePercent,
+          annualLDSpend: inputs.sectionD?.annualLDSpend,
+          annualLDSpendIsEstimate: inputs.sectionD?.annualLDSpendIsEstimate,
+          annualRevenue: inputs.sectionD?.annualRevenue,
+          annualRevenueIsEstimate: inputs.sectionD?.annualRevenueIsEstimate,
+          currentEngagementScore: inputs.sectionD?.currentEngagementScore,
+          hrFteCount: inputs.sectionB?.hrTeamSize,
+          avgTimeToFill: inputs.sectionD?.avgTimeToFillDays,
+        },
+        sectionI: {
+          workforceWorkType: sectionI.workforceWorkType,
+          workforceComposition: sectionI.workforceComposition,
+          workforceEmploymentMix: sectionI.workforceEmploymentMix,
+          businessDirectionType: sectionI.businessDirectionType,
+          geographicDistribution: sectionI.geographicDistribution,
+          managerCapabilityForInsights: sectionI.managerCapabilityForInsights,
+          skillsFrameworkStatus: sectionI.skillsFrameworkStatus,
+          skillsInventoryCompleteness: sectionI.skillsInventoryCompleteness,
+          pivotalJobFamilies: sectionI.pivotalJobFamilies,
+          employeeExperienceState: sectionI.employeeExperienceState,
+          frontlineHeadcountPercent: sectionI.frontlineHeadcountPercent,
+          topBusinessPriorities: sectionI.topBusinessPriorities,
+        },
+        sectionK: {
+          performanceReviewCadence: sectionK.performanceReviewCadence,
+          internalMobilityApproach: sectionK.internalMobilityApproach,
+          onboardingModel: sectionK.onboardingModel,
+          hrHelpdeskModel: sectionK.hrHelpdeskModel,
+          hiringProcessStructure: sectionK.hiringProcessStructure,
+          hiringVolumeProfile: sectionK.hiringVolumeProfile,
+          lAndDDeliveryModel: sectionK.lAndDDeliveryModel,
+          rewardCycleModel: sectionK.rewardCycleModel,
+        },
+        sectionJ: {
+          budgetCeiling: sectionJ.budgetCeiling,
+          timelineConstraint: sectionJ.timelineConstraint,
+          riskTolerance: sectionJ.riskTolerance,
+          quickWinsPreference: sectionJ.quickWinsPreference,
+        },
+        sectionF: { changeReadiness: inputs.sectionF?.changeReadiness },
+        sectionG: {
+          ai_ethics_trust: capAssessment.ai_ethics_trust?.score,
+        },
+      };
+
+      const fitResults = evaluateAllInitiatives(engineInputs);
+      const fitImpactResultsJson = JSON.stringify(fitResults);
+
+      // Auto-select top STRONG_FIT + POSSIBLE_FIT initiatives (up to 12)
+      const autoSelected = fitResults
+        .filter((r: { fitStatus: string; fitScore: number }) =>
+          r.fitStatus === "STRONG_FIT" || r.fitStatus === "POSSIBLE_FIT"
+        )
+        .sort((a: { fitScore: number }, b: { fitScore: number }) => b.fitScore - a.fitScore)
+        .slice(0, 12)
+        .map((r: { id: string }) => r.id);
+
+      const selectedInitiativesJson = autoSelected.length > 0 ? JSON.stringify(autoSelected) : null;
+
+      await db.update(ailOrgContext)
+        .set({ fitImpactResultsJson, ...(selectedInitiativesJson ? { selectedInitiativesJson } : {}) })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      return { success: true, count: autoSelected.length };
     }),
 
   /**
