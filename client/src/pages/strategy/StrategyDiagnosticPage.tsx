@@ -42,7 +42,7 @@ import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
   CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
   Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe, Sliders, Settings,
-  Save, Clock,
+  Save, Clock, ArrowRight, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
@@ -2608,18 +2608,37 @@ export default function StrategyDiagnosticPage() {
             </div>
           )}
 
-          {/* Pre-work status banner */}
-          {preworkDone && !sessionDone && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 text-sm text-emerald-700 dark:text-emerald-300">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium">Pre-work complete</p>
-                <p className="text-xs mt-0.5">
-                  {draftState === "generating" && "Generating initial strategy drafts in the background…"}
-                  {draftState === "initial_draft" && "Initial drafts are ready on your strategy pages. Your facilitator will help you curate them during your session."}
-                  {draftState === "none" && "Initial strategy drafts will be generated shortly."}
-                  {draftState === "curated" && "Strategy drafts have been curated."}
-                </p>
+          {/* Pre-work complete — prominent success state with navigation CTA */}
+          {preworkDone && (
+            <div className="rounded-xl border border-emerald-200 dark:border-emerald-700 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/20 p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-800/50 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm">
+                    Great — everything is complete. Let's build your strategy.
+                  </p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                    {draftState === "generating" && "Preparing your initial strategy drafts in the background — this takes about 30 seconds."}
+                    {draftState === "initial_draft" && "Your initial drafts are ready. Start with your vision statement."}
+                    {(draftState === "none" || !draftState) && "Your data has been saved. Initial strategy drafts will be ready shortly."}
+                    {draftState === "curated" && "Your strategy drafts have been curated and are ready to review."}
+                  </p>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                      onClick={() => navigate("/strategy/vision")}
+                    >
+                      {draftState === "generating" ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" />Preparing drafts…</>
+                      ) : (
+                        <>Start with your vision<ArrowRight className="w-4 h-4" /></>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

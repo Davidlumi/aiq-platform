@@ -4029,7 +4029,14 @@ test
 
 ## Stage 4 UI: Principle Alignment Rationale Display
 
-- [ ] StrategyPlanPage.tsx: show rationale one-liner below alignment badge (violates and aligned cases)
-- [ ] InitiativeDrawer.tsx: add Principle Alignment section showing ranking, score, rationale, violatedPrinciples, alignedPrinciples
-- [ ] TypeScript: 0 errors
-- [ ] Checkpoint
+- [x] StrategyPlanPage.tsx: show rationale one-liner below alignment badge (violates and aligned cases)
+- [x] InitiativeDrawer.tsx: add Principle Alignment section showing ranking, score, rationale, violatedPrinciples, alignedPrinciples
+- [x] TypeScript: 0 errors
+- [x] Checkpoint
+
+## Stage 1 Post-Completion CTA Fix
+
+- [x] StrategyDiagnosticPage: replace small "Pre-work complete" badge with prominent success state — congratulations message + "Build your strategy" CTA button navigating to /strategy/vision
+- [x] CTA only appears after completePrework mutation succeeds (preworkDone = true)
+- [x] TypeScript: 0 errors
+- [x] Checkpoint
