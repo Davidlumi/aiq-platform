@@ -28,6 +28,8 @@ import { contentReviewRouter } from "./routers/contentReview";
 import { hwgtRouter } from "./routers/hwgt";
 import { backgroundInputsRouter } from "./routers/backgroundInputs";
 import { gateRouter } from "./routers/gate";
+import { companyProfileRouter } from "./routers/companyProfile";
+import { rewardPreworkRouter } from "./routers/rewardPrework";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -58,6 +60,8 @@ export const appRouter = router({
   hwgt: hwgtRouter,
   backgroundInputs: backgroundInputsRouter,
   gate: gateRouter,
+  companyProfile: companyProfileRouter,
+  rewardPrework: rewardPreworkRouter,
 });
 
 export type AppRouter = typeof appRouter;

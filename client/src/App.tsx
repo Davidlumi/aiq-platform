@@ -82,6 +82,8 @@ import AcceptInvitationPage from "./pages/AcceptInvitationPage";
 import ContentLibraryAdminPage from "./pages/admin/ContentLibraryPage";
 import ContentReviewPage from "./pages/admin/ContentReviewPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
+import CompanyProfilePage from "./pages/admin/CompanyProfilePage";
+import RewardPreworkPage from "./pages/strategy/RewardPreworkPage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
 import HowItWorksPage from "./pages/marketing/HowItWorksPage";
@@ -355,6 +357,12 @@ function Router() {
       </Route>
       <Route path="/admin/content-review">
         <ProtectedRoute component={ContentReviewPage} />
+      </Route>
+      <Route path="/company-profile">
+        <ProtectedRoute component={CompanyProfilePage} />
+      </Route>
+      <Route path="/strategy/reward-prework">
+        <ProtectedRoute component={RewardPreworkPage} />
       </Route>
       <Route path="/backoffice">
         <ProtectedRoute component={BackOfficePage} />

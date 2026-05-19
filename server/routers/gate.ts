@@ -25,7 +25,7 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { ailOrgContext, tenants } from "../../drizzle/schema";
+import { ailOrgContext, tenants, companyProfile, rewardPrework } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import { evaluateAllInitiatives, evaluateAllInitiativesWithSemanticAlignment, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { computeAlignmentCacheKey } from "../services/semanticPrincipleAlignment";
@@ -417,6 +417,16 @@ export const gateRouter = router({
         const sectionK = orgCtx.sectionKJson ? JSON.parse(orgCtx.sectionKJson) : {};
         const capAssessment = orgCtx.capabilityAssessmentJson ? JSON.parse(orgCtx.capabilityAssessmentJson) : {};
 
+        // Fetch Company Profile and Reward Pre-work for engine context
+        const [cpRow] = await db
+          .select()
+          .from(companyProfile)
+          .where(eq(companyProfile.tenantId, ctx.user.tenantId));
+        const [rpRow] = tenantMode === "reward" ? await db
+          .select()
+          .from(rewardPrework)
+          .where(eq(rewardPrework.tenantId, ctx.user.tenantId)) : [null];
+
         const engineInputs: FitImpactEngineInputs = {
           sectionA: {
             totalHeadcount: inputs.sectionA?.totalHeadcount ?? (() => {
@@ -481,6 +491,45 @@ export const gateRouter = router({
           },
           sectionF: { changeReadiness: inputs.sectionF?.changeReadiness },
           sectionG: { ai_ethics_trust: capAssessment.ai_ethics_trust?.score },
+          // Company Profile — shared org facts
+          ...(cpRow ? {
+            companyProfile: {
+              sector: cpRow.sector ?? undefined,
+              headcount: cpRow.headcount ?? undefined,
+              geographicFootprint: cpRow.geographicFootprint ?? undefined,
+              ownershipStructure: cpRow.ownershipStructure ?? undefined,
+              businessAiAmbition: cpRow.businessAiAmbition ?? undefined,
+              hris: cpRow.hris ?? undefined,
+              workforceKnowledgePct: cpRow.workforceKnowledgePct ?? undefined,
+              workforceFrontlinePct: cpRow.workforceFrontlinePct ?? undefined,
+              annualPayrollCostGbp: cpRow.annualPayrollCostGbp ?? undefined,
+              fcaSysc19InScope: cpRow.fcaSysc19InScope ?? undefined,
+            },
+          } : {}),
+          // Reward Pre-work — Reward-mode-specific context
+          ...(rpRow ? {
+            rewardPrework: {
+              rewardFunctionSize: rpRow.rewardFunctionSize ?? undefined,
+              rewardFunctionMaturityRating: rpRow.rewardFunctionMaturityRating ?? undefined,
+              aiMaturityInRewardToday: rpRow.aiMaturityInRewardToday ?? undefined,
+              rewardAiAmbition: rpRow.rewardAiAmbition ?? undefined,
+              payEquityCapability: rpRow.payEquityCapability ?? undefined,
+              payStructureMaturity: rpRow.payStructureMaturity ?? undefined,
+              ukGenderPayGapStatus: rpRow.ukGenderPayGapStatus ?? undefined,
+              pensionSchemeArchitecture: rpRow.pensionSchemeArchitecture ?? undefined,
+              externalCompDataSources: rpRow.externalCompDataSources ?? undefined,
+              aiToolsCurrentlyInRewardUse: rpRow.aiToolsCurrentlyInRewardUse ?? undefined,
+              compManagementPlatform: rpRow.compManagementPlatform ?? undefined,
+              unionWorksCouncilCoverage: rpRow.unionWorksCouncilCoverage ?? undefined,
+              primaryTriggerForRewardAiStrategy: rpRow.primaryTriggerForRewardAiStrategy ?? undefined,
+              topRewardPrioritiesNext12Months: rpRow.topRewardPrioritiesNext12Months ?? undefined,
+              strategicTimeline: rpRow.strategicTimeline ?? undefined,
+              existingProgrammesToCoexistWith: rpRow.existingProgrammesToCoexistWith ?? undefined,
+              aiTalentRetentionConcern: rpRow.aiTalentRetentionConcern ?? undefined,
+              recentRemunerationVoteConcerns: rpRow.recentRemunerationVoteConcerns ?? undefined,
+              nationalLivingWageExposure: rpRow.nationalLivingWageExposure ?? undefined,
+            },
+          } : {}),
         };
         // Attach principle alignment context and mode as extra fields for engine
         (engineInputs as Record<string, unknown>).principles = principles.map(p => p.title);

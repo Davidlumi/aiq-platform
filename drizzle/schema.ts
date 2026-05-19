@@ -2300,3 +2300,117 @@ export const hwgtInitiatives = mysqlTable("hwgt_initiatives", {
 
 export type HwgtInitiative = typeof hwgtInitiatives.$inferSelect;
 export type HwgtInitiativeInsert = typeof hwgtInitiatives.$inferInsert;
+
+// ─── Company Profile ──────────────────────────────────────────────────────────
+// Shared org-level facts. Set by admin once at tenant setup. Read by all function engines.
+export const companyProfile = mysqlTable("company_profile", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  // Section A — Company identity
+  companyName: varchar("company_name", { length: 120 }),
+  sector: varchar("sector", { length: 50 }),
+  headcount: int("headcount"),
+  annualRevenueGbp: bigint("annual_revenue_gbp", { mode: "number" }),
+  annualPayrollCostGbp: bigint("annual_payroll_cost_gbp", { mode: "number" }),
+  geographicFootprint: varchar("geographic_footprint", { length: 50 }),
+  ownershipStructure: varchar("ownership_structure", { length: 50 }),
+  // Section B — Tech and workforce
+  hris: varchar("hris", { length: 50 }),
+  workforceKnowledgePct: int("workforce_knowledge_pct"),
+  workforceFrontlinePct: int("workforce_frontline_pct"),
+  workforceBlendedPct: int("workforce_blended_pct"),
+  materialSalesWorkforce: varchar("material_sales_workforce", { length: 50 }),
+  criticalAiDigitalTalentPopulation: varchar("critical_ai_digital_talent_population", { length: 50 }),
+  businessAiAmbition: int("business_ai_ambition"),
+  // Section C — Conditional fields
+  fcaSysc19InScope: varchar("fca_sysc_19_in_scope", { length: 20 }),
+  ukEmployeeHeadcount: int("uk_employee_headcount"),
+  euEmployeeHeadcount: int("eu_employee_headcount"),
+  listingExchange: varchar("listing_exchange", { length: 50 }),
+  // Metadata
+  isCompleted: tinyint("is_completed").notNull().default(0),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+  updatedByUserId: varchar("updated_by_user_id", { length: 36 }),
+}, (t) => ({
+  tenantIdx: index("idx_company_profile_tenant").on(t.tenantId),
+}));
+export type CompanyProfile = typeof companyProfile.$inferSelect;
+export type CompanyProfileInsert = typeof companyProfile.$inferInsert;
+
+// ─── Company Profile Audit ────────────────────────────────────────────────────
+export const companyProfileAudit = mysqlTable("company_profile_audit", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  fieldName: varchar("field_name", { length: 100 }).notNull(),
+  oldValue: text("old_value"),
+  newValue: text("new_value"),
+  changedByUserId: varchar("changed_by_user_id", { length: 36 }).notNull(),
+  changedAt: bigint("changed_at", { mode: "number" }).notNull(),
+  changeReason: text("change_reason"),
+}, (t) => ({
+  tenantIdx: index("idx_cp_audit_tenant").on(t.tenantId),
+  changedAtIdx: index("idx_cp_audit_changed_at").on(t.changedAt),
+}));
+export type CompanyProfileAudit = typeof companyProfileAudit.$inferSelect;
+
+// ─── Company Profile Flag ─────────────────────────────────────────────────────
+export const companyProfileFlag = mysqlTable("company_profile_flag", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  fieldName: varchar("field_name", { length: 100 }).notNull(),
+  flaggedByUserId: varchar("flagged_by_user_id", { length: 36 }).notNull(),
+  suggestedCorrection: text("suggested_correction"),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["open", "accepted", "dismissed"]).notNull().default("open"),
+  resolvedByUserId: varchar("resolved_by_user_id", { length: 36 }),
+  resolvedAt: bigint("resolved_at", { mode: "number" }),
+  resolveNote: text("resolve_note"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_cp_flag_tenant").on(t.tenantId),
+  statusIdx: index("idx_cp_flag_status").on(t.status),
+}));
+export type CompanyProfileFlag = typeof companyProfileFlag.$inferSelect;
+
+// ─── Reward Pre-work ──────────────────────────────────────────────────────────
+// Function-specific pre-work for Reward mode. Set by Reward function leader at Stage 1.
+export const rewardPrework = mysqlTable("reward_prework", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  // Block A — Reward function context
+  rewardFunctionSize: int("reward_function_size"),
+  rewardFunctionMaturityRating: int("reward_function_maturity_rating"),
+  aiMaturityInRewardToday: int("ai_maturity_in_reward_today"),
+  rewardAiAmbition: int("reward_ai_ambition"),
+  // Block B — Reward capability
+  payEquityCapability: varchar("pay_equity_capability", { length: 50 }),
+  payStructureMaturity: varchar("pay_structure_maturity", { length: 50 }),
+  ukGenderPayGapStatus: varchar("uk_gender_pay_gap_status", { length: 50 }),
+  pensionSchemeArchitecture: varchar("pension_scheme_architecture", { length: 50 }),
+  // Block C — Reward landscape
+  externalCompDataSources: json("external_comp_data_sources").$type<string[]>(),
+  aiToolsCurrentlyInRewardUse: json("ai_tools_currently_in_reward_use").$type<string[]>(),
+  compManagementPlatform: varchar("comp_management_platform", { length: 50 }),
+  unionWorksCouncilCoverage: varchar("union_works_council_coverage", { length: 50 }),
+  // Block D — Triggers and direction
+  primaryTriggerForRewardAiStrategy: varchar("primary_trigger_for_reward_ai_strategy", { length: 50 }),
+  topRewardPrioritiesNext12Months: json("top_reward_priorities_next_12_months").$type<string[]>(),
+  strategicTimeline: varchar("strategic_timeline", { length: 50 }),
+  // Block E — Existing programmes
+  existingProgrammesToCoexistWith: json("existing_programmes_to_coexist_with").$type<string[]>(),
+  // Block F — Conditional add-ons
+  aiTalentRetentionConcern: varchar("ai_talent_retention_concern", { length: 50 }),
+  recentRemunerationVoteConcerns: varchar("recent_remuneration_vote_concerns", { length: 50 }),
+  nationalLivingWageExposure: varchar("national_living_wage_exposure", { length: 50 }),
+  // Metadata
+  isCompleted: tinyint("is_completed").notNull().default(0),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+  reassessmentCount: int("reassessment_count").notNull().default(0),
+  lastReassessedAt: bigint("last_reassessed_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_reward_prework_tenant").on(t.tenantId),
+  userIdx: index("idx_reward_prework_user").on(t.userId),
+}));
+export type RewardPrework = typeof rewardPrework.$inferSelect;
+export type RewardPreworkInsert = typeof rewardPrework.$inferInsert;

@@ -160,6 +160,41 @@ export type FitImpactEngineInputs = ValueFormulaInputs & {
     lAndDDeliveryModel?: string;
     rewardCycleModel?: string;
   };
+  /** Company Profile — shared organisational facts (populated for both modes) */
+  companyProfile?: {
+    sector?: string;
+    headcount?: number;
+    geographicFootprint?: string;
+    ownershipStructure?: string;
+    businessAiAmbition?: number;
+    hris?: string;
+    workforceKnowledgePct?: number;
+    workforceFrontlinePct?: number;
+    annualPayrollCostGbp?: number;
+    fcaSysc19InScope?: string;
+  };
+  /** Reward Pre-work — Reward-mode-specific context */
+  rewardPrework?: {
+    rewardFunctionSize?: number;
+    rewardFunctionMaturityRating?: number;
+    aiMaturityInRewardToday?: number;
+    rewardAiAmbition?: number;
+    payEquityCapability?: string;
+    payStructureMaturity?: string;
+    ukGenderPayGapStatus?: string;
+    pensionSchemeArchitecture?: string;
+    externalCompDataSources?: string[];
+    aiToolsCurrentlyInRewardUse?: string[];
+    compManagementPlatform?: string;
+    unionWorksCouncilCoverage?: string;
+    primaryTriggerForRewardAiStrategy?: string;
+    topRewardPrioritiesNext12Months?: string[];
+    strategicTimeline?: string;
+    existingProgrammesToCoexistWith?: string[];
+    aiTalentRetentionConcern?: string;
+    recentRemunerationVoteConcerns?: string;
+    nationalLivingWageExposure?: string;
+  };
 };
 
 // ─── Soft factor evaluators ───────────────────────────────────────────────────

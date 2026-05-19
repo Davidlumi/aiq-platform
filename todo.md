@@ -4205,3 +4205,68 @@ test
 - [x] TypeScript: 0 errors
 - [x] All 1315 tests passing (0 regressions; 3 new mode-filtering tests added)
 - [x] Checkpoint saved
+
+## Company Profile + Reward Stage 1 Pre-work (Schema v2)
+
+### Phase 1 — Database Schema
+- [x] Create `company_profile` table (35+ fields: sector, headcount, ownership, HRIS, AI ambition, workforce mix, regulatory, etc.)
+- [x] Create `company_profile_audit` table (field-level change log)
+- [x] Create `company_profile_flag` table (flag-for-correction workflow)
+- [x] Create `reward_prework` table (Reward Stage 1 pre-work: 5 screens, 30+ fields)
+- [x] SQL migration applied via webdev_execute_sql
+
+### Phase 2 — Server tRPC Procedures
+- [x] `companyProfile.get` — fetch current profile for tenant
+- [x] `companyProfile.save` — upsert with field-level audit trail + material-change detection
+- [x] `companyProfile.complete` — mark profile as complete
+- [x] `companyProfile.flagField` — submit a flag-for-correction with owner notification
+- [x] `companyProfile.listFlags` — list open/all flags for admin
+- [x] `companyProfile.resolveFlag` — accept or dismiss a flag
+- [x] `rewardPrework.get` — fetch current pre-work for tenant
+- [x] `rewardPrework.save` — upsert pre-work fields
+- [x] `rewardPrework.complete` — mark pre-work as complete
+- [x] `rewardPrework.reassess` — increment reassessmentCount and clear isCompleted
+
+### Phase 3 — Company Profile Admin UI
+- [x] `CompanyProfilePage` — 3-screen wizard (Company Basics, Workforce & Technology, Regulatory)
+- [x] Triple-slider for workforce mix (Knowledge / Frontline / Blended, sums to 100%)
+- [x] Conditional regulatory screen (shown for public/FCA/EMEA/Global)
+- [x] Audit trail tab showing field-level change history
+- [x] Flags tab showing `CompanyProfileFlagsPanel`
+- [x] Route: `/admin/company-profile`
+- [x] AppShell nav item added
+
+### Phase 4 — Reward Pre-work UI
+- [x] `RewardPreworkPage` — 5-screen wizard
+  - Screen 1: Reward Function Context (team size, reporting line, mandate)
+  - Screen 2: Reward Capability (maturity, pay structure, job architecture)
+  - Screen 3: Reward Landscape (benchmarking, pay equity, pay transparency)
+  - Screen 4: Triggers & Direction (strategic triggers, max-3 priority selector)
+  - Screen 5: Existing Programmes (current initiatives, blockers, dependencies)
+- [x] Max-3 priority selector with visual toggle chips
+- [x] Route: `/strategy/reward-prework`
+
+### Phase 5 — Flag-for-Correction Workflow
+- [x] `FlagFieldButton` component — flag icon on Company Profile fields
+- [x] Flag submission modal with notes + suggested correction fields
+- [x] `CompanyProfileFlagsPanel` — admin panel with accept/dismiss actions
+- [x] Owner notification on flag submission (via notifyOwner)
+- [x] Flags tab in CompanyProfilePage admin view
+
+### Phase 6 — Re-assessment Workflow
+- [x] `ReassessmentBanner` component — shows when re-assessment is required
+- [x] Material-change detection in `companyProfile.save` (sector, headcount, HRIS, AI ambition, FCA status, ownership)
+- [x] Auto-trigger `rewardPrework.reassess` when material change detected
+- [x] Post-save banner in CompanyProfilePage when material change detected
+- [x] Re-assessment banner wired into RewardPreworkPage
+
+### Phase 7 — Engine Integration
+- [x] `companyProfile` and `rewardPrework` fields added to `FitImpactEngineInputs`
+- [x] Company Profile and Reward Pre-work data fetched and injected in `gate.completeStage4`
+- [x] Engine uses sector, headcount, AI ambition, pay structure maturity, strategic priorities for Reward mode scoring
+
+### Phase 8 — Tests & Quality
+- [x] TypeScript: 0 errors
+- [x] Tests: 1335 passing (20 new tests added; 0 regressions)
+- [x] New test file: `server/company-profile.test.ts` (material-change detection, workforce mix validation, priority selector, regulatory screen visibility)
+- [x] Checkpoint saved

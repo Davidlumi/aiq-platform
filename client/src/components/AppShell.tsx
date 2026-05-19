@@ -115,6 +115,13 @@ const NAV_ITEMS: NavItem[] = [
     section: "aistrategy",
   },
   {
+    label: "Company Profile",
+    path: "/company-profile",
+    icon: Building2,
+    roles: CPO_ROLES,
+    section: "aistrategy",
+  },
+  {
     label: "Team Progress",
     path: "/manager/team-progress",
     icon: BarChart3,
