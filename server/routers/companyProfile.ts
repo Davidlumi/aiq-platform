@@ -42,7 +42,7 @@ const CompanyProfileSaveSchema = z.object({
   workforceBlendedPct: z.number().int().min(0).max(100).optional(),
   materialSalesWorkforce: z.string().max(50).optional(),
   criticalAiDigitalTalentPopulation: z.string().max(50).optional(),
-  businessAiAmbition: z.number().int().min(1).max(5).optional(),
+  businessAiAmbition: z.number().int().min(1).max(4).optional(),
   // Section C (conditional)
   fcaSysc19InScope: z.string().max(20).optional(),
   ukEmployeeHeadcount: z.number().int().nonnegative().optional(),
@@ -176,6 +176,17 @@ export const companyProfileRouter = router({
             })
             .where(eq(rewardPrework.tenantId, tenantId));
         }
+      }
+
+      // Cross-field headcount validation: uk + eu must not exceed total
+      const totalHc = (input.headcount ?? (existing?.headcount ?? 0)) as number;
+      const ukHc = (input.ukEmployeeHeadcount ?? (existing?.ukEmployeeHeadcount ?? 0)) as number;
+      const euHc = (input.euEmployeeHeadcount ?? (existing?.euEmployeeHeadcount ?? 0)) as number;
+      if (totalHc > 0 && (ukHc + euHc) > totalHc) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `UK (${ukHc}) + EU (${euHc}) headcount exceeds total headcount (${totalHc}).`,
+        });
       }
 
       return { ok: true, materialChangeDetected: !!hasMaterialChange };

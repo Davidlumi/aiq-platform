@@ -22,9 +22,9 @@ import { TRPCError } from "@trpc/server";
 const RewardPreworkSaveSchema = z.object({
   // Block A
   rewardFunctionSize: z.number().int().positive().optional(),
-  rewardFunctionMaturityRating: z.number().int().min(1).max(5).optional(),
-  aiMaturityInRewardToday: z.number().int().min(1).max(5).optional(),
-  rewardAiAmbition: z.number().int().min(1).max(5).optional(),
+  rewardFunctionMaturityRating: z.number().int().min(1).max(4).optional(),
+  aiMaturityInRewardToday: z.number().int().min(1).max(4).optional(),
+  rewardAiAmbition: z.number().int().min(1).max(4).optional(),
   // Block B
   payEquityCapability: z.string().max(50).optional(),
   payStructureMaturity: z.string().max(50).optional(),
@@ -57,7 +57,7 @@ export const rewardPreworkRouter = router({
     const tenantId = ctx.user.tenantId;
 
     const [profile] = await db
-      .select({ isCompleted: companyProfile.isCompleted })
+      .select({ isCompleted: companyProfile.isCompleted, completedAt: companyProfile.completedAt })
       .from(companyProfile)
       .where(eq(companyProfile.tenantId, tenantId));
 
@@ -69,10 +69,27 @@ export const rewardPreworkRouter = router({
     const companyProfileComplete = (profile?.isCompleted ?? 0) === 1;
     const preworkComplete = (prework?.isCompleted ?? 0) === 1;
 
+    // D9 gate: pre-work cannot start until Company Profile is complete
+    const canStart = companyProfileComplete;
+    const canStartMessage = companyProfileComplete
+      ? null
+      : "Company Profile must be completed by an admin before Reward Pre-work can begin.";
+
+    // 12-month reassessment timer: flag if profile was completed more than 12 months ago
+    const TWELVE_MONTHS_MS = 365 * 24 * 60 * 60 * 1000;
+    const profileCompletedAt = profile?.completedAt ?? null;
+    const isDueReassessment =
+      companyProfileComplete &&
+      profileCompletedAt !== null &&
+      Date.now() - profileCompletedAt > TWELVE_MONTHS_MS;
+
     return {
       companyProfileComplete,
       preworkComplete,
-      canStart: companyProfileComplete,
+      canStart,
+      canStartMessage,
+      isDueReassessment,
+      profileCompletedAt,
     };
   }),
 

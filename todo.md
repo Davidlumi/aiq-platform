@@ -4270,3 +4270,49 @@ test
 - [x] Tests: 1335 passing (20 new tests added; 0 regressions)
 - [x] New test file: `server/company-profile.test.ts` (material-change detection, workforce mix validation, priority selector, regulatory screen visibility)
 - [x] Checkpoint saved
+
+## QA Pass — Company Profile + Reward Stage 1 (qa-prompt-company-profile-and-reward-stage1.md)
+
+### Company Profile fixes
+- [x] Fix sector dropdown: use schema v2 enum values (15 options, snake_case)
+- [x] Fix geography dropdown: use 4 spec options (uk_only / uk_plus_eu / uk_plus_non_eu_global / uk_plus_eu_plus_global)
+- [x] Fix ownership dropdown: use 10 spec options (ftse_100_listed, ftse_250_listed, aim_listed, other_listed, private_pe_backed, private_vc_backed, private_family_owned, mutual_cooperative, public_sector, subsidiary_listed_group)
+- [x] Fix HRIS dropdown: 17 options including hibob, rippling, zellis, cezanne_hr, cascade_hr, dont_know
+- [x] Fix material_sales_workforce options to match spec enum (4 options: none_minimal, present_but_small, significant_named_seller_workforce, predominantly_sales)
+- [x] Fix critical_ai_digital_talent_population options to match spec enum (4 options: none_or_minimal, emerging_small_population, established_growing, actively_fighting_in_market_for_ai_talent)
+- [x] Fix business_ai_ambition slider: 1–4 (not 1–5), update labels
+- [x] Fix conditional logic: fca_sysc_19_in_scope shows ONLY when sector = financial_services (not based on geo/ownership)
+- [x] Fix conditional logic: listing_exchange shows ONLY when ownership is a listed type
+- [x] Fix conditional logic: uk_employee_headcount shows ONLY when geo ≠ uk_only
+- [x] Fix conditional logic: eu_employee_headcount shows ONLY when geo includes EU (uk_plus_eu or uk_plus_eu_plus_global)
+- [x] Add maxLength={120} to company name input
+- [x] Add read-only view for Reward leaders (role check: if user.aiqRole === 'reward_leader', show read-only with flag icons)
+- [x] Add help text to all fields without it (sector, geography, ownership, HRIS, sales workforce, AI talent)
+- [x] Fix fca_sysc_19_in_scope options to match spec enum (yes_in_scope, yes_not_smcr, no_not_fca_regulated, under_review)
+- [x] Fix listing_exchange options to match spec enum (lse_main_market, ftse_aim, nyse, nasdaq, euronext, multiple_exchanges, other_listed)
+
+### Reward Pre-work fixes
+- [x] Fix all sliders: 1–4 (not 1–5), update low/high labels to match spec
+- [x] Fix pay_equity_capability options to match spec enum (4 options)
+- [x] Fix pay_structure_maturity options to match spec enum (4 options)
+- [x] Fix uk_gender_pay_gap_status options to match spec enum (4 options)
+- [x] Fix pension_scheme_architecture options to match spec (7 options including dont_know)
+- [x] Fix external_comp_data_sources options to match spec (14 options)
+- [x] Fix ai_tools_currently_in_reward_use options to match spec (9 options)
+- [x] Fix comp_management_platform options to match spec (7 options)
+- [x] Fix union_works_council_coverage options to match spec (4 options including dont_know)
+- [x] Fix primary_trigger_for_reward_ai_strategy options to match spec (10 options)
+- [x] Fix top_reward_priorities options: use spec enum values, add conditional options based on Company Profile
+- [x] Fix strategic_timeline options to match spec (4 options)
+- [x] Fix conditional logic: ai_talent_retention_concern shows when Company Profile criticalAiDigitalTalentPopulation ≠ none_or_minimal
+- [x] Fix conditional logic: recent_remuneration_vote_concerns shows when Company Profile ownershipStructure is listed type
+- [x] Fix conditional logic: national_living_wage_exposure shows when Company Profile workforceFrontlinePct ≥ 30
+- [x] Add conditional priority options: sales_comp_redesign (material_sales ≠ none), ai_talent_pay_strategy (critical_ai ≠ none), frontline_workforce_pay (frontline ≥ 20%), executive_comp_refresh (listed)
+- [x] Add AI maturity inconsistency warning (D5): warn when ai_maturity_in_reward_today ≥ 3 but ai_tools = none_no_ai_yet
+- [x] Add help text to all Block B/C/D fields
+- [x] Add rewardFunctionSize as integer input (not slider), min 0 max 500
+
+### Server-side fixes
+- [x] Add cross-field validation: uk_employee_headcount + eu_employee_headcount ≤ total headcount
+- [x] Add D9 gate check: rewardPrework.getStatus returns canStart=false if company profile not complete, with message
+- [x] Confirm 12-month reassessment timer: document how it works (F2)
