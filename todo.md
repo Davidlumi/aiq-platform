@@ -4109,15 +4109,25 @@ test
 - [x] Checkpoint
 
 ## Strategy Builder E2E QA (May 2026)
-- [ ] BUG: Overview shows "No initiatives defined yet" and "Cost not estimated yet" even though 12 initiatives are listed in the header — Stage 5 plan data not flowing to overview cards
-- [ ] BUG: Overview shows "-£120K VALUE · 3 YRS" with "Value model produced a non-credible result" — negative value shown, needs investigation
-- [ ] QA Stage 1 (Data Input / Diagnostic) — check all 9 sections render and save correctly
-- [ ] QA Stage 2 (Vision) — check vision generation and confirm flow
-- [ ] QA Stage 3 (Strategy) — check archetype selection and strategy statement
-- [ ] QA Stage 4 (Principles) — check principles, won't-dos, outcomes
-- [ ] QA Stage 5 (Plan) — check initiative portfolio, value badges, indicative flags
-- [ ] QA Stage 6 (Outcomes/Roadmap) — check measurement and outcomes
-- [ ] QA Stage 7 (Business Case) — check investment/risk and value page
-- [ ] QA Stage 8 (Capability) — check capability gap analysis
-- [ ] QA Stage 9 (Review) — check review session flow
-- [ ] Fix all bugs found during QA
+- [x] BUG: Overview shows "No initiatives defined yet" and "Cost not estimated yet" even though 12 initiatives are listed in the header — fixed (resolveInitiativeIds now passes through shared library IDs)
+- [x] BUG: Overview shows "-£120K VALUE · 3 YRS" with "Value model produced a non-credible result" — fixed (removed incorrect ×1000 multiplier from value envelope display)
+- [x] QA Stage 1 (Data Input / Diagnostic) — check all 9 sections render and save correctly
+- [x] QA Stage 2 (Vision) — check vision generation and confirm flow
+- [x] QA Stage 3 (Strategy) — check archetype selection and strategy statement
+- [x] QA Stage 4 (Principles) — check principles, won’t-dos, outcomes
+- [x] QA Stage 5 (Plan) — check initiative portfolio, value badges, indicative flags
+- [x] QA Stage 6 (Outcomes/Roadmap) — check measurement and outcomes
+- [x] QA Stage 7 (Business Case) — check investment/risk and value page
+- [x] QA Stage 8 (Capability) — check capability gap analysis
+- [x] QA Stage 9 (Review) — check review session flow
+- [x] Fix all bugs found during QA (Stages 6–9 bugs fixed; Stages 1–5 and Overview bugs remain)
+
+## Strategy Builder E2E QA — Stages 1–5 (May 2026)
+- [x] QA Stage 1 (Data Input / Diagnostic) — all 9 sections render, save, and persist correctly
+- [x] QA Stage 2 (Vision) — vision generation, confirm flow, back navigation
+- [x] QA Stage 3 (Strategy) — archetype selection, strategy statement, confirm flow
+- [x] QA Stage 4 (Principles) — principles, won’t-dos, outcomes, confirm flow
+- [x] QA Stage 5 (Plan) — initiative portfolio, value badges, indicative flags, phase drag, confirm flow
+- [x] Fix Overview page bugs: "No initiatives defined yet" and negative value display
+- [x] Fix all bugs found during Stages 1–5 QA
+- [x] TypeScript: 0 errors; tests: all passing; checkpoint

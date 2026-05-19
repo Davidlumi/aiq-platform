@@ -1213,11 +1213,14 @@ export default function StrategyPlanPage() {
                           const valueHighGbp = vr.high ?? 0;
                           const costMidGbp   = cr ? (((cr.low + cr.high) / 2) * 1000) : 0;
                           if (valueHighGbp < costMidGbp) {
-                            // Value is implausibly lower than cost — flag rather than mislead
+                            // Value is lower than cost mid — show actual value with a warning indicator
+                            const midGbpW = Math.round((vr.low + vr.high) / 2);
+                            const midKW   = Math.round(midGbpW / 1000);
+                            const fmtW = (k: number) => k >= 1000 ? `${String.fromCharCode(163)}${(k / 1000).toFixed(1)}M` : `${String.fromCharCode(163)}${k}k`;
                             return (
-                              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20 gap-0.5">
+                              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20 gap-0.5" title="Estimated value may not justify cost at current scale">
                                 <AlertTriangle className="w-2.5 h-2.5" />
-                                Value data unavailable
+                                {fmtW(midKW)} est.
                               </Badge>
                             );
                           }
