@@ -116,6 +116,13 @@ export type InitiativeDefinition = {
    * Replaces the numeric phase field for v3 initiatives.
    */
   phaseV3?: "foundation" | "build" | "scale" | "optimise";
+  /**
+   * Which platform mode(s) this initiative is relevant to.
+   * "cpo"    = CPO/AI Strategy mode only
+   * "reward" = Reward Leader mode only
+   * "both"   = shown in both modes (default when omitted)
+   */
+  functionScope?: "cpo" | "reward" | "both";
 };
 
 export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
@@ -151,6 +158,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -182,6 +190,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionD.annualApplicationVolume", value: 1000, label: "More than 1,000 annual applications" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -212,6 +221,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -243,6 +253,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -273,6 +284,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -303,6 +315,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -332,9 +345,9 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
       { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
     ],
-    phaseV3: "foundation",
+        phaseV3: "foundation",
+    functionScope: "both",
   },
-
   {
     id: "ta_offer_generation",
     label: "Offer & Contract Generation AI",
@@ -362,9 +375,9 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
       { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
     ],
-    phaseV3: "foundation",
+        phaseV3: "foundation",
+    functionScope: "both",
   },
-
   {
     id: "ta_jd_optimization",
     label: "Job Description Optimisation AI",
@@ -391,9 +404,9 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     hardGates: [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Resourcing in scope" },
     ],
-    phaseV3: "foundation",
+        phaseV3: "foundation",
+    functionScope: "both",
   },
-
   // ─── Onboarding (4 initiatives) ──────────────────────────────────────────
 
   {
@@ -425,6 +438,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Onboarding in scope" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -455,6 +469,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Onboarding in scope" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -485,6 +500,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionD.annualHires", value: 50, label: "More than 50 annual hires" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -515,6 +531,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "TA", label: "Onboarding in scope" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   // ─── Learning & Development (6 initiatives) ──────────────────────────────
@@ -549,6 +566,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_populated", path: "sectionC.lmsSystem", label: "LMS system in place" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -579,6 +597,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
     ],
     phaseV3: "scale",
+    functionScope: "both",
   },
 
   {
@@ -609,6 +628,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -640,6 +660,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -669,6 +690,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -699,6 +721,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "L&D", label: "L&D in scope" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   // ─── Internal Mobility (3 initiatives) ───────────────────────────────────
@@ -731,6 +754,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HRBP", label: "Internal mobility in scope" },
     ],
     phaseV3: "scale",
+    functionScope: "cpo",
   },
 
   {
@@ -760,6 +784,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   {
@@ -789,6 +814,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   // ─── Performance Management (3 initiatives) ──────────────────────────────
@@ -820,6 +846,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "PM", label: "Performance management in scope" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -849,6 +876,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "PM", label: "Performance management in scope" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -879,6 +907,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "PM", label: "Performance management in scope" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   // ─── Employee Experience (4 initiatives) ─────────────────────────────────
@@ -911,6 +940,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "Employee experience in scope" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -942,6 +972,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_in_array", path: "sectionC.workforceDigitalAccess", values: ["all_laptops", "mixed_access", "frontline_mobile"], label: "Workforce has digital access" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -972,6 +1003,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "Employee experience in scope" },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -1006,6 +1038,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       ] },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   // ─── Retention (3 initiatives) ────────────────────────────────────────────
@@ -1039,6 +1072,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   {
@@ -1070,6 +1104,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionD.attritionRate", value: 10, label: "Attrition rate above 10%" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   {
@@ -1099,6 +1134,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_in_array", path: "sectionC.yearsOfHrisData", values: ["1_to_2_years", "2_to_5_years", "5_plus_years"], label: "At least 1 year of HRIS data available" },
     ],
     phaseV3: "foundation",
+    functionScope: "cpo",
   },
 
   // ─── HR Operations (3 initiatives) ───────────────────────────────────────
@@ -1135,6 +1171,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       ] },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
   {
     id: "hr_policy_generation",
@@ -1164,6 +1201,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -1197,6 +1235,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       ] },
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   // ─── Workforce Planning (4 initiatives) ──────────────────────────────────
@@ -1230,6 +1269,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_not_equals", path: "sectionC.hrSystemIntegrationMaturity", value: "Separate systems", label: "HR systems have some integration" },
     ],
     phaseV3: "scale",
+    functionScope: "cpo",
   },
 
   {
@@ -1260,6 +1300,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_populated", path: "sectionI.pivotalJobFamilies", label: "Pivotal job families identified" },
     ],
     phaseV3: "scale",
+    functionScope: "cpo",
   },
 
   {
@@ -1290,6 +1331,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_in_array", path: "sectionI.businessDirectionType", values: ["transforming", "optimising"], label: "Organisation is transforming or optimising" },
     ],
     phaseV3: "optimise",
+    functionScope: "cpo",
   },
 
   {
@@ -1324,6 +1366,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       ] },
     ],
     phaseV3: "optimise",
+    functionScope: "cpo",
   },
 
   // ─── Compensation & Reward (2 initiatives) ───────────────────────────────
@@ -1356,6 +1399,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
     ],
     phaseV3: "build",
+    functionScope: "reward",
   },
 
   {
@@ -1386,6 +1430,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
     ],
     phaseV3: "build",
+    functionScope: "reward",
   },
 
   // ─── Manager Effectiveness (2 initiatives) ───────────────────────────────
@@ -1419,6 +1464,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_not_equals", path: "sectionK.performanceReviewCadence", value: "light_touch", label: "Performance review cadence is not light touch" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   {
@@ -1449,6 +1495,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_in_array", path: "sectionI.managerCapabilityForInsights", values: ["Mixed", "Weak"], label: "Manager capability is mixed or weak" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   // ─── Governance (2 initiatives) ───────────────────────────────────────────
@@ -1480,6 +1527,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       // Universal — recommended for any org deploying HR AI; no hard gates
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -1509,6 +1557,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       // Recommended when 2+ HR AI initiatives are deployed or planned; no strict hard gate
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   // ─── Frontline Workforce (4 initiatives) ─────────────────────────────────
@@ -1543,6 +1592,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
     ],
     phaseV3: "scale",
+    functionScope: "cpo",
   },
 
   {
@@ -1576,6 +1626,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   {
@@ -1608,6 +1659,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
   // ─── AI Capability Building (2 initiatives) ─────────────────────────────────
@@ -1638,6 +1690,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       // Universal — recommended for any org deploying HR AI; no hard gates
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -1666,6 +1719,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       // Universal — recommended for any large org with AI ambition
     ],
     phaseV3: "build",
+    functionScope: "both",
   },
 
   {
@@ -1694,6 +1748,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       // Universal — recommended for any org deploying HR AI; no hard gates
     ],
     phaseV3: "foundation",
+    functionScope: "both",
   },
 
   {
@@ -1726,6 +1781,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
       { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
     ],
     phaseV3: "build",
+    functionScope: "cpo",
   },
 
 ];

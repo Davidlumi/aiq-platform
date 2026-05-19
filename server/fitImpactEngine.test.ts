@@ -220,9 +220,31 @@ describe("Engine: hard gate failures", () => {
 // ── 3. Engine: fit classification and sorting ─────────────────────────────────
 
 describe("Engine: fit classification and sorting", () => {
-  it("returns exactly 52 results", () => {
+  it("returns 50 results in CPO mode (2 reward-only initiatives filtered)", () => {
+    const results = evaluateAllInitiatives({ ...baseInputs, mode: "cpo" });
+    expect(results).toHaveLength(50);
+    // Reward-only initiatives must not appear in CPO mode
+    const ids = results.map((r) => r.id);
+    expect(ids).not.toContain("cr_pay_equity");
+    expect(ids).not.toContain("cr_compensation_recommendations");
+  });
+
+  it("returns 36 results in Reward mode (34 both + 2 reward-only)", () => {
+    const results = evaluateAllInitiatives({ ...baseInputs, mode: "reward" });
+    expect(results).toHaveLength(36);
+    const ids = results.map((r) => r.id);
+    // Reward-only initiatives must appear in Reward mode
+    expect(ids).toContain("cr_pay_equity");
+    expect(ids).toContain("cr_compensation_recommendations");
+    // CPO-only initiatives must NOT appear in Reward mode
+    expect(ids).not.toContain("wp_workforce_planning");
+    expect(ids).not.toContain("wp_succession_planning");
+    expect(ids).not.toContain("fw_shift_scheduling_ai");
+  });
+
+  it("returns 50 results when mode is not specified (defaults to CPO filter)", () => {
     const results = evaluateAllInitiatives(baseInputs);
-    expect(results).toHaveLength(52);
+    expect(results).toHaveLength(50);
   });
 
   it("each result has required fields", () => {

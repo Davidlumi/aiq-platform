@@ -332,6 +332,17 @@ export default function CapabilityPage() {
   const gate = useGate();
   const { isDeepDive } = useDeepDive();
   const utils = trpc.useUtils();
+  const isRewardMode = gate.tenantMode === "reward";
+  // Mode-aware dimension config: Reward mode uses Reward-specific descriptions
+  const activeDimConfig = isRewardMode
+    ? DIMENSION_CONFIG.map(d => {
+        if (d.key === "skills") return { ...d, description: "Does your Reward team have the data & analytics literacy to execute?" };
+        if (d.key === "capacity") return { ...d, description: "Does your team have the time and headcount to run reward cycles?" };
+        if (d.key === "changeReadiness") return { ...d, description: "Are managers and employees ready to adopt new reward frameworks?" };
+        if (d.key === "vendorEcosystem") return { ...d, description: "Do you have the compensation benchmarking and HRIS supplier relationships needed?" };
+        return d;
+      })
+    : DIMENSION_CONFIG;
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const capabilityQ = trpc.intelligence.getCapabilityAssessment.useQuery();
@@ -455,6 +466,7 @@ export default function CapabilityPage() {
       sector: assessmentQ.data?.sector ?? undefined,
       ambitionTier,
       selectedInitiatives: selectedInitiativeNames,
+      mode: isRewardMode ? "reward" : "cpo",
     });
   };
 
@@ -473,11 +485,11 @@ export default function CapabilityPage() {
   });
 
   // ── Validation ────────────────────────────────────────────────────────────
-  const allDimsScored = DIMENSION_CONFIG.every(
+  const allDimsScored = activeDimConfig.every(
     d => cap[d.key].current > 0 && cap[d.key].needed > 0
   );
 
-  const allGapsCovered = DIMENSION_CONFIG.every(d => {
+  const allGapsCovered = activeDimConfig.every(d => {
     const dim = cap[d.key];
     const gap = dim.current > 0 && dim.needed > 0 ? dim.needed - dim.current : 0;
     if (gap <= 0) return true;
@@ -492,9 +504,9 @@ export default function CapabilityPage() {
   const isLocked = !gate.isStage8Accessible;
 
   // ── Summary stats ─────────────────────────────────────────────────────────
-  const scoredDims = DIMENSION_CONFIG.filter(d => cap[d.key].current > 0 && cap[d.key].needed > 0);
+  const scoredDims = activeDimConfig.filter(d => cap[d.key].current > 0 && cap[d.key].needed > 0);
   const gapDims = scoredDims.filter(d => cap[d.key].needed > cap[d.key].current);
-  const totalTactics = DIMENSION_CONFIG.reduce((acc, d) => acc + cap[d.key].tactics.filter(t => t.trim()).length, 0);
+  const totalTactics = activeDimConfig.reduce((acc, d) => acc + cap[d.key].tactics.filter(t => t.trim()).length, 0);
 
   return (
     <SectionPageLayout
@@ -566,7 +578,7 @@ export default function CapabilityPage() {
 
       {/* Dimension cards */}
       <div className="space-y-4">
-        {DIMENSION_CONFIG.map(config => (
+        {activeDimConfig.map(config => (
           <DimensionCard
             key={config.key}
             config={config}
@@ -680,7 +692,7 @@ export default function CapabilityPage() {
               You can still return to edit, but you'll need to re-confirm.
             </p>
             <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
-              {DIMENSION_CONFIG.map(d => {
+              {activeDimConfig.map(d => {
                 const dim = cap[d.key];
                 const gap = dim.needed - dim.current;
                 return (

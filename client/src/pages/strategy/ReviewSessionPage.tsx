@@ -42,6 +42,7 @@ import {
   Users,
 } from "lucide-react";
 import { INITIATIVE_LIBRARY } from "@/../../shared/initiativeLibrary";
+import { getModeLabels } from "@/../../shared/modeLabels";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,8 @@ export default function ReviewSessionPage() {
   const [, navigate] = useLocation();
   const gate = useGate();
   const { isDeepDive } = useDeepDive();
+  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
+  const reportTitle = modeLabels.stage10Label;
 
   // Gate redirect
   useEffect(() => {
@@ -186,6 +189,7 @@ export default function ReviewSessionPage() {
       strategyArchetype: data.strategyArchetype ?? undefined,
       selectedInitiatives,
       businessCaseNarrative: data.businessCaseNarrative ?? undefined,
+      mode: gate.tenantMode === "reward" ? "reward" : "cpo",
     });
   };
 
@@ -230,7 +234,7 @@ export default function ReviewSessionPage() {
       stageProgress={!isDeepDive ? {
         stageNumber: 9,
         title: "Leadership Review Session",
-        description: "Hold your strategy review session with leadership stakeholders, capture tensions and notes, then confirm the session took place to unlock the Board Report.",
+        description: `Hold your strategy review session with leadership stakeholders, capture tensions and notes, then confirm the session took place to unlock the ${reportTitle}.`,
         isCleared: !!stage9Cleared,
         isEdited: false,
         canConfirm: true,
@@ -238,7 +242,7 @@ export default function ReviewSessionPage() {
         onConfirm: () => stage9Cleared ? navigate("/strategy/board-report") : setConfirmOpen(true),
         backRoute: "/strategy/capability",
         nextRoute: "/strategy/board-report",
-        nextLabel: "Board Report",
+        nextLabel: reportTitle,
       } : undefined}
     >
       <div className="max-w-3xl mx-auto space-y-8">
@@ -271,7 +275,7 @@ export default function ReviewSessionPage() {
                 Hard questions to anticipate
               </h2>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Five tensions your board or CEO is likely to raise, with suggested talking points.
+                Five tensions your {modeLabels.sponsorLabel} is likely to raise, with suggested talking points.
               </p>
             </div>
             <Button
@@ -293,7 +297,7 @@ export default function ReviewSessionPage() {
             <div className="border border-dashed border-border rounded-lg p-8 text-center">
               <AlertTriangle className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">
-                Generate tensions to see the hard questions your board might raise.
+                Generate tensions to see the hard questions your {modeLabels.sponsorLabel} might raise.
               </p>
             </div>
           ) : (
@@ -318,7 +322,7 @@ export default function ReviewSessionPage() {
             <Badge variant="outline" className="text-xs">Optional</Badge>
           </div>
           <p className="text-sm text-muted-foreground mb-3">
-            Record what was discussed, decisions made, and any follow-up actions. These notes can be included as an appendix in the board report.
+            Record what was discussed, decisions made, and any follow-up actions. These notes can be included as an appendix in the {reportTitle.toLowerCase()}.
           </p>
           <Textarea
             value={notes}
@@ -338,7 +342,7 @@ export default function ReviewSessionPage() {
             <div>
               <h3 className="text-sm font-semibold text-foreground">Confirm review held</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Self-attestation that the strategy review session has taken place. This unlocks Stage 10: Board Report.
+                Self-attestation that the strategy review session has taken place. This unlocks Stage 10: {reportTitle}.
               </p>
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -369,7 +373,7 @@ export default function ReviewSessionPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm review session held?</AlertDialogTitle>
             <AlertDialogDescription>
-              By confirming, you attest that a strategy review session has taken place and the strategy has been discussed with relevant stakeholders. This will unlock Stage 10: Board Report.
+              By confirming, you attest that a strategy review session has taken place and the strategy has been discussed with relevant stakeholders. This will unlock Stage 10: {reportTitle}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

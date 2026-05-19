@@ -81,6 +81,7 @@ export const backofficeRouter = router({
       slug: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
       primaryDomain: z.string().optional(),
       status: z.enum(["active", "trial", "suspended", "archived"]).default("trial"),
+      mode: z.enum(["cpo", "reward"]).default("cpo"),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -96,6 +97,7 @@ export const backofficeRouter = router({
         slug: input.slug,
         primaryDomain: input.primaryDomain ?? null,
         status: input.status,
+        mode: input.mode,
       });
       return { tenantId, slug: input.slug };
     }),

@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { formatGbp as fmt, formatGbpMidpoint as fmtMidpoint } from "@/lib/format";
 import { useGate } from "@/contexts/GateContext";
 import { cn } from "@/lib/utils";
+import { getModeLabels } from "../../../../shared/modeLabels";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const BUSINESS_LEVELS: Record<number, { label: string; description: string }> = {
@@ -163,8 +164,9 @@ interface CapabilityBridgeProps {
   hasAmbition: boolean;
   isLoading: boolean;
   onBuildCapability: () => void;
+  teamLabel?: string;
 }
-function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBuildCapability }: CapabilityBridgeProps) {
+function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBuildCapability, teamLabel = "HR" }: CapabilityBridgeProps) {
   const nowNum    = hrNow != null ? Number(hrNow) : null;
   const targetNum = Number(hrTarget);
   const gapNum    = hrGap != null ? Number(hrGap) : null;
@@ -179,7 +181,7 @@ function CapabilityBridge({ hrNow, hrTarget, hrGap, hasAmbition, isLoading, onBu
       {/* Header row */}
       <div className="flex items-center justify-between mb-4 gap-3">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          WHAT HR NEEDS TO BE ABLE TO DO
+          WHAT {teamLabel.toUpperCase()} NEEDS TO BE ABLE TO DO
         </h2>
         <Button
           variant="outline"
@@ -862,6 +864,7 @@ const STAGE_LABELS: Record<number, string> = {
 function GateFlowStrip() {
   const gate = useGate();
   const [, navigate] = useLocation();
+  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
 
   type StageInfo = { num: number; label: string; href: string; isAccessible: boolean; isCleared: boolean };
 
@@ -878,8 +881,8 @@ function GateFlowStrip() {
     { num: 8, label: "Capability",    href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
   ];
   const row3: StageInfo[] = [
-    { num: 9,  label: "Review",        href: "/strategy/review",        isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
-    { num: 10, label: "Board report",  href: "/strategy/board-report",  isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
+    { num: 9,  label: modeLabels.stage9Label,  href: "/strategy/review",        isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
+    { num: 10, label: modeLabels.stage10Label, href: "/strategy/board-report",  isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
   ];
 
   function StageRow({ stages }: { stages: StageInfo[] }) {
@@ -956,6 +959,7 @@ export default function StrategyOverviewPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const gate = useGate();
+  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
 
   // ── Data queries ──────────────────────────────────────────────────────────
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();
@@ -1518,6 +1522,7 @@ export default function StrategyOverviewPage() {
           hasAmbition={hasStrategy}
           isLoading={ambitionGapQ.isLoading}
           onBuildCapability={handleBuildCapability}
+          teamLabel={modeLabels.teamLabel}
         />
 
         {/* ══ STRATEGY CARDS — 2×2 GRID (mid-flow, hidden after Stage 8 cleared) ═════ */}
@@ -1850,11 +1855,11 @@ export default function StrategyOverviewPage() {
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <p className="text-xs font-semibold tracking-widest uppercase text-emerald-500 mb-1">Primary deliverable</p>
-                  <p className="text-sm font-semibold text-foreground">Board Report</p>
+                  <p className="text-sm font-semibold text-foreground">{modeLabels.stage10Label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {gate.stage10Cleared
-                      ? "Stage 10 confirmed — ready to share with your CEO."
-                      : "Complete Stage 10 to generate and confirm your board report."}
+                      ? `Stage 10 confirmed — ready to share with your ${modeLabels.sponsorLabel}.`
+                      : `Complete Stage 10 to generate and confirm your ${modeLabels.stage10Label.toLowerCase()}.`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1880,7 +1885,7 @@ export default function StrategyOverviewPage() {
                       onClick={() => navigate("/strategy/board-report")}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                     >
-                      Open Board Report →
+                      Open {modeLabels.stage10Label} →
                     </button>
                   )}
                 </div>

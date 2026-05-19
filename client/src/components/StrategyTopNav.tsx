@@ -14,6 +14,8 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Lock, ChevronRight, AlertTriangle } from "lucide-react";
+import { useGate } from "@/contexts/GateContext";
+import { getModeLabels } from "../../../shared/modeLabels";
 import {
   Tooltip,
   TooltipContent,
@@ -239,6 +241,14 @@ function StageStep({
 export default function StrategyTopNav() {
   const [location, setLocation] = useLocation();
   const navigate = setLocation;
+  const { tenantMode } = useGate();
+  const modeLabels = getModeLabels(tenantMode as "cpo" | "reward" | null | undefined);
+  // Apply mode-aware labels to stages 9 and 10
+  const activeStages = STAGES.map(s => {
+    if (s.number === 9) return { ...s, label: modeLabels.stage9Label, what: modeLabels.stage9What };
+    if (s.number === 10) return { ...s, label: modeLabels.stage10Label, shortLabel: modeLabels.stage10ShortLabel, what: modeLabels.stage10What };
+    return s;
+  });
 
   const { data: gateState, isLoading } = trpc.gate.getState.useQuery(undefined, {
     staleTime: 30_000,
@@ -321,14 +331,14 @@ export default function StrategyTopNav() {
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             <div className="flex items-center">
-              {STAGES.map((stage, idx) => {
+              {activeStages.map((stage, idx) => {
                 const state = getStepState(stage, effectiveGate, location);
                 return (
                   <StageStep
                     key={stage.number}
                     stage={stage}
                     state={state}
-                    isLast={idx === STAGES.length - 1}
+                    isLast={idx === activeStages.length - 1}
                     onClick={() => navigate(stage.route)}
                   />
                 );
@@ -336,12 +346,23 @@ export default function StrategyTopNav() {
             </div>
           </div>
 
-          {/* Right: progress pill */}
+          {/* Right: mode badge + progress pill */}
           {!isLoading && (
             <div className="hidden sm:flex items-center gap-2 shrink-0 ml-2 pl-2 border-l border-border/40">
+              {/* Mode badge */}
+              <span
+                className={cn(
+                  "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide border",
+                  tenantMode === "reward"
+                    ? "bg-violet-500/10 text-violet-400 border-violet-500/25"
+                    : "bg-primary/10 text-primary border-primary/25"
+                )}
+              >
+                {tenantMode === "reward" ? "Reward" : "CPO"}
+              </span>
               {/* Mini progress bars */}
               <div className="flex gap-0.5">
-                {STAGES.map(s => {
+                {activeStages.map(s => {
                   const cleared = !!(effectiveGate[s.clearedKey] as boolean);
                   const edited  = !!(effectiveGate[s.editedKey]  as boolean);
                   return (

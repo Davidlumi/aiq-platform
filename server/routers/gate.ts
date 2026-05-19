@@ -25,7 +25,7 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { ailOrgContext } from "../../drizzle/schema";
+import { ailOrgContext, tenants } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import { evaluateAllInitiatives, evaluateAllInitiativesWithSemanticAlignment, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { computeAlignmentCacheKey } from "../services/semanticPrincipleAlignment";
@@ -139,6 +139,10 @@ export const gateRouter = router({
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
         .limit(1);
 
+      // Fetch tenant mode for mode-aware UI
+      const tenantRow = await db.select({ mode: tenants.mode }).from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
+      const tenantMode: "cpo" | "reward" = tenantRow[0]?.mode ?? "cpo";
+
       const orgCtx = row[0];
       if (!orgCtx) {
         return {
@@ -161,6 +165,7 @@ export const gateRouter = router({
           visionInspirationSource: null,
           strategyArchetype: null,
           strategyStatement: null,
+          tenantMode,
         };
       }
 
@@ -210,6 +215,7 @@ export const gateRouter = router({
         visionInspirationSource: orgCtx.visionInspirationSource ?? null,
         strategyArchetype: orgCtx.strategyArchetype ?? null,
         strategyStatement: orgCtx.strategyStatement ?? null,
+        tenantMode,
       };
     }),
 
@@ -369,6 +375,10 @@ export const gateRouter = router({
       const orgCtx = row[0];
       if (!orgCtx) throw new TRPCError({ code: "NOT_FOUND" });
 
+      // Fetch tenant mode for engine filtering
+      const tenantModeRow = await db.select({ mode: tenants.mode }).from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
+      const tenantMode: "cpo" | "reward" = tenantModeRow[0]?.mode ?? "cpo";
+
       // Parse and validate principles
       let principles: Array<{ title: string; description: string }> = [];
       try {
@@ -472,14 +482,18 @@ export const gateRouter = router({
           sectionF: { changeReadiness: inputs.sectionF?.changeReadiness },
           sectionG: { ai_ethics_trust: capAssessment.ai_ethics_trust?.score },
         };
-        // Attach principle alignment context as extra fields for engine
+        // Attach principle alignment context and mode as extra fields for engine
         (engineInputs as Record<string, unknown>).principles = principles.map(p => p.title);
         (engineInputs as Record<string, unknown>).wontDoItems = wontDoItems.map(w => w.text);
+        (engineInputs as Record<string, unknown>).mode = tenantMode;
 
         // Compute cache key to check if we can skip the LLM call
+        // Include mode + library version so cache invalidates when either changes
         const newCacheKey = computeAlignmentCacheKey(
           principles.map(p => p.title),
           wontDoItems.map(w => w.text),
+          tenantMode,
+          1, // tenantLibraryVersion — bump when initiative library is updated
         );
         const cachedKey = orgCtx.semanticAlignmentCacheKey ?? undefined;
         const cachedJson = orgCtx.semanticAlignmentCacheJson ?? undefined;

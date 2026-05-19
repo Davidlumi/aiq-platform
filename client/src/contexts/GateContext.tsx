@@ -38,6 +38,7 @@ type StageKey = "stage1" | "stage2" | "stage3" | "stage4" | "stage5" | "stage6" 
 type GateContextValue = {
   gateState: StageGateState | null;
   isLoading: boolean;
+  tenantMode: "cpo" | "reward";
   isStage1Accessible: boolean;
   isStage2Accessible: boolean;
   isStage3Accessible: boolean;
@@ -79,6 +80,7 @@ type GateContextValue = {
 const DEFAULT_CONTEXT: GateContextValue = {
   gateState: null,
   isLoading: true,
+  tenantMode: "cpo",
   isStage1Accessible: true,
   isStage2Accessible: false,
   isStage3Accessible: false,
@@ -174,6 +176,7 @@ export function GateProvider({ children }: { children: React.ReactNode }) {
     visionInspirationSource: data?.visionInspirationSource ?? null,
     strategyArchetype: data?.strategyArchetype ?? null,
     strategyStatement: data?.strategyStatement ?? null,
+    tenantMode: (data?.tenantMode as "cpo" | "reward") ?? "cpo",
     refetch: () => { void refetch(); },
     markEdited,
   };

@@ -43,10 +43,15 @@ export type SemanticAlignmentMap = Record<string, SemanticAlignmentResult>;
 export function computeAlignmentCacheKey(
   principles: string[],
   wontDoItems: string[],
+  mode?: "cpo" | "reward",
+  libraryVersion?: number,
 ): string {
   const sorted = {
     p: [...principles].sort(),
     w: [...wontDoItems].sort(),
+    // Include mode and library version so cache invalidates when they change
+    m: mode ?? "cpo",
+    v: libraryVersion ?? 1,
   };
   return createHash("sha256").update(JSON.stringify(sorted)).digest("hex");
 }

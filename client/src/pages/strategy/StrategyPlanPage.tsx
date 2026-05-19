@@ -11,6 +11,13 @@
  *   6. Empty / loading / error states for each block
  */
 import { useGate } from "@/contexts/GateContext";
+// Reward mode shows only Reward-relevant HR functions in chips and distribution chart
+const REWARD_FUNCTIONS: readonly string[] = [
+  "Pay & Reward",
+  "HR Operations",
+  "Ethics & Governance",
+  "Workforce Planning",
+] as const;
 import StageProgressHeader from "@/components/StageProgressHeader";
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
@@ -65,6 +72,7 @@ const HR_FUNCTIONS = [
   "Ethics & Governance",
 ] as const;
 
+// All HR functions (CPO mode)
 const FUNCTION_COLOURS: Record<string, string> = {
   "Talent Acquisition":        "#60A5FA",
   "Learning & Development":    "#4ADE80",
@@ -444,9 +452,11 @@ function PhaseChip({ value, onChange, readonly }: {
 
 // ─── Function Chip Popover ────────────────────────────────────────────────────
 
-function FunctionChip({ value, onChange, readonly }: {
+function FunctionChip({ value, onChange, readonly, functions }: {
   value: string; onChange: (v: string) => void; readonly?: boolean;
+  functions?: readonly string[];
 }) {
+  const fnList = functions ?? HR_FUNCTIONS;
   const color = FUNCTION_COLOURS[value] ?? "#9CA3AF";
   if (readonly) {
     return (
@@ -467,7 +477,7 @@ function FunctionChip({ value, onChange, readonly }: {
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-52 p-1 bg-card border-border" align="start">
-        {HR_FUNCTIONS.map(fn => (
+        {fnList.map(fn => (
           <button
             key={fn}
             onClick={() => onChange(fn)}
@@ -546,7 +556,10 @@ export default function StrategyPlanPage() {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const gate = useGate();
-  const { isStage5Accessible, stage5Cleared: isStage5Cleared } = gate;
+  const { isStage5Accessible, stage5Cleared: isStage5Cleared, tenantMode } = gate;
+  const isRewardMode = tenantMode === "reward";
+  // Mode-aware function list: Reward mode shows only Reward-relevant functions
+  const activeFunctions = isRewardMode ? REWARD_FUNCTIONS : HR_FUNCTIONS;
 
   // Regenerate initiative options
   const regenerateMutation = trpc.intelligence.regenerateInitiativeOptions.useMutation({
@@ -665,14 +678,14 @@ export default function StrategyPlanPage() {
     [enriched]
   );
 
-  // Function distribution
+  // Function distribution (mode-aware)
   const functionData = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const fn of HR_FUNCTIONS) counts[fn] = 0;
+    for (const fn of activeFunctions) counts[fn] = 0;
     for (const init of enriched) counts[init._function] = (counts[init._function] ?? 0) + 1;
     const max = Math.max(...Object.values(counts), 1);
-    return HR_FUNCTIONS.map(fn => ({ fn, count: counts[fn] ?? 0, pct: ((counts[fn] ?? 0) / max) * 100 }));
-  }, [enriched]);
+    return activeFunctions.map(fn => ({ fn, count: counts[fn] ?? 0, pct: ((counts[fn] ?? 0) / max) * 100 }));
+  }, [enriched, activeFunctions]);
 
   // Filtered + sorted list (capped at 12 in executive view, uncapped in operational)
   const PLAN_CAP = 12;
@@ -1183,6 +1196,7 @@ export default function StrategyPlanPage() {
                           value={init._function}
                           onChange={v => handleFunctionChange(init, v)}
                           readonly={viewMode === "executive"}
+                          functions={activeFunctions}
                         />
                         <StatusChip
                           value={init.status ?? "not_started"}

@@ -29,6 +29,8 @@ export const tenants = mysqlTable("tenants", {
   // readiness: + team dashboards, manager nudges, gap analysis, learning plans
   // enterprise: + org-level analytics, regulatory mapping, API access, custom branding
   plan: mysqlEnum("plan", ["foundation", "readiness", "enterprise"]).notNull().default("foundation"),
+  // Two-mode build: tenant strategy mode — permanent for v1
+  mode: mysqlEnum("mode", ["cpo", "reward"]).notNull().default("cpo"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -78,6 +80,8 @@ export const users = mysqlTable("users", {
   managerOnboardingCompletedAt: timestamp("manager_onboarding_completed_at"),
   // v1.4: module personalisation collapse preference
   modulePersonalisationCollapsed: tinyint("module_personalisation_collapsed").notNull().default(0),
+  // Two-mode build: AiQ strategy role — determines which mode tenant is created at sign-up
+  aiqRole: mysqlEnum("aiq_role", ["cpo", "reward_leader"]).default("cpo"),
 }, (t) => ({
   tenantEmailUnique: unique("tenant_email_unique").on(t.tenantId, t.email),
   tenantEmailIdx: index("idx_users_tenant_email").on(t.tenantId, t.email),
@@ -960,8 +964,12 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   boardReportSectionsJson: text("board_report_sections_json"),                       // JSON: { [sectionId]: { content, lockedAt, generatedAt, editedAt, isAiGenerated, wordCount } }
   boardReportIncludeNotes: boolean("board_report_include_notes").default(false),     // Whether to include review session notes in appendix
   // v4 LLM-semantic principle alignment cache
-  semanticAlignmentCacheKey: varchar("semantic_alignment_cache_key", { length: 64 }),  // SHA-256 hash of (principles[], wontDoItems[]) — cache invalidation key
+  semanticAlignmentCacheKey: varchar("semantic_alignment_cache_key", { length: 64 }),  // SHA-256 hash of (mode + libraryVersion + principles[] + wontDoItems[]) — cache invalidation key
   semanticAlignmentCacheJson: text("semantic_alignment_cache_json"),                   // JSON: SemanticAlignmentMap — cached LLM alignment results
+  // Two-mode build: Reward mode pre-work fields (JSON blob for flexibility)
+  rewardPreworkJson: text("reward_prework_json"),                                      // JSON: Reward-specific pre-work fields (annualCompSpend, equityProgramScope, etc.)
+  // Two-mode build: per-tenant library version counter for cache invalidation
+  tenantLibraryVersion: int("tenant_library_version").notNull().default(1),           // bumps when custom initiatives added/removed
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

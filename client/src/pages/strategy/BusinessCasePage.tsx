@@ -206,6 +206,7 @@ export default function BusinessCasePage() {
   const [, navigate] = useLocation();
   const gate = useGate();
   const { isDeepDive } = useDeepDive();
+  const isRewardMode = gate.tenantMode === "reward";
   const utils = trpc.useUtils();
   // Gate redirect: Stage 7 (Business Case) requires Stage 6 to be cleared
   useEffect(() => {
@@ -428,6 +429,7 @@ export default function BusinessCasePage() {
       totalValueHigh: ve?.net_value_gbp?.high ?? undefined,
       topRisks,
       keyDependencies: keyDeps,
+      mode: isRewardMode ? "reward" : "cpo",
     });
   };
 
@@ -566,7 +568,9 @@ export default function BusinessCasePage() {
           )}
         </div>
         <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-          The case you'll take to your board. Numbers and risks support the argument — but the argument is the deliverable.
+          {isRewardMode
+            ? "The case you'll take to your CFO and CHRO. Numbers and risks support the argument — but the argument is the deliverable."
+            : "The case you'll take to your board. Numbers and risks support the argument — but the argument is the deliverable."}
         </p>
 
         {/* AI actions toolbar */}

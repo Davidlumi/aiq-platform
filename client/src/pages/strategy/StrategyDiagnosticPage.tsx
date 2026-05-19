@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
 import StageProgressHeader from "@/components/StageProgressHeader";
+import { useGate } from "@/contexts/GateContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -358,6 +359,8 @@ export default function StrategyDiagnosticPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const isSuperAdmin = (user as any)?.role === "platform_super_admin";
+  const { tenantMode } = useGate();
+  const isRewardMode = tenantMode === "reward";
 
   const [activeSection, setActiveSection] = useState<SectionId>("A");
   const [showFacilitatorNotes, setShowFacilitatorNotes] = useState(isSuperAdmin);
@@ -2516,6 +2519,84 @@ export default function StrategyDiagnosticPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* ── Reward-mode-specific pre-work fields ──────────────────── */}
+              {isRewardMode && (
+                <>
+                  <div className="mt-4 p-3 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 text-xs text-violet-700 dark:text-violet-300">
+                    <strong>Reward Intelligence</strong> — These additional fields help tailor your Reward AI strategy to your compensation architecture and governance model.
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Pay band structure</Label>
+                    <p className="text-xs text-muted-foreground">How are pay bands currently defined across the organisation?</p>
+                    <Select
+                      value={(getFieldK("payBandStructure") as string) ?? ""}
+                      onValueChange={v => updateSectionK("payBandStructure", v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select pay band structure" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="narrow_bands">Narrow bands — many grades, tight ranges</SelectItem>
+                        <SelectItem value="broad_bands">Broad bands — few grades, wide ranges</SelectItem>
+                        <SelectItem value="spot_rates">Spot rates — individual market pricing</SelectItem>
+                        <SelectItem value="no_formal_structure">No formal structure — ad hoc pay decisions</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Job architecture status</Label>
+                    <p className="text-xs text-muted-foreground">What is the current state of your job architecture or grading framework?</p>
+                    <Select
+                      value={(getFieldK("jobArchitectureStatus") as string) ?? ""}
+                      onValueChange={v => updateSectionK("jobArchitectureStatus", v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select job architecture status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mature_consistent">Mature and consistent — applied across the org</SelectItem>
+                        <SelectItem value="partial">Partial — some functions have it, others don’t</SelectItem>
+                        <SelectItem value="in_progress">In progress — currently being built or refreshed</SelectItem>
+                        <SelectItem value="none">None — no formal job architecture in place</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Total compensation philosophy</Label>
+                    <p className="text-xs text-muted-foreground">What is your organisation’s stated approach to total compensation?</p>
+                    <Select
+                      value={(getFieldK("totalCompPhilosophy") as string) ?? ""}
+                      onValueChange={v => updateSectionK("totalCompPhilosophy", v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select comp philosophy" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="market_median">Market median — target 50th percentile</SelectItem>
+                        <SelectItem value="market_leading">Market leading — target 75th percentile or above</SelectItem>
+                        <SelectItem value="below_market">Below market — offset by non-cash benefits</SelectItem>
+                        <SelectItem value="differentiated">Differentiated — varies by role family or level</SelectItem>
+                        <SelectItem value="no_formal_philosophy">No formal philosophy — reactive / manager-driven</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Pay equity audit frequency</Label>
+                    <p className="text-xs text-muted-foreground">How often does the organisation formally audit pay equity?</p>
+                    <Select
+                      value={(getFieldK("payEquityAuditFrequency") as string) ?? ""}
+                      onValueChange={v => updateSectionK("payEquityAuditFrequency", v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select audit frequency" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="annual">Annual — formal audit every year</SelectItem>
+                        <SelectItem value="biannual">Bi-annual — every two years</SelectItem>
+                        <SelectItem value="ad_hoc">Ad hoc — triggered by events or requests</SelectItem>
+                        <SelectItem value="never">Never — no formal pay equity audit conducted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

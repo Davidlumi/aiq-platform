@@ -22,6 +22,13 @@ export const authRouter = router({
   me: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.user) return null;
     const roles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    // Fetch tenant mode for mode-aware UI
+    const db = await getDb();
+    let tenantMode: "cpo" | "reward" = "cpo";
+    if (db) {
+      const tenantRow = await db.select({ mode: tenants.mode }).from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
+      tenantMode = tenantRow[0]?.mode ?? "cpo";
+    }
     return {
       id: ctx.user.id,
       email: ctx.user.email,
@@ -34,6 +41,8 @@ export const authRouter = router({
       experienceLevel: ctx.user.experienceLevel ?? null,
       aiUsageLevel: ctx.user.aiUsageLevel ?? null,
       jobFunction: ctx.user.jobFunction ?? null,
+      aiqRole: ctx.user.aiqRole ?? "cpo",
+      tenantMode,
     };
   }),
 

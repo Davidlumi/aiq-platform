@@ -165,8 +165,8 @@ describe("Acme Retail — Section 11 validation", () => {
     expect(r.fitStatus).not.toBe("HARD_GATE_FAIL");
   });
 
-  it("results should include all 52 initiatives (49 v3 canonical + gv_cross_cutting_bias_audit + wp_ai_capability_building + wp_ai_capability_advanced)", () => {
-    expect(results.length).toBe(52);
+  it("results should include 50 initiatives in CPO mode (52 total minus 2 reward-only)", () => {
+    expect(results.length).toBe(50);
   });
 
   it("wp_ai_capability_building should be STRONG_FIT (foundation initiative)", () => {

@@ -135,6 +135,12 @@ export type FitImpactEngineInputs = ValueFormulaInputs & {
   /** Principle alignment context — injected by Stage 4 gate re-fire */
   principles?: string[];
   wontDoItems?: string[];
+  /**
+   * Platform mode — filters the initiative library to the relevant scope.
+   * "cpo"    = show initiatives with functionScope "cpo" or "both" (default)
+   * "reward" = show initiatives with functionScope "reward" or "both"
+   */
+  mode?: "cpo" | "reward";
   sectionB?: { hrSubFunctions?: string[] };
   sectionG?: { [domain: string]: number };
   sectionF?: { changeReadiness?: string };
@@ -923,8 +929,16 @@ export function evaluateInitiative(
  * Sort order: STRONG_FIT → POSSIBLE_FIT → WEAK_FIT → NOT_APPLICABLE, then by fitScore desc.
  */
 export function evaluateAllInitiatives(inputs: FitImpactEngineInputs): InitiativeOutputCard[] {
-  // Pass 1: evaluate all initiatives (co-deployment signals score 0 in first pass)
-  const results = INITIATIVE_LIBRARY.map((initiative) =>
+  const mode = inputs.mode ?? "cpo";
+  // Filter library by functionScope for the active mode
+  const scopedLibrary = INITIATIVE_LIBRARY.filter((i) => {
+    const scope = i.functionScope ?? "cpo";
+    if (mode === "reward") return scope === "reward" || scope === "both";
+    // cpo mode: show cpo + both
+    return scope === "cpo" || scope === "both";
+  });
+  // Pass 1: evaluate scoped initiatives (co-deployment signals score 0 in first pass)
+  const results = scopedLibrary.map((initiative) =>
     evaluateInitiative(initiative.id, inputs)
   );
 
@@ -940,7 +954,7 @@ export function evaluateAllInitiatives(inputs: FitImpactEngineInputs): Initiativ
   // Pass 2: apply co-deployment bonuses
   for (const result of results) {
     if (result.fitStatus === "NOT_APPLICABLE" || result.fitStatus === "HARD_GATE_FAIL") continue;
-    const initiative = INITIATIVE_LIBRARY.find((i) => i.id === result.id)!;
+    const initiative = scopedLibrary.find((i) => i.id === result.id)!;
     let coDeployBonus = 0;
     for (const factor of initiative.softFitFactors) {
       if (factor.evaluator !== "scoreCoDeployment") continue;

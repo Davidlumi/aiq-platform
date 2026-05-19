@@ -55,6 +55,7 @@ import {
   MonitorSmartphone,
   WifiOff,
 } from "lucide-react";
+import { getModeLabels } from "@/../../shared/modeLabels";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -236,6 +237,9 @@ export default function BoardReportPage() {
   const [, navigate] = useLocation();
   const gate = useGate();
   const { isDeepDive } = useDeepDive();
+  // Mode labels — declared before early returns so they are always in scope
+  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
+  const reportTitle = modeLabels.stage10Label;
 
   // No hard redirect — we show a blocking gate screen instead
 
@@ -489,9 +493,9 @@ export default function BoardReportPage() {
           <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto">
             <Lock className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Board Report is locked</h1>
+          <h1 className="text-2xl font-bold text-foreground">{reportTitle} is locked</h1>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
-            Complete all 9 preceding stages before generating your board report. Each stage builds on the last to ensure your report is grounded in a complete strategy.
+            Complete all 9 preceding stages before generating your {reportTitle.toLowerCase()}. Each stage builds on the last to ensure your report is grounded in a complete strategy.
           </p>
         </div>
 
@@ -545,7 +549,7 @@ export default function BoardReportPage() {
       <SectionPageLayout sectionNumber="10"
       isDeepDive={isDeepDive}
       confirmedAt={gate.gateState?.stage10.completedAt}
-      sectionLabel="Board Report" title="Board Report" accentColor="#0f172a" icon={<FileText className="w-4 h-4 text-white" />}>
+      sectionLabel={reportTitle} title={reportTitle} accentColor="#0f172a" icon={<FileText className="w-4 h-4 text-white" />}>
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
@@ -558,13 +562,13 @@ export default function BoardReportPage() {
       sectionNumber="10"
       isDeepDive={isDeepDive}
       confirmedAt={gate.gateState?.stage10.completedAt}
-      sectionLabel="Board Report"
-      title="Board Report"
+      sectionLabel={reportTitle}
+      title={reportTitle}
       accentColor="#0f172a"
       icon={<FileText className="w-4 h-4 text-white" />}
       stageProgress={!isDeepDive ? {
         stageNumber: 10,
-        title: "Board Report",
+        title: reportTitle,
         description: "Generate all 6 report sections, review and edit them, then confirm when the total word count is between 1,200 and 4,000 words.",
         isCleared: !!stage10Cleared,
         canConfirm,
@@ -712,7 +716,7 @@ export default function BoardReportPage() {
             Export Word
           </Button>
           <p className="text-xs text-muted-foreground">
-            Intermediate exports — the final board report is this document.
+            Intermediate exports — the final {reportTitle.toLowerCase()} is this document.
           </p>
         </div>
 
@@ -720,7 +724,7 @@ export default function BoardReportPage() {
         <section className="border-t border-border pt-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Confirm board report</h3>
+              <h3 className="text-sm font-semibold text-foreground">Confirm {reportTitle.toLowerCase()}</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {!allSectionsPresent
                   ? "All 6 sections must have content before confirming."
@@ -750,7 +754,7 @@ export default function BoardReportPage() {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm board report?</AlertDialogTitle>
+            <AlertDialogTitle>Confirm {reportTitle.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
               This will mark Stage 10 as complete and lock the report version. You can still edit and re-confirm at any time. Total word count: {totalWords.toLocaleString()}.
             </AlertDialogDescription>

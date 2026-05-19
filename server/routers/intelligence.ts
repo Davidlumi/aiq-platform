@@ -829,12 +829,14 @@ Return JSON with this exact structure:
       capabilityScore: z.number().nullable().optional(),
       capabilityLabel: z.string().nullable().optional(),
        capabilityCount: z.number().nullable().optional(),
+      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      const isReward = input.mode === "reward";
       // Map enums to human-readable labels
       const OUTCOME_LABELS: Record<string, string> = {
         cost: "cost reduction", growth: "business growth", talent_supply: "talent supply",
@@ -856,7 +858,9 @@ Return JSON with this exact structure:
       const govLocks = input.governanceLocks.length > 0 ? input.governanceLocks.join(", ") : "hiring, firing, pay and promotion";
 
       const systemPrompt = [
-        "You are an expert HR strategy consultant writing for a CHRO audience.",
+        isReward
+          ? "You are an expert Reward strategy consultant writing for a Head of Reward audience."
+          : "You are an expert HR strategy consultant writing for a CHRO audience.",
         "Write a single board-ready AI vision statement: 2-3 sentences, max 80 words.",
         "Requirements:",
         "- Open with a concrete outcome claim. NEVER start with: We will, Our vision, Our goal, We aim, We seek, We aspire, Our ambition",
@@ -866,7 +870,9 @@ Return JSON with this exact structure:
         "- Name the strategic outcome being chased",
         "- Reference at least 2 pain areas and 1 reinvestment target",
         "- State the governance posture (people sign off on: " + govLocks + ")",
-        "- End with the HR function's specific role",
+        isReward
+          ? "- End with the Reward function's specific role in delivering this outcome"
+          : "- End with the HR function's specific role",
         "FORBIDDEN WORDS: AI-fluent workforce, responsible AI adoption, championing, fundamentally reshape, transformative AI capabilities, strategic partner, strategic enabler",
         "FORBIDDEN: any percentage or number not present in the inputs",
         "Return ONLY the vision statement text. No quotes, no preamble, no JSON.",
@@ -2268,19 +2274,25 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       totalValueHigh: z.number().optional(),
       topRisks: z.array(z.string()).optional(),
       keyDependencies: z.array(z.string()).optional(),
+      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ input }) => {
       const fmt = (n: number | undefined) => n ? `£${(n / 1000).toFixed(1)}M` : "N/A";
+      const isReward = input.mode === "reward";
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const systemPrompt = [
-        "You are drafting the business case section of an HR AI strategy document, written for the CEO and board.",
+        isReward
+          ? "You are drafting the business case section of a Reward AI strategy document, written for the CFO and CHRO. Frame the value in terms of pay equity, reward efficiency, and retention impact."
+          : "You are drafting the business case section of an HR AI strategy document, written for the CEO and board.",
         "The case should be 400–600 words. It should reference specific numbers, specific risks, and specific business outcomes.",
         "It should NOT be defensive or hedging. Write in plain, direct English.",
         `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
-        "Open with why this matters now, then the approach, then the investment, then the value, then the risks honestly stated. Close with the ask of the board.",
-        "CURRENCY FORMAT: Always express monetary values in the form \u00a3XM (e.g. \u00a32.4M, \u00a312M, \u00a30.8M). Never write out full millions as digits (e.g. never \u00a32,400,000 or \u00a32.4 million). Never use billions unless the figure genuinely exceeds \u00a31,000M.",
+        isReward
+          ? "Open with why Reward AI matters now, then the approach, then the investment, then the value (pay equity, retention, reward cycle efficiency), then the risks honestly stated. Close with the ask of the CFO and CHRO."
+          : "Open with why this matters now, then the approach, then the investment, then the value, then the risks honestly stated. Close with the ask of the board.",
+        "CURRENCY FORMAT: Always express monetary values in the form £XM (e.g. £2.4M, £12M, £0.8M). Never write out full millions as digits (e.g. never £2,400,000 or £2.4 million). Never use billions unless the figure genuinely exceeds £1,000M.",
         "Return ONLY the narrative text. No headings, no markdown fences, no preamble.",
-      ].join(" ");
+      ].filter(Boolean).join(" ");
       const userPrompt = [
         input.orgName ? `Organisation: ${input.orgName}` : "",
         input.sector ? `Sector: ${input.sector}` : "",
@@ -2470,13 +2482,15 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       sector: z.string().optional(),
       ambitionTier: z.enum(["cautious", "progressive", "transformative"]).optional(),
       selectedInitiatives: z.array(z.string()).optional(),
+      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ input }) => {
+      const isReward = input.mode === "reward";
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const SCALE_LABELS: Record<number, string> = { 1: "significant gap", 2: "below requirement", 3: "adequate", 4: "strong", 5: "exceptional" };
       const dims = [
-        { key: "skills", label: "HR team AI skills", data: input.capabilityData.skills },
-        { key: "capacity", label: "HR team capacity", data: input.capabilityData.capacity },
+        { key: "skills", label: isReward ? "Reward team AI skills" : "HR team AI skills", data: input.capabilityData.skills },
+        { key: "capacity", label: isReward ? "Reward team capacity" : "HR team capacity", data: input.capabilityData.capacity },
         { key: "changeReadiness", label: "change readiness", data: input.capabilityData.changeReadiness },
         { key: "vendorEcosystem", label: "vendor ecosystem", data: input.capabilityData.vendorEcosystem },
       ].filter(d => d.data);
@@ -2492,10 +2506,14 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         input.selectedInitiatives?.length ? `Selected initiatives: ${input.selectedInitiatives.slice(0, 8).join(", ")}` : "",
       ].filter(Boolean).join(". ");
       const systemPrompt = [
-        `You are an expert HR transformation consultant writing a delivery capability narrative for a CPO's AI strategy.`,
+        isReward
+          ? `You are an expert Reward transformation consultant writing a delivery capability narrative for a Head of Reward's AI strategy.`
+          : `You are an expert HR transformation consultant writing a delivery capability narrative for a CPO's AI strategy.`,
         ctxParts ? `Context: ${ctxParts}.` : "",
         `Capability assessment: ${dimSummary}`,
-        `Write a 400-word narrative (no more than 450 words) that: (1) honestly acknowledges the current capability gaps, (2) explains how the listed tactics will close each gap, (3) gives the CPO and board confidence that the strategy is executable. Write in first-person plural ("we"). Be specific and concrete — no vague reassurances.`,
+        isReward
+          ? `Write a 400-word narrative (no more than 450 words) that: (1) honestly acknowledges the current capability gaps in the Reward function, (2) explains how the listed tactics will close each gap, (3) gives the Head of Reward and CFO confidence that the strategy is executable. Write in first-person plural ("we"). Be specific and concrete — no vague reassurances.`
+          : `Write a 400-word narrative (no more than 450 words) that: (1) honestly acknowledges the current capability gaps, (2) explains how the listed tactics will close each gap, (3) gives the CPO and board confidence that the strategy is executable. Write in first-person plural ("we"). Be specific and concrete — no vague reassurances.`,
         `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
         `Return ONLY the narrative text. No headings, no bullet points, no preamble.`,
       ].filter(Boolean).join(" ");
@@ -2517,8 +2535,10 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       outcomesJson: z.string().optional(),
       businessCaseNarrative: z.string().optional(),
       capabilityJson: z.string().optional(),
+      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ input }) => {
+      const isReward = input.mode === "reward";
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const ctxParts = [
         input.strategyStatement ? `Strategy statement: ${input.strategyStatement}` : "",
@@ -2527,10 +2547,16 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         input.businessCaseNarrative ? `Business case: ${input.businessCaseNarrative.slice(0, 500)}` : "",
       ].filter(Boolean).join(". ");
       const systemPrompt = [
-        `You are a senior board advisor preparing a CPO for a strategy review session.`,
+        isReward
+          ? `You are a senior CFO advisor preparing a Head of Reward for a strategy review session.`
+          : `You are a senior board advisor preparing a CPO for a strategy review session.`,
         `Context: ${ctxParts}`,
-        `Generate exactly 5 tensions or hard questions that a board member or CEO might raise about this AI HR strategy.`,
-        `Each tension should: (1) be grounded in the specific strategy content, (2) be genuinely challenging — not softballs, (3) include a suggested talking point the CPO could use to address it.`,
+        isReward
+          ? `Generate exactly 5 tensions or hard questions that a CFO or CHRO might raise about this Reward AI strategy.`
+          : `Generate exactly 5 tensions or hard questions that a board member or CEO might raise about this AI HR strategy.`,
+        isReward
+          ? `Each tension should: (1) be grounded in the specific strategy content, (2) be genuinely challenging — not softballs, (3) include a suggested talking point the Head of Reward could use to address it.`
+          : `Each tension should: (1) be grounded in the specific strategy content, (2) be genuinely challenging — not softballs, (3) include a suggested talking point the CPO could use to address it.`,
         `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
         `Return JSON object with key "tensions" containing array of exactly 5 items: [{"title":"...","description":"...","talkingPoint":"..."}].`,
       ].filter(Boolean).join(" ");
