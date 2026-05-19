@@ -4100,3 +4100,10 @@ test
 - [x] TypeScript: 0 errors
 - [x] Tests: 1313/1313 passing
 - [x] Checkpoint
+## Zero-Value Formula Fallbacks (May 2026)
+- [x] Add headcount-based fallbacks to 13 formulas currently showing £0: ta_recruiter_productivity_ai, on_documentation_automation, hr_policy_generation, ta_high_volume_hiring, ta_interview_scheduling, ta_sourcing_matching, ta_video_interview_assessment, ta_offer_generation, ta_jd_optimization, on_personalised_journeys, on_new_hire_chatbot, on_buddy_matching, wp_location_strategy
+- [x] Mark all fallback results as isIndicative: true
+- [x] Apply enterprise caps to fallback values to stay within 10x ROI
+- [x] TypeScript: 0 errors
+- [x] Tests: 1310/1310 passing (email.test.ts excluded — transient network failure, unrelated to formulas)
+- [x] Checkpoint

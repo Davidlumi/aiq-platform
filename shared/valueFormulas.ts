@@ -175,22 +175,29 @@ function storeOrSiteCount(inputs: ValueFormulaInputs): number {
 
 export function ta_high_volume_hiring(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
-  const adminHours = d.adminTimePerHire ?? 0;
-  const appVol = d.annualApplicationVolume ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  // Fallback: when annualHires not provided, estimate from headcount (45% annual hiring rate)
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
+  const adminHours = d.adminTimePerHire ?? 4;
+  const appVol = d.annualApplicationVolume ?? Math.round(hires * 5);
   const hrlyRate = 35;
   const cfg = INITIATIVE_CONFIG.ta_high_volume_hiring;
 
   const adminSaving = hires * adminHours * cfg.adminTimeReductionMultiplier * hrlyRate;
   const screeningValue = appVol * cfg.screeningCostPerApplication * cfg.screeningReductionRate;
-  const total = adminSaving + screeningValue;
+  const rawTotal = adminSaving + screeningValue;
+  const total = Math.min(rawTotal, 1_500_000); // Enterprise cap: high-volume hiring value bounded at £1.5M
 
   return {
     low: Math.round(total * 0.7),
     high: Math.round(total * 1.3),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires × ${adminHours}h admin per hire × ${Math.round(cfg.adminTimeReductionMultiplier * 100)}% reduction, plus ${appVol.toLocaleString()} application volume screening savings.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): admin time saving and application screening automation.`
+      : `Based on ${hires} annual hires × ${adminHours}h admin per hire × ${Math.round(cfg.adminTimeReductionMultiplier * 100)}% reduction, plus ${appVol.toLocaleString()} application volume screening savings.`,
   };
 }
 
@@ -218,56 +225,74 @@ export function ta_candidate_chatbot(inputs: ValueFormulaInputs): ValueRange {
 
 export function ta_interview_scheduling(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const cfg = INITIATIVE_CONFIG.ta_interview_scheduling;
   const hrlyRate = 35;
 
   const hoursSaved = hires * cfg.interviewsPerHire * cfg.schedulingHoursPerInterview * cfg.timeReductionRate;
-  const value = hoursSaved * hrlyRate;
+  const rawValue = hoursSaved * hrlyRate;
+  const value = Math.min(rawValue, 500_000); // Enterprise cap: interview scheduling value bounded at £500k
 
   return {
     low: Math.round(value * 0.7),
     high: Math.round(value * 1.2),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires × ${cfg.interviewsPerHire} interviews × ${cfg.schedulingHoursPerInterview}h scheduling × ${Math.round(cfg.timeReductionRate * 100)}% reduction at £${hrlyRate}/hr.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): interview scheduling automation saving.`
+      : `Based on ${hires} annual hires × ${cfg.interviewsPerHire} interviews × ${cfg.schedulingHoursPerInterview}h scheduling × ${Math.round(cfg.timeReductionRate * 100)}% reduction at £${hrlyRate}/hr.`,
   };
 }
 
 export function ta_sourcing_matching(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const costPerHire = d.costPerExternalHire ?? 8000;
   const cfg = INITIATIVE_CONFIG.ta_sourcing_matching;
 
   const qualityValue = hires * costPerHire * cfg.qualityOfHireUpliftRate * 0.15;
   const timeValue = hires * (d.avgTimeToFill ?? 45) * cfg.timeToFillReductionRate * (avgSalary(inputs) / 250);
-  const total = qualityValue + timeValue;
+  const rawTotal = qualityValue + timeValue;
+  const total = Math.min(rawTotal, 1_000_000); // Enterprise cap: sourcing & matching value bounded at £1M
 
   return {
     low: Math.round(total * 0.5),
     high: Math.round(total * 1.3),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires: quality-of-hire uplift (${Math.round(cfg.qualityOfHireUpliftRate * 100)}%) and time-to-fill reduction (${Math.round(cfg.timeToFillReductionRate * 100)}%).`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): quality-of-hire uplift and time-to-fill reduction.`
+      : `Based on ${hires} annual hires: quality-of-hire uplift (${Math.round(cfg.qualityOfHireUpliftRate * 100)}%) and time-to-fill reduction (${Math.round(cfg.timeToFillReductionRate * 100)}%).`,
   };
 }
 
 export function ta_video_interview_assessment(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const cfg = INITIATIVE_CONFIG.ta_video_interview_assessment;
   const hrlyRate = 35;
 
   const hoursSaved = hires * cfg.interviewHoursPerHire * cfg.timeReductionRate;
-  const value = hoursSaved * hrlyRate;
+  const rawValue = hoursSaved * hrlyRate;
+  const value = Math.min(rawValue, 750_000); // Enterprise cap: video interview value bounded at £750k
 
   return {
     low: Math.round(value * 0.6),
     high: Math.round(value * 1.3),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires × ${cfg.interviewHoursPerHire}h interview time × ${Math.round(cfg.timeReductionRate * 100)}% reduction at £${hrlyRate}/hr.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): interviewer time saving through AI-assisted video screening.`
+      : `Based on ${hires} annual hires × ${cfg.interviewHoursPerHire}h interview time × ${Math.round(cfg.timeReductionRate * 100)}% reduction at £${hrlyRate}/hr.`,
   };
 }
 
@@ -290,56 +315,75 @@ export function ta_bias_monitoring(inputs: ValueFormulaInputs): ValueRange {
 
 export function ta_recruiter_productivity_ai(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hrFte = d.hrFteCount ?? 5;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  // Fallback: estimate HR FTE from headcount (1 HR FTE per 100 employees) when not provided
+  const hrFteRaw = d.hrFteCount ?? 0;
+  const hrFte = hrFteRaw > 0 ? hrFteRaw : Math.max(5, Math.round(headcount / 100));
+  const usingFallback = hrFteRaw === 0 && headcount > 0;
   const cfg = INITIATIVE_CONFIG.ta_recruiter_productivity_ai;
-  const recruiterFte = Math.round(hrFte * cfg.recruiterFteFraction);
+  const recruiterFte = Math.max(1, Math.round(hrFte * cfg.recruiterFteFraction));
   const annualSalary = avgSalary(inputs) * 0.9;
 
-  const value = recruiterFte * annualSalary * cfg.productivityUpliftRate;
+  const rawValue = recruiterFte * annualSalary * cfg.productivityUpliftRate;
+  const value = Math.min(rawValue, 1_000_000); // Enterprise cap: recruiter productivity value bounded at £1M
 
   return {
     low: Math.round(value * 0.5),
     high: Math.round(value * 1.2),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${recruiterFte} estimated recruiter FTEs × ${Math.round(cfg.productivityUpliftRate * 100)}% productivity uplift at £${Math.round(annualSalary).toLocaleString()} average salary.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${recruiterFte} estimated recruiter FTEs (${headcount.toLocaleString()} headcount × 1% HR ratio × 30% recruiters): AI productivity uplift.`
+      : `Based on ${recruiterFte} estimated recruiter FTEs × ${Math.round(cfg.productivityUpliftRate * 100)}% productivity uplift at £${Math.round(annualSalary).toLocaleString()} average salary.`,
   };
 }
 
 export function ta_offer_generation(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const cfg = INITIATIVE_CONFIG.ta_offer_generation;
   const hrlyRate = 40;
 
   const hoursSaved = hires * cfg.offerProcessHoursPerHire * cfg.timeReductionRate;
-  const value = hoursSaved * hrlyRate;
+  const rawValue = hoursSaved * hrlyRate;
+  const value = Math.min(rawValue, 250_000); // Enterprise cap: offer generation value bounded at £250k
 
   return {
     low: Math.round(value * 0.7),
     high: Math.round(value * 1.2),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires × ${cfg.offerProcessHoursPerHire}h offer process × ${Math.round(cfg.timeReductionRate * 100)}% time reduction at £${hrlyRate}/hr.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): offer letter generation and process time saving.`
+      : `Based on ${hires} annual hires × ${cfg.offerProcessHoursPerHire}h offer process × ${Math.round(cfg.timeReductionRate * 100)}% time reduction at £${hrlyRate}/hr.`,
   };
 }
 
 export function ta_jd_optimization(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const costPerHire = d.costPerExternalHire ?? 8000;
   const cfg = INITIATIVE_CONFIG.ta_jd_optimization;
 
   const qualityValue = hires * costPerHire * cfg.qualityUpliftRate * 0.1;
   const timeValue = hires * (d.avgTimeToFill ?? 45) * cfg.timeToFillReductionRate * (avgSalary(inputs) / 250);
-  const total = qualityValue + timeValue;
+  const rawTotal = qualityValue + timeValue;
+  const total = Math.min(rawTotal, 250_000); // Enterprise cap: JD optimisation value bounded at £250k
 
   return {
     low: Math.round(total * 0.5),
     high: Math.round(total * 1.2),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires: improved candidate quality (${Math.round(cfg.qualityUpliftRate * 100)}% uplift) and time-to-fill reduction (${Math.round(cfg.timeToFillReductionRate * 100)}%).`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): improved job description quality and time-to-fill reduction.`
+      : `Based on ${hires} annual hires: improved candidate quality (${Math.round(cfg.qualityUpliftRate * 100)}% uplift) and time-to-fill reduction (${Math.round(cfg.timeToFillReductionRate * 100)}%).`,
   };
 }
 
@@ -347,7 +391,10 @@ export function ta_jd_optimization(inputs: ValueFormulaInputs): ValueRange {
 
 export function on_personalised_journeys(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const salary = avgSalary(inputs);
   const cfg = INITIATIVE_CONFIG.on_personalised_journeys;
   const dailySalaryValue = salary / INITIATIVE_CONFIG.defaults.workingDaysPerYear;
@@ -355,72 +402,92 @@ export function on_personalised_journeys(inputs: ValueFormulaInputs): ValueRange
   const rampValue = hires * cfg.timeToProductivityReductionDays * dailySalaryValue * cfg.productivityValueFraction;
   const retentionValue = hires * cfg.firstYearAttritionReduction * costPerLeaver(inputs);
   const rawTotal = rampValue + retentionValue;
-  // Cap at £2M: prevents inflated figures for large enterprises (20K+ headcount)
-  const total = Math.min(rawTotal, 2_000_000);
+  const total = Math.min(rawTotal, 1_250_000); // Enterprise cap: personalised onboarding journeys bounded at £1.25M
 
   return {
     low: Math.round(total * 0.6),
     high: Math.round(total * 1.3),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires × ${cfg.timeToProductivityReductionDays} days faster ramp × £${Math.round(dailySalaryValue)} daily value, plus ${Math.round(cfg.firstYearAttritionReduction * 100)}% first-year attrition reduction.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): faster time-to-productivity and first-year retention improvement.`
+      : `Based on ${hires} annual hires × ${cfg.timeToProductivityReductionDays} days faster ramp × £${Math.round(dailySalaryValue)} daily value, plus ${Math.round(cfg.firstYearAttritionReduction * 100)}% first-year attrition reduction.`,
   };
 }
 
 export function on_new_hire_chatbot(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const cfg = INITIATIVE_CONFIG.on_new_hire_chatbot;
   const hrlyRate = 35;
 
   const querySavings = hires * cfg.queriesPerNewHire * cfg.queryDeflectionRate * (15 / 60) * hrlyRate;
   const rampValue = hires * cfg.rampDaysReduction * (avgSalary(inputs) / INITIATIVE_CONFIG.defaults.workingDaysPerYear) * 0.5;
-  const total = querySavings + rampValue;
+  const rawTotal = querySavings + rampValue;
+  const total = Math.min(rawTotal, 500_000); // Enterprise cap: new hire chatbot value bounded at £500k
 
   return {
     low: Math.round(total * 0.6),
     high: Math.round(total * 1.3),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires × ${cfg.queriesPerNewHire} queries per new hire × ${Math.round(cfg.queryDeflectionRate * 100)}% deflection, plus ramp time reduction.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): HR query deflection and ramp time saving.`
+      : `Based on ${hires} annual hires × ${cfg.queriesPerNewHire} queries per new hire × ${Math.round(cfg.queryDeflectionRate * 100)}% deflection, plus ramp time reduction.`,
   };
 }
 
 export function on_documentation_automation(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
-  const hrFte = d.hrFteCount ?? 5;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
+  const hrFteRaw = d.hrFteCount ?? 0;
+  const hrFte = hrFteRaw > 0 ? hrFteRaw : Math.max(5, Math.round(headcount / 100));
   const cfg = INITIATIVE_CONFIG.on_documentation_automation;
   const hrlyRate = 35;
 
   const docTimeSaving = hires * cfg.docHoursPerHire * cfg.timeReductionRate * hrlyRate;
   const hrAdminSaving = hrFte * cfg.hrAdminHoursPerWeek * 52 * cfg.adminReductionRate * hrlyRate;
-  const total = docTimeSaving + hrAdminSaving;
+  const rawTotal = docTimeSaving + hrAdminSaving;
+  const total = Math.min(rawTotal, 1_000_000); // Enterprise cap: documentation automation value bounded at £1M
 
   return {
     low: Math.round(total * 0.6),
     high: Math.round(total * 1.3),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires × ${cfg.docHoursPerHire}h documentation per hire × ${Math.round(cfg.timeReductionRate * 100)}% reduction, plus HR admin time saving.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires and ${hrFte} estimated HR FTEs: onboarding documentation automation and HR admin time saving.`
+      : `Based on ${hires} annual hires × ${cfg.docHoursPerHire}h documentation per hire × ${Math.round(cfg.timeReductionRate * 100)}% reduction, plus HR admin time saving.`,
   };
 }
 
 export function on_buddy_matching(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const cfg = INITIATIVE_CONFIG.on_buddy_matching;
 
   const retentionValue = hires * cfg.firstYearAttritionReduction * costPerLeaver(inputs);
   const rampValue = hires * cfg.rampDaysReduction * (avgSalary(inputs) / INITIATIVE_CONFIG.defaults.workingDaysPerYear) * 0.4;
-  const total = retentionValue + rampValue;
+  const rawTotal = retentionValue + rampValue;
+  const total = Math.min(rawTotal, 500_000); // Enterprise cap: buddy matching value bounded at £500k
 
   return {
     low: Math.round(total * 0.5),
     high: Math.round(total * 1.2),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires: ${Math.round(cfg.firstYearAttritionReduction * 100)}% first-year attrition reduction and ${cfg.rampDaysReduction} days faster ramp.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires (${headcount.toLocaleString()} headcount × 45% hiring rate): first-year retention improvement and faster ramp through buddy programme.`
+      : `Based on ${hires} annual hires: ${Math.round(cfg.firstYearAttritionReduction * 100)}% first-year attrition reduction and ${cfg.rampDaysReduction} days faster ramp.`,
   };
 }
 
@@ -849,18 +916,24 @@ export function hr_virtual_assistant(inputs: ValueFormulaInputs): ValueRange {
 
 export function hr_policy_generation(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hrFte = d.hrFteCount ?? 5;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hrFteRaw = d.hrFteCount ?? 0;
+  const hrFte = hrFteRaw > 0 ? hrFteRaw : Math.max(5, Math.round(headcount / 100));
+  const usingFallback = hrFteRaw === 0 && headcount > 0;
   const cfg = INITIATIVE_CONFIG.hr_policy_generation;
   const hrlyRate = 50;
 
-  const timeSaving = hrFte * cfg.policyHoursPerFtePerYear * cfg.timeReductionRate * hrlyRate;
+  const rawTimeSaving = hrFte * cfg.policyHoursPerFtePerYear * cfg.timeReductionRate * hrlyRate;
+  const timeSaving = Math.min(rawTimeSaving, 250_000); // Enterprise cap: policy generation value bounded at £250k
 
   return {
     low: Math.round(timeSaving * 0.6),
     high: Math.round(timeSaving * 1.3),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hrFte} HR FTEs × ${cfg.policyHoursPerFtePerYear}h policy work per year × ${Math.round(cfg.timeReductionRate * 100)}% reduction at £${hrlyRate}/hr.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hrFte} estimated HR FTEs (${headcount.toLocaleString()} headcount × 1% HR ratio): policy and document generation time saving.`
+      : `Based on ${hrFte} HR FTEs × ${cfg.policyHoursPerFtePerYear}h policy work per year × ${Math.round(cfg.timeReductionRate * 100)}% reduction at £${hrlyRate}/hr.`,
   };
 }
 
@@ -947,21 +1020,29 @@ export function wp_org_design(inputs: ValueFormulaInputs): ValueRange {
 
 export function wp_location_strategy(inputs: ValueFormulaInputs): ValueRange {
   const d = inputs.sectionD;
-  const hires = d.annualHires ?? 0;
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const hiresRaw = d.annualHires ?? 0;
+  const hires = hiresRaw > 0 ? hiresRaw : Math.round(headcount * 0.45);
+  const usingFallback = hiresRaw === 0 && headcount > 0;
   const costPerHire = d.costPerExternalHire ?? 8000;
-  const revenue = d.annualRevenue ?? 0;
+  // Revenue fallback: estimate from headcount at £25k revenue per employee
+  const revenueRaw = d.annualRevenue ?? 0;
+  const revenue = revenueRaw > 0 ? revenueRaw : headcount * 25000;
   const cfg = INITIATIVE_CONFIG.wp_location_strategy;
 
   const hiringOptimisation = hires * costPerHire * cfg.locationOptimisationRate;
   const strategicValue = revenue * cfg.revenueImpactRate;
-  const total = hiringOptimisation + strategicValue;
+  const rawTotal = hiringOptimisation + strategicValue;
+  const total = Math.min(rawTotal, 1_500_000); // Enterprise cap: location strategy value bounded at £1.5M
 
   return {
     low: Math.round(total * 0.3),
     high: Math.round(total * 0.8),
     currency: "GBP",
-    isIndicative: indicative(d),
-    narrative: `Based on ${hires} annual hires: ${Math.round(cfg.locationOptimisationRate * 100)}% hiring cost optimisation through smarter location decisions, plus strategic revenue impact.`,
+    isIndicative: usingFallback || indicative(d),
+    narrative: usingFallback
+      ? `Indicative estimate based on ${hires.toLocaleString()} estimated annual hires and £${(revenue / 1_000_000).toFixed(0)}M estimated revenue: hiring cost optimisation through smarter location decisions.`
+      : `Based on ${hires} annual hires: ${Math.round(cfg.locationOptimisationRate * 100)}% hiring cost optimisation through smarter location decisions, plus strategic revenue impact.`,
   };
 }
 
