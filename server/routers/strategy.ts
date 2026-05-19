@@ -15,6 +15,7 @@ import {
   strategyRiskRegister,
 } from "../../drizzle/schema";
 import { randomUUID } from "crypto";
+import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
 
 // ─── Domain config ─────────────────────────────────────────────────────────
 const DOMAINS = [
@@ -339,7 +340,35 @@ export const strategyRouter = router({
           )
         )
         .orderBy(strategyInitiativeLibrary.category, strategyInitiativeLibrary.name);
-      return rows;
+      // Merge shared in-memory library entries that are not already in the DB.
+      // This ensures selectedInitiativeIds (which reference shared library IDs like
+      // 'on_documentation_automation', 'ld_content_creation', etc.) can be resolved
+      // to their names and metadata by the overview and other pages.
+      const dbIds = new Set(rows.map((r: any) => r.id));
+      const sharedRows = INITIATIVE_LIBRARY
+        .filter(i => !dbIds.has(i.id))
+        .map(i => ({
+          id: i.id,
+          tenantId: null as string | null,
+          name: i.label,
+          description: i.description ?? null,
+          category: i.category,
+          aiType: null as string | null,
+          decisionAuthority: null as string | null,
+          regulatoryFlag: null as string | null,
+          owningSegmentsJson: [] as string[],
+          weightsJson: [] as number[],
+          baseTarget: 3,
+          complexity: i.y1CostRange
+            ? Math.max(1, Math.min(5, Math.round((i.y1CostRange.low + i.y1CostRange.high) / 2 / 50)))
+            : 3,
+          keywordsJson: [] as string[],
+          forkedFromId: null as string | null,
+          isUserDefined: 0,
+          createdAt: null as Date | null,
+          updatedAt: null as Date | null,
+        }));
+      return [...rows, ...sharedRows];
     }),
 
   // Get or create HR segments for a tenant

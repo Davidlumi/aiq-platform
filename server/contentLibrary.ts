@@ -7,6 +7,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { INITIATIVE_LIBRARY } from "../shared/initiativeLibrary";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -264,22 +265,39 @@ export function estimateInitiativeCost(
 
 // ── Legacy ID backward-compat ─────────────────────────────────────────────────
 /**
- * Resolves a mix of legacy numeric IDs (init-XX, 1-indexed) and current
- * snake_case IDs to a deduplicated array of valid snake_case initiative IDs.
- * Silently drops IDs that cannot be resolved.
+ * Resolves a mix of legacy numeric IDs (init-XX, 1-indexed), current
+ * snake_case content-library IDs, and shared-library IDs to a deduplicated
+ * array of valid initiative IDs. Silently drops IDs that cannot be resolved.
+ *
+ * Priority:
+ *   1. Content library (getAllInitiatives) — full value model + cost estimate
+ *   2. Shared initiative library (INITIATIVE_LIBRARY) — cost estimate via y1CostRange
+ *   3. Legacy numeric IDs (init-XX) mapped to content library by index
  */
 export function resolveInitiativeIds(ids: string[]): string[] {
   const allInits = getAllInitiatives();
   const validSet = new Set(allInits.map(i => i.initiative_id));
-  return ids
-    .map(id => {
-      if (validSet.has(id)) return id;                          // already snake_case
-      const m = id.match(/^init-(\d+)$/);
-      if (m) {
-        const idx = parseInt(m[1], 10) - 1;                    // 1-indexed → 0-indexed
-        return allInits[idx]?.initiative_id ?? null;
+  const sharedSet = new Set(INITIATIVE_LIBRARY.map(i => i.id));
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const id of ids) {
+    if (validSet.has(id)) {
+      if (!seen.has(id)) { seen.add(id); result.push(id); }
+      continue;
+    }
+    const m = id.match(/^init-(\d+)$/);
+    if (m) {
+      const idx = parseInt(m[1], 10) - 1;
+      const resolved = allInits[idx]?.initiative_id ?? null;
+      if (resolved && validSet.has(resolved) && !seen.has(resolved)) {
+        seen.add(resolved); result.push(resolved);
       }
-      return null;
-    })
-    .filter((id): id is string => id !== null && validSet.has(id));
+      continue;
+    }
+    // Accept shared library IDs directly — calculateCostEnvelope has a fallback for these
+    if (sharedSet.has(id) && !seen.has(id)) {
+      seen.add(id); result.push(id);
+    }
+  }
+  return result;
 }

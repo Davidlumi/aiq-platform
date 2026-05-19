@@ -89,7 +89,7 @@ const STAGES: StageDefinition[] = [
     number: 6,
     label: "Outcomes",
     shortLabel: "Outcomes",
-    route: "/strategy/roadmap",
+    route: "/strategy/measurement",
     what: "Define success measures and outcomes for each initiative",
     accessibleKey: "isStage6Accessible",
     clearedKey: "stage6Cleared",

@@ -4107,3 +4107,17 @@ test
 - [x] TypeScript: 0 errors
 - [x] Tests: 1310/1310 passing (email.test.ts excluded — transient network failure, unrelated to formulas)
 - [x] Checkpoint
+
+## Strategy Builder E2E QA (May 2026)
+- [ ] BUG: Overview shows "No initiatives defined yet" and "Cost not estimated yet" even though 12 initiatives are listed in the header — Stage 5 plan data not flowing to overview cards
+- [ ] BUG: Overview shows "-£120K VALUE · 3 YRS" with "Value model produced a non-credible result" — negative value shown, needs investigation
+- [ ] QA Stage 1 (Data Input / Diagnostic) — check all 9 sections render and save correctly
+- [ ] QA Stage 2 (Vision) — check vision generation and confirm flow
+- [ ] QA Stage 3 (Strategy) — check archetype selection and strategy statement
+- [ ] QA Stage 4 (Principles) — check principles, won't-dos, outcomes
+- [ ] QA Stage 5 (Plan) — check initiative portfolio, value badges, indicative flags
+- [ ] QA Stage 6 (Outcomes/Roadmap) — check measurement and outcomes
+- [ ] QA Stage 7 (Business Case) — check investment/risk and value page
+- [ ] QA Stage 8 (Capability) — check capability gap analysis
+- [ ] QA Stage 9 (Review) — check review session flow
+- [ ] Fix all bugs found during QA

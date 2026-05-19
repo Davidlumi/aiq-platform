@@ -755,7 +755,7 @@ export default function StrategyPlanPage() {
     (window as any).umami?.track("strategy.plan.initiative.removed", { initiativeId: init.id });
   }, [strategyQ.data, saveStrategy]);
 
-  const isLoading = strategyQ.isLoading || initiativesQ.isLoading;
+  const isLoading = strategyQ.isLoading || initiativesQ.isLoading || costEnvelopeQ.isLoading;
   const isError   = strategyQ.isError   || initiativesQ.isError;
 
   // Cost envelope display
@@ -922,9 +922,9 @@ export default function StrategyPlanPage() {
             isEdited={!!gate.stage5EditedAfterClearing}
             canConfirm={enriched.length > 0}
             isPending={confirmPlanMutation.isPending}
-            onConfirm={() => isStage5Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/roadmap") : setConfirmPlanOpen(true)}
+            onConfirm={() => isStage5Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/measurement") : setConfirmPlanOpen(true)}
             backRoute="/strategy/ambition"
-            nextRoute="/strategy/roadmap"
+            nextRoute="/strategy/measurement"
             nextLabel="Outcomes"
           />
         )}

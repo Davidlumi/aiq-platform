@@ -424,8 +424,8 @@ export default function BusinessCasePage() {
       selectedInitiatives: selectedInitiativeNames,
       totalCostLow: costEnv ? costEnv.totalMin * 1000 : undefined,
       totalCostHigh: costEnv ? costEnv.totalMax * 1000 : undefined,
-      totalValueLow: ve?.net_value_gbp?.low ? ve.net_value_gbp.low * 1000 : undefined,
-      totalValueHigh: ve?.net_value_gbp?.high ? ve.net_value_gbp.high * 1000 : undefined,
+      totalValueLow: ve?.net_value_gbp?.low ?? undefined,
+      totalValueHigh: ve?.net_value_gbp?.high ?? undefined,
       topRisks,
       keyDependencies: keyDeps,
     });
@@ -673,22 +673,22 @@ export default function BusinessCasePage() {
                 <div className="flex flex-wrap gap-4 mb-4">
                   <div className="rounded-lg border dark:border-emerald-500/30 border-emerald-300 bg-emerald-500/8 p-3 flex-1 min-w-[120px]">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Gross value</div>
-                    <div className="text-lg font-bold dark:text-emerald-400 text-emerald-600">{fmt(ve.total_quantified_value_gbp?.high * 1000)}</div>
+                    <div className="text-lg font-bold dark:text-emerald-400 text-emerald-600">{fmt(ve.total_quantified_value_gbp?.high)}</div>
                   </div>
                   <div className="rounded-lg border dark:border-red-500/25 border-red-300 bg-red-500/6 p-3 flex-1 min-w-[120px]">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Total cost</div>
-                    <div className="text-lg font-bold dark:text-red-400 text-red-600">{fmt(ve.tco?.total_3yr_gbp?.high * 1000)}</div>
+                    <div className="text-lg font-bold dark:text-red-400 text-red-600">{fmt(ve.tco?.total_3yr_gbp?.high)}</div>
                   </div>
                   <div className="rounded-lg border dark:border-blue-500/25 border-blue-300 bg-blue-500/6 p-3 flex-1 min-w-[120px]">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Net value</div>
-                    <div className="text-lg font-bold dark:text-blue-400 text-blue-600">{fmt(Math.max(0, ve.net_value_gbp?.high) * 1000)}</div>
+                    <div className="text-lg font-bold dark:text-blue-400 text-blue-600">{fmt(Math.max(0, ve.net_value_gbp?.high))}</div>
                   </div>
                 </div>
                 {ve.total_quantified_value_gbp && ve.tco?.total_3yr_gbp && ve.net_value_gbp && (
                   <ValueSummaryChart
-                    gross={{ low: ve.total_quantified_value_gbp.low * 1000, high: ve.total_quantified_value_gbp.high * 1000 }}
-                    cost={{ low: ve.tco.total_3yr_gbp.low * 1000, high: ve.tco.total_3yr_gbp.high * 1000 }}
-                    net={{ low: Math.max(0, ve.net_value_gbp.low) * 1000, high: Math.max(0, ve.net_value_gbp.high) * 1000 }}
+                    gross={{ low: ve.total_quantified_value_gbp.low, high: ve.total_quantified_value_gbp.high }}
+                    cost={{ low: ve.tco.total_3yr_gbp.low, high: ve.tco.total_3yr_gbp.high }}
+                    net={{ low: Math.max(0, ve.net_value_gbp.low), high: Math.max(0, ve.net_value_gbp.high) }}
                   />
                 )}
               </div>
@@ -717,7 +717,7 @@ export default function BusinessCasePage() {
                         <div key={row.label}>
                           <div className="flex items-center justify-between mb-1">
                             <p className="text-xs text-muted-foreground">{row.label}</p>
-                            <p className="text-xs font-semibold" style={{ color: row.color }}>{fmt(row.low * 1000)}–{fmt(row.high * 1000)}</p>
+                            <p className="text-xs font-semibold" style={{ color: row.color }}>{fmt(row.low)}–{fmt(row.high)}</p>
                           </div>
                           <div className="h-1.5 rounded-full bg-foreground/8 overflow-hidden">
                             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: row.color }} />

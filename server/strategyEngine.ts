@@ -20,6 +20,7 @@ import {
 } from "./contentLibrary";
 import { getSectorDef, getSubSectorLabel } from "../shared/sectorTaxonomy";
 import { SECTOR_REGULATORY_CONTEXT } from "./ail/organisationContextLayer";
+import { INITIATIVE_LIBRARY } from "../shared/initiativeLibrary";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -664,6 +665,11 @@ export function calculateCostEnvelope(
   const libMeta = getLibraryMeta();
   const allInitiatives = getAllInitiatives();
   const initiativeMap = new Map(allInitiatives.map(i => [i.initiative_id, i]));
+  // Shared library fallback map for IDs not in the content library
+  const sharedLibMap = new Map(INITIATIVE_LIBRARY.map(i => [i.id, i]));
+  const phaseV3ToPhase: Record<string, string> = {
+    foundation: "foundation", build: "build", scale: "scale", optimise: "optimise",
+  };
 
   const phaseOrder = ["foundation", "build", "scale", "optimise"];
   const phaseLabels: Record<string, string> = {
@@ -679,8 +685,14 @@ export function calculateCostEnvelope(
 
   for (const phase of phaseOrder) {
     const phaseIds = selectedInitiativeIds.filter(id => {
-      const initiative = initiativeMap.get(id);
-      return initiative?.typical_phase === phase;
+      const contentInit = initiativeMap.get(id);
+      if (contentInit) return contentInit.typical_phase === phase;
+      const sharedInit = sharedLibMap.get(id);
+      if (sharedInit) {
+        const mappedPhase = phaseV3ToPhase[sharedInit.phaseV3 ?? ""] ?? "foundation";
+        return mappedPhase === phase;
+      }
+      return phase === "foundation";
     });
 
     if (phaseIds.length === 0) continue;
@@ -691,9 +703,9 @@ export function calculateCostEnvelope(
 
     for (const id of phaseIds) {
       const initiative = initiativeMap.get(id);
-      if (!initiative) continue;
-
-      const estimate = estimateInitiativeCost(id, orgSizeToHeadcount(orgSize), toLibAmbitionTier(ambitionTier));
+      const sharedInit = sharedLibMap.get(id);
+      const displayName = initiative?.display_name ?? sharedInit?.label ?? id;
+      const estimate = initiative ? estimateInitiativeCost(id, orgSizeToHeadcount(orgSize), toLibAmbitionTier(ambitionTier)) : null;
       if (estimate) {
         const minGbk = Math.round(estimate.min / 1000);
         const maxGbk = Math.round(estimate.max / 1000);
@@ -701,19 +713,22 @@ export function calculateCostEnvelope(
         phaseMax += maxGbk;
         phaseInitiatives.push({
           id,
-          name: initiative.display_name ?? id,
+          name: displayName,
           minGbk,
           maxGbk,
           caveat: estimate.caveat,
         });
       } else {
-        // Fallback estimate if no cost data
-        const fallback = { small: [15, 40], medium: [25, 70], large: [40, 120], enterprise: [60, 200] }[orgSize] ?? [25, 70];
+        // Use shared library y1CostRange if available, else org-size fallback
+        const y1Cost = sharedInit?.y1CostRange;
+        const fallback = y1Cost
+          ? [y1Cost.low, y1Cost.high]
+          : ({ small: [15, 40], medium: [25, 70], large: [40, 120], enterprise: [60, 200] }[orgSize] ?? [25, 70]);
         phaseMin += fallback[0];
         phaseMax += fallback[1];
         phaseInitiatives.push({
           id,
-          name: initiative.display_name ?? id,
+          name: displayName,
           minGbk: fallback[0],
           maxGbk: fallback[1],
           caveat: "Estimate based on typical range for this initiative type",

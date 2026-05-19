@@ -1109,7 +1109,7 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     description: "AI-powered HR helpdesk handling employee queries on policies, benefits, payroll, and processes.",
     category: "hr_operations",
     requiredSubFunctions: ["hr_operations"],
-    requiredDataFields: ["monthlyHrQueryVolume"],
+    requiredDataFields: [],
     softFitFactors: [
       { key: "query_volume", label: "Monthly HR query volume", fieldPath: "sectionD.monthlyHrQueryVolume", evaluator: "scoreQueryVolume", maxScore: 35 },
       { key: "hris_present", label: "HRIS in place", fieldPath: "sectionC.hrisSystem", evaluator: "scoreHrisPresent", maxScore: 25 },
@@ -1126,8 +1126,8 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     coDeployments: ["on_new_hire_chatbot", "ld_knowledge_management"],
     phaseRationale: "Foundation phase — HR virtual assistant delivers immediate cost savings and is the platform for other chatbot use cases.",
     y1CostRange: { low: 150, high: 500 },
-    hardGates: [
-      { type: "field_gt", path: "sectionD.monthlyHrQueryVolume", value: 100, label: "More than 100 HR queries per month" },
+        hardGates: [
+      // monthlyHrQueryVolume gate removed — formula uses headcount-based fallback (2 queries/employee/month) when null
       { type: "field_in_array", path: "sectionC.workforceDigitalAccess", values: ["all_laptops", "mixed_access", "frontline_mobile"], label: "Workforce has digital access" },
       { type: "field_or", label: "HR Ops or HRBP in scope", gates: [
         { type: "field_includes", path: "sectionB.hrSubFunctions", value: "HR Ops", label: "HR Ops in scope" },
@@ -1136,7 +1136,6 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     ],
     phaseV3: "foundation",
   },
-
   {
     id: "hr_policy_generation",
     label: "AI Policy & Document Generation",

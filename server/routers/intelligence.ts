@@ -1292,8 +1292,63 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       const allInits = getAllInitiatives();
       const resolvedValueIds = resolveInitiativeIds(input.selectedInitiativeIds);
       const selected = allInits.filter(i => resolvedValueIds.includes(i.initiative_id));
+
+      // Bridge: for IDs in the shared INITIATIVE_LIBRARY (snake_case like ta_recruiter_productivity_ai)
+      // that are NOT in the content library, synthesise a minimal Initiative object so the
+      // value engine can process them via the generic fallback formula.
+      const contentLibIds = new Set(allInits.map(i => i.initiative_id));
+      const unresolved = input.selectedInitiativeIds.filter(id => !contentLibIds.has(id));
+      const syntheticInits = unresolved
+        .map(id => {
+          const shared = INITIATIVE_LIBRARY.find(i => i.id === id);
+          if (!shared) return null;
+          const phaseMap: Record<string, "foundation" | "build" | "scale" | "optimise"> = {
+            foundation: "foundation", build: "build", scale: "scale", optimise: "optimise",
+          };
+          const phase: "foundation" | "build" | "scale" | "optimise" =
+            phaseMap[shared.phaseV3 ?? ""] ??
+            (shared.phase === 1 ? "foundation" : shared.phase === 2 ? "build" : "scale");
+          const costLow  = (shared.y1CostRange?.low  ?? 50)  * 1000;
+          const costHigh = (shared.y1CostRange?.high ?? 150) * 1000;
+          return {
+            initiative_id: id,
+            display_name: shared.label,
+            category: shared.category,
+            short_description: shared.description ?? "",
+            capability_domains_addressed: [] as string[],
+            typical_phase: phase,
+            applicable_personas: [] as string[],
+            applicable_industries: [] as string[],
+            cost: { base_range_gbp: [costLow, costHigh] as [number, number] },
+            typical_risks: [] as never[],
+            dependencies: [] as string[],
+            typical_outcomes: [] as string[],
+            outcome_ids: [] as string[],
+            regulatory_exposure: { eu_ai_act: "limited", gdpr: "limited", employment_law: "limited" },
+            sources: [] as string[],
+            confidence: "medium" as const,
+            last_reviewed: "",
+            reviewer: "",
+            review_tier: "",
+            value_model: {
+              primary_value_type: "productivity_gain" as const,
+              qualitative_value_only: false,
+              qualitative_value: [] as string[],
+              quantified_value: {
+                primary_metric: "HR function efficiency",
+                typical_improvement_pct: { low: 0.05, high: 0.12 },
+                monetisation_formula: "hr_cost_per_fte × headcount × improvement_pct",
+                sources: [] as string[],
+                confidence: "medium" as const,
+                payback_months: { low: 12, high: 24 },
+              },
+            },
+          };
+        })
+        .filter((i): i is NonNullable<typeof i> => i !== null);
+
       return calculateValueEnvelope(
-        selected,
+        [...selected, ...syntheticInits],
         input.operationalBaseline ?? {},
         input.planHorizonMonths,
         input.solutionDeliveryConfidence,
