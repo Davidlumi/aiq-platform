@@ -4316,3 +4316,18 @@ test
 - [x] Add cross-field validation: uk_employee_headcount + eu_employee_headcount ≤ total headcount
 - [x] Add D9 gate check: rewardPrework.getStatus returns canStart=false if company profile not complete, with message
 - [x] Confirm 12-month reassessment timer: document how it works (F2)
+
+## Stage 5 — Reward Initiatives (Build)
+
+- [x] 30-initiative Reward library (shared/rewardInitiativeLibrary.ts) with rules, value calibration, reasoning templates
+- [x] DB schema: rewardInitiativePortfolio, rewardCustomInitiative, rewardRecommendationRun tables
+- [x] DB migration: 0042_reward_stage5_portfolio.sql applied
+- [x] Reward recommendation engine (server/services/rewardRecommendationEngine.ts) — four-signal scoring, value calibration, phase assignment, bundling/prerequisites, caching
+- [x] tRPC router (server/routers/rewardInitiatives.ts) — getRecommendations, getPortfolio, addToPortfolio, removeFromPortfolio, dismiss, undismiss, addCustom, editCustom, removeCustom, complete, reopen, getStatus
+- [x] Route registered in server/routers.ts
+- [x] Stage 5 UI page (client/src/pages/strategy/RewardInitiativesPage.tsx) — portfolio summary, initiative cards, fit signals, filter/sort, bundling hints, custom add form, dismiss modal, not-recommended section, complete CTA
+- [x] Route registered in App.tsx at /strategy/reward-initiatives
+- [x] StrategyTopNav: stage 5 shows "Programmes" label and routes to /strategy/reward-initiatives in reward mode
+- [x] 29 tests in server/rewardInitiatives.test.ts — all passing
+- [x] TypeScript: 0 errors
+- [x] Full test suite: 1,416 tests passing

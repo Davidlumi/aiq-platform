@@ -1,0 +1,1847 @@
+/**
+ * Reward Initiative Library — 30 Reward AI initiatives
+ *
+ * Each initiative includes:
+ *   - Metadata (id, title, description, sub-domain, default phase, complexity)
+ *   - Recommendation rules (sector_fit, workforce_fit, capability_fit, priority_fit)
+ *   - Value calibration formula (base values + multipliers)
+ *   - Bundling / prerequisite relationships
+ *   - Reasoning templates (strong_fit, moderate_fit, weak_fit, not_recommended)
+ *
+ * Rules engine: four signals combined per spec §3.
+ * Value calibration: log-scaled payroll + headcount + sector multiplier per spec §3.
+ */
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type FitSignal = "STRONG_FIT" | "MODERATE_FIT" | "WEAK_FIT" | "NOT_RECOMMENDED";
+
+export type RewardSubDomain =
+  | "Compensation"
+  | "Pay Equity"
+  | "Pay Transparency"
+  | "Benefits"
+  | "Reward Operations"
+  | "Executive Compensation"
+  | "Sales Compensation";
+
+export type RewardPhase = "Foundation" | "Build" | "Optimise";
+export type RewardComplexity = "Low" | "Medium" | "High" | "Highest";
+
+export interface SectorFitMap {
+  financial_services?: FitSignal;
+  technology?: FitSignal;
+  professional_services?: FitSignal;
+  retail?: FitSignal;
+  manufacturing?: FitSignal;
+  hospitality_leisure?: FitSignal;
+  public_sector?: FitSignal;
+  higher_education?: FitSignal;
+  not_for_profit?: FitSignal;
+  healthcare?: FitSignal;
+  energy_utilities?: FitSignal;
+  media_entertainment?: FitSignal;
+  logistics_transport?: FitSignal;
+  construction_real_estate?: FitSignal;
+  pharmaceuticals_biotech?: FitSignal;
+  default?: FitSignal;
+}
+
+export interface WorkforceFitRule {
+  /** field on company profile or reward prework */
+  field: "workforceFrontlinePct" | "workforceKnowledgePct" | "materialSalesWorkforce" | "criticalAiDigitalTalentPopulation";
+  /** operator */
+  op: "<" | ">=" | "==" | "!=" | "in" | "not_in";
+  /** threshold value (number for pct fields, string for enum fields, string[] for in/not_in) */
+  value: number | string | string[] | readonly string[];
+  result: FitSignal;
+}
+
+export interface CapabilityFitRule {
+  field:
+    | "payEquityCapability"
+    | "payStructureMaturity"
+    | "aiMaturityInRewardToday"
+    | "rewardFunctionMaturityRating"
+    | "rewardAiAmbition"
+    | "compManagementPlatform"
+    | "aiToolsCurrentlyInRewardUse"
+    | "externalCompDataSources"
+    | "pensionSchemeArchitecture"
+    | "unionWorksCouncilCoverage";
+  op: "==" | "!=" | "in" | "not_in" | ">=" | "<";
+  value: string | number | string[] | readonly string[];
+  result: FitSignal;
+  reasoning?: string;
+}
+
+export interface PriorityFitRule {
+  field:
+    | "topRewardPrioritiesNext12Months"
+    | "primaryTriggerForRewardAiStrategy"
+    | "ukGenderPayGapStatus"
+    | "ownershipStructure"
+    | "fcaSysc19InScope"
+    | "strategicTimeline";
+  op: "contains" | "==" | "!=" | "in" | "not_in";
+  value: string | string[];
+  result: FitSignal;
+}
+
+export interface ValueCalibration {
+  base3yrLow: number;   // GBP
+  base3yrHigh: number;  // GBP
+  /** payroll multiplier: log10(payroll / baseline) * factor, added to 1 */
+  payrollBaseline: number;
+  payrollFactor: number;
+  /** headcount multiplier: log10(headcount / baseline) * factor, added to 1 */
+  headcountBaseline: number;
+  headcountFactor: number;
+  /** sector multiplier map */
+  sectorMultipliers: Partial<Record<string, number>>;
+  defaultSectorMultiplier: number;
+}
+
+export interface ReasoningTemplates {
+  strong_fit: string[];
+  moderate_fit: string[];
+  weak_fit: string[];
+  not_recommended: string[];
+}
+
+export interface RewardInitiative {
+  id: string;
+  number: number;
+  title: string;
+  shortDescription: string;   // 2-3 sentence card description
+  fullDescription: string;    // library detail
+  subDomain: RewardSubDomain;
+  defaultPhase: RewardPhase;
+  complexity: RewardComplexity;
+  sectorFit: SectorFitMap;
+  workforceFitRules: WorkforceFitRule[];
+  capabilityFitRules: CapabilityFitRule[];
+  priorityFitRules: PriorityFitRule[];
+  notRecommendedIf?: Array<{ condition: string; reasoning: string }>;
+  valueCalibration: ValueCalibration;
+  bundleWith?: string;        // initiative id
+  prerequisiteOf?: string[];  // this initiative is a prerequisite for these
+  requiresPrerequisite?: string; // this initiative requires this other initiative
+  reasoningTemplates: ReasoningTemplates;
+}
+
+// ─── Library ──────────────────────────────────────────────────────────────────
+
+export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
+
+  // ── #1 AI Compensation Recommendation Engine ─────────────────────────────
+  {
+    id: "ai_compensation_recommendation_engine",
+    number: 1,
+    title: "AI Compensation Recommendation Engine",
+    shortDescription:
+      "ML-driven pay recommendations at the point of hire, promotion, and merit review — surfacing market-aligned offers within your pay bands and flagging outliers before they become equity issues.",
+    fullDescription:
+      "Replaces manager intuition and HR manual lookups with a structured recommendation layer. The engine ingests live market data, internal equity position, and role-level pay band guidance to produce a recommended pay range and a rationale for every compensation decision. Reduces time-to-offer, improves pay equity at source, and creates an auditable trail for every pay decision.",
+    subDomain: "Compensation",
+    defaultPhase: "Build",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      hospitality_leisure: "WEAK_FIT",
+      public_sector: "WEAK_FIT",
+      higher_education: "WEAK_FIT",
+      not_for_profit: "WEAK_FIT",
+      healthcare: "MODERATE_FIT",
+      energy_utilities: "MODERATE_FIT",
+      pharmaceuticals_biotech: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "payStructureMaturity",
+        op: "in",
+        value: ["no_formal_bands", "informal_ranges_in_use"],
+        result: "WEAK_FIT",
+        reasoning: "A recommendation engine needs formal pay bands to anchor recommendations. Consider AI Pay Band Design (#6) first.",
+      },
+      {
+        field: "payStructureMaturity",
+        op: "in",
+        value: ["formal_bands_not_refreshed_regularly", "formal_bands_actively_maintained"],
+        result: "STRONG_FIT",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "modernise_comp_decisions", result: "STRONG_FIT" },
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "fix_pay_equity_gaps", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "talent_attraction_retention_pressure", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 450000,
+      base3yrHigh: 1800000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.2, retail: 0.9, public_sector: 0.7 },
+      defaultSectorMultiplier: 1.0,
+    },
+    bundleWith: "ai_driven_merit_cycle_orchestration",
+    prerequisiteOf: ["ai_bonus_pool_optimisation"],
+    reasoningTemplates: {
+      strong_fit: [
+        "Your sector ({sector}) and pay structure maturity make this a high-value initiative.",
+        "Your 'modernise comp decisions' priority directly aligns with what this initiative delivers.",
+        "Your HRIS ({hris}) supports vendor integration for most recommendation engine providers.",
+      ],
+      moderate_fit: [
+        "Recommended, though your sector typically sees lower value than FS or Tech.",
+        "Pay structure maturity suggests some groundwork needed before full deployment.",
+      ],
+      weak_fit: [
+        "Pay band architecture needs strengthening before a recommendation engine can operate effectively. Consider AI Pay Band Design first.",
+      ],
+      not_recommended: [
+        "Workforce composition or current capability suggests other initiatives should come first.",
+      ],
+    },
+  },
+
+  // ── #2 AI-Driven Merit Cycle Orchestration ───────────────────────────────
+  {
+    id: "ai_driven_merit_cycle_orchestration",
+    number: 2,
+    title: "AI-Driven Merit Cycle Orchestration",
+    shortDescription:
+      "End-to-end automation of the annual merit cycle — from budget modelling and manager guidance through to approval workflows and payroll handoff — reducing cycle time and improving consistency.",
+    fullDescription:
+      "Transforms the merit cycle from a manual, error-prone spreadsheet exercise into an orchestrated, AI-assisted process. Managers receive guided recommendations within budget, HR sees real-time budget consumption and equity flags, and the cycle closes faster with fewer errors. Integrates with HRIS and payroll systems.",
+    subDomain: "Compensation",
+    defaultPhase: "Build",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      public_sector: "WEAK_FIT",
+      higher_education: "WEAK_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "payStructureMaturity",
+        op: "in",
+        value: ["no_formal_bands", "informal_ranges_in_use"],
+        result: "WEAK_FIT",
+        reasoning: "Merit orchestration requires formal pay bands to anchor manager guidance.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "modernise_comp_decisions", result: "STRONG_FIT" },
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "reduce_reward_admin_burden", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 300000,
+      base3yrHigh: 1200000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.35,
+      headcountBaseline: 1000,
+      headcountFactor: 0.25,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.2, public_sector: 0.7 },
+      defaultSectorMultiplier: 1.0,
+    },
+    bundleWith: "ai_compensation_recommendation_engine",
+    prerequisiteOf: [],
+    reasoningTemplates: {
+      strong_fit: [
+        "Paired with the Compensation Recommendation Engine, this completes the merit cycle modernisation.",
+        "Your 'reduce reward admin burden' priority maps directly to what this initiative delivers.",
+      ],
+      moderate_fit: [
+        "Merit cycle automation delivers value across most sectors, though FS and Tech see the highest ROI.",
+      ],
+      weak_fit: [
+        "Pay structure maturity needs strengthening before merit orchestration can work effectively.",
+      ],
+      not_recommended: ["Current capability profile suggests foundational work is needed first."],
+    },
+  },
+
+  // ── #3 AI Pay Equity Continuous Monitoring ───────────────────────────────
+  {
+    id: "ai_pay_equity_continuous_monitoring",
+    number: 3,
+    title: "AI Pay Equity Continuous Monitoring",
+    shortDescription:
+      "Always-on ML analysis of pay decisions across protected characteristics, surfacing emerging gaps as they develop rather than discovering them at annual audit.",
+    fullDescription:
+      "Moves pay equity from a point-in-time annual audit to a continuous monitoring capability. The system flags pay decisions that create or widen gaps across gender, ethnicity, disability, and other characteristics in real time, enabling HR to intervene before gaps compound. Substantially reduces annual GPG reporting effort and regulatory exposure.",
+    subDomain: "Pay Equity",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "STRONG_FIT",
+      manufacturing: "MODERATE_FIT",
+      public_sector: "STRONG_FIT",
+      higher_education: "STRONG_FIT",
+      not_for_profit: "MODERATE_FIT",
+      healthcare: "STRONG_FIT",
+      pharmaceuticals_biotech: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "payEquityCapability",
+        op: "==",
+        value: "continuous_monitoring",
+        result: "NOT_RECOMMENDED",
+        reasoning: "You already have continuous monitoring capability. Consider AI Multi-Characteristic Pay Gap Reporting (#4) to extend coverage.",
+      },
+      {
+        field: "payEquityCapability",
+        op: "in",
+        value: ["no_formal_process", "ad_hoc_when_issues_arise"],
+        result: "STRONG_FIT",
+      },
+      {
+        field: "payEquityCapability",
+        op: "==",
+        value: "annual_structured_audit",
+        result: "STRONG_FIT",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "fix_pay_equity_gaps", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "regulatory_deadline_pressure", result: "STRONG_FIT" },
+      { field: "ukGenderPayGapStatus", op: "==", value: "mandatory_and_finding_it_hard", result: "STRONG_FIT" },
+      { field: "ukGenderPayGapStatus", op: "==", value: "mandatory_managing_ok", result: "MODERATE_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 200000,
+      base3yrHigh: 900000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.4,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.1, public_sector: 1.2, retail: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    bundleWith: "ai_multi_characteristic_pay_gap_reporting",
+    prerequisiteOf: [],
+    reasoningTemplates: {
+      strong_fit: [
+        "Your sector ({sector}) faces significant regulatory scrutiny on pay equity.",
+        "Moving from annual audit to continuous monitoring is the natural next step given your current capability.",
+        "Your GPG status ({ukGenderPayGapStatus}) means continuous monitoring will substantially ease annual reporting.",
+        "This directly addresses your 'fix pay equity gaps' priority.",
+      ],
+      moderate_fit: [
+        "Continuous monitoring delivers value across most organisations, particularly as regulatory expectations increase.",
+      ],
+      weak_fit: [
+        "Your current pay equity capability suggests this may be more advanced than needed right now.",
+      ],
+      not_recommended: [
+        "You already have continuous monitoring capability. Consider extending to multi-characteristic reporting instead.",
+      ],
+    },
+  },
+
+  // ── #4 AI Multi-Characteristic Pay Gap Reporting ─────────────────────────
+  {
+    id: "ai_multi_characteristic_pay_gap_reporting",
+    number: 4,
+    title: "AI Multi-Characteristic Pay Gap Reporting",
+    shortDescription:
+      "Automated reporting across gender, ethnicity, disability, and age pay gaps — going beyond mandatory GPG to voluntary disclosure and intersectional analysis.",
+    fullDescription:
+      "Extends pay gap reporting beyond the mandatory gender pay gap to cover ethnicity, disability, age, and intersectional combinations. AI-driven analysis identifies root causes, models remediation scenarios, and generates board-ready narrative. Positions the organisation ahead of anticipated mandatory ethnicity pay gap reporting.",
+    subDomain: "Pay Equity",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "STRONG_FIT",
+      public_sector: "STRONG_FIT",
+      higher_education: "STRONG_FIT",
+      healthcare: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "payEquityCapability",
+        op: "in",
+        value: ["no_formal_process", "ad_hoc_when_issues_arise"],
+        result: "MODERATE_FIT",
+        reasoning: "Build continuous monitoring (#3) first, then extend to multi-characteristic reporting.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "fix_pay_equity_gaps", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "regulatory_deadline_pressure", result: "STRONG_FIT" },
+      { field: "ukGenderPayGapStatus", op: "in", value: ["mandatory_and_finding_it_hard", "mandatory_managing_ok"], result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 150000,
+      base3yrHigh: 600000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.3, public_sector: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    bundleWith: "ai_pay_equity_continuous_monitoring",
+    prerequisiteOf: [],
+    reasoningTemplates: {
+      strong_fit: [
+        "Often deployed alongside Pay Equity Continuous Monitoring (#3) for complete coverage.",
+        "Anticipated mandatory ethnicity pay gap reporting makes this a forward-looking investment.",
+      ],
+      moderate_fit: ["Multi-characteristic reporting delivers value as disclosure expectations increase."],
+      weak_fit: ["Consider building continuous monitoring capability first."],
+      not_recommended: ["Current pay equity capability suggests foundational monitoring should come first."],
+    },
+  },
+
+  // ── #5 AI Equal Pay Risk Audit ───────────────────────────────────────────
+  {
+    id: "ai_equal_pay_risk_audit",
+    number: 5,
+    title: "AI Equal Pay Risk Audit",
+    shortDescription:
+      "Automated equal pay risk assessment across job families — identifying where like-for-like pay comparisons could generate legal exposure before claims are filed.",
+    fullDescription:
+      "Uses ML to cluster roles by comparable worth, then analyses pay distributions within clusters for unexplained gaps. Produces a risk-ranked list of job families requiring attention, with modelled remediation costs. Enables proactive resolution before tribunal claims or regulatory scrutiny.",
+    subDomain: "Pay Equity",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      retail: "STRONG_FIT",
+      public_sector: "STRONG_FIT",
+      higher_education: "STRONG_FIT",
+      healthcare: "STRONG_FIT",
+      manufacturing: "MODERATE_FIT",
+      technology: "MODERATE_FIT",
+      professional_services: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "payEquityCapability",
+        op: "in",
+        value: ["no_formal_process", "ad_hoc_when_issues_arise"],
+        result: "STRONG_FIT",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "fix_pay_equity_gaps", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "regulatory_deadline_pressure", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 100000,
+      base3yrHigh: 400000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.25,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.2, public_sector: 1.2, retail: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your current pay equity capability ({payEquityCapability}) means equal pay risk may be unquantified.",
+        "Proactive risk audit substantially reduces tribunal exposure.",
+      ],
+      moderate_fit: ["Equal pay risk audit is valuable as a periodic check even with existing equity processes."],
+      weak_fit: ["Your existing equity monitoring may already cover this ground."],
+      not_recommended: ["Existing continuous monitoring capability covers this."],
+    },
+  },
+
+  // ── #6 AI Pay Band Design ────────────────────────────────────────────────
+  {
+    id: "ai_pay_band_design",
+    number: 6,
+    title: "AI Pay Band Design",
+    shortDescription:
+      "Data-driven pay band architecture using ML job evaluation and live market data — replacing manual job sizing with a defensible, market-anchored structure.",
+    fullDescription:
+      "Combines AI-powered job evaluation with live market benchmarking to design or refresh pay band architecture. The system clusters roles by complexity and scope, anchors bands to market percentiles, and models the cost of moving to the new structure. Produces a defensible, auditable pay framework that supports all downstream compensation decisions.",
+    subDomain: "Compensation",
+    defaultPhase: "Build",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "STRONG_FIT",
+      manufacturing: "STRONG_FIT",
+      public_sector: "MODERATE_FIT",
+      higher_education: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "payStructureMaturity",
+        op: "in",
+        value: ["no_formal_bands", "informal_ranges_in_use"],
+        result: "STRONG_FIT",
+      },
+      {
+        field: "payStructureMaturity",
+        op: "==",
+        value: "formal_bands_not_refreshed_regularly",
+        result: "MODERATE_FIT",
+      },
+      {
+        field: "payStructureMaturity",
+        op: "==",
+        value: "formal_bands_actively_maintained",
+        result: "NOT_RECOMMENDED",
+        reasoning: "Your pay bands are actively maintained. Consider AI Market Data Intelligence (#7) to keep them current.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "modernise_comp_decisions", result: "STRONG_FIT" },
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "fix_pay_equity_gaps", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 200000,
+      base3yrHigh: 800000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.2, public_sector: 0.8 },
+      defaultSectorMultiplier: 1.0,
+    },
+    prerequisiteOf: ["ai_skills_based_pay_modelling"],
+    reasoningTemplates: {
+      strong_fit: [
+        "Your pay structure maturity ({payStructureMaturity}) means formal pay bands are either absent or overdue for refresh.",
+        "Pay band design is the foundation for most downstream compensation initiatives.",
+      ],
+      moderate_fit: ["Pay band refresh delivers value even with existing structures."],
+      weak_fit: ["Your existing pay structure may not need a full redesign."],
+      not_recommended: ["Your actively maintained pay bands mean this initiative's value is limited. Consider market data intelligence instead."],
+    },
+  },
+
+  // ── #7 AI Market Data Intelligence ──────────────────────────────────────
+  {
+    id: "ai_market_data_intelligence",
+    number: 7,
+    title: "AI Market Data Intelligence",
+    shortDescription:
+      "Automated ingestion and synthesis of multiple pay survey sources into a single, always-current market view — replacing the annual survey cycle with continuous benchmarking.",
+    fullDescription:
+      "Aggregates data from multiple compensation surveys (Willis Towers Watson, Mercer, Radford, etc.) with real-time signals from job postings and offer data. AI normalises across methodologies, flags where your pay position has drifted from target, and surfaces emerging market movements before they affect hiring. Reduces survey administration by 60-80%.",
+    subDomain: "Compensation",
+    defaultPhase: "Build",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      public_sector: "WEAK_FIT",
+      higher_education: "WEAK_FIT",
+      pharmaceuticals_biotech: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "externalCompDataSources",
+        op: "not_in",
+        value: ["none_no_external_data"],
+        result: "STRONG_FIT",
+        reasoning: "You already use external comp data — this initiative automates and enriches that process.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "modernise_comp_decisions", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "talent_attraction_retention_pressure", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 150000,
+      base3yrHigh: 600000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.25,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.2, pharmaceuticals_biotech: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "You already use {externalCompDataSources} — this initiative automates and enriches that process.",
+        "Continuous market intelligence reduces the lag between market moves and your pay position.",
+      ],
+      moderate_fit: ["Market data intelligence delivers value across most organisations with competitive pay pressures."],
+      weak_fit: ["Limited external data use suggests other priorities first."],
+      not_recommended: ["Public sector pay structures typically don't benefit from market data automation."],
+    },
+  },
+
+  // ── #8 AI Pay Transparency Engine ───────────────────────────────────────
+  {
+    id: "ai_pay_transparency_engine",
+    number: 8,
+    title: "AI Pay Transparency Engine",
+    shortDescription:
+      "Automated generation of pay range disclosures for job postings and employee-facing pay band communications — compliant with EU Pay Transparency Directive and emerging UK requirements.",
+    fullDescription:
+      "Prepares the organisation for mandatory pay transparency by automating the generation of pay range disclosures for job postings, internal role communications, and employee queries. Integrates with pay band architecture and market data to ensure disclosures are accurate, current, and legally compliant. Includes a manager-facing tool for handling pay questions.",
+    subDomain: "Pay Transparency",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      public_sector: "STRONG_FIT",
+      higher_education: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "prepare_for_pay_transparency", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "regulatory_deadline_pressure", result: "STRONG_FIT" },
+      { field: "fcaSysc19InScope", op: "in", value: ["yes_in_scope", "yes_not_smcr"], result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 100000,
+      base3yrHigh: 450000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.1, public_sector: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Pay transparency regulation is advancing — this initiative positions you ahead of mandatory requirements.",
+        "Your regulatory context ({fcaSysc19InScope}) makes pay transparency a near-term priority.",
+      ],
+      moderate_fit: ["Pay transparency preparation is increasingly important across all sectors."],
+      weak_fit: ["Transparency requirements may be less immediate for your sector."],
+      not_recommended: ["Current regulatory context suggests limited near-term requirement."],
+    },
+  },
+
+  // ── #9 AI Executive Comp Peer Benchmarking ───────────────────────────────
+  {
+    id: "ai_executive_comp_peer_benchmarking",
+    number: 9,
+    title: "AI Executive Comp Peer Benchmarking",
+    shortDescription:
+      "Automated peer group analysis and executive pay benchmarking — replacing manual proxy statement analysis with AI-driven comparator tracking and remuneration committee support.",
+    fullDescription:
+      "Automates the collection and analysis of executive pay data from proxy statements, annual reports, and regulatory filings. AI identifies the most relevant peer group, tracks movements in total pay quantum and structure, and generates remuneration committee briefing materials. Reduces the cost and time of annual benchmarking exercises.",
+    subDomain: "Executive Compensation",
+    defaultPhase: "Optimise",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "STRONG_FIT",
+      manufacturing: "MODERATE_FIT",
+      public_sector: "WEAK_FIT",
+      higher_education: "WEAK_FIT",
+      not_for_profit: "WEAK_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "executive_comp_refresh", result: "STRONG_FIT" },
+      { field: "ownershipStructure", op: "in", value: ["ftse_100_listed", "ftse_250_listed", "aim_listed", "other_listed", "subsidiary_listed_group"], result: "STRONG_FIT" },
+      { field: "ownershipStructure", op: "in", value: ["private_pe_backed", "private_vc_backed"], result: "MODERATE_FIT" },
+    ],
+    notRecommendedIf: [
+      {
+        condition: "ownershipStructure in ['public_sector', 'mutual_cooperative', 'not_for_profit']",
+        reasoning: "Executive pay benchmarking against listed peers is not applicable for your ownership structure.",
+      },
+    ],
+    valueCalibration: {
+      base3yrLow: 200000,
+      base3yrHigh: 800000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.1,
+      sectorMultipliers: { financial_services: 1.4, technology: 1.3, retail: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "As a listed company, remuneration committee support and peer benchmarking are high-value activities.",
+        "Your 'executive comp refresh' priority maps directly to what this initiative delivers.",
+      ],
+      moderate_fit: ["Executive benchmarking delivers value for PE/VC-backed organisations preparing for exit or IPO."],
+      weak_fit: ["Executive benchmarking value is limited for your ownership structure."],
+      not_recommended: ["Executive pay benchmarking against listed peers is not applicable for your ownership structure."],
+    },
+  },
+
+  // ── #10 AI Talent Pay Strategy ───────────────────────────────────────────
+  {
+    id: "ai_talent_pay_strategy",
+    number: 10,
+    title: "AI Talent Pay Strategy",
+    shortDescription:
+      "Data-driven pay strategy for AI and digital talent — modelling competitive positioning, equity implications, and retention risk for your critical AI workforce.",
+    fullDescription:
+      "Addresses the specific challenge of paying for AI and digital talent in a market where pay norms are still forming. Uses market data, internal equity analysis, and attrition modelling to design a pay strategy that attracts and retains critical AI talent without creating internal equity problems. Includes a framework for AI role levelling and pay band design.",
+    subDomain: "Compensation",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      pharmaceuticals_biotech: "STRONG_FIT",
+      manufacturing: "MODERATE_FIT",
+      retail: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [
+      {
+        field: "criticalAiDigitalTalentPopulation",
+        op: "==",
+        value: "none_or_minimal",
+        result: "NOT_RECOMMENDED",
+      },
+      {
+        field: "criticalAiDigitalTalentPopulation",
+        op: "in",
+        value: ["emerging_small_population", "established_growing"],
+        result: "STRONG_FIT",
+      },
+      {
+        field: "criticalAiDigitalTalentPopulation",
+        op: "==",
+        value: "actively_fighting_in_market_for_ai_talent",
+        result: "STRONG_FIT",
+      },
+    ],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "ai_talent_pay_strategy", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "talent_attraction_retention_pressure", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 150000,
+      base3yrHigh: 600000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.25,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.4, professional_services: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your AI talent population ({criticalAiDigitalTalentPopulation}) makes this a high-priority initiative.",
+        "AI talent pay strategy is one of the most pressing Reward challenges in your sector ({sector}).",
+      ],
+      moderate_fit: ["AI talent pay strategy is increasingly relevant as AI roles grow."],
+      weak_fit: ["Limited AI talent population reduces the urgency of this initiative."],
+      not_recommended: ["Minimal AI talent population means this initiative has limited applicability right now."],
+    },
+  },
+
+  // ── #11 AI Skills-Based Pay Modelling ────────────────────────────────────
+  {
+    id: "ai_skills_based_pay_modelling",
+    number: 11,
+    title: "AI Skills-Based Pay Modelling",
+    shortDescription:
+      "ML-powered modelling of skills-based pay structures — mapping skills to pay premiums and designing transition paths from job-based to skills-based compensation.",
+    fullDescription:
+      "Supports the transition to skills-based pay by using AI to identify which skills command market premiums, model the cost of skills-based pay structures, and design transition paths that manage internal equity. Requires formal pay band architecture as a foundation.",
+    subDomain: "Compensation",
+    defaultPhase: "Optimise",
+    complexity: "Highest",
+    sectorFit: {
+      technology: "STRONG_FIT",
+      financial_services: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      pharmaceuticals_biotech: "MODERATE_FIT",
+      default: "WEAK_FIT",
+    },
+    workforceFitRules: [
+      {
+        field: "workforceKnowledgePct",
+        op: "<",
+        value: 50,
+        result: "NOT_RECOMMENDED",
+      },
+      {
+        field: "workforceKnowledgePct",
+        op: ">=",
+        value: 80,
+        result: "STRONG_FIT",
+      },
+    ],
+    capabilityFitRules: [
+      {
+        field: "payStructureMaturity",
+        op: "!=",
+        value: "formal_bands_actively_maintained",
+        result: "NOT_RECOMMENDED",
+        reasoning: "Skills-based pay requires mature pay band architecture as foundation. Build AI Pay Band Design (#6) first.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "modernise_comp_decisions", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 300000,
+      base3yrHigh: 1200000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.25,
+      sectorMultipliers: { technology: 1.3, financial_services: 1.2 },
+      defaultSectorMultiplier: 0.8,
+    },
+    requiresPrerequisite: "ai_pay_band_design",
+    reasoningTemplates: {
+      strong_fit: [
+        "Your knowledge-worker workforce ({workforceKnowledgePct}% knowledge workers) and mature pay structure make this viable.",
+        "Skills-based pay is a significant competitive differentiator in your sector.",
+      ],
+      moderate_fit: ["Skills-based pay modelling is increasingly relevant as workforce skills become the primary value driver."],
+      weak_fit: ["Your workforce composition or pay structure maturity suggests this is premature."],
+      not_recommended: ["Formal pay band architecture is required before skills-based pay modelling can work. Build AI Pay Band Design (#6) first."],
+    },
+  },
+
+  // ── #12 AI Total Rewards Personalisation ─────────────────────────────────
+  {
+    id: "ai_total_rewards_personalisation",
+    number: 12,
+    title: "AI Total Rewards Personalisation",
+    shortDescription:
+      "AI-driven personalisation of total rewards packages — modelling employee preferences and designing flexible benefits structures that maximise perceived value per pound spent.",
+    fullDescription:
+      "Uses preference modelling and conjoint analysis to understand what employees value most in their total rewards package, then designs flexible benefits structures that deliver higher perceived value at the same or lower cost. Particularly effective for knowledge-worker populations with diverse preferences.",
+    subDomain: "Benefits",
+    defaultPhase: "Optimise",
+    complexity: "Highest",
+    sectorFit: {
+      technology: "STRONG_FIT",
+      financial_services: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [
+      {
+        field: "workforceKnowledgePct",
+        op: "<",
+        value: 50,
+        result: "WEAK_FIT",
+      },
+    ],
+    capabilityFitRules: [
+      {
+        field: "aiMaturityInRewardToday",
+        op: "<",
+        value: 2,
+        result: "WEAK_FIT",
+        reasoning: "Total rewards personalisation requires foundational AI capability. Build AI maturity first.",
+      },
+      {
+        field: "rewardAiAmbition",
+        op: "<",
+        value: 3,
+        result: "WEAK_FIT",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "improve_employee_value_proposition", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 200000,
+      base3yrHigh: 900000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { technology: 1.3, financial_services: 1.2 },
+      defaultSectorMultiplier: 0.9,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your knowledge-worker population and high AI ambition make personalisation viable and high-value.",
+      ],
+      moderate_fit: ["Total rewards personalisation delivers value across most knowledge-worker organisations."],
+      weak_fit: ["AI maturity or ambition level suggests this initiative is premature. Build foundational capability first."],
+      not_recommended: ["Current AI maturity and ambition profile suggests other initiatives should come first."],
+    },
+  },
+
+  // ── #13 AI Total Rewards Statement Generation ─────────────────────────────
+  {
+    id: "ai_total_rewards_statement_generation",
+    number: 13,
+    title: "AI Total Rewards Statement Generation",
+    shortDescription:
+      "Automated, personalised total rewards statements — replacing annual PDF generation with always-current, employee-accessible statements that increase perceived total comp value.",
+    fullDescription:
+      "Generates personalised total rewards statements for every employee, showing the full value of their compensation package including salary, bonus, benefits, pension, and non-monetary elements. AI-driven narrative explains the value in plain language. Statements are always current, not just annual, and accessible via employee self-service.",
+    subDomain: "Pay Transparency",
+    defaultPhase: "Build",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      public_sector: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "improve_employee_value_proposition", result: "STRONG_FIT" },
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "prepare_for_pay_transparency", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 100000,
+      base3yrHigh: 500000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.25,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    bundleWith: "ai_pay_decision_explainer",
+    reasoningTemplates: {
+      strong_fit: [
+        "Total rewards statements are a high-impact, relatively low-complexity initiative that improves EVP perception.",
+        "Often paired with AI Pay Decision Explainer (#14) for complete pay communication.",
+      ],
+      moderate_fit: ["Total rewards statements deliver value across most organisations."],
+      weak_fit: ["Consider whether employee self-service infrastructure is in place."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #14 AI Pay Decision Explainer ────────────────────────────────────────
+  {
+    id: "ai_pay_decision_explainer",
+    number: 14,
+    title: "AI Pay Decision Explainer",
+    shortDescription:
+      "AI-generated plain-language explanations for individual pay decisions — giving managers and employees clear, consistent answers to 'why is my pay what it is?'",
+    fullDescription:
+      "Generates personalised, plain-language explanations for every pay decision — merit increases, promotions, market adjustments, and bonus outcomes. Explanations are grounded in the actual decision factors (market position, performance, pay band, budget) and calibrated for the audience (manager-facing vs employee-facing). Reduces HR query volume and improves pay satisfaction.",
+    subDomain: "Pay Transparency",
+    defaultPhase: "Build",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "prepare_for_pay_transparency", result: "STRONG_FIT" },
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "improve_employee_value_proposition", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 80000,
+      base3yrHigh: 350000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    bundleWith: "ai_total_rewards_statement_generation",
+    reasoningTemplates: {
+      strong_fit: [
+        "Pay decision explainers reduce HR query volume and improve pay satisfaction — high ROI relative to complexity.",
+      ],
+      moderate_fit: ["Pay decision explainers deliver value across most organisations."],
+      weak_fit: ["Consider whether pay band architecture is in place to support explanations."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #15 AI Reward Operations Assistant ───────────────────────────────────
+  {
+    id: "ai_reward_operations_assistant",
+    number: 15,
+    title: "AI Reward Operations Assistant",
+    shortDescription:
+      "AI-powered assistant for the Reward team — handling routine queries, generating comp analysis, drafting job evaluations, and automating repetitive Reward admin tasks.",
+    fullDescription:
+      "A Reward-specific AI assistant that handles the high-volume, repetitive tasks that consume Reward team capacity: answering manager pay queries, generating comp analysis outputs, drafting job evaluation rationales, and producing standard reports. Frees the Reward team to focus on strategic work. Integrates with HRIS and comp management platform.",
+    subDomain: "Reward Operations",
+    defaultPhase: "Foundation",
+    complexity: "Low",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "STRONG_FIT",
+      manufacturing: "STRONG_FIT",
+      public_sector: "STRONG_FIT",
+      higher_education: "STRONG_FIT",
+      default: "STRONG_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "aiToolsCurrentlyInRewardUse",
+        op: "not_in",
+        value: ["none_no_ai_yet"],
+        result: "MODERATE_FIT",
+        reasoning: "You already use some AI tools — this builds on that foundation.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "reduce_reward_admin_burden", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 80000,
+      base3yrHigh: 350000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.15,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: {},
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "A Reward Operations Assistant is a quick win — low complexity, fast to deploy, immediate capacity release.",
+        "Your 'reduce reward admin burden' priority maps directly to what this initiative delivers.",
+      ],
+      moderate_fit: ["Reward operations automation delivers value across all organisations."],
+      weak_fit: ["Consider whether HRIS integration is in place to support the assistant."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #16 AI Bonus Pool Optimisation ───────────────────────────────────────
+  {
+    id: "ai_bonus_pool_optimisation",
+    number: 16,
+    title: "AI Bonus Pool Optimisation",
+    shortDescription:
+      "ML-driven bonus pool allocation modelling — optimising the distribution of bonus budgets across business units, teams, and individuals to maximise retention and performance impact.",
+    fullDescription:
+      "Uses ML to model the retention and performance impact of different bonus allocation scenarios, enabling the Reward team to optimise pool distribution before the cycle begins. Integrates with performance data, attrition risk models, and market data to surface where bonus investment has the highest marginal impact.",
+    subDomain: "Compensation",
+    defaultPhase: "Optimise",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "rewardAiAmbition",
+        op: "<",
+        value: 3,
+        result: "WEAK_FIT",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "modernise_comp_decisions", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 300000,
+      base3yrHigh: 1500000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.4,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.4, technology: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    requiresPrerequisite: "ai_compensation_recommendation_engine",
+    reasoningTemplates: {
+      strong_fit: [
+        "Bonus pool optimisation delivers significant value in your sector ({sector}) where bonus is a major component of total comp.",
+        "Requires AI Compensation Recommendation Engine (#1) as a foundation.",
+      ],
+      moderate_fit: ["Bonus pool optimisation delivers value across most organisations with significant variable pay."],
+      weak_fit: ["Reward AI ambition level suggests this initiative may be premature."],
+      not_recommended: ["Current AI ambition profile suggests foundational initiatives should come first."],
+    },
+  },
+
+  // ── #17 AI Sales Compensation Plan Design ────────────────────────────────
+  {
+    id: "ai_sales_compensation_plan_design",
+    number: 17,
+    title: "AI Sales Compensation Plan Design",
+    shortDescription:
+      "Data-driven sales compensation plan design — using ML to model plan mechanics, quota attainment distributions, and cost-of-sales to design plans that drive the right behaviours.",
+    fullDescription:
+      "Applies ML to the design and optimisation of sales compensation plans. The system models how different plan mechanics (accelerators, thresholds, caps, SPIFs) affect quota attainment distributions and cost-of-sales, enabling the Reward team to design plans that drive desired behaviours within budget. Integrates with CRM and sales performance data.",
+    subDomain: "Sales Compensation",
+    defaultPhase: "Build",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      pharmaceuticals_biotech: "STRONG_FIT",
+      default: "WEAK_FIT",
+    },
+    workforceFitRules: [
+      {
+        field: "materialSalesWorkforce",
+        op: "==",
+        value: "none_minimal",
+        result: "NOT_RECOMMENDED",
+      },
+      {
+        field: "materialSalesWorkforce",
+        op: "==",
+        value: "present_but_small",
+        result: "MODERATE_FIT",
+      },
+      {
+        field: "materialSalesWorkforce",
+        op: "in",
+        value: ["significant_named_seller_workforce", "predominantly_sales"],
+        result: "STRONG_FIT",
+      },
+    ],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "sales_comp_redesign", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 250000,
+      base3yrHigh: 1200000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.3, pharmaceuticals_biotech: 1.2 },
+      defaultSectorMultiplier: 0.9,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your sales workforce composition ({materialSalesWorkforce}) makes sales comp design a high-value initiative.",
+        "Your 'sales comp redesign' priority maps directly to what this initiative delivers.",
+      ],
+      moderate_fit: ["Sales compensation design delivers value where there is a meaningful sales workforce."],
+      weak_fit: ["Limited sales workforce reduces the value of this initiative."],
+      not_recommended: ["Minimal sales workforce means this initiative has limited applicability."],
+    },
+  },
+
+  // ── #18 AI LTIP Modelling ─────────────────────────────────────────────────
+  {
+    id: "ai_ltip_modelling",
+    number: 18,
+    title: "AI LTIP Modelling",
+    shortDescription:
+      "Automated modelling of long-term incentive plan outcomes — simulating TSR, EPS, and other performance conditions to support remuneration committee decision-making.",
+    fullDescription:
+      "Uses Monte Carlo simulation and ML to model the expected outcomes of LTIP performance conditions under different scenarios. Enables the remuneration committee to understand the probability distribution of vesting outcomes, the cost of the plan, and the alignment between executive pay and shareholder returns. Integrates with proxy advisor guidance.",
+    subDomain: "Executive Compensation",
+    defaultPhase: "Optimise",
+    complexity: "Highest",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      retail: "STRONG_FIT",
+      manufacturing: "MODERATE_FIT",
+      professional_services: "MODERATE_FIT",
+      public_sector: "WEAK_FIT",
+      not_for_profit: "WEAK_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "executive_comp_refresh", result: "STRONG_FIT" },
+      { field: "ownershipStructure", op: "in", value: ["ftse_100_listed", "ftse_250_listed", "aim_listed", "other_listed", "subsidiary_listed_group"], result: "STRONG_FIT" },
+    ],
+    notRecommendedIf: [
+      {
+        condition: "ownershipStructure in ['private_pe_backed', 'private_vc_backed', 'private_family_owned', 'mutual_cooperative', 'public_sector', 'not_for_profit']",
+        reasoning: "LTIP modelling is designed for listed companies with public performance conditions. Not applicable for your ownership structure.",
+      },
+    ],
+    valueCalibration: {
+      base3yrLow: 200000,
+      base3yrHigh: 900000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.1,
+      sectorMultipliers: { financial_services: 1.4, technology: 1.3 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "As a listed company, LTIP modelling is a high-value initiative for remuneration committee support.",
+      ],
+      moderate_fit: ["LTIP modelling delivers value for organisations with complex long-term incentive structures."],
+      weak_fit: ["LTIP modelling value is limited for your ownership structure."],
+      not_recommended: ["LTIP modelling is designed for listed companies. Not applicable for your ownership structure."],
+    },
+  },
+
+  // ── #19 AI Pension Engagement Optimisation ────────────────────────────────
+  {
+    id: "ai_pension_engagement_optimisation",
+    number: 19,
+    title: "AI Pension Engagement Optimisation",
+    shortDescription:
+      "AI-driven pension communication and engagement — personalising pension contribution nudges and investment education to improve employee retirement outcomes.",
+    fullDescription:
+      "Uses behavioural science and ML to personalise pension communications, contribution nudges, and investment education at scale. Identifies employees at risk of under-saving, models the impact of different contribution strategies, and delivers personalised guidance through digital channels. Improves employee financial wellbeing and reduces employer liability.",
+    subDomain: "Benefits",
+    defaultPhase: "Build",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      technology: "MODERATE_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      public_sector: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "pensionSchemeArchitecture",
+        op: "in",
+        value: ["defined_contribution_single_provider", "defined_contribution_multiple_providers", "hybrid_db_dc"],
+        result: "STRONG_FIT",
+      },
+      {
+        field: "pensionSchemeArchitecture",
+        op: "==",
+        value: "no_employer_pension",
+        result: "NOT_RECOMMENDED",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "improve_employee_value_proposition", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 100000,
+      base3yrHigh: 450000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your DC pension architecture ({pensionSchemeArchitecture}) is well-suited to AI-driven engagement.",
+      ],
+      moderate_fit: ["Pension engagement optimisation delivers value across most organisations with employer pension schemes."],
+      weak_fit: ["Pension scheme architecture may limit the scope of AI-driven engagement."],
+      not_recommended: ["No employer pension scheme means this initiative is not applicable."],
+    },
+  },
+
+  // ── #20 AI Benefits Utilisation Analytics ────────────────────────────────
+  {
+    id: "ai_benefits_utilisation_analytics",
+    number: 20,
+    title: "AI Benefits Utilisation Analytics",
+    shortDescription:
+      "ML analysis of benefits utilisation patterns — identifying underused benefits, modelling the cost of the benefits portfolio, and informing benefits strategy decisions.",
+    fullDescription:
+      "Analyses benefits utilisation data to identify which benefits are valued and used, which are underused relative to cost, and where there are gaps between employee needs and current provision. AI models the cost-effectiveness of the benefits portfolio and surfaces recommendations for optimisation. Supports annual benefits review and flex benefits design.",
+    subDomain: "Benefits",
+    defaultPhase: "Foundation",
+    complexity: "Low",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "improve_employee_value_proposition", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 60000,
+      base3yrHigh: 250000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.15,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.1, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: ["Benefits utilisation analytics is a low-complexity, high-insight initiative."],
+      moderate_fit: ["Benefits analytics delivers value across most organisations."],
+      weak_fit: ["Limited benefits data may constrain the analysis."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #21 AI Reward Governance Audit Trail ─────────────────────────────────
+  {
+    id: "ai_reward_governance_audit_trail",
+    number: 21,
+    title: "AI Reward Governance Audit Trail",
+    shortDescription:
+      "Automated audit trail for all reward decisions — creating an immutable, searchable record of every pay decision with the rationale, approvals, and market context.",
+    fullDescription:
+      "Creates a comprehensive, automated audit trail for every reward decision — hire, promotion, merit, market adjustment, bonus, and equity grant. Each record captures the decision, the rationale, the approvals obtained, and the market context at the time. Enables rapid response to equal pay claims, regulatory enquiries, and internal audit requests.",
+    subDomain: "Reward Operations",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      technology: "MODERATE_FIT",
+      public_sector: "STRONG_FIT",
+      healthcare: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "regulatory_deadline_pressure", result: "STRONG_FIT" },
+      { field: "fcaSysc19InScope", op: "in", value: ["yes_in_scope", "yes_not_smcr"], result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 80000,
+      base3yrHigh: 350000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.3, public_sector: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your regulatory context ({fcaSysc19InScope}) makes a comprehensive audit trail a compliance necessity.",
+        "Audit trail capability substantially reduces the cost of responding to equal pay claims.",
+      ],
+      moderate_fit: ["Reward governance audit trail delivers value across most organisations."],
+      weak_fit: ["Current regulatory context suggests limited near-term urgency."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #22 AI Reward Benchmarking Automation ─────────────────────────────────
+  {
+    id: "ai_reward_benchmarking_automation",
+    number: 22,
+    title: "AI Reward Benchmarking Automation",
+    shortDescription:
+      "Automated job matching and benchmarking against external pay surveys — replacing manual job matching with AI-driven role clustering and percentile positioning.",
+    fullDescription:
+      "Automates the most time-consuming part of compensation benchmarking: matching internal roles to survey jobs. AI clusters roles by scope and complexity, matches to survey equivalents, and calculates percentile positioning across multiple surveys simultaneously. Reduces benchmarking cycle time from weeks to hours.",
+    subDomain: "Reward Operations",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "externalCompDataSources",
+        op: "not_in",
+        value: ["none_no_external_data"],
+        result: "STRONG_FIT",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "reduce_reward_admin_burden", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 100000,
+      base3yrHigh: 400000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "You already use external comp data — automating the benchmarking process delivers immediate capacity savings.",
+      ],
+      moderate_fit: ["Benchmarking automation delivers value across most organisations using external survey data."],
+      weak_fit: ["Limited external data use reduces the value of this initiative."],
+      not_recommended: ["No external comp data use means this initiative has limited applicability."],
+    },
+  },
+
+  // ── #23 AI Reward Budget Forecasting ─────────────────────────────────────
+  {
+    id: "ai_reward_budget_forecasting",
+    number: 23,
+    title: "AI Reward Budget Forecasting",
+    shortDescription:
+      "ML-driven reward budget forecasting — predicting merit, bonus, and benefits costs under different scenarios to improve financial planning accuracy.",
+    fullDescription:
+      "Uses ML to forecast reward costs across merit, bonus, benefits, and equity under different business scenarios. Integrates with workforce planning data to model the impact of headcount changes, promotions, and attrition on reward costs. Enables more accurate financial planning and reduces end-of-year budget surprises.",
+    subDomain: "Reward Operations",
+    defaultPhase: "Build",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "reduce_reward_admin_burden", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 100000,
+      base3yrHigh: 450000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: ["Reward budget forecasting delivers significant value in organisations with complex, multi-component reward structures."],
+      moderate_fit: ["Budget forecasting automation delivers value across most organisations."],
+      weak_fit: ["Consider whether workforce planning data is available to support forecasting."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #24 AI Pension Strategy Modelling ────────────────────────────────────
+  {
+    id: "ai_pension_strategy_modelling",
+    number: 24,
+    title: "AI Pension Strategy Modelling",
+    shortDescription:
+      "Scenario modelling for pension strategy decisions — DB to DC transition, contribution rate changes, provider consolidation — with cost and employee impact analysis.",
+    fullDescription:
+      "Uses actuarial modelling and ML to support major pension strategy decisions: DB to DC transition, contribution rate changes, provider consolidation, and auto-enrolment optimisation. Models the cost, employee impact, and regulatory implications of different scenarios. Supports trustee and board-level decision-making.",
+    subDomain: "Benefits",
+    defaultPhase: "Optimise",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      manufacturing: "STRONG_FIT",
+      public_sector: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "pensionSchemeArchitecture",
+        op: "in",
+        value: ["defined_benefit_closed_to_new", "hybrid_db_dc", "defined_benefit_open"],
+        result: "STRONG_FIT",
+      },
+      {
+        field: "pensionSchemeArchitecture",
+        op: "==",
+        value: "no_employer_pension",
+        result: "NOT_RECOMMENDED",
+      },
+    ],
+    priorityFitRules: [],
+    valueCalibration: {
+      base3yrLow: 150000,
+      base3yrHigh: 700000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.3,
+      headcountBaseline: 1000,
+      headcountFactor: 0.15,
+      sectorMultipliers: { financial_services: 1.3, manufacturing: 1.2, public_sector: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your pension architecture ({pensionSchemeArchitecture}) involves significant strategic decisions that benefit from scenario modelling.",
+      ],
+      moderate_fit: ["Pension strategy modelling delivers value for organisations with complex pension arrangements."],
+      weak_fit: ["Pension scheme architecture suggests limited scope for strategic modelling."],
+      not_recommended: ["No employer pension scheme means this initiative is not applicable."],
+    },
+  },
+
+  // ── #25 AI Reward Communications Generator ───────────────────────────────
+  {
+    id: "ai_reward_communications_generator",
+    number: 25,
+    title: "AI Reward Communications Generator",
+    shortDescription:
+      "AI-generated reward communications — producing personalised, plain-language communications for pay reviews, bonus outcomes, and benefits changes at scale.",
+    fullDescription:
+      "Generates personalised reward communications for every employee at key moments: pay review outcomes, bonus notifications, benefits enrolment, and total rewards updates. AI ensures communications are accurate, personalised, and in plain language. Reduces Reward team effort and improves employee understanding of their total rewards package.",
+    subDomain: "Reward Operations",
+    defaultPhase: "Foundation",
+    complexity: "Low",
+    sectorFit: {
+      default: "MODERATE_FIT",
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      retail: "STRONG_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "improve_employee_value_proposition", result: "STRONG_FIT" },
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "reduce_reward_admin_burden", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 50000,
+      base3yrHigh: 200000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.1,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: {},
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: ["Reward communications automation is a quick win — low complexity, immediate capacity release."],
+      moderate_fit: ["Communications automation delivers value across most organisations."],
+      weak_fit: ["Consider whether HRIS integration is in place to support personalisation."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #26 AI Attrition Risk Modelling for Reward ───────────────────────────
+  {
+    id: "ai_attrition_risk_modelling_reward",
+    number: 26,
+    title: "AI Attrition Risk Modelling for Reward",
+    shortDescription:
+      "ML-driven attrition risk modelling focused on pay-related flight risk — identifying employees at risk of leaving due to pay dissatisfaction and modelling retention investment options.",
+    fullDescription:
+      "Uses ML to identify employees at risk of leaving due to pay-related dissatisfaction, modelling the relationship between pay position, market movement, and attrition probability. Enables targeted retention investment — pay adjustments, equity grants, or benefits changes — before employees reach the point of resignation. Integrates with HRIS and exit interview data.",
+    subDomain: "Compensation",
+    defaultPhase: "Build",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      pharmaceuticals_biotech: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [
+      {
+        field: "criticalAiDigitalTalentPopulation",
+        op: "in",
+        value: ["established_growing", "actively_fighting_in_market_for_ai_talent"],
+        result: "STRONG_FIT",
+      },
+    ],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "ai_talent_pay_strategy", result: "STRONG_FIT" },
+      { field: "primaryTriggerForRewardAiStrategy", op: "==", value: "talent_attraction_retention_pressure", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 200000,
+      base3yrHigh: 900000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.35,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.3, technology: 1.3, professional_services: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your AI talent population and sector make pay-related attrition risk a significant concern.",
+        "Targeted retention investment based on risk modelling substantially outperforms across-the-board pay increases.",
+      ],
+      moderate_fit: ["Attrition risk modelling delivers value across most organisations with competitive talent markets."],
+      weak_fit: ["Consider whether HRIS data quality supports attrition modelling."],
+      not_recommended: ["Current talent profile suggests limited applicability."],
+    },
+  },
+
+  // ── #27 AI Job Architecture Rationalisation ───────────────────────────────
+  {
+    id: "ai_job_architecture_rationalisation",
+    number: 27,
+    title: "AI Job Architecture Rationalisation",
+    shortDescription:
+      "AI-driven rationalisation of job titles and job families — reducing proliferation, improving market comparability, and creating a foundation for consistent pay management.",
+    fullDescription:
+      "Uses NLP and ML to cluster existing job titles by role content, identify duplication and inconsistency, and propose a rationalised job architecture. Reduces job title proliferation (often 3-5x reduction), improves market benchmarking accuracy, and creates a cleaner foundation for pay band design and skills-based pay.",
+    subDomain: "Compensation",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      retail: "MODERATE_FIT",
+      manufacturing: "MODERATE_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "modernise_comp_decisions", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 100000,
+      base3yrHigh: 400000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.2,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.1, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: ["Job architecture rationalisation is a foundational initiative that enables most downstream compensation improvements."],
+      moderate_fit: ["Job architecture rationalisation delivers value across most organisations with complex role structures."],
+      weak_fit: ["Consider whether job architecture complexity justifies this initiative."],
+      not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+  },
+
+  // ── #28 AI Manager Pay Conversation Coaching ─────────────────────────────
+  {
+    id: "ai_manager_pay_conversation_coaching",
+    number: 28,
+    title: "AI Manager Pay Conversation Coaching",
+    shortDescription:
+      "AI-powered coaching for managers on pay conversations — preparing them for merit, promotion, and market adjustment discussions with personalised scripts and objection handling.",
+    fullDescription:
+      "Provides managers with AI-generated preparation materials for pay conversations: personalised scripts based on the specific employee's pay history and market position, anticipated questions and objection handling, and guidance on what they can and cannot disclose. Reduces manager anxiety around pay conversations and improves consistency.",
+    subDomain: "Reward Operations",
+    defaultPhase: "Build",
+    complexity: "Medium",
+    sectorFit: {
+      default: "MODERATE_FIT",
+      financial_services: "MODERATE_FIT",
+      technology: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "aiMaturityInRewardToday",
+        op: "<",
+        value: 2,
+        result: "WEAK_FIT",
+        reasoning: "Manager pay conversation coaching delivers more value once foundational AI capability is in place.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "improve_employee_value_proposition", result: "STRONG_FIT" },
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "prepare_for_pay_transparency", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 80000,
+      base3yrHigh: 300000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.15,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: {},
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: ["Manager pay conversation coaching is a high-impact initiative for pay transparency readiness."],
+      moderate_fit: ["Pay conversation coaching delivers value across most organisations."],
+      weak_fit: ["Build foundational AI capability before investing in manager coaching tools."],
+      not_recommended: ["Current AI maturity suggests foundational initiatives should come first."],
+    },
+  },
+
+  // ── #29 AI Reward Analytics Dashboard ────────────────────────────────────
+  {
+    id: "ai_reward_analytics_dashboard",
+    number: 29,
+    title: "AI Reward Analytics Dashboard",
+    shortDescription:
+      "Integrated Reward analytics platform — combining pay equity, market position, budget consumption, and attrition risk into a single, always-current view for the Reward team and leadership.",
+    fullDescription:
+      "Creates a unified analytics layer across all Reward data: pay equity metrics, market position by job family, merit budget consumption, bonus pool utilisation, and attrition risk signals. AI-driven anomaly detection surfaces issues before they become problems. Provides board-ready reporting and supports data-driven Reward strategy.",
+    subDomain: "Reward Operations",
+    defaultPhase: "Build",
+    complexity: "High",
+    sectorFit: {
+      financial_services: "STRONG_FIT",
+      technology: "STRONG_FIT",
+      professional_services: "STRONG_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [],
+    capabilityFitRules: [
+      {
+        field: "rewardFunctionMaturityRating",
+        op: "<",
+        value: 2,
+        result: "WEAK_FIT",
+        reasoning: "Analytics dashboard delivers most value when foundational Reward processes are in place.",
+      },
+    ],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "reduce_reward_admin_burden", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 150000,
+      base3yrHigh: 600000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.25,
+      headcountBaseline: 1000,
+      headcountFactor: 0.2,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: ["A unified Reward analytics dashboard delivers significant value once foundational data is in place."],
+      moderate_fit: ["Reward analytics delivers value across most organisations."],
+      weak_fit: ["Build foundational Reward processes before investing in analytics infrastructure."],
+      not_recommended: ["Current Reward function maturity suggests foundational work is needed first."],
+    },
+  },
+
+  // ── #30 AI Frontline Pay Optimisation ────────────────────────────────────
+  {
+    id: "ai_frontline_pay_optimisation",
+    number: 30,
+    title: "AI Frontline Pay Optimisation",
+    shortDescription:
+      "ML-driven pay optimisation for frontline and hourly workers — modelling the impact of pay rates, shift premiums, and NLW compliance on attraction, retention, and cost.",
+    fullDescription:
+      "Addresses the specific challenges of frontline pay management: NLW compliance, shift premium optimisation, high-volume hiring pay rates, and the cost-benefit of pay rate changes on retention and productivity. Uses ML to model the impact of different pay strategies on attraction, retention, and total cost. Particularly valuable for retail, hospitality, and logistics organisations.",
+    subDomain: "Compensation",
+    defaultPhase: "Foundation",
+    complexity: "Medium",
+    sectorFit: {
+      retail: "STRONG_FIT",
+      hospitality_leisure: "STRONG_FIT",
+      logistics_transport: "STRONG_FIT",
+      manufacturing: "STRONG_FIT",
+      healthcare: "STRONG_FIT",
+      financial_services: "WEAK_FIT",
+      technology: "WEAK_FIT",
+      professional_services: "WEAK_FIT",
+      default: "MODERATE_FIT",
+    },
+    workforceFitRules: [
+      {
+        field: "workforceFrontlinePct",
+        op: "<",
+        value: 20,
+        result: "NOT_RECOMMENDED",
+      },
+      {
+        field: "workforceFrontlinePct",
+        op: "<",
+        value: 40,
+        result: "WEAK_FIT",
+      },
+      {
+        field: "workforceFrontlinePct",
+        op: ">=",
+        value: 60,
+        result: "STRONG_FIT",
+      },
+    ],
+    capabilityFitRules: [],
+    priorityFitRules: [
+      { field: "topRewardPrioritiesNext12Months", op: "contains", value: "frontline_workforce_pay", result: "STRONG_FIT" },
+    ],
+    valueCalibration: {
+      base3yrLow: 200000,
+      base3yrHigh: 1000000,
+      payrollBaseline: 50000000,
+      payrollFactor: 0.4,
+      headcountBaseline: 1000,
+      headcountFactor: 0.3,
+      sectorMultipliers: { retail: 1.2, hospitality_leisure: 1.2, logistics_transport: 1.2 },
+      defaultSectorMultiplier: 1.0,
+    },
+    reasoningTemplates: {
+      strong_fit: [
+        "Your frontline workforce ({workforceFrontlinePct}% frontline) makes this a high-value initiative.",
+        "NLW compliance, shift premium optimisation, and frontline retention are significant cost drivers for your organisation.",
+      ],
+      moderate_fit: ["Frontline pay optimisation delivers value where there is a meaningful frontline workforce."],
+      weak_fit: ["Limited frontline workforce reduces the value of this initiative."],
+      not_recommended: ["Minimal frontline workforce means this initiative has limited applicability."],
+    },
+  },
+];
+
+// ─── Lookup helpers ───────────────────────────────────────────────────────────
+
+export function getRewardInitiative(id: string): RewardInitiative | undefined {
+  return REWARD_INITIATIVE_LIBRARY.find((i) => i.id === id);
+}
+
+export function getAllRewardInitiatives(): RewardInitiative[] {
+  return REWARD_INITIATIVE_LIBRARY;
+}
+
+export const REWARD_INITIATIVE_IDS = REWARD_INITIATIVE_LIBRARY.map((i) => i.id);

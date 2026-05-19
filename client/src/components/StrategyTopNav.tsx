@@ -243,8 +243,17 @@ export default function StrategyTopNav() {
   const navigate = setLocation;
   const { tenantMode } = useGate();
   const modeLabels = getModeLabels(tenantMode as "cpo" | "reward" | null | undefined);
-  // Apply mode-aware labels to stages 9 and 10
+  // Apply mode-aware labels to stages 5, 9, and 10
   const activeStages = STAGES.map(s => {
+    if (s.number === 5 && tenantMode === "reward") {
+      return {
+        ...s,
+        label: "Programmes",
+        shortLabel: "Programmes",
+        route: "/strategy/reward-initiatives",
+        what: "Build your Reward initiative portfolio from AI-powered recommendations",
+      };
+    }
     if (s.number === 9) return { ...s, label: modeLabels.stage9Label, what: modeLabels.stage9What };
     if (s.number === 10) return { ...s, label: modeLabels.stage10Label, shortLabel: modeLabels.stage10ShortLabel, what: modeLabels.stage10What };
     return s;

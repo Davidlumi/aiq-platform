@@ -2414,3 +2414,70 @@ export const rewardPrework = mysqlTable("reward_prework", {
 }));
 export type RewardPrework = typeof rewardPrework.$inferSelect;
 export type RewardPreworkInsert = typeof rewardPrework.$inferInsert;
+
+// ─── Reward Stage 5 — Initiative Portfolio ────────────────────────────────────
+// Stores the selected initiative portfolio, custom initiatives, dismissals,
+// and recommendation run cache for each tenant's Reward Stage 5.
+
+export const rewardInitiativePortfolio = mysqlTable("reward_initiative_portfolio", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  /** JSON array of selected initiative IDs (library + custom) */
+  selectedInitiativesJson: json("selected_initiatives_json").$type<string[]>(),
+  /** JSON array of dismissed initiative IDs with reasons */
+  dismissedInitiativesJson: json("dismissed_initiatives_json").$type<Array<{
+    initiativeId: string;
+    reason: string;
+    freeText?: string;
+    dismissedAt: number;
+  }>>(),
+  /** Stage 5 gate */
+  isCompleted: tinyint("is_completed").notNull().default(0),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_reward_portfolio_tenant").on(t.tenantId),
+}));
+export type RewardInitiativePortfolio = typeof rewardInitiativePortfolio.$inferSelect;
+
+export const rewardCustomInitiative = mysqlTable("reward_custom_initiative", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  title: varchar("title", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  subDomain: varchar("sub_domain", { length: 50 }).notNull(),
+  phase: mysqlEnum("phase", ["Foundation", "Build", "Optimise"]).notNull(),
+  complexity: mysqlEnum("complexity", ["Low", "Medium", "High", "Highest"]).notNull(),
+  valueLow: int("value_low").notNull(),
+  valueHigh: int("value_high").notNull(),
+  costLow: int("cost_low"),
+  costHigh: int("cost_high"),
+  principlesAlignment: text("principles_alignment"),
+  risks: text("risks"),
+  notes: text("notes"),
+  /** Whether this custom initiative is currently in the portfolio */
+  inPortfolio: tinyint("in_portfolio").notNull().default(1),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_reward_custom_tenant").on(t.tenantId),
+}));
+export type RewardCustomInitiative = typeof rewardCustomInitiative.$inferSelect;
+export type RewardCustomInitiativeInsert = typeof rewardCustomInitiative.$inferInsert;
+
+export const rewardRecommendationRun = mysqlTable("reward_recommendation_run", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  ranAt: bigint("ran_at", { mode: "number" }).notNull(),
+  /** SHA-256 of company_profile + reward_prework inputs — used for cache invalidation */
+  inputsHash: varchar("inputs_hash", { length: 64 }).notNull(),
+  /** Full recommendation output JSON for audit/debugging */
+  recommendationsJson: json("recommendations_json"),
+  engineVersion: varchar("engine_version", { length: 20 }).notNull().default("v1"),
+}, (t) => ({
+  tenantIdx: index("idx_reward_rec_run_tenant").on(t.tenantId),
+  hashIdx: index("idx_reward_rec_run_hash").on(t.inputsHash),
+}));
+export type RewardRecommendationRun = typeof rewardRecommendationRun.$inferSelect;
