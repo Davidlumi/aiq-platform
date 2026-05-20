@@ -293,9 +293,12 @@ function evaluatePriorityFit(
 
 /**
  * Interpolation model (NOT a multiplier-on-top-of-range):
- *   position = clamp(log10(headcount / 1000) / 1, 0, 1)
- *   estimated_cost = year1Low + position × (year1High − year1Low)
+ *   position = clamp((log10(hc) − log10(hcMin)) / (log10(hcMax) − log10(hcMin)), 0, 1)
+ *   Anchors: hcMin=1,000 (low-end research calibration), hcMax=10,000 (high-end research calibration)
+ *   estimated_cost_mid = year1Low + position × (year1High − year1Low)
  *   then × sectorMultiplier (clamped 0.6-2×, applied after interpolation)
+ *   output band: ±25% around midpoint (reflects real implementation-cost uncertainty)
+ *   Orgs outside 1,000–10,000 range clamp to the researched low/high end.
  */
 function calibrateCost(
   cc: CostCalibration,
@@ -314,11 +317,11 @@ function calibrateCost(
   const rawSectorMult = cc.sectorMultipliers[inputs.sector] ?? cc.defaultSectorMultiplier;
   const mult = clamp(cc.subDomainMultiplier ?? rawSectorMult, 0.6, 2);
 
-  // Produce a low/high range: low = interpolated × mult × 0.85, high = interpolated × mult × 1.15
-  const year1Low = Math.round(year1Mid * mult * 0.85);
-  const year1High = Math.round(year1Mid * mult * 1.15);
-  const ongoingLow = Math.round(ongoingMid * mult * 0.85);
-  const ongoingHigh = Math.round(ongoingMid * mult * 1.15);
+  // Produce a low/high range: ±25% around midpoint (reflects real implementation-cost uncertainty)
+  const year1Low = Math.round(year1Mid * mult * 0.75);
+  const year1High = Math.round(year1Mid * mult * 1.25);
+  const ongoingLow = Math.round(ongoingMid * mult * 0.75);
+  const ongoingHigh = Math.round(ongoingMid * mult * 1.25);
 
   return { year1Low, year1High, ongoingLow, ongoingHigh };
 }

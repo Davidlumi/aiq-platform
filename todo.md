@@ -4340,9 +4340,9 @@ test
 - [x] Align navigation label from "Programmes" to "Initiatives" (StrategyTopNav + useMode.ts)
 
 ## Stage 5 — Cost Calibration + Custom Form Cost Fields
-- [ ] Add CostCalibration interface to rewardInitiativeLibrary.ts (interpolation model)
-- [ ] Populate all 30 initiatives with year1Low/year1High/ongoingAnnualLow/ongoingAnnualHigh from library Costs sections
-- [ ] Update recommendation engine to compute calibrated year1 and ongoing cost ranges
-- [ ] Add optional costLow/costHigh fields to custom initiative form (both-or-neither validation, costLow ≤ costHigh)
-- [ ] Update Zod schema in rewardInitiatives router for addCustom/editCustom
-- [ ] Run TypeScript check and update tests
+- [x] Add CostCalibration interface to rewardInitiativeLibrary.ts (interpolation model)
+- [x] Populate all 30 initiatives with year1Low/year1High/ongoingAnnualLow/ongoingAnnualHigh from library Costs sections
+- [x] Update recommendation engine to compute calibrated year1 and ongoing cost ranges
+- [x] Add optional costLow/costHigh fields to custom initiative form (both-or-neither validation, costLow ≤ costHigh)
+- [x] Update Zod schema in rewardInitiatives router for addCustom/editCustom
+- [x] Run TypeScript check and update tests
