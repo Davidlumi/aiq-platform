@@ -526,7 +526,7 @@ export default function AssessmentResultsPage() {
             <Button
               size="sm" variant="outline"
               className="h-6 px-2.5 text-xs border-border text-foreground/70 hover:text-foreground hover:border-border/80 bg-transparent"
-              onClick={() => navigate(`/assessment/session/${(inProgressSession as any).id}`)}
+              onClick={() => navigate(`/assessment/${(inProgressSession as any).id}`)}
             >
               Resume
             </Button>
@@ -555,7 +555,7 @@ export default function AssessmentResultsPage() {
             <Button
               size="sm" variant="outline"
               className="h-7 px-3 text-xs border-border text-muted-foreground hover:text-foreground hover:border-border/80 bg-transparent"
-              onClick={() => navigate("/assessment")}
+              onClick={() => navigate("/assessment?new=1")}
             >
               <RotateCcw className="w-3 h-3 mr-1" /> Reassess
             </Button>
