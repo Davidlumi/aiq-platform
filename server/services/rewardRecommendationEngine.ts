@@ -34,6 +34,7 @@ import {
   type CapabilityFitRule,
   type WorkforceFitRule,
   type PriorityFitRule,
+  type CostCalibration,
 } from "../../shared/rewardInitiativeLibrary";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
@@ -88,6 +89,18 @@ export interface RewardRecommendationResult {
   notRecommendedReason: string | null;
   calibratedValueLow: number;
   calibratedValueHigh: number;
+  /** Calibrated Year 1 implementation cost range (interpolated by headcount + sector) */
+  calibratedYear1CostLow: number;
+  calibratedYear1CostHigh: number;
+  /** Calibrated ongoing annual cost range */
+  calibratedOngoingCostLow: number;
+  calibratedOngoingCostHigh: number;
+  /** Cost type: annual | project | per_cycle | per_deal */
+  costType: string;
+  /** True when implementation cost excludes programme funding */
+  excludesProgrammeFunding: boolean;
+  programmeFundingNote: string | null;
+  costNote: string | null;
   bundleWith: string | null;
   prerequisiteOf: string[];
   requiresPrerequisite: string | null;
@@ -276,6 +289,40 @@ function evaluatePriorityFit(
   return best;
 }
 
+// ─── Cost calibration ───────────────────────────────────────────────────────
+
+/**
+ * Interpolation model (NOT a multiplier-on-top-of-range):
+ *   position = clamp(log10(headcount / 1000) / 1, 0, 1)
+ *   estimated_cost = year1Low + position × (year1High − year1Low)
+ *   then × sectorMultiplier (clamped 0.6-2×, applied after interpolation)
+ */
+function calibrateCost(
+  cc: CostCalibration,
+  inputs: RewardEngineInputs
+): { year1Low: number; year1High: number; ongoingLow: number; ongoingHigh: number } {
+  const headcount = Math.max(inputs.totalEmployeeHeadcount ?? 3000, 1);
+
+    // Interpolation position: 0 at headcountMin, 1 at headcountMax (log scale)
+  const logMin = Math.log10(cc.headcountMin);
+  const logMax = Math.log10(cc.headcountMax);
+  const position = clamp((Math.log10(headcount) - logMin) / (logMax - logMin), 0, 1);
+  // Interpolate within the researched range
+  const year1Mid = cc.year1Low + position * (cc.year1High - cc.year1Low);
+  const ongoingMid = cc.ongoingAnnualLow + position * (cc.ongoingAnnualHigh - cc.ongoingAnnualLow);
+  // Sector or sub-domain multiplier (applied after interpolation, clamped 0.6-2×)
+  const rawSectorMult = cc.sectorMultipliers[inputs.sector] ?? cc.defaultSectorMultiplier;
+  const mult = clamp(cc.subDomainMultiplier ?? rawSectorMult, 0.6, 2);
+
+  // Produce a low/high range: low = interpolated × mult × 0.85, high = interpolated × mult × 1.15
+  const year1Low = Math.round(year1Mid * mult * 0.85);
+  const year1High = Math.round(year1Mid * mult * 1.15);
+  const ongoingLow = Math.round(ongoingMid * mult * 0.85);
+  const ongoingHigh = Math.round(ongoingMid * mult * 1.15);
+
+  return { year1Low, year1High, ongoingLow, ongoingHigh };
+}
+
 // ─── Value calibration ────────────────────────────────────────────────────────
 
 function calibrateValue(
@@ -413,6 +460,14 @@ export function runRewardRecommendationEngine(
     // ── Value calibration
     const { low: calibratedValueLow, high: calibratedValueHigh } = calibrateValue(initiative, inputs);
 
+    // ── Cost calibration
+    const {
+      year1Low: calibratedYear1CostLow,
+      year1High: calibratedYear1CostHigh,
+      ongoingLow: calibratedOngoingCostLow,
+      ongoingHigh: calibratedOngoingCostHigh,
+    } = calibrateCost(initiative.costCalibration, inputs);
+
     // ── Reasoning
     const reasoningLines = selectReasoningLines(initiative, fitSignal, inputs);
 
@@ -431,6 +486,14 @@ export function runRewardRecommendationEngine(
       notRecommendedReason,
       calibratedValueLow,
       calibratedValueHigh,
+      calibratedYear1CostLow,
+      calibratedYear1CostHigh,
+      calibratedOngoingCostLow,
+      calibratedOngoingCostHigh,
+      costType: initiative.costCalibration.costType,
+      excludesProgrammeFunding: initiative.costCalibration.excludesProgrammeFunding ?? false,
+      programmeFundingNote: initiative.costCalibration.programmeFundingNote ?? null,
+      costNote: initiative.costCalibration.costNote ?? null,
       bundleWith: initiative.bundleWith ?? null,
       prerequisiteOf: initiative.prerequisiteOf ?? [],
       requiresPrerequisite: initiative.requiresPrerequisite ?? null,

@@ -398,14 +398,27 @@ export default function RewardInitiativesPage() {
   // Custom initiative modal
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [editingCustomId, setEditingCustomId] = useState<string | null>(null);
-  const [customForm, setCustomForm] = useState({
+  const [customForm, setCustomForm] = useState<{
+    title: string;
+    description: string;
+    subDomain: string;
+    phase: "Foundation" | "Build" | "Optimise";
+    complexity: "Low" | "Medium" | "High" | "Highest";
+    valueLow: number;
+    valueHigh: number;
+    costLow: number | undefined;
+    costHigh: number | undefined;
+    notes: string;
+  }>({
     title: "",
     description: "",
     subDomain: "Compensation",
-    phase: "Foundation" as "Foundation" | "Build" | "Optimise",
-    complexity: "Medium" as "Low" | "Medium" | "High" | "Highest",
+    phase: "Foundation",
+    complexity: "Medium",
     valueLow: 0,
     valueHigh: 0,
+    costLow: undefined,
+    costHigh: undefined,
     notes: "",
   });
 
@@ -508,9 +521,22 @@ export default function RewardInitiativesPage() {
     setCustomForm({
       title: "", description: "", subDomain: "Compensation",
       phase: "Foundation", complexity: "Medium",
-      valueLow: 0, valueHigh: 0, notes: "",
+      valueLow: 0, valueHigh: 0,
+      costLow: undefined, costHigh: undefined,
+      notes: "",
     });
   }
+
+  // Cost validation: both-or-neither, and low ≤ high
+  const costValidationError = useMemo(() => {
+    const { costLow, costHigh } = customForm;
+    const hasLow = costLow !== undefined && costLow > 0;
+    const hasHigh = costHigh !== undefined && costHigh > 0;
+    if (hasLow && !hasHigh) return "Please enter both a low and high cost estimate, or leave both blank.";
+    if (!hasLow && hasHigh) return "Please enter both a low and high cost estimate, or leave both blank.";
+    if (hasLow && hasHigh && costLow! > costHigh!) return "Cost low must be ≤ cost high.";
+    return null;
+  }, [customForm.costLow, customForm.costHigh]);
 
   const recommendations = recommendationsQuery.data as RewardEngineOutput | undefined;
   const portfolio = portfolioQuery.data;
@@ -593,6 +619,8 @@ export default function RewardInitiativesPage() {
       complexity: c.complexity as "Low" | "Medium" | "High" | "Highest",
       valueLow: c.valueLow,
       valueHigh: c.valueHigh,
+      costLow: c.costLow ?? undefined,
+      costHigh: c.costHigh ?? undefined,
       notes: c.notes ?? "",
     });
     setShowCustomModal(true);
@@ -1104,6 +1132,38 @@ export default function RewardInitiativesPage() {
                 </div>
               </div>
             </div>
+            {/* Cost fields */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">
+                Est. Year 1 implementation cost (£)
+                <span className="ml-1 text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <p className="text-[10px] text-muted-foreground">
+                Enter both low and high, or leave both blank. Used by Stage 7 business case.
+              </p>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min={0}
+                  value={customForm.costLow ?? ""}
+                  onChange={(e) => setCustomForm((f) => ({ ...f, costLow: e.target.value === "" ? undefined : Number(e.target.value) }))}
+                  placeholder="Low"
+                  className={`text-xs h-9 ${costValidationError ? "border-rose-500" : ""}`}
+                />
+                <span className="text-xs text-muted-foreground">–</span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={customForm.costHigh ?? ""}
+                  onChange={(e) => setCustomForm((f) => ({ ...f, costHigh: e.target.value === "" ? undefined : Number(e.target.value) }))}
+                  placeholder="High"
+                  className={`text-xs h-9 ${costValidationError ? "border-rose-500" : ""}`}
+                />
+              </div>
+              {costValidationError && (
+                <p className="text-[10px] text-rose-500">{costValidationError}</p>
+              )}
+            </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Notes (optional)</Label>
               <Textarea
@@ -1128,6 +1188,7 @@ export default function RewardInitiativesPage() {
               disabled={
                 !customForm.title.trim() ||
                 !customForm.description.trim() ||
+                !!costValidationError ||
                 addCustomMutation.isPending ||
                 editCustomMutation.isPending
               }

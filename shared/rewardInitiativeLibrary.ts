@@ -102,6 +102,39 @@ export interface ValueCalibration {
   defaultSectorMultiplier: number;
 }
 
+/**
+ * CostCalibration — implementation cost ranges for a 1,000-10,000 employee UK enterprise.
+ *
+ * Interpolation model (NOT a multiplier-on-top-of-range):
+ *   position = clamp(log10(headcount / 1000) / 1, 0, 1)   // 0 at 1000hc, 1 at 10000hc
+ *   estimated_cost = year1Low + position × (year1High − year1Low)
+ *   then × sectorMultiplier (clamped 0.6-2×, applied after interpolation)
+ *
+ * Stage 7 TCO: 3yr_TCO = year1 + 2 × ongoingAnnual
+ */
+export interface CostCalibration {
+  year1Low: number;              // GBP — Year 1 implementation cost, low end (small org)
+  year1High: number;             // GBP — Year 1 implementation cost, high end (large org)
+  ongoingAnnualLow: number;      // GBP — ongoing annual cost, low end
+  ongoingAnnualHigh: number;     // GBP — ongoing annual cost, high end
+  costType: 'annual' | 'project' | 'per_cycle' | 'per_deal';
+  /** headcount at which position = 0 (near low end of range) — default 500 */
+  headcountMin: number;
+  /** headcount at which position = 1 (near high end of range) — default 15000 */
+  headcountMax: number;
+  /** sector cost multipliers — applied after interpolation, clamped 0.6-2× */
+  sectorMultipliers: Partial<Record<string, number>>;
+  /** sub-domain multiplier (e.g. executive_compensation: 1.25) — applied instead of sector if more specific */
+  subDomainMultiplier?: number;
+  defaultSectorMultiplier: number;
+  /** true when implementation cost excludes programme funding (payroll uplift, reward spend, etc.) */
+  excludesProgrammeFunding?: boolean;
+  /** human-readable note surfaced in Stage 7 business case */
+  programmeFundingNote?: string;
+  /** special-case note shown in UI (e.g. per-cycle, per-deal, incremental) */
+  costNote?: string;
+}
+
 export interface ReasoningTemplates {
   strong_fit: string[];
   moderate_fit: string[];
@@ -124,6 +157,7 @@ export interface RewardInitiative {
   priorityFitRules: PriorityFitRule[];
   notRecommendedIf?: Array<{ condition: string; reasoning: string }>;
   valueCalibration: ValueCalibration;
+  costCalibration: CostCalibration;
   bundleWith?: string;        // initiative id
   prerequisiteOf?: string[];  // this initiative is a prerequisite for these
   requiresPrerequisite?: string; // this initiative requires this other initiative
@@ -192,6 +226,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, technology: 1.2, retail: 0.9, public_sector: 0.7 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 250000,
+      year1High: 800000,
+      ongoingAnnualLow: 120000,
+      ongoingAnnualHigh: 350000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.0, professional_services: 1.1, retail: 0.95, public_sector: 0.85, higher_education: 0.85 },
+      defaultSectorMultiplier: 1.0,
+    },
     bundleWith: "ai_driven_merit_cycle_orchestration",
     prerequisiteOf: ["ai_bonus_pool_optimisation"],
     reasoningTemplates: {
@@ -258,6 +303,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.25,
       sectorMultipliers: { financial_services: 1.3, technology: 1.2, public_sector: 0.7 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 200000,
+      year1High: 500000,
+      ongoingAnnualLow: 70000,
+      ongoingAnnualHigh: 170000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.0, public_sector: 0.85 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Incremental cost above Initiative #1 (AI Compensation Recommendation Engine).',
     },
     bundleWith: "ai_compensation_recommendation_engine",
     prerequisiteOf: [],
@@ -339,6 +396,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, technology: 1.1, public_sector: 1.2, retail: 1.1 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 100000,
+      year1High: 400000,
+      ongoingAnnualLow: 55000,
+      ongoingAnnualHigh: 190000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, public_sector: 1.1, technology: 1.0, retail: 0.95 },
+      defaultSectorMultiplier: 1.0,
+    },
     bundleWith: "ai_multi_characteristic_pay_gap_reporting",
     prerequisiteOf: [],
     reasoningTemplates: {
@@ -407,6 +475,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, public_sector: 1.2, technology: 1.1 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 70000,
+      year1High: 200000,
+      ongoingAnnualLow: 25000,
+      ongoingAnnualHigh: 90000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, public_sector: 1.1, technology: 1.0 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Incremental cost above Initiative #3 (AI Pay Equity Continuous Monitoring).',
+    },
     bundleWith: "ai_pay_equity_continuous_monitoring",
     prerequisiteOf: [],
     reasoningTemplates: {
@@ -465,6 +545,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.15,
       sectorMultipliers: { financial_services: 1.2, public_sector: 1.2, retail: 1.1 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 200000,
+      year1High: 700000,
+      ongoingAnnualLow: 67000,
+      ongoingAnnualHigh: 233000,
+      costType: 'per_cycle',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, public_sector: 1.1, retail: 1.0 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Cost is per audit cycle (typically every 2-3 years). Ongoing figure shown is amortised annually.',
     },
     reasoningTemplates: {
       strong_fit: [
@@ -535,6 +627,20 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.2, public_sector: 0.8 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 250000,
+      year1High: 800000,
+      ongoingAnnualLow: 15000,
+      ongoingAnnualHigh: 40000,
+      costType: 'project',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, professional_services: 1.1, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+      excludesProgrammeFunding: true,
+      programmeFundingNote: 'Excludes payroll uplift from moving employees onto new band minimums (typically 1-3% of payroll). Surface as a separate programme funding line in the business case.',
+      costNote: 'Primarily a one-off design project; ongoing cost is minimal annual band refresh.',
+    },
     prerequisiteOf: ["ai_skills_based_pay_modelling"],
     reasoningTemplates: {
       strong_fit: [
@@ -594,6 +700,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, technology: 1.2, pharmaceuticals_biotech: 1.2 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 40000,
+      year1High: 160000,
+      ongoingAnnualLow: 25000,
+      ongoingAnnualHigh: 100000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: [
         "You already use {externalCompDataSources} — this initiative automates and enriches that process.",
@@ -643,6 +760,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.15,
       sectorMultipliers: { financial_services: 1.3, technology: 1.1, public_sector: 1.1 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 500000,
+      year1High: 1800000,
+      ongoingAnnualLow: 20000,
+      ongoingAnnualHigh: 60000,
+      costType: 'project',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, professional_services: 1.1, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'One-off architecture project; ongoing cost is minimal maintenance and taxonomy updates.',
     },
     reasoningTemplates: {
       strong_fit: [
@@ -700,6 +829,19 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.1,
       sectorMultipliers: { financial_services: 1.4, technology: 1.3, retail: 1.1 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 20000,
+      year1High: 80000,
+      ongoingAnnualLow: 20000,
+      ongoingAnnualHigh: 80000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.0 },
+      subDomainMultiplier: 1.25,
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Incremental tooling cost above your existing exec comp advisor relationship. Does not include advisor fees (pre-existing cost).',
     },
     reasoningTemplates: {
       strong_fit: [
@@ -768,6 +910,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, technology: 1.4, professional_services: 1.2 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 40000,
+      year1High: 100000,
+      ongoingAnnualLow: 30000,
+      ongoingAnnualHigh: 80000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population ({criticalAiDigitalTalentPopulation}) makes this a high-priority initiative.",
@@ -833,6 +986,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.25,
       sectorMultipliers: { technology: 1.3, financial_services: 1.2 },
       defaultSectorMultiplier: 0.8,
+    },
+    costCalibration: {
+      year1Low: 500000,
+      year1High: 1500000,
+      ongoingAnnualLow: 100000,
+      ongoingAnnualHigh: 300000,
+      costType: 'project',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'High-uncertainty initiative; many deployments stall. Ongoing cost varies widely with scale and taxonomy maintenance requirements.',
     },
     requiresPrerequisite: "ai_pay_band_design",
     reasoningTemplates: {
@@ -900,6 +1065,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { technology: 1.3, financial_services: 1.2 },
       defaultSectorMultiplier: 0.9,
     },
+    costCalibration: {
+      year1Low: 600000,
+      year1High: 1800000,
+      ongoingAnnualLow: 150000,
+      ongoingAnnualHigh: 400000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: [
         "Your knowledge-worker population and high AI ambition make personalisation viable and high-value.",
@@ -947,6 +1123,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 100000,
+      year1High: 300000,
+      ongoingAnnualLow: 35000,
+      ongoingAnnualHigh: 120000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.1, technology: 1.0, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+    },
     bundleWith: "ai_pay_decision_explainer",
     reasoningTemplates: {
       strong_fit: [
@@ -992,6 +1179,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.2,
       sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 40000,
+      year1High: 120000,
+      ongoingAnnualLow: 20000,
+      ongoingAnnualHigh: 60000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.1, public_sector: 1.0 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Incremental cost above Initiative #13 (AI Total Rewards Statement Generation).',
     },
     bundleWith: "ai_total_rewards_statement_generation",
     reasoningTemplates: {
@@ -1049,6 +1248,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: {},
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 50000,
+      year1High: 180000,
+      ongoingAnnualLow: 25000,
+      ongoingAnnualHigh: 90000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.1, technology: 1.0, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: [
         "A Reward Operations Assistant is a quick win — low complexity, fast to deploy, immediate capacity release.",
@@ -1099,6 +1309,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.2,
       sectorMultipliers: { financial_services: 1.4, technology: 1.2 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 140000,
+      year1High: 360000,
+      ongoingAnnualLow: 60000,
+      ongoingAnnualHigh: 140000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Incremental cost above Initiative #2 (AI-Driven Merit Cycle Orchestration).',
     },
     requiresPrerequisite: "ai_compensation_recommendation_engine",
     reasoningTemplates: {
@@ -1167,6 +1389,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, technology: 1.3, pharmaceuticals_biotech: 1.2 },
       defaultSectorMultiplier: 0.9,
     },
+    costCalibration: {
+      year1Low: 190000,
+      year1High: 600000,
+      ongoingAnnualLow: 70000,
+      ongoingAnnualHigh: 250000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, professional_services: 1.1 },
+      subDomainMultiplier: 1.2,
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: [
         "Your sales workforce composition ({materialSalesWorkforce}) makes sales comp design a high-value initiative.",
@@ -1221,6 +1455,19 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.1,
       sectorMultipliers: { financial_services: 1.4, technology: 1.3 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 150000,
+      year1High: 500000,
+      ongoingAnnualLow: 40000,
+      ongoingAnnualHigh: 150000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      subDomainMultiplier: 1.25,
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Incremental tooling cost above your existing exec comp advisor relationship.',
     },
     reasoningTemplates: {
       strong_fit: [
@@ -1281,6 +1528,19 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 80000,
+      year1High: 260000,
+      ongoingAnnualLow: 40000,
+      ongoingAnnualHigh: 140000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.1, technology: 1.0, retail: 1.0, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+      excludesProgrammeFunding: true,
+      programmeFundingNote: 'Excludes the reward funding itself (typically 0.5-2% of payroll). Surface as a separate programme funding line in the business case.',
+    },
     reasoningTemplates: {
       strong_fit: [
         "Your DC pension architecture ({pensionSchemeArchitecture}) is well-suited to AI-driven engagement.",
@@ -1325,6 +1585,19 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.1, technology: 1.1 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 100000,
+      year1High: 280000,
+      ongoingAnnualLow: 40000,
+      ongoingAnnualHigh: 120000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
+      defaultSectorMultiplier: 1.0,
+      excludesProgrammeFunding: true,
+      programmeFundingNote: 'Excludes retention spend (the pay awards themselves). Surface as a separate programme funding line in the business case.',
+    },
     reasoningTemplates: {
       strong_fit: ["Benefits utilisation analytics is a low-complexity, high-insight initiative."],
       moderate_fit: ["Benefits analytics delivers value across most organisations."],
@@ -1368,6 +1641,19 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.15,
       sectorMultipliers: { financial_services: 1.3, public_sector: 1.2 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 100000,
+      year1High: 300000,
+      ongoingAnnualLow: 25000,
+      ongoingAnnualHigh: 100000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+      excludesProgrammeFunding: true,
+      programmeFundingNote: 'Excludes payroll uplift if geographic differentials are introduced. Surface as a separate programme funding line in the business case.',
     },
     reasoningTemplates: {
       strong_fit: [
@@ -1420,6 +1706,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 90000,
+      year1High: 280000,
+      ongoingAnnualLow: 30000,
+      ongoingAnnualHigh: 100000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: [
         "You already use external comp data — automating the benchmarking process delivers immediate capacity savings.",
@@ -1463,6 +1760,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountBaseline: 1000,
       headcountFactor: 0.2,
       sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 100000,
+      year1High: 320000,
+      ongoingAnnualLow: 35000,
+      ongoingAnnualHigh: 120000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.1, technology: 1.0, public_sector: 0.9 },
       defaultSectorMultiplier: 1.0,
     },
     reasoningTemplates: {
@@ -1519,6 +1827,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, manufacturing: 1.2, public_sector: 1.2 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 200000,
+      year1High: 800000,
+      ongoingAnnualLow: 100000,
+      ongoingAnnualHigh: 400000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, public_sector: 1.1, professional_services: 1.1 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Includes actuarial consultancy costs alongside tooling. Figures assume an established pension scheme.',
+    },
     reasoningTemplates: {
       strong_fit: [
         "Your pension architecture ({pensionSchemeArchitecture}) involves significant strategic decisions that benefit from scenario modelling.",
@@ -1562,6 +1882,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.2,
       sectorMultipliers: {},
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 150000,
+      year1High: 700000,
+      ongoingAnnualLow: 0,
+      ongoingAnnualHigh: 0,
+      costType: 'per_deal',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, professional_services: 1.1 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Cost is per-deal, not annual. Applies when a transaction is active. No standing ongoing cost.',
     },
     reasoningTemplates: {
       strong_fit: ["Reward communications automation is a quick win — low complexity, immediate capacity release."],
@@ -1613,6 +1945,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.3, technology: 1.3, professional_services: 1.2 },
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 70000,
+      year1High: 230000,
+      ongoingAnnualLow: 20000,
+      ongoingAnnualHigh: 80000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, public_sector: 1.1, technology: 1.0 },
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population and sector make pay-related attrition risk a significant concern.",
@@ -1657,6 +2000,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountBaseline: 1000,
       headcountFactor: 0.2,
       sectorMultipliers: { financial_services: 1.1, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 170000,
+      year1High: 570000,
+      ongoingAnnualLow: 60000,
+      ongoingAnnualHigh: 200000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
     reasoningTemplates: {
@@ -1708,6 +2062,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: {},
       defaultSectorMultiplier: 1.0,
     },
+    costCalibration: {
+      year1Low: 60000,
+      year1High: 180000,
+      ongoingAnnualLow: 25000,
+      ongoingAnnualHigh: 70000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.1, technology: 1.0, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+    },
     reasoningTemplates: {
       strong_fit: ["Manager pay conversation coaching is a high-impact initiative for pay transparency readiness."],
       moderate_fit: ["Pay conversation coaching delivers value across most organisations."],
@@ -1755,6 +2120,17 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountBaseline: 1000,
       headcountFactor: 0.2,
       sectorMultipliers: { financial_services: 1.2, technology: 1.1 },
+      defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 175000,
+      year1High: 580000,
+      ongoingAnnualLow: 45000,
+      ongoingAnnualHigh: 150000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
     reasoningTemplates: {
@@ -1821,6 +2197,18 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       headcountFactor: 0.3,
       sectorMultipliers: { retail: 1.2, hospitality_leisure: 1.2, logistics_transport: 1.2 },
       defaultSectorMultiplier: 1.0,
+    },
+    costCalibration: {
+      year1Low: 270000,
+      year1High: 1000000,
+      ongoingAnnualLow: 80000,
+      ongoingAnnualHigh: 250000,
+      costType: 'annual',
+      headcountMin: 500,
+      headcountMax: 15000,
+      sectorMultipliers: { retail: 1.0, hospitality_leisure: 0.95, manufacturing: 0.95, financial_services: 1.1, public_sector: 0.9 },
+      defaultSectorMultiplier: 1.0,
+      costNote: 'Higher than typical for complexity tier due to union consultation requirements and workforce scale factors.',
     },
     reasoningTemplates: {
       strong_fit: [

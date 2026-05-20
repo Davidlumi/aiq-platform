@@ -493,3 +493,124 @@ describe("buildEngineInputs", () => {
     expect(inputs.topRewardPrioritiesNext12Months == null || Array.isArray(inputs.topRewardPrioritiesNext12Months)).toBe(true);
   });
 });
+
+// ─── Cost Calibration tests ────────────────────────────────────────────────────
+
+describe("CostCalibration — library completeness", () => {
+  it("all 30 initiatives have a costCalibration block", () => {
+    for (const init of REWARD_INITIATIVE_LIBRARY) {
+      expect(init.costCalibration).toBeDefined();
+      expect(typeof init.costCalibration!.year1Low).toBe("number");
+      expect(typeof init.costCalibration!.year1High).toBe("number");
+      expect(typeof init.costCalibration!.ongoingAnnualLow).toBe("number");
+      expect(typeof init.costCalibration!.ongoingAnnualHigh).toBe("number");
+    }
+  });
+
+  it("year1Low ≤ year1High for all initiatives", () => {
+    for (const init of REWARD_INITIATIVE_LIBRARY) {
+      const cc = init.costCalibration!;
+      expect(cc.year1Low).toBeLessThanOrEqual(cc.year1High);
+    }
+  });
+
+  it("ongoingAnnualLow ≤ ongoingAnnualHigh for all initiatives", () => {
+    for (const init of REWARD_INITIATIVE_LIBRARY) {
+      const cc = init.costCalibration!;
+      expect(cc.ongoingAnnualLow).toBeLessThanOrEqual(cc.ongoingAnnualHigh);
+    }
+  });
+
+  it("all initiatives have a valid costType", () => {
+    const validTypes = ["annual", "project", "per_cycle", "per_deal"];
+    for (const init of REWARD_INITIATIVE_LIBRARY) {
+      expect(validTypes).toContain(init.costCalibration!.costType);
+    }
+  });
+
+  it("defaultSectorMultiplier is between 0.6 and 2.0 for all initiatives", () => {
+    for (const init of REWARD_INITIATIVE_LIBRARY) {
+      const cc = init.costCalibration!;
+      expect(cc.defaultSectorMultiplier).toBeGreaterThanOrEqual(0.6);
+      expect(cc.defaultSectorMultiplier).toBeLessThanOrEqual(2.0);
+    }
+  });
+
+  it("initiative #1 has researched cost figures (£250k-£800k Year 1)", () => {
+    const init1 = REWARD_INITIATIVE_LIBRARY.find((i) => i.number === 1)!;
+    expect(init1.costCalibration!.year1Low).toBe(250_000);
+    expect(init1.costCalibration!.year1High).toBe(800_000);
+  });
+
+  it("initiative #15 (Reward Ops Assistant) has correct Year 1 range (£50k-£180k)", () => {
+    const init15 = REWARD_INITIATIVE_LIBRARY.find((i) => i.number === 15)!;
+    expect(init15.costCalibration!.year1Low).toBe(50_000);
+    expect(init15.costCalibration!.year1High).toBe(180_000);
+  });
+
+  it("initiative #30 (Frontline Pay) has correct Year 1 range (£270k-£1M)", () => {
+    const init30 = REWARD_INITIATIVE_LIBRARY.find((i) => i.number === 30)!;
+    expect(init30.costCalibration!.year1Low).toBe(270_000);
+    expect(init30.costCalibration!.year1High).toBe(1_000_000);
+  });
+
+  it("special-case costTypes are assigned correctly", () => {
+    const byNum = Object.fromEntries(REWARD_INITIATIVE_LIBRARY.map((i) => [i.number, i]));
+    expect(byNum[5].costCalibration!.costType).toBe("per_cycle");
+    expect(byNum[6].costCalibration!.costType).toBe("project");
+    expect(byNum[8].costCalibration!.costType).toBe("project");
+    expect(byNum[25].costCalibration!.costType).toBe("per_deal");
+  });
+
+  it("programme-funding exclusion flags are set on correct initiatives", () => {
+    const byNum = Object.fromEntries(REWARD_INITIATIVE_LIBRARY.map((i) => [i.number, i]));
+    expect(byNum[6].costCalibration!.excludesProgrammeFunding).toBe(true);
+    expect(byNum[19].costCalibration!.excludesProgrammeFunding).toBe(true);
+    expect(byNum[20].costCalibration!.excludesProgrammeFunding).toBe(true);
+    expect(byNum[21].costCalibration!.excludesProgrammeFunding).toBe(true);
+  });
+});
+
+describe("CostCalibration — engine interpolation", () => {
+  it("calibrated cost for initiative #1 at 8,000 headcount lands near high end (Maya scenario)", () => {
+    const init1 = REWARD_INITIATIVE_LIBRARY.find((i) => i.number === 1)!;
+    const cc = init1.costCalibration!;
+    const headcount = 8_000;
+    const logMin = Math.log10(cc.headcountMin);
+    const logMax = Math.log10(cc.headcountMax);
+    const position = Math.min(1, Math.max(0, (Math.log10(headcount) - logMin) / (logMax - logMin)));
+    const year1 = cc.year1Low + position * (cc.year1High - cc.year1Low);
+    expect(year1).toBeGreaterThan(600_000);
+    expect(year1).toBeLessThanOrEqual(800_000);
+  });
+
+  it("calibrated cost for initiative #1 at 1,000 headcount lands near low end", () => {
+    const init1 = REWARD_INITIATIVE_LIBRARY.find((i) => i.number === 1)!;
+    const cc = init1.costCalibration!;
+    const headcount = 1_000;
+    const logMin = Math.log10(cc.headcountMin);
+    const logMax = Math.log10(cc.headcountMax);
+    const position = Math.min(1, Math.max(0, (Math.log10(headcount) - logMin) / (logMax - logMin)));
+    const year1 = cc.year1Low + position * (cc.year1High - cc.year1Low);
+    expect(year1).toBeGreaterThanOrEqual(250_000);
+    expect(year1).toBeLessThan(450_000);
+  });
+
+  it("engine produces calibratedYear1Cost and calibratedOngoingCost for all results", () => {
+    const output = runRewardRecommendationEngine(makeInputs({ totalEmployeeHeadcount: 5_000 }));
+    for (const r of [...output.recommended, ...output.notRecommended]) {
+      expect(typeof r.calibratedYear1CostLow).toBe("number");
+      expect(typeof r.calibratedYear1CostHigh).toBe("number");
+      expect(r.calibratedYear1CostLow).toBeGreaterThan(0);
+      expect(r.calibratedYear1CostHigh).toBeGreaterThanOrEqual(r.calibratedYear1CostLow);
+    }
+  });
+
+  it("costType is passed through to engine results", () => {
+    const output = runRewardRecommendationEngine(makeInputs());
+    const validTypes = new Set(["annual", "project", "per_cycle", "per_deal"]);
+    for (const r of [...output.recommended, ...output.notRecommended]) {
+      expect(validTypes.has(r.costType)).toBe(true);
+    }
+  });
+});

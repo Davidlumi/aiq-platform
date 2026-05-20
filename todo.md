@@ -4338,3 +4338,11 @@ test
 - [x] Phase balance soft warning (no Foundation initiatives) with override in complete modal
 - [x] Re-assessment diff surface: newly recommended / no longer recommended / changed fit level
 - [x] Align navigation label from "Programmes" to "Initiatives" (StrategyTopNav + useMode.ts)
+
+## Stage 5 — Cost Calibration + Custom Form Cost Fields
+- [ ] Add CostCalibration interface to rewardInitiativeLibrary.ts (interpolation model)
+- [ ] Populate all 30 initiatives with year1Low/year1High/ongoingAnnualLow/ongoingAnnualHigh from library Costs sections
+- [ ] Update recommendation engine to compute calibrated year1 and ongoing cost ranges
+- [ ] Add optional costLow/costHigh fields to custom initiative form (both-or-neither validation, costLow ≤ costHigh)
+- [ ] Update Zod schema in rewardInitiatives router for addCustom/editCustom
+- [ ] Run TypeScript check and update tests
