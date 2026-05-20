@@ -857,6 +857,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
       costNote: 'Incremental tooling cost above your existing exec comp advisor relationship. Does not include advisor fees (pre-existing cost).',
     },
+    supportsPrincipleIds: ["competitive_pay"],
     reasoningTemplates: {
       strong_fit: [
         "As a listed company, remuneration committee support and peer benchmarking are high-value activities.",
@@ -1015,6 +1016,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'High-uncertainty initiative; many deployments stall. Ongoing cost varies widely with scale and taxonomy maintenance requirements.',
     },
     requiresPrerequisite: "ai_pay_band_design",
+    supportsPrincipleIds: ["clear_structure", "evidence_based"],
     reasoningTemplates: {
       strong_fit: [
         "Your knowledge-worker workforce ({workforceKnowledgePct}% knowledge workers) and mature pay structure make this viable.",
@@ -1421,6 +1423,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       subDomainMultiplier: 1.2,
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["evidence_based"],
     reasoningTemplates: {
       strong_fit: [
         "Your sales workforce composition ({materialSalesWorkforce}) makes sales comp design a high-value initiative.",
@@ -1489,6 +1492,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
       costNote: 'Incremental tooling cost above your existing exec comp advisor relationship.',
     },
+    supportsPrincipleIds: ["evidence_based"],
     reasoningTemplates: {
       strong_fit: [
         "As a listed company, LTIP modelling is a high-value initiative for remuneration committee support.",
@@ -1619,6 +1623,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       excludesProgrammeFunding: true,
       programmeFundingNote: 'Excludes retention spend (the pay awards themselves). Surface as a separate programme funding line in the business case.',
     },
+    supportsPrincipleIds: ["individual_needs"],
     reasoningTemplates: {
       strong_fit: ["Benefits utilisation analytics is a low-complexity, high-insight initiative."],
       moderate_fit: ["Benefits analytics delivers value across most organisations."],
@@ -1676,6 +1681,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       excludesProgrammeFunding: true,
       programmeFundingNote: 'Excludes payroll uplift if geographic differentials are introduced. Surface as a separate programme funding line in the business case.',
     },
+    supportsPrincipleIds: ["transparency_default", "equal_pay_commitment"],
     reasoningTemplates: {
       strong_fit: [
         "Your regulatory context ({fcaSysc19InScope}) makes a comprehensive audit trail a compliance necessity.",
@@ -1738,6 +1744,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["competitive_pay", "evidence_based"],
     reasoningTemplates: {
       strong_fit: [
         "You already use external comp data — automating the benchmarking process delivers immediate capacity savings.",
@@ -1794,6 +1801,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.1, technology: 1.0, public_sector: 0.9 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["evidence_based"],
     reasoningTemplates: {
       strong_fit: ["Reward budget forecasting delivers significant value in organisations with complex, multi-component reward structures."],
       moderate_fit: ["Budget forecasting automation delivers value across most organisations."],
@@ -1860,6 +1868,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
       costNote: 'Includes actuarial consultancy costs alongside tooling. Figures assume an established pension scheme.',
     },
+    supportsPrincipleIds: ["individual_needs"],
     reasoningTemplates: {
       strong_fit: [
         "Your pension architecture ({pensionSchemeArchitecture}) involves significant strategic decisions that benefit from scenario modelling.",
@@ -1916,6 +1925,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
       costNote: 'Cost is per-deal, not annual. Applies when a transaction is active. No standing ongoing cost.',
     },
+    supportsPrincipleIds: ["explainable_pay", "transparency_default"],
     reasoningTemplates: {
       strong_fit: ["Reward communications automation is a quick win — low complexity, immediate capacity release."],
       moderate_fit: ["Communications automation delivers value across most organisations."],
@@ -1977,6 +1987,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, public_sector: 1.1, technology: 1.0 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["competitive_pay", "evidence_based"],
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population and sector make pay-related attrition risk a significant concern.",
@@ -2034,6 +2045,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["clear_structure"],
     reasoningTemplates: {
       strong_fit: ["Job architecture rationalisation is a foundational initiative that enables most downstream compensation improvements."],
       moderate_fit: ["Job architecture rationalisation delivers value across most organisations with complex role structures."],
@@ -2155,6 +2167,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["evidence_based", "transparency_default"],
     reasoningTemplates: {
       strong_fit: ["A unified Reward analytics dashboard delivers significant value once foundational data is in place."],
       moderate_fit: ["Reward analytics delivers value across most organisations."],
@@ -2232,6 +2245,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
       costNote: 'Higher than typical for complexity tier due to union consultation requirements and workforce scale factors.',
     },
+    supportsPrincipleIds: ["competitive_pay", "equal_pay_commitment"],
     reasoningTemplates: {
       strong_fit: [
         "Your frontline workforce ({workforceFrontlinePct}% frontline) makes this a high-value initiative.",

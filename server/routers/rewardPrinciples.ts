@@ -51,13 +51,13 @@ function enforceVocab(text: string): string {
 
 // ── Token overlap similarity (for unlink threshold §5.8) ─────────────────────
 function tokenOverlap(a: string, b: string): number {
-  const tokenize = (s: string) =>
-    new Set(s.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean));
+  const tokenize = (s: string): Set<string> =>
+    new Set<string>(s.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean));
   const setA = tokenize(a);
   const setB = tokenize(b);
   if (!setA.size || !setB.size) return 0;
   let overlap = 0;
-  for (const t of setA) if (setB.has(t)) overlap++;
+  setA.forEach(t => { if (setB.has(t)) overlap++; });
   return overlap / Math.max(setA.size, setB.size);
 }
 
@@ -68,14 +68,15 @@ interface PrincipleItem {
   text: string;
   source: "ai_suggested" | "canonical_selected" | "custom";
   aiGeneratedOriginal: string;
+  selected: boolean;
 }
-
 interface WontDoItem {
   id: string;
   wontDoId: string | null;
   text: string;
   source: "ai_suggested" | "canonical_selected" | "custom";
   aiGeneratedOriginal: string;
+  selected: boolean;
 }
 
 // ── Build context string ──────────────────────────────────────────────────────
@@ -94,7 +95,7 @@ async function buildContext(tenantId: string): Promise<string> {
     parts.push(`Company: ${profile.companyName ?? "Unknown"}`);
     if (profile.sector) parts.push(`Sector: ${profile.sector}`);
     if (profile.ownershipStructure) parts.push(`Ownership: ${profile.ownershipStructure}`);
-    if (profile.totalEmployeeHeadcount) parts.push(`Headcount: ~${profile.totalEmployeeHeadcount}`);
+    if (profile.ukEmployeeHeadcount) parts.push(`Headcount: ~${profile.ukEmployeeHeadcount}`);
   }
   if (prework) {
     if (prework.rewardAiAmbition) parts.push(`Reward AI ambition: ${prework.rewardAiAmbition}/4`);
@@ -176,6 +177,7 @@ export const rewardPrinciplesRouter = router({
         text: z.string().max(500),
         source: z.enum(["ai_suggested", "canonical_selected", "custom"]),
         aiGeneratedOriginal: z.string().max(500),
+        selected: z.boolean().default(false),
       })),
       wontDos: z.array(z.object({
         id: z.string(),
@@ -183,6 +185,7 @@ export const rewardPrinciplesRouter = router({
         text: z.string().max(500),
         source: z.enum(["ai_suggested", "canonical_selected", "custom"]),
         aiGeneratedOriginal: z.string().max(500),
+        selected: z.boolean().default(false),
       })),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -306,7 +309,7 @@ Output as JSON:
         ],
         response_format: { type: "json_object" },
       });
-      const raw = response.choices?.[0]?.message?.content ?? "{}";
+      const raw = (response.choices?.[0]?.message?.content as string | undefined) ?? "{}";
       const parsed = JSON.parse(raw);
 
       principles = (parsed.principles ?? []).map((p: { principleId?: string | null; text?: string; source?: string }) => ({
@@ -315,6 +318,7 @@ Output as JSON:
         text: enforceVocab(p.text ?? ""),
         source: (p.source as PrincipleItem["source"]) ?? "ai_suggested",
         aiGeneratedOriginal: enforceVocab(p.text ?? ""),
+        selected: false,
       }));
 
       wontDos = (parsed.wontDos ?? []).map((w: { wontDoId?: string | null; text?: string; source?: string }) => ({
@@ -323,6 +327,7 @@ Output as JSON:
         text: enforceVocab(w.text ?? ""),
         source: (w.source as WontDoItem["source"]) ?? "ai_suggested",
         aiGeneratedOriginal: enforceVocab(w.text ?? ""),
+        selected: false,
       }));
     } catch {
       throw new TRPCError({
@@ -430,7 +435,7 @@ Output as JSON: { "principles": [...], "wontDos": [...] }`;
         ],
         response_format: { type: "json_object" },
       });
-      const raw = response.choices?.[0]?.message?.content ?? "{}";
+      const raw = (response.choices?.[0]?.message?.content as string | undefined) ?? "{}";
       const parsed = JSON.parse(raw);
 
       newPrinciples = (parsed.principles ?? []).map((p: { principleId?: string | null; text?: string; source?: string }) => ({
@@ -439,6 +444,7 @@ Output as JSON: { "principles": [...], "wontDos": [...] }`;
         text: enforceVocab(p.text ?? ""),
         source: "ai_suggested" as const,
         aiGeneratedOriginal: enforceVocab(p.text ?? ""),
+        selected: false,
       }));
 
       newWontDos = (parsed.wontDos ?? []).map((w: { wontDoId?: string | null; text?: string }) => ({
@@ -447,6 +453,7 @@ Output as JSON: { "principles": [...], "wontDos": [...] }`;
         text: enforceVocab(w.text ?? ""),
         source: "ai_suggested" as const,
         aiGeneratedOriginal: enforceVocab(w.text ?? ""),
+        selected: false,
       }));
     } catch {
       throw new TRPCError({
@@ -526,7 +533,7 @@ Output the result now:`;
             { role: "user", content: userPrompt },
           ],
         });
-        result = enforceVocab((response.choices?.[0]?.message?.content ?? "").trim());
+        result = enforceVocab(((response.choices?.[0]?.message?.content as string | undefined) ?? "").trim());
       } catch {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -586,7 +593,7 @@ Output as JSON: { "principleId": "..." | null, "text": "..." }`;
         ],
         response_format: { type: "json_object" },
       });
-      const raw = response.choices?.[0]?.message?.content ?? "{}";
+      const raw = (response.choices?.[0]?.message?.content as string | undefined) ?? "{}";
       const parsed = JSON.parse(raw);
       const text = enforceVocab(parsed.text ?? "");
       result = {
@@ -595,6 +602,7 @@ Output as JSON: { "principleId": "..." | null, "text": "..." }`;
         text,
         source: "ai_suggested",
         aiGeneratedOriginal: text,
+        selected: false,
       };
     } catch {
       throw new TRPCError({
@@ -648,7 +656,7 @@ Output as JSON: { "wontDoId": "..." | null, "text": "..." }`;
         ],
         response_format: { type: "json_object" },
       });
-      const raw = response.choices?.[0]?.message?.content ?? "{}";
+      const raw = (response.choices?.[0]?.message?.content as string | undefined) ?? "{}";
       const parsed = JSON.parse(raw);
       const text = enforceVocab(parsed.text ?? "");
       result = {
@@ -657,6 +665,7 @@ Output as JSON: { "wontDoId": "..." | null, "text": "..." }`;
         text,
         source: "ai_suggested",
         aiGeneratedOriginal: text,
+        selected: false,
       };
     } catch {
       throw new TRPCError({

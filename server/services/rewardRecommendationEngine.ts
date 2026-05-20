@@ -514,11 +514,14 @@ export function runRewardRecommendationEngine(
       }
     }
 
-    // ── Principle boost: if ≥1 confirmed principle aligns, boost fitScore by 0.25 (capped at 3)
+    // ── Principle boost: +0.1 per aligned confirmed principle, capped at +0.3 total (max fitScore 3)
+    // Cumulative: more aligned principles = stronger boost, reflecting depth of alignment (§5.5)
     let boostedFitScore = fitScore;
     let principleBoostApplied = false;
     if (alignedPrincipleIds.length > 0 && fitSignal !== "NOT_RECOMMENDED") {
-      boostedFitScore = Math.min(fitScore + 0.25, 3);
+      const rawBoost = alignedPrincipleIds.length * 0.1;
+      const cappedBoost = Math.min(rawBoost, 0.3);
+      boostedFitScore = Math.min(fitScore + cappedBoost, 3);
       principleBoostApplied = true;
     }
     const finalFitSignal: FitSignal = notRecommendedReason ? "NOT_RECOMMENDED" : scoreToSignal(boostedFitScore);

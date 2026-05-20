@@ -2520,7 +2520,7 @@ export const rewardPrinciples = mysqlTable("reward_principles", {
     id: string;
     principleId: string | null;
     text: string;
-    source: "canonical" | "custom";
+    source: "ai_suggested" | "canonical_selected" | "custom";
     aiGeneratedOriginal: string;
     selected: boolean;
   }>>(),
@@ -2529,7 +2529,7 @@ export const rewardPrinciples = mysqlTable("reward_principles", {
     id: string;
     wontDoId: string | null;
     text: string;
-    source: "canonical" | "custom";
+    source: "ai_suggested" | "canonical_selected" | "custom";
     aiGeneratedOriginal: string;
     selected: boolean;
   }>>(),

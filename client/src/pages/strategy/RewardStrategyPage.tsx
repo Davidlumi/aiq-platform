@@ -48,7 +48,7 @@ const AFFORDANCES: { key: Affordance; label: string; tooltip: string }[] = [
 ];
 
 const MIN_SHIFTS = 3;
-const MAX_SHIFTS = 7;
+const MAX_SHIFTS = 4;
 
 // ── Staleness banner ──────────────────────────────────────────────────────────
 function StalenessBanner({

@@ -4362,3 +4362,24 @@ test
 - [x] Initiative cards: "Supports your principles" chips and "Consistent with your won't-dos" notes in expanded view
 - [x] TypeScript: 0 new errors introduced (27 pre-existing errors in router files remain)
 - [x] Full test suite: 1,444 tests passing
+
+## QA Pre-flight Fixes (Stage 2–4 + Principle Boost)
+- [ ] Populate supportsPrincipleIds for all 14 missing initiatives (9,11,17,18,20,21,22,23,24,25,26,27,29,30)
+- [ ] Switch principle boost to cumulative: +0.1 per aligned principle, capped at +0.3
+- [ ] Fix Stage 3 MAX_SHIFTS from 7 to 4 (spec: 3–4 default 3)
+- [ ] Add manual-write fallback in generate error state (Stage 2, 3, 4): show textarea even when text is empty after failed generation
+- [ ] Add comprehensive test suite for Stage 2 (rewardVision.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
+- [ ] Add comprehensive test suite for Stage 3 (rewardStrategy.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
+- [ ] Add comprehensive test suite for Stage 4 (rewardPrinciples.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
+- [ ] Add principle boost tests: cumulative scoring, cap at 0.3, alignedPrincipleTexts, wontDoReassuranceNotes
+
+## QA Pre-flight Fixes — Completed (May 2026)
+
+- [x] Principle boost changed to cumulative: +0.1 per aligned principle, capped at +0.3
+- [x] Stage 3 max shifts capped at 4 (was 7); router save procedure validates max(4)
+- [x] supportsPrincipleIds populated for all 30 initiatives in the library (was 16/30)
+- [x] Staleness cascade confirmed: Vision→Strategy→Principles (3-stage); Principles→Stage 5 via cache key hash
+- [x] AI error states confirmed: try/catch in all generate/affordance procedures; frontend shows toast + retry
+- [x] Comprehensive tests added: rewardVision.test.ts (28 tests), rewardStrategy.test.ts (28 tests), rewardPrinciples.test.ts (27 tests) = 83 new tests
+- [x] TypeScript errors fixed: totalEmployeeHeadcount→ukEmployeeHeadcount, source enum, selected field, content type cast, Set.forEach
+- [x] All 1,524 tests pass; zero TS errors

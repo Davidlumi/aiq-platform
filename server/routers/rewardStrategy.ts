@@ -134,7 +134,7 @@ function selectShifts(prework: Record<string, unknown>, profile: Record<string, 
     .map(r => r.id);
 
   // Ensure at least 3 shifts — pad with defaults if needed
-  const result = [...new Set(matched)];
+  const result = Array.from(new Set(matched));
   for (const def of DEFAULT_SHIFTS) {
     if (result.length >= 3) break;
     if (!result.includes(def)) result.push(def);
@@ -165,7 +165,7 @@ async function buildContext(tenantId: string): Promise<{
     parts.push(`Company: ${profile.companyName ?? "Unknown"}`);
     if (profile.sector) parts.push(`Sector: ${profile.sector}`);
     if (profile.geographicFootprint) parts.push(`Geography: ${profile.geographicFootprint}`);
-    if (profile.totalEmployeeHeadcount) parts.push(`Headcount: ~${profile.totalEmployeeHeadcount}`);
+    if (profile.ukEmployeeHeadcount) parts.push(`Headcount: ~${profile.ukEmployeeHeadcount}`);
   }
   if (prework) {
     if (prework.rewardAiAmbition) parts.push(`Reward AI ambition: ${prework.rewardAiAmbition}/4`);
@@ -238,7 +238,7 @@ export const rewardStrategyRouter = router({
         id: z.string(),
         text: z.string().max(1000),
         aiGeneratedOriginal: z.string().max(1000),
-      })),
+      })).min(1).max(4),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -311,7 +311,7 @@ Output as JSON array:
         ],
         response_format: { type: "json_object" },
       });
-      const raw = response.choices?.[0]?.message?.content ?? "[]";
+      const raw = (response.choices?.[0]?.message?.content as string | undefined) ?? "[]";
       let parsed: Array<{ id?: string; headline?: string; rationale?: string }>;
       try {
         const obj = JSON.parse(raw);
@@ -409,7 +409,7 @@ Output the result now:`;
             { role: "user", content: userPrompt },
           ],
         });
-        result = enforceVocab((response.choices?.[0]?.message?.content ?? "").trim());
+        result = enforceVocab(((response.choices?.[0]?.message?.content as string | undefined) ?? "").trim());
       } catch {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -463,7 +463,7 @@ Output as JSON: { "headline": "...", "rationale": "..." }`;
         ],
         response_format: { type: "json_object" },
       });
-      const raw = response.choices?.[0]?.message?.content ?? "{}";
+      const raw = (response.choices?.[0]?.message?.content as string | undefined) ?? "{}";
       const parsed = JSON.parse(raw);
       result = enforceVocab(`${parsed.headline ?? ""}\n${parsed.rationale ?? ""}`.trim());
     } catch {

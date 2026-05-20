@@ -73,7 +73,7 @@ async function buildStage1Context(tenantId: string): Promise<string> {
     if (profile.sector) parts.push(`Sector: ${profile.sector}`);
     if (profile.geographicFootprint) parts.push(`Geography: ${profile.geographicFootprint}`);
     if (profile.ownershipStructure) parts.push(`Ownership: ${profile.ownershipStructure}`);
-    if (profile.totalEmployeeHeadcount) parts.push(`Headcount: ~${profile.totalEmployeeHeadcount} employees`);
+    if (profile.ukEmployeeHeadcount) parts.push(`Headcount: ~${profile.ukEmployeeHeadcount} employees`);
     if (profile.businessAiAmbition) {
       parts.push(`Business AI ambition: ${profile.businessAiAmbition}/4`);
     }
@@ -216,7 +216,7 @@ Write the vision statement now:`;
         ],
       });
       visionText = enforceVocab(
-        (response.choices?.[0]?.message?.content ?? "").trim()
+        ((response.choices?.[0]?.message?.content as string | undefined) ?? "").trim()
       );
     } catch {
       throw new TRPCError({
@@ -301,7 +301,7 @@ Output the result now:`;
           ],
         });
         result = enforceVocab(
-          (response.choices?.[0]?.message?.content ?? "").trim()
+          ((response.choices?.[0]?.message?.content as string | undefined) ?? "").trim()
         );
       } catch {
         throw new TRPCError({
