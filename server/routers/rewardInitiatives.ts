@@ -436,39 +436,173 @@ export const rewardInitiativesRouter = router({
     }),
 
   /** Mark Stage 5 as complete — gate for Stage 6 */
-  complete: protectedProcedure.mutation(async ({ ctx }) => {
+  complete: protectedProcedure
+    .input(
+      z.object({
+        /** User has explicitly acknowledged soft-gate warnings and chosen to proceed */
+        overrideSoftGates: z.boolean().optional().default(false),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const tenantId = ctx.user.tenantId;
+
+      const portfolio = await getOrCreatePortfolio(db, tenantId, ctx.user.id);
+      const selected = portfolio.selectedInitiativesJson ?? [];
+
+      const customRows = await db
+        .select()
+        .from(rewardCustomInitiative)
+        .where(
+          and(
+            eq(rewardCustomInitiative.tenantId, tenantId),
+            eq(rewardCustomInitiative.inPortfolio, 1)
+          )
+        );
+
+      const totalInPortfolio = selected.length + customRows.length;
+
+      // Hard gate: must have at least 1 initiative
+      if (totalInPortfolio < 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Add at least one initiative to your portfolio before completing Stage 5.",
+        });
+      }
+
+      // Hard gate: max 12 initiatives
+      if (totalInPortfolio > 12) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Your portfolio has ${totalInPortfolio} initiatives. The maximum is 12. Please remove ${totalInPortfolio - 12} before completing.`,
+        });
+      }
+
+      // Soft gates — return warnings unless user has explicitly overridden
+      if (!input.overrideSoftGates) {
+        const warnings: string[] = [];
+
+        // Soft min-6
+        if (totalInPortfolio < 6) {
+          warnings.push(
+            `Your portfolio has only ${totalInPortfolio} initiative${totalInPortfolio !== 1 ? "s" : ""}. We recommend at least 6 to build a credible strategy. You can proceed with fewer if intentional.`
+          );
+        }
+
+        // At least 1 Foundation initiative
+        const { REWARD_INITIATIVE_LIBRARY } = await import("../../shared/rewardInitiativeLibrary");
+        const foundationInLibrary = new Set(
+          REWARD_INITIATIVE_LIBRARY.filter((i) => i.defaultPhase === "Foundation").map((i) => i.id)
+        );
+        const hasFoundation =
+          selected.some((id) => foundationInLibrary.has(id)) ||
+          customRows.some((c) => c.phase === "Foundation");
+
+        if (!hasFoundation) {
+          warnings.push(
+            "Your portfolio has no Foundation-phase initiatives. Starting with at least one Foundation initiative ensures you build the capabilities needed for Build and Optimise phases."
+          );
+        }
+
+        if (warnings.length > 0) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: JSON.stringify({ type: "soft_gate_warnings", warnings }),
+          });
+        }
+      }
+
+      await db
+        .update(rewardInitiativePortfolio)
+        .set({ isCompleted: 1, completedAt: Date.now(), updatedAt: Date.now() })
+        .where(eq(rewardInitiativePortfolio.tenantId, tenantId));
+
+      return { success: true };
+    }),
+
+  /**
+   * Get a diff between the most recent two recommendation runs for this tenant.
+   * Returns newly recommended, no longer recommended, and changed-fit-level initiatives.
+   * Returns null if there is only one run (first time).
+   */
+  getDiff: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
     const tenantId = ctx.user.tenantId;
 
-    const portfolio = await getOrCreatePortfolio(db, tenantId, ctx.user.id);
-    const selected = portfolio.selectedInitiativesJson ?? [];
+    // Fetch the two most recent distinct runs ordered by ranAt desc
+    const runs = await db
+      .select({
+        id: rewardRecommendationRun.id,
+        ranAt: rewardRecommendationRun.ranAt,
+        inputsHash: rewardRecommendationRun.inputsHash,
+        recommendationsJson: rewardRecommendationRun.recommendationsJson,
+      })
+      .from(rewardRecommendationRun)
+      .where(eq(rewardRecommendationRun.tenantId, tenantId))
+      .orderBy(rewardRecommendationRun.ranAt)
+      .limit(100);
 
-    const customCount = await db
-      .select({ id: rewardCustomInitiative.id })
-      .from(rewardCustomInitiative)
-      .where(
-        and(
-          eq(rewardCustomInitiative.tenantId, tenantId),
-          eq(rewardCustomInitiative.inPortfolio, 1)
-        )
-      );
+    if (runs.length < 2) return null;
 
-    const totalInPortfolio = selected.length + customCount.length;
+    // Get the latest and second-latest (distinct hash)
+    const latest = runs[runs.length - 1];
+    const previous = [...runs].reverse().find((r) => r.inputsHash !== latest.inputsHash);
+    if (!previous) return null;
 
-    if (totalInPortfolio < 1) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Add at least one initiative to your portfolio before completing Stage 5.",
-      });
-    }
+    type RunJson = { recommended: { initiativeId: string; fitSignal: string; title: string }[]; notRecommended: { initiativeId: string; title: string }[] };
+    const latestRecs = latest.recommendationsJson as unknown as RunJson;
+    const prevRecs = previous.recommendationsJson as unknown as RunJson;
 
-    await db
-      .update(rewardInitiativePortfolio)
-      .set({ isCompleted: 1, completedAt: Date.now(), updatedAt: Date.now() })
-      .where(eq(rewardInitiativePortfolio.tenantId, tenantId));
+    if (!latestRecs || !prevRecs) return null;
 
-    return { success: true };
+    const latestRecIds = new Set(latestRecs.recommended.map((r) => r.initiativeId));
+    const prevRecIds = new Set(prevRecs.recommended.map((r) => r.initiativeId));
+    const latestNotRecIds = new Set(latestRecs.notRecommended.map((r) => r.initiativeId));
+    const prevNotRecIds = new Set(prevRecs.notRecommended.map((r) => r.initiativeId));
+
+    const prevFitById = new Map(prevRecs.recommended.map((r) => [r.initiativeId, r.fitSignal]));
+    const latestFitById = new Map(latestRecs.recommended.map((r) => [r.initiativeId, r.fitSignal]));
+    const latestTitleById = new Map([
+      ...latestRecs.recommended.map((r) => [r.initiativeId, r.title] as [string, string]),
+      ...latestRecs.notRecommended.map((r) => [r.initiativeId, r.title] as [string, string]),
+    ]);
+    const prevTitleById = new Map([
+      ...prevRecs.recommended.map((r) => [r.initiativeId, r.title] as [string, string]),
+      ...prevRecs.notRecommended.map((r) => [r.initiativeId, r.title] as [string, string]),
+    ]);
+
+    // Newly recommended: in latest recommended, not in previous recommended
+    const newlyRecommended = latestRecs.recommended
+      .filter((r) => !prevRecIds.has(r.initiativeId))
+      .map((r) => ({ initiativeId: r.initiativeId, title: r.title, fitSignal: r.fitSignal }));
+
+    // No longer recommended: in previous recommended, not in latest recommended
+    const noLongerRecommended = prevRecs.recommended
+      .filter((r) => !latestRecIds.has(r.initiativeId))
+      .map((r) => ({ initiativeId: r.initiativeId, title: prevTitleById.get(r.initiativeId) ?? r.initiativeId }));
+
+    // Changed fit level: in both recommended lists but different fitSignal
+    const changedFitLevel = latestRecs.recommended
+      .filter((r) => prevRecIds.has(r.initiativeId) && prevFitById.get(r.initiativeId) !== r.fitSignal)
+      .map((r) => ({
+        initiativeId: r.initiativeId,
+        title: latestTitleById.get(r.initiativeId) ?? r.initiativeId,
+        previousFit: prevFitById.get(r.initiativeId) ?? "UNKNOWN",
+        currentFit: r.fitSignal,
+      }));
+
+    const hasDiff = newlyRecommended.length > 0 || noLongerRecommended.length > 0 || changedFitLevel.length > 0;
+
+    return {
+      hasDiff,
+      previousRunAt: previous.ranAt,
+      latestRunAt: latest.ranAt,
+      newlyRecommended,
+      noLongerRecommended,
+      changedFitLevel,
+    };
   }),
 
   /** Reopen Stage 5 for editing */

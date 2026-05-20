@@ -40,7 +40,7 @@ export function useModeLabels() {
     /** "Strategy" label for stage 3 */
     stage3Label: mode === "reward" ? "Reward Philosophy" : "Strategy",
     /** "The Plan" label for stage 5 */
-    stage5Label: mode === "reward" ? "Reward Programmes" : "The Plan",
+    stage5Label: mode === "reward" ? "Reward Initiatives" : "The Plan",
     /** "Business Case" label for stage 7 */
     stage7Label: mode === "reward" ? "Business Case" : "Business Case",
     /** "Capability" label for stage 8 */

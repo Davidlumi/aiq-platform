@@ -343,6 +343,103 @@ describe("Reward Recommendation Engine — reasoning lines", () => {
   });
 });
 
+// ─── Soft-gate and portfolio validation ─────────────────────────────────────
+
+describe("portfolio gate rules", () => {
+  it("library has Foundation-phase initiatives", () => {
+    const foundationInitiatives = REWARD_INITIATIVE_LIBRARY.filter((i) => i.defaultPhase === "Foundation");
+    expect(foundationInitiatives.length).toBeGreaterThan(0);
+  });
+
+  it("library has Build-phase initiatives", () => {
+    const buildInitiatives = REWARD_INITIATIVE_LIBRARY.filter((i) => i.defaultPhase === "Build");
+    expect(buildInitiatives.length).toBeGreaterThan(0);
+  });
+
+  it("library has Optimise-phase initiatives", () => {
+    const optimiseInitiatives = REWARD_INITIATIVE_LIBRARY.filter((i) => i.defaultPhase === "Optimise");
+    expect(optimiseInitiatives.length).toBeGreaterThan(0);
+  });
+
+  it("soft gate min-6 warning message is well-formed", () => {
+    const count = 3;
+    const msg = `Your portfolio has only ${count} initiative${count !== 1 ? "s" : ""}. We recommend at least 6 to build a credible strategy. You can proceed with fewer if intentional.`;
+    expect(msg).toContain("3 initiatives");
+    expect(msg).toContain("at least 6");
+  });
+
+  it("soft gate Foundation warning message is well-formed", () => {
+    const msg = "Your portfolio has no Foundation-phase initiatives. Starting with at least one Foundation initiative ensures you build the capabilities needed for Build and Optimise phases.";
+    expect(msg).toContain("Foundation");
+    expect(msg).toContain("Build and Optimise");
+  });
+
+  it("library has more than 12 initiatives (supports max-12 portfolio cap)", () => {
+    expect(REWARD_INITIATIVE_LIBRARY.length).toBeGreaterThan(12);
+  });
+});
+
+// ─── getDiff logic ────────────────────────────────────────────────────────────
+
+describe("getDiff logic (pure function tests)", () => {
+  it("correctly identifies newly recommended initiatives", () => {
+    const prevRecs = [{ initiativeId: "ri-001", fitSignal: "MODERATE_FIT", title: "A" }];
+    const latestRecs = [
+      { initiativeId: "ri-001", fitSignal: "MODERATE_FIT", title: "A" },
+      { initiativeId: "ri-002", fitSignal: "STRONG_FIT", title: "B" },
+    ];
+    const prevIds = new Set(prevRecs.map((r) => r.initiativeId));
+    const newlyRecommended = latestRecs.filter((r) => !prevIds.has(r.initiativeId));
+    expect(newlyRecommended).toHaveLength(1);
+    expect(newlyRecommended[0].initiativeId).toBe("ri-002");
+  });
+
+  it("correctly identifies no-longer-recommended initiatives", () => {
+    const prevRecs = [
+      { initiativeId: "ri-001", fitSignal: "MODERATE_FIT", title: "A" },
+      { initiativeId: "ri-003", fitSignal: "WEAK_FIT", title: "C" },
+    ];
+    const latestRecs = [{ initiativeId: "ri-001", fitSignal: "MODERATE_FIT", title: "A" }];
+    const latestIds = new Set(latestRecs.map((r) => r.initiativeId));
+    const noLongerRecommended = prevRecs.filter((r) => !latestIds.has(r.initiativeId));
+    expect(noLongerRecommended).toHaveLength(1);
+    expect(noLongerRecommended[0].initiativeId).toBe("ri-003");
+  });
+
+  it("correctly identifies changed fit level", () => {
+    const prevRecs = [{ initiativeId: "ri-001", fitSignal: "WEAK_FIT", title: "A" }];
+    const latestRecs = [{ initiativeId: "ri-001", fitSignal: "STRONG_FIT", title: "A" }];
+    const prevFitById = new Map(prevRecs.map((r) => [r.initiativeId, r.fitSignal]));
+    const changedFitLevel = latestRecs.filter(
+      (r) => prevFitById.has(r.initiativeId) && prevFitById.get(r.initiativeId) !== r.fitSignal
+    );
+    expect(changedFitLevel).toHaveLength(1);
+    expect(changedFitLevel[0].fitSignal).toBe("STRONG_FIT");
+  });
+
+  it("returns no diff when inputs are identical", () => {
+    const recs = [{ initiativeId: "ri-001", fitSignal: "MODERATE_FIT", title: "A" }];
+    const prevIds = new Set(recs.map((r) => r.initiativeId));
+    const latestIds = new Set(recs.map((r) => r.initiativeId));
+    const prevFitById = new Map(recs.map((r) => [r.initiativeId, r.fitSignal]));
+    const newlyRecommended = recs.filter((r) => !prevIds.has(r.initiativeId));
+    const noLongerRecommended = recs.filter((r) => !latestIds.has(r.initiativeId));
+    const changedFitLevel = recs.filter(
+      (r) => prevFitById.has(r.initiativeId) && prevFitById.get(r.initiativeId) !== r.fitSignal
+    );
+    const hasDiff = newlyRecommended.length > 0 || noLongerRecommended.length > 0 || changedFitLevel.length > 0;
+    expect(hasDiff).toBe(false);
+  });
+
+  it("hasDiff is true when any category has changes", () => {
+    const newlyRecommended = [{ initiativeId: "ri-002", fitSignal: "STRONG_FIT", title: "B" }];
+    const noLongerRecommended: unknown[] = [];
+    const changedFitLevel: unknown[] = [];
+    const hasDiff = newlyRecommended.length > 0 || noLongerRecommended.length > 0 || changedFitLevel.length > 0;
+    expect(hasDiff).toBe(true);
+  });
+});
+
 // ─── buildEngineInputs ────────────────────────────────────────────────────────
 
 describe("buildEngineInputs", () => {

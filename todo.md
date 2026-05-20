@@ -4331,3 +4331,10 @@ test
 - [x] 29 tests in server/rewardInitiatives.test.ts — all passing
 - [x] TypeScript: 0 errors
 - [x] Full test suite: 1,416 tests passing
+
+## Stage 5 Reward Initiatives — QA Gaps (Fix Pass)
+
+- [ ] Soft min-6 / max-12 / at-least-1-Foundation gate with override acknowledgement (server + UI)
+- [ ] Phase balance soft warning (no Foundation initiatives) with override in complete modal
+- [ ] Re-assessment diff surface: newly recommended / no longer recommended / changed fit level
+- [ ] Align navigation label from "Programmes" to "Initiatives" (StrategyTopNav + useMode.ts)

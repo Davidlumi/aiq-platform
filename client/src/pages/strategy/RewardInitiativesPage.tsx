@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import {
   Plus, CheckCircle2, XCircle, ChevronDown, ChevronUp,
   Sparkles, AlertTriangle, Info, Layers, TrendingUp,
-  ArrowRight, Trash2, Pencil, Lock,
+  ArrowRight, Trash2, Pencil, Lock, RefreshCw, TrendingDown, Minus,
 } from "lucide-react";
 import type { RewardRecommendationResult, RewardEngineOutput } from "@/../../server/services/rewardRecommendationEngine";
 
@@ -409,8 +409,11 @@ export default function RewardInitiativesPage() {
     notes: "",
   });
 
-  // Complete modal
+  // Complete modal + soft-gate state
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [softGateWarnings, setSoftGateWarnings] = useState<string[]>([]);
+  const [overrideSoftGates, setOverrideSoftGates] = useState(false);
+  const [showDiffBanner, setShowDiffBanner] = useState(true);
 
   // Data
   const statusQuery = trpc.rewardInitiatives.getStatus.useQuery();
@@ -470,11 +473,36 @@ export default function RewardInitiativesPage() {
       utils.rewardInitiatives.getStatus.invalidate();
       utils.gate.getState.invalidate();
       setShowCompleteModal(false);
+      setSoftGateWarnings([]);
+      setOverrideSoftGates(false);
       toast.success("Stage 5 complete — your initiative portfolio is confirmed.");
       navigate("/strategy");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      // Detect soft-gate warning payload
+      try {
+        const parsed = JSON.parse(e.message) as { type: string; warnings: string[] };
+        if (parsed.type === "soft_gate_warnings" && parsed.warnings?.length) {
+          setSoftGateWarnings(parsed.warnings);
+          return;
+        }
+      } catch {
+        // Not a JSON payload — fall through
+      }
+      toast.error(e.message);
+    },
   });
+
+  // Diff query — only runs after recommendations have loaded
+  const diffQuery = trpc.rewardInitiatives.getDiff.useQuery(undefined, {
+    enabled: statusQuery.data?.canStart === true,
+  });
+
+  function handleCompleteClick() {
+    setSoftGateWarnings([]);
+    setOverrideSoftGates(false);
+    setShowCompleteModal(true);
+  }
 
   function resetCustomForm() {
     setCustomForm({
@@ -587,7 +615,7 @@ export default function RewardInitiativesPage() {
           <Button
             size="sm"
             className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-            onClick={() => setShowCompleteModal(true)}
+            onClick={handleCompleteClick}
             disabled={!portfolioStats || portfolioStats.count < 1}
           >
             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
@@ -601,6 +629,63 @@ export default function RewardInitiativesPage() {
         ) : undefined
       }
     >
+      {/* Re-assessment diff banner */}
+      {showDiffBanner && diffQuery.data?.hasDiff && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3">
+          <RefreshCw className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+              Recommendations updated
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Your Stage 1 inputs have changed since the last run. Here’s what changed:
+            </p>
+            <div className="mt-2 space-y-1">
+              {diffQuery.data.newlyRecommended.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                  <Plus className="w-3 h-3 flex-shrink-0" />
+                  <span>
+                    <strong>{diffQuery.data.newlyRecommended.length}</strong> newly recommended:{" "}
+                    {diffQuery.data.newlyRecommended.slice(0, 3).map((r) => r.title).join(", ")}
+                    {diffQuery.data.newlyRecommended.length > 3 && ` +${diffQuery.data.newlyRecommended.length - 3} more`}
+                  </span>
+                </div>
+              )}
+              {diffQuery.data.noLongerRecommended.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400">
+                  <Minus className="w-3 h-3 flex-shrink-0" />
+                  <span>
+                    <strong>{diffQuery.data.noLongerRecommended.length}</strong> no longer recommended:{" "}
+                    {diffQuery.data.noLongerRecommended.slice(0, 3).map((r) => r.title).join(", ")}
+                    {diffQuery.data.noLongerRecommended.length > 3 && ` +${diffQuery.data.noLongerRecommended.length - 3} more`}
+                  </span>
+                </div>
+              )}
+              {diffQuery.data.changedFitLevel.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                  <TrendingDown className="w-3 h-3 flex-shrink-0" />
+                  <span>
+                    <strong>{diffQuery.data.changedFitLevel.length}</strong> changed fit level:{" "}
+                    {diffQuery.data.changedFitLevel.slice(0, 3).map((r) => `${r.title} (${FIT_SIGNAL_CONFIG[r.previousFit]?.label ?? r.previousFit} → ${FIT_SIGNAL_CONFIG[r.currentFit]?.label ?? r.currentFit})`).join(", ")}
+                    {diffQuery.data.changedFitLevel.length > 3 && ` +${diffQuery.data.changedFitLevel.length - 3} more`}
+                  </span>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1.5">
+              Review your portfolio selections in light of these changes.
+            </p>
+          </div>
+          <button
+            className="text-muted-foreground hover:text-foreground transition-colors ml-2 flex-shrink-0"
+            onClick={() => setShowDiffBanner(false)}
+            aria-label="Dismiss diff banner"
+          >
+            <XCircle className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Gate banner — prework not complete */}
       {!statusQuery.data?.canStart && !statusQuery.isLoading && (
         <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
@@ -1055,32 +1140,83 @@ export default function RewardInitiativesPage() {
       </Dialog>
 
       {/* Complete Stage 5 modal */}
-      <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
+      <Dialog
+        open={showCompleteModal}
+        onOpenChange={(open) => {
+          if (!open) { setShowCompleteModal(false); setSoftGateWarnings([]); setOverrideSoftGates(false); }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base">Complete Stage 5?</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-3">
-            <p className="text-sm text-muted-foreground">
-              You have <strong>{portfolioStats?.count ?? 0} initiative{(portfolioStats?.count ?? 0) !== 1 ? "s" : ""}</strong> in your portfolio with an estimated 3-year value of{" "}
-              <strong>{portfolioStats ? formatValue(portfolioStats.valueLow, portfolioStats.valueHigh) : "—"}</strong>.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Completing Stage 5 will lock your initiative portfolio and unlock Stage 6. You can re-open this stage at any time.
-            </p>
+            {/* Portfolio summary */}
+            <div className="rounded-lg bg-muted/40 p-3 text-sm">
+              <p>
+                <strong>{portfolioStats?.count ?? 0} initiative{(portfolioStats?.count ?? 0) !== 1 ? "s" : ""}</strong>
+                {" "}in your portfolio • estimated 3-year value:{" "}
+                <strong>{portfolioStats ? formatValue(portfolioStats.valueLow, portfolioStats.valueHigh) : "—"}</strong>
+              </p>
+              {portfolioStats && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Phase breakdown:{" "}
+                  {Object.entries(portfolioStats.phaseCounts)
+                    .filter(([, c]) => c > 0)
+                    .map(([p, c]) => `${c} ${p}`)
+                    .join(" · ") || "None"}
+                </p>
+              )}
+            </div>
+
+            {/* Soft-gate warnings */}
+            {softGateWarnings.length > 0 && (
+              <div className="space-y-2">
+                {softGateWarnings.map((w, i) => (
+                  <div key={i} className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-amber-700 dark:text-amber-300">{w}</p>
+                  </div>
+                ))}
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={overrideSoftGates}
+                    onChange={(e) => setOverrideSoftGates(e.target.checked)}
+                    className="mt-0.5 accent-amber-500"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    I understand the recommendations above and want to proceed with my current portfolio.
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {softGateWarnings.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Completing Stage 5 will lock your initiative portfolio and unlock Stage 6. You can re-open this stage at any time.
+              </p>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowCompleteModal(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setShowCompleteModal(false); setSoftGateWarnings([]); setOverrideSoftGates(false); }}
+            >
               Cancel
             </Button>
             <Button
               size="sm"
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              disabled={completeMutation.isPending}
-              onClick={() => completeMutation.mutate()}
+              disabled={
+                completeMutation.isPending ||
+                (softGateWarnings.length > 0 && !overrideSoftGates)
+              }
+              onClick={() => completeMutation.mutate({ overrideSoftGates })}
             >
               <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-              Confirm portfolio
+              {softGateWarnings.length > 0 ? "Proceed anyway" : "Confirm portfolio"}
             </Button>
           </DialogFooter>
         </DialogContent>

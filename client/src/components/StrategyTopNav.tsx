@@ -248,8 +248,8 @@ export default function StrategyTopNav() {
     if (s.number === 5 && tenantMode === "reward") {
       return {
         ...s,
-        label: "Programmes",
-        shortLabel: "Programmes",
+        label: "Initiatives",
+        shortLabel: "Initiatives",
         route: "/strategy/reward-initiatives",
         what: "Build your Reward initiative portfolio from AI-powered recommendations",
       };
