@@ -31,6 +31,9 @@ import { gateRouter } from "./routers/gate";
 import { companyProfileRouter } from "./routers/companyProfile";
 import { rewardPreworkRouter } from "./routers/rewardPrework";
 import { rewardInitiativesRouter } from "./routers/rewardInitiatives";
+import { rewardVisionRouter } from "./routers/rewardVision";
+import { rewardStrategyRouter } from "./routers/rewardStrategy";
+import { rewardPrinciplesRouter } from "./routers/rewardPrinciples";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -64,6 +67,9 @@ export const appRouter = router({
   companyProfile: companyProfileRouter,
   rewardPrework: rewardPreworkRouter,
   rewardInitiatives: rewardInitiativesRouter,
+  rewardVision: rewardVisionRouter,
+  rewardStrategy: rewardStrategyRouter,
+  rewardPrinciples: rewardPrinciplesRouter,
 });
 
 export type AppRouter = typeof appRouter;

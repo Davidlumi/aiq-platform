@@ -162,6 +162,12 @@ export interface RewardInitiative {
   prerequisiteOf?: string[];  // this initiative is a prerequisite for these
   requiresPrerequisite?: string; // this initiative requires this other initiative
   reasoningTemplates: ReasoningTemplates;
+  /**
+   * Canonical principle IDs from Stage 4 that this initiative supports.
+   * Used by the Stage 5 engine to boost fit score when the tenant has confirmed
+   * those principles, and to render alignment notes on initiative cards.
+   */
+  supportsPrincipleIds?: string[];
 }
 
 // ─── Library ──────────────────────────────────────────────────────────────────
@@ -239,6 +245,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     bundleWith: "ai_driven_merit_cycle_orchestration",
     prerequisiteOf: ["ai_bonus_pool_optimisation"],
+    supportsPrincipleIds: ["explainable_pay", "evidence_based", "manager_authority"],
     reasoningTemplates: {
       strong_fit: [
         "Your sector ({sector}) and pay structure maturity make this a high-value initiative.",
@@ -318,6 +325,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     bundleWith: "ai_compensation_recommendation_engine",
     prerequisiteOf: [],
+    supportsPrincipleIds: ["evidence_based", "manager_authority"],
     reasoningTemplates: {
       strong_fit: [
         "Paired with the Compensation Recommendation Engine, this completes the merit cycle modernisation.",
@@ -409,6 +417,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     bundleWith: "ai_multi_characteristic_pay_gap_reporting",
     prerequisiteOf: [],
+    supportsPrincipleIds: ["continuous_fairness", "equal_pay_commitment"],
     reasoningTemplates: {
       strong_fit: [
         "Your sector ({sector}) faces significant regulatory scrutiny on pay equity.",
@@ -489,6 +498,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     bundleWith: "ai_pay_equity_continuous_monitoring",
     prerequisiteOf: [],
+    supportsPrincipleIds: ["continuous_fairness", "transparency_default"],
     reasoningTemplates: {
       strong_fit: [
         "Often deployed alongside Pay Equity Continuous Monitoring (#3) for complete coverage.",
@@ -558,6 +568,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
       costNote: 'Cost is per audit cycle (typically every 2-3 years). Ongoing figure shown is amortised annually.',
     },
+    supportsPrincipleIds: ["equal_pay_commitment"],
     reasoningTemplates: {
       strong_fit: [
         "Your current pay equity capability ({payEquityCapability}) means equal pay risk may be unquantified.",
@@ -642,6 +653,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Primarily a one-off design project; ongoing cost is minimal annual band refresh.',
     },
     prerequisiteOf: ["ai_skills_based_pay_modelling"],
+    supportsPrincipleIds: ["clear_structure"],
     reasoningTemplates: {
       strong_fit: [
         "Your pay structure maturity ({payStructureMaturity}) means formal pay bands are either absent or overdue for refresh.",
@@ -711,6 +723,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["evidence_based", "competitive_pay"],
     reasoningTemplates: {
       strong_fit: [
         "You already use {externalCompDataSources} — this initiative automates and enriches that process.",
@@ -773,6 +786,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
       costNote: 'One-off architecture project; ongoing cost is minimal maintenance and taxonomy updates.',
     },
+    supportsPrincipleIds: ["clear_structure", "transparency_default"],
     reasoningTemplates: {
       strong_fit: [
         "Pay transparency regulation is advancing — this initiative positions you ahead of mandatory requirements.",
@@ -921,6 +935,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["competitive_pay"],
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population ({criticalAiDigitalTalentPopulation}) makes this a high-priority initiative.",
@@ -1076,6 +1091,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.2, technology: 1.1, public_sector: 0.85 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["individual_needs"],
     reasoningTemplates: {
       strong_fit: [
         "Your knowledge-worker population and high AI ambition make personalisation viable and high-value.",
@@ -1135,6 +1151,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     bundleWith: "ai_pay_decision_explainer",
+    supportsPrincipleIds: ["explainable_pay", "transparency_default"],
     reasoningTemplates: {
       strong_fit: [
         "Total rewards statements are a high-impact, relatively low-complexity initiative that improves EVP perception.",
@@ -1193,6 +1210,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Incremental cost above Initiative #13 (AI Total Rewards Statement Generation).',
     },
     bundleWith: "ai_total_rewards_statement_generation",
+    supportsPrincipleIds: ["explainable_pay", "transparency_default"],
     reasoningTemplates: {
       strong_fit: [
         "Pay decision explainers reduce HR query volume and improve pay satisfaction — high ROI relative to complexity.",
@@ -1259,6 +1277,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.1, technology: 1.0, public_sector: 0.9 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["amplify_team"],
     reasoningTemplates: {
       strong_fit: [
         "A Reward Operations Assistant is a quick win — low complexity, fast to deploy, immediate capacity release.",
@@ -1323,6 +1342,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Incremental cost above Initiative #2 (AI-Driven Merit Cycle Orchestration).',
     },
     requiresPrerequisite: "ai_compensation_recommendation_engine",
+    supportsPrincipleIds: ["evidence_based"],
     reasoningTemplates: {
       strong_fit: [
         "Bonus pool optimisation delivers significant value in your sector ({sector}) where bonus is a major component of total comp.",
@@ -1541,6 +1561,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       excludesProgrammeFunding: true,
       programmeFundingNote: 'Excludes the reward funding itself (typically 0.5-2% of payroll). Surface as a separate programme funding line in the business case.',
     },
+    supportsPrincipleIds: ["individual_needs"],
     reasoningTemplates: {
       strong_fit: [
         "Your DC pension architecture ({pensionSchemeArchitecture}) is well-suited to AI-driven engagement.",
@@ -2073,6 +2094,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       sectorMultipliers: { financial_services: 1.1, technology: 1.0, public_sector: 0.9 },
       defaultSectorMultiplier: 1.0,
     },
+    supportsPrincipleIds: ["amplify_team"],
     reasoningTemplates: {
       strong_fit: ["Manager pay conversation coaching is a high-impact initiative for pay transparency readiness."],
       moderate_fit: ["Pay conversation coaching delivers value across most organisations."],

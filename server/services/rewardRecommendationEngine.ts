@@ -72,6 +72,16 @@ export interface RewardEngineInputs {
   aiTalentRetentionConcern: string | null;
   recentRemunerationVoteConcerns: string | null;
   nationalLivingWageExposure: string | null;
+  /** Canonical principle IDs the tenant has confirmed in Stage 4 */
+  confirmedPrincipleIds: string[];
+  /** Won't-do template IDs the tenant has confirmed in Stage 4 */
+  confirmedWontDoIds: string[];
+  /** Won't-do note text keyed by wontDoId — for reassurance rendering */
+  wontDoNotesByWontDoId: Record<string, string>;
+  /** Principle text keyed by principleId — for alignment note rendering */
+  principleTextByPrincipleId: Record<string, string>;
+  /** Won't-do initiative numbers affected, keyed by wontDoId */
+  wontDoAffectedNumbersByWontDoId: Record<string, number[]>;
 }
 
 export interface RewardRecommendationResult {
@@ -110,6 +120,14 @@ export interface RewardRecommendationResult {
     capability: FitSignal | null;
     priority: FitSignal | null;
   };
+  /** Canonical principle IDs confirmed by the tenant that this initiative supports */
+  alignedPrincipleIds: string[];
+  /** Principle text for each aligned principle (for UI rendering) */
+  alignedPrincipleTexts: string[];
+  /** Reassurance notes from won't-do templates that affect this initiative */
+  wontDoReassuranceNotes: string[];
+  /** Whether the fit score was boosted by principle alignment */
+  principleBoostApplied: boolean;
 }
 
 export interface RewardEngineOutput {
@@ -471,8 +489,42 @@ export function runRewardRecommendationEngine(
       ongoingHigh: calibratedOngoingCostHigh,
     } = calibrateCost(initiative.costCalibration, inputs);
 
+    // ── Principle alignment
+    const confirmedPrincipleIds = inputs.confirmedPrincipleIds ?? [];
+    const confirmedWontDoIds = inputs.confirmedWontDoIds ?? [];
+    const principleTextByPrincipleId = inputs.principleTextByPrincipleId ?? {};
+    const wontDoNotesByWontDoId = inputs.wontDoNotesByWontDoId ?? {};
+    const wontDoAffectedNumbersByWontDoId = inputs.wontDoAffectedNumbersByWontDoId ?? {};
+
+    const initiativeSupportedPrinciples = initiative.supportsPrincipleIds ?? [];
+    const alignedPrincipleIds = initiativeSupportedPrinciples.filter((pid) =>
+      confirmedPrincipleIds.includes(pid)
+    );
+    const alignedPrincipleTexts = alignedPrincipleIds.map(
+      (pid) => principleTextByPrincipleId[pid] ?? pid
+    );
+
+    // ── Won't-do reassurance notes for this initiative
+    const wontDoReassuranceNotes: string[] = [];
+    for (const wontDoId of confirmedWontDoIds) {
+      const affectedNumbers = wontDoAffectedNumbersByWontDoId[wontDoId] ?? [];
+      if (affectedNumbers.includes(initiative.number)) {
+        const note = wontDoNotesByWontDoId[wontDoId];
+        if (note) wontDoReassuranceNotes.push(note);
+      }
+    }
+
+    // ── Principle boost: if ≥1 confirmed principle aligns, boost fitScore by 0.25 (capped at 3)
+    let boostedFitScore = fitScore;
+    let principleBoostApplied = false;
+    if (alignedPrincipleIds.length > 0 && fitSignal !== "NOT_RECOMMENDED") {
+      boostedFitScore = Math.min(fitScore + 0.25, 3);
+      principleBoostApplied = true;
+    }
+    const finalFitSignal: FitSignal = notRecommendedReason ? "NOT_RECOMMENDED" : scoreToSignal(boostedFitScore);
+
     // ── Reasoning
-    const reasoningLines = selectReasoningLines(initiative, fitSignal, inputs);
+    const reasoningLines = selectReasoningLines(initiative, finalFitSignal, inputs);
 
     const result: RewardRecommendationResult = {
       initiativeId: initiative.id,
@@ -482,8 +534,8 @@ export function runRewardRecommendationEngine(
       subDomain: initiative.subDomain,
       defaultPhase: initiative.defaultPhase,
       complexity: initiative.complexity,
-      fitSignal,
-      fitScore: Math.round(fitScore * 100) / 100,
+      fitSignal: finalFitSignal,
+      fitScore: Math.round(boostedFitScore * 100) / 100,
       fitScoreMax: 3,
       reasoningLines,
       notRecommendedReason,
@@ -506,6 +558,10 @@ export function runRewardRecommendationEngine(
         capability: capabilitySignal,
         priority: prioritySignal,
       },
+      alignedPrincipleIds,
+      alignedPrincipleTexts,
+      wontDoReassuranceNotes,
+      principleBoostApplied,
     };
 
     if (notRecommendedReason) {
@@ -523,6 +579,9 @@ export function runRewardRecommendationEngine(
     }
     return b.fitScore - a.fitScore;
   });
+
+  // Also sort notRecommended by number for stable display
+  notRecommended.sort((a, b) => a.number - b.number);
 
   // Portfolio value = sum of recommended initiatives' calibrated value
   const portfolioValueLow = recommended.reduce((s, r) => s + r.calibratedValueLow, 0);
@@ -548,7 +607,14 @@ export function runRewardRecommendationEngine(
 
 export function buildEngineInputs(
   companyProfile: Record<string, unknown>,
-  rewardPrework: Record<string, unknown>
+  rewardPrework: Record<string, unknown>,
+  principlesData?: {
+    confirmedPrincipleIds: string[];
+    confirmedWontDoIds: string[];
+    wontDoNotesByWontDoId: Record<string, string>;
+    principleTextByPrincipleId: Record<string, string>;
+    wontDoAffectedNumbersByWontDoId: Record<string, number[]>;
+  }
 ): RewardEngineInputs {
   return {
     // Company Profile
@@ -583,5 +649,10 @@ export function buildEngineInputs(
     aiTalentRetentionConcern: (rewardPrework.aiTalentRetentionConcern as string) ?? null,
     recentRemunerationVoteConcerns: (rewardPrework.recentRemunerationVoteConcerns as string) ?? null,
     nationalLivingWageExposure: (rewardPrework.nationalLivingWageExposure as string) ?? null,
+    confirmedPrincipleIds: principlesData?.confirmedPrincipleIds ?? [],
+    confirmedWontDoIds: principlesData?.confirmedWontDoIds ?? [],
+    wontDoNotesByWontDoId: principlesData?.wontDoNotesByWontDoId ?? {},
+    principleTextByPrincipleId: principlesData?.principleTextByPrincipleId ?? {},
+    wontDoAffectedNumbersByWontDoId: principlesData?.wontDoAffectedNumbersByWontDoId ?? {},
   };
 }

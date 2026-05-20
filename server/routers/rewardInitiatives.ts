@@ -26,6 +26,9 @@ import {
   rewardInitiativePortfolio,
   rewardCustomInitiative,
   rewardRecommendationRun,
+  rewardPrinciples,
+  rewardPrincipleTemplates,
+  rewardWontDoTemplates,
 } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import {
@@ -156,10 +159,58 @@ export const rewardInitiativesRouter = router({
       });
     }
 
+    // Fetch confirmed principles from Stage 4 (optional — if not confirmed, engine runs without boost)
+    const [principlesRow] = await db
+      .select()
+      .from(rewardPrinciples)
+      .where(eq(rewardPrinciples.tenantId, tenantId));
+
+    // Build principle lookup maps for the engine
+    let principlesData: Parameters<typeof buildEngineInputs>[2] | undefined;
+    if (principlesRow?.state === "confirmed" || principlesRow?.state === "stale") {
+      const allPrincipleTemplates = await db.select().from(rewardPrincipleTemplates);
+      const allWontDoTemplates = await db.select().from(rewardWontDoTemplates);
+
+      const confirmedPrinciples = (principlesRow.principlesJson ?? []).filter((p) => p.selected);
+      const confirmedWontDos = (principlesRow.wontDosJson ?? []).filter((w) => w.selected);
+
+      const confirmedPrincipleIds = confirmedPrinciples
+        .map((p) => p.principleId)
+        .filter((id): id is string => id !== null);
+      const confirmedWontDoIds = confirmedWontDos
+        .map((w) => w.wontDoId)
+        .filter((id): id is string => id !== null);
+
+      const principleTextByPrincipleId: Record<string, string> = {};
+      for (const t of allPrincipleTemplates) {
+        principleTextByPrincipleId[t.principleId] = t.text;
+      }
+      // Also include custom principle texts
+      for (const p of confirmedPrinciples) {
+        if (p.principleId) principleTextByPrincipleId[p.principleId] = p.text;
+      }
+
+      const wontDoNotesByWontDoId: Record<string, string> = {};
+      const wontDoAffectedNumbersByWontDoId: Record<string, number[]> = {};
+      for (const t of allWontDoTemplates) {
+        if (t.noteText) wontDoNotesByWontDoId[t.wontDoId] = t.noteText;
+        if (t.affectsInitiativesJson) wontDoAffectedNumbersByWontDoId[t.wontDoId] = t.affectsInitiativesJson;
+      }
+
+      principlesData = {
+        confirmedPrincipleIds,
+        confirmedWontDoIds,
+        wontDoNotesByWontDoId,
+        principleTextByPrincipleId,
+        wontDoAffectedNumbersByWontDoId,
+      };
+    }
+
     // Build inputs and check cache
     const inputs = buildEngineInputs(
       profile as Record<string, unknown>,
-      prework as Record<string, unknown>
+      prework as Record<string, unknown>,
+      principlesData
     );
 
     // Check for cached run with same inputs hash

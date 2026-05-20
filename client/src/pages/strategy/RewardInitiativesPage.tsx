@@ -231,6 +231,39 @@ function InitiativeCard({
                 <p className="text-xs text-muted-foreground">{line}</p>
               </div>
             ))}
+            {/* Principle alignment notes */}
+            {initiative.alignedPrincipleTexts && initiative.alignedPrincipleTexts.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-border/40">
+                <p className="text-[9px] font-semibold text-violet-500 dark:text-violet-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  Supports your principles
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {initiative.alignedPrincipleTexts.map((text, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20"
+                    >
+                      {text}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Won't-do reassurance notes */}
+            {initiative.wontDoReassuranceNotes && initiative.wontDoReassuranceNotes.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-border/40">
+                <p className="text-[9px] font-semibold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <CheckCircle2 className="w-2.5 h-2.5" />
+                  Consistent with your won’t-dos
+                </p>
+                <div className="space-y-0.5">
+                  {initiative.wontDoReassuranceNotes.map((note, i) => (
+                    <p key={i} className="text-[9px] text-muted-foreground">✓ {note}</p>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Signal breakdown */}
             <div className="mt-2 pt-2 border-t border-border/40 grid grid-cols-4 gap-1">
               {Object.entries(initiative.signalBreakdown).map(([key, sig]) => {

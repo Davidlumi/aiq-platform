@@ -2481,3 +2481,84 @@ export const rewardRecommendationRun = mysqlTable("reward_recommendation_run", {
   hashIdx: index("idx_reward_rec_run_hash").on(t.inputsHash),
 }));
 export type RewardRecommendationRun = typeof rewardRecommendationRun.$inferSelect;
+
+// ─── Reward Stage 2 — Vision ─────────────────────────────────────────────────
+export const rewardVision = mysqlTable("reward_vision", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  visionText: text("vision_text"),
+  /** Original AI-generated draft — used for "Reset to suggested" */
+  aiGeneratedOriginal: text("ai_generated_original"),
+  /** unconfirmed | confirmed | stale */
+  state: varchar("state", { length: 12 }).notNull().default("unconfirmed"),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+});
+export type RewardVision = typeof rewardVision.$inferSelect;
+
+// ─── Reward Stage 3 — Strategy ───────────────────────────────────────────────
+export const rewardStrategy = mysqlTable("reward_strategy", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  /** JSON array of {id, text, aiGeneratedOriginal} */
+  strategicShiftsJson: json("strategic_shifts_json").$type<Array<{
+    id: string;
+    text: string;
+    aiGeneratedOriginal: string;
+  }>>(),
+  /** unconfirmed | confirmed | stale */
+  state: varchar("state", { length: 12 }).notNull().default("unconfirmed"),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+});
+export type RewardStrategy = typeof rewardStrategy.$inferSelect;
+
+// ─── Reward Stage 4 — Principles + Won't-do ──────────────────────────────────
+export const rewardPrinciples = mysqlTable("reward_principles", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  /** JSON array of {id, principleId|null, text, source, aiGeneratedOriginal, selected} */
+  principlesJson: json("principles_json").$type<Array<{
+    id: string;
+    principleId: string | null;
+    text: string;
+    source: "canonical" | "custom";
+    aiGeneratedOriginal: string;
+    selected: boolean;
+  }>>(),
+  /** JSON array of {id, wontDoId|null, text, source, aiGeneratedOriginal, selected} */
+  wontDosJson: json("wont_dos_json").$type<Array<{
+    id: string;
+    wontDoId: string | null;
+    text: string;
+    source: "canonical" | "custom";
+    aiGeneratedOriginal: string;
+    selected: boolean;
+  }>>(),
+  /** unconfirmed | confirmed | stale */
+  state: varchar("state", { length: 12 }).notNull().default("unconfirmed"),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+});
+export type RewardPrinciples = typeof rewardPrinciples.$inferSelect;
+
+// ─── Reward Principle Templates (canonical library) ───────────────────────────
+export const rewardPrincipleTemplates = mysqlTable("reward_principle_templates", {
+  principleId: varchar("principle_id", { length: 50 }).primaryKey(),
+  text: text("text").notNull(),
+  /** JSON array of initiative numbers that this principle maps to */
+  mapsToInitiativesJson: json("maps_to_initiatives_json").$type<number[]>(),
+  /** JSON object describing surfacing conditions */
+  surfacedWhenJson: json("surfaced_when_json").$type<Record<string, unknown>>(),
+});
+export type RewardPrincipleTemplate = typeof rewardPrincipleTemplates.$inferSelect;
+
+// ─── Reward Won't-do Templates (canonical library) ────────────────────────────
+export const rewardWontDoTemplates = mysqlTable("reward_wont_do_templates", {
+  wontDoId: varchar("wont_do_id", { length: 50 }).primaryKey(),
+  text: text("text").notNull(),
+  /** JSON array of initiative numbers affected */
+  affectsInitiativesJson: json("affects_initiatives_json").$type<number[]>(),
+  /** flag | filter | inform */
+  effect: varchar("effect", { length: 10 }).notNull().default("flag"),
+  /** Reassurance note shown on affected Stage 5 cards */
+  noteText: text("note_text"),
+});
+export type RewardWontDoTemplate = typeof rewardWontDoTemplates.$inferSelect;

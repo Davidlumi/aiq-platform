@@ -243,10 +243,38 @@ export default function StrategyTopNav() {
   const navigate = setLocation;
   const { tenantMode } = useGate();
   const modeLabels = getModeLabels(tenantMode as "cpo" | "reward" | null | undefined);
-  // Apply mode-aware labels to stages 5, 9, and 10
+  // Apply mode-aware labels and routes to stages 1-5, 9, and 10
   const activeStages = STAGES.map(s => {
-    if (s.number === 5 && tenantMode === "reward") {
-      return {
+    if (tenantMode === "reward") {
+      if (s.number === 1) return {
+        ...s,
+        label: "Pre-work",
+        shortLabel: "Pre-work",
+        route: "/strategy/reward-prework",
+        what: "Complete the Reward function background inputs",
+      };
+      if (s.number === 2) return {
+        ...s,
+        label: "Vision",
+        shortLabel: "Vision",
+        route: "/strategy/reward-vision",
+        what: "Define your Reward AI vision statement",
+      };
+      if (s.number === 3) return {
+        ...s,
+        label: "Strategy",
+        shortLabel: "Strategy",
+        route: "/strategy/reward-strategy",
+        what: "Choose your Reward AI strategy archetype",
+      };
+      if (s.number === 4) return {
+        ...s,
+        label: "Principles",
+        shortLabel: "Principles",
+        route: "/strategy/reward-principles",
+        what: "Define Reward AI principles and won\u2019t-dos",
+      };
+      if (s.number === 5) return {
         ...s,
         label: "Initiatives",
         shortLabel: "Initiatives",

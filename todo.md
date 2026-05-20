@@ -4346,3 +4346,19 @@ test
 - [x] Add optional costLow/costHigh fields to custom initiative form (both-or-neither validation, costLow ≤ costHigh)
 - [x] Update Zod schema in rewardInitiatives router for addCustom/editCustom
 - [x] Run TypeScript check and update tests
+
+## Stage 2–4 Reward Pages + Principle Boost (Build)
+- [x] Stage 2 — RewardVisionPage: AI-drafted vision, affordances (expand/refine/challenge/suggest), autosave, confirm gate, staleness banner
+- [x] Stage 3 — RewardStrategyPage: AI-generated strategic shifts (3–6), per-shift affordances, add/remove shifts, confirm gate, staleness banner
+- [x] Stage 4 — RewardPrinciplesPage: AI-generated principles and won't-dos, canonical picker, affordances, confirm gate, staleness banner
+- [x] DB schema: reward_visions, reward_strategies, reward_principles, reward_principle_templates, reward_wont_do_templates tables
+- [x] tRPC routers: rewardVisionRouter, rewardStrategyRouter, rewardPrinciplesRouter — all procedures wired
+- [x] Routes registered in App.tsx: /strategy/reward-vision, /strategy/reward-strategy, /strategy/reward-principles
+- [x] StrategyTopNav: reward mode now overrides stages 1–5 with correct labels and routes
+- [x] supportsPrincipleIds field added to RewardInitiative interface and populated for all 30 initiatives
+- [x] Recommendation engine: confirmedPrincipleIds/confirmedWontDoIds inputs, +0.25 fit score boost when ≥1 principle aligns
+- [x] Recommendation engine: alignedPrincipleIds, alignedPrincipleTexts, wontDoReassuranceNotes, principleBoostApplied on RewardRecommendationResult
+- [x] rewardInitiatives router: fetches confirmed principles from Stage 4 and passes to engine
+- [x] Initiative cards: "Supports your principles" chips and "Consistent with your won't-dos" notes in expanded view
+- [x] TypeScript: 0 new errors introduced (27 pre-existing errors in router files remain)
+- [x] Full test suite: 1,444 tests passing
