@@ -4387,3 +4387,15 @@ test
 ## QA Item 4 Fixes (Diff Banner)
 - [x] Fix diff banner copy: "Your Stage 1 inputs have changed" → "Your inputs have changed since the last run"
 - [x] Add changedFitScore to getDiff: fires when fitScore delta ≥0.05 even if fitSignal stays same (surfaces principle-driven reordering in violet row)
+
+## Stage 7 — Business Case
+
+- [x] Add primaryValueType and timeToFirstValueMonths to all 30 initiatives in rewardInitiativeLibrary.ts
+- [x] Add reward_business_case table to drizzle/schema.ts, generate migration, apply SQL
+- [x] Build server/services/rewardBusinessCaseEngine.ts: computeBusinessCase, TCO, overlap discount, sensitivity, payback, programme funding
+- [x] Build server/routers/rewardBusinessCase.ts: get, generate-narrative, affordance, override, assumption, confirm procedures
+- [x] Build client/src/pages/strategy/RewardBusinessCasePage.tsx with all UI sections
+- [x] Wire /strategy/reward-business-case route in App.tsx
+- [x] Update StrategyTopNav Stage 7 route in reward mode
+- [x] Write comprehensive tests for computation service and router (34 tests, all passing)
+- [x] Fix 6 failing tests: wrong initiative IDs, snake_case sub-domain strings, programme funding TCO exclusion engine bug

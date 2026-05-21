@@ -168,6 +168,17 @@ export interface RewardInitiative {
    * those principles, and to render alignment notes on initiative cards.
    */
   supportsPrincipleIds?: string[];
+  /**
+   * Primary value type for Stage 7 business case categorisation.
+   * efficiency | decision_quality | risk_mitigation | retention | strategic
+   */
+  primaryValueType: "efficiency" | "decision_quality" | "risk_mitigation" | "retention" | "strategic";
+  /**
+   * Months from project kick-off to first measurable value realisation.
+   * Used for payback period calculation in Stage 7.
+   * Defaults: Foundation=6, Build=12, Optimise=18
+   */
+  timeToFirstValueMonths: number;
 }
 
 // ─── Library ──────────────────────────────────────────────────────────────────
@@ -246,6 +257,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     bundleWith: "ai_driven_merit_cycle_orchestration",
     prerequisiteOf: ["ai_bonus_pool_optimisation"],
     supportsPrincipleIds: ["explainable_pay", "evidence_based", "manager_authority"],
+    primaryValueType: "decision_quality",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Your sector ({sector}) and pay structure maturity make this a high-value initiative.",
@@ -326,6 +341,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     bundleWith: "ai_compensation_recommendation_engine",
     prerequisiteOf: [],
     supportsPrincipleIds: ["evidence_based", "manager_authority"],
+    primaryValueType: "efficiency",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Paired with the Compensation Recommendation Engine, this completes the merit cycle modernisation.",
@@ -418,6 +437,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     bundleWith: "ai_multi_characteristic_pay_gap_reporting",
     prerequisiteOf: [],
     supportsPrincipleIds: ["continuous_fairness", "equal_pay_commitment"],
+    primaryValueType: "risk_mitigation",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "Your sector ({sector}) faces significant regulatory scrutiny on pay equity.",
@@ -499,6 +522,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     bundleWith: "ai_pay_equity_continuous_monitoring",
     prerequisiteOf: [],
     supportsPrincipleIds: ["continuous_fairness", "transparency_default"],
+    primaryValueType: "risk_mitigation",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "Often deployed alongside Pay Equity Continuous Monitoring (#3) for complete coverage.",
@@ -569,6 +596,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Cost is per audit cycle (typically every 2-3 years). Ongoing figure shown is amortised annually.',
     },
     supportsPrincipleIds: ["equal_pay_commitment"],
+    primaryValueType: "risk_mitigation",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "Your current pay equity capability ({payEquityCapability}) means equal pay risk may be unquantified.",
@@ -654,6 +685,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     prerequisiteOf: ["ai_skills_based_pay_modelling"],
     supportsPrincipleIds: ["clear_structure"],
+    primaryValueType: "strategic",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Your pay structure maturity ({payStructureMaturity}) means formal pay bands are either absent or overdue for refresh.",
@@ -724,6 +759,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["evidence_based", "competitive_pay"],
+    primaryValueType: "decision_quality",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "You already use {externalCompDataSources} — this initiative automates and enriches that process.",
@@ -787,6 +826,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'One-off architecture project; ongoing cost is minimal maintenance and taxonomy updates.',
     },
     supportsPrincipleIds: ["clear_structure", "transparency_default"],
+    primaryValueType: "retention",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "Pay transparency regulation is advancing — this initiative positions you ahead of mandatory requirements.",
@@ -858,6 +901,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Incremental tooling cost above your existing exec comp advisor relationship. Does not include advisor fees (pre-existing cost).',
     },
     supportsPrincipleIds: ["competitive_pay"],
+    primaryValueType: "decision_quality",
+
+    timeToFirstValueMonths: 18,
+
     reasoningTemplates: {
       strong_fit: [
         "As a listed company, remuneration committee support and peer benchmarking are high-value activities.",
@@ -937,6 +984,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["competitive_pay"],
+    primaryValueType: "strategic",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population ({criticalAiDigitalTalentPopulation}) makes this a high-priority initiative.",
@@ -1017,6 +1068,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     requiresPrerequisite: "ai_pay_band_design",
     supportsPrincipleIds: ["clear_structure", "evidence_based"],
+    primaryValueType: "strategic",
+
+    timeToFirstValueMonths: 18,
+
     reasoningTemplates: {
       strong_fit: [
         "Your knowledge-worker workforce ({workforceKnowledgePct}% knowledge workers) and mature pay structure make this viable.",
@@ -1094,6 +1149,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["individual_needs"],
+    primaryValueType: "retention",
+
+    timeToFirstValueMonths: 18,
+
     reasoningTemplates: {
       strong_fit: [
         "Your knowledge-worker population and high AI ambition make personalisation viable and high-value.",
@@ -1154,6 +1213,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     bundleWith: "ai_pay_decision_explainer",
     supportsPrincipleIds: ["explainable_pay", "transparency_default"],
+    primaryValueType: "efficiency",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Total rewards statements are a high-impact, relatively low-complexity initiative that improves EVP perception.",
@@ -1213,6 +1276,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     bundleWith: "ai_total_rewards_statement_generation",
     supportsPrincipleIds: ["explainable_pay", "transparency_default"],
+    primaryValueType: "retention",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Pay decision explainers reduce HR query volume and improve pay satisfaction — high ROI relative to complexity.",
@@ -1280,6 +1347,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["amplify_team"],
+    primaryValueType: "efficiency",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "A Reward Operations Assistant is a quick win — low complexity, fast to deploy, immediate capacity release.",
@@ -1345,6 +1416,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     requiresPrerequisite: "ai_compensation_recommendation_engine",
     supportsPrincipleIds: ["evidence_based"],
+    primaryValueType: "decision_quality",
+
+    timeToFirstValueMonths: 18,
+
     reasoningTemplates: {
       strong_fit: [
         "Bonus pool optimisation delivers significant value in your sector ({sector}) where bonus is a major component of total comp.",
@@ -1424,6 +1499,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["evidence_based"],
+    primaryValueType: "decision_quality",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Your sales workforce composition ({materialSalesWorkforce}) makes sales comp design a high-value initiative.",
@@ -1493,6 +1572,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Incremental tooling cost above your existing exec comp advisor relationship.',
     },
     supportsPrincipleIds: ["evidence_based"],
+    primaryValueType: "strategic",
+
+    timeToFirstValueMonths: 18,
+
     reasoningTemplates: {
       strong_fit: [
         "As a listed company, LTIP modelling is a high-value initiative for remuneration committee support.",
@@ -1566,6 +1649,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       programmeFundingNote: 'Excludes the reward funding itself (typically 0.5-2% of payroll). Surface as a separate programme funding line in the business case.',
     },
     supportsPrincipleIds: ["individual_needs"],
+    primaryValueType: "retention",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Your DC pension architecture ({pensionSchemeArchitecture}) is well-suited to AI-driven engagement.",
@@ -1624,6 +1711,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       programmeFundingNote: 'Excludes retention spend (the pay awards themselves). Surface as a separate programme funding line in the business case.',
     },
     supportsPrincipleIds: ["individual_needs"],
+    primaryValueType: "efficiency",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: ["Benefits utilisation analytics is a low-complexity, high-insight initiative."],
       moderate_fit: ["Benefits analytics delivers value across most organisations."],
@@ -1682,6 +1773,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       programmeFundingNote: 'Excludes payroll uplift if geographic differentials are introduced. Surface as a separate programme funding line in the business case.',
     },
     supportsPrincipleIds: ["transparency_default", "equal_pay_commitment"],
+    primaryValueType: "risk_mitigation",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "Your regulatory context ({fcaSysc19InScope}) makes a comprehensive audit trail a compliance necessity.",
@@ -1745,6 +1840,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["competitive_pay", "evidence_based"],
+    primaryValueType: "efficiency",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "You already use external comp data — automating the benchmarking process delivers immediate capacity savings.",
@@ -1802,6 +1901,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["evidence_based"],
+    primaryValueType: "decision_quality",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: ["Reward budget forecasting delivers significant value in organisations with complex, multi-component reward structures."],
       moderate_fit: ["Budget forecasting automation delivers value across most organisations."],
@@ -1869,6 +1972,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Includes actuarial consultancy costs alongside tooling. Figures assume an established pension scheme.',
     },
     supportsPrincipleIds: ["individual_needs"],
+    primaryValueType: "strategic",
+
+    timeToFirstValueMonths: 18,
+
     reasoningTemplates: {
       strong_fit: [
         "Your pension architecture ({pensionSchemeArchitecture}) involves significant strategic decisions that benefit from scenario modelling.",
@@ -1926,6 +2033,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Cost is per-deal, not annual. Applies when a transaction is active. No standing ongoing cost.',
     },
     supportsPrincipleIds: ["explainable_pay", "transparency_default"],
+    primaryValueType: "efficiency",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: ["Reward communications automation is a quick win — low complexity, immediate capacity release."],
       moderate_fit: ["Communications automation delivers value across most organisations."],
@@ -1988,6 +2099,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["competitive_pay", "evidence_based"],
+    primaryValueType: "retention",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population and sector make pay-related attrition risk a significant concern.",
@@ -2046,6 +2161,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["clear_structure"],
+    primaryValueType: "strategic",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: ["Job architecture rationalisation is a foundational initiative that enables most downstream compensation improvements."],
       moderate_fit: ["Job architecture rationalisation delivers value across most organisations with complex role structures."],
@@ -2107,6 +2226,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["amplify_team"],
+    primaryValueType: "decision_quality",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: ["Manager pay conversation coaching is a high-impact initiative for pay transparency readiness."],
       moderate_fit: ["Pay conversation coaching delivers value across most organisations."],
@@ -2168,6 +2291,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       defaultSectorMultiplier: 1.0,
     },
     supportsPrincipleIds: ["evidence_based", "transparency_default"],
+    primaryValueType: "efficiency",
+
+    timeToFirstValueMonths: 12,
+
     reasoningTemplates: {
       strong_fit: ["A unified Reward analytics dashboard delivers significant value once foundational data is in place."],
       moderate_fit: ["Reward analytics delivers value across most organisations."],
@@ -2246,6 +2373,10 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       costNote: 'Higher than typical for complexity tier due to union consultation requirements and workforce scale factors.',
     },
     supportsPrincipleIds: ["competitive_pay", "equal_pay_commitment"],
+    primaryValueType: "risk_mitigation",
+
+    timeToFirstValueMonths: 6,
+
     reasoningTemplates: {
       strong_fit: [
         "Your frontline workforce ({workforceFrontlinePct}% frontline) makes this a high-value initiative.",

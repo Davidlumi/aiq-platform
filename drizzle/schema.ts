@@ -2562,3 +2562,50 @@ export const rewardWontDoTemplates = mysqlTable("reward_wont_do_templates", {
   noteText: text("note_text"),
 });
 export type RewardWontDoTemplate = typeof rewardWontDoTemplates.$inferSelect;
+
+// ─── Reward Stage 7 — Business Case ──────────────────────────────────────────
+export const rewardBusinessCase = mysqlTable("reward_business_case", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+
+  /** JSON: Record<initiativeId, { year1Low?: number; year1High?: number; ongoingLow?: number; ongoingHigh?: number; valueLow?: number; valueHigh?: number; overrideNote?: string }> */
+  costValueOverridesJson: json("cost_value_overrides_json").$type<Record<string, {
+    year1Low?: number;
+    year1High?: number;
+    ongoingLow?: number;
+    ongoingHigh?: number;
+    valueLow?: number;
+    valueHigh?: number;
+    overrideNote?: string;
+  }>>(),
+
+  /** JSON: { offBandPopulationPct?: number; programmeFundingNote?: string } */
+  programmeFundingAssumptionsJson: json("programme_funding_assumptions_json").$type<{
+    offBandPopulationPct?: number;
+    programmeFundingNote?: string;
+  }>(),
+
+  execSummaryText: text("exec_summary_text"),
+  execSummaryAiOriginal: text("exec_summary_ai_original"),
+
+  investmentRationaleText: text("investment_rationale_text"),
+  investmentRationaleAiOriginal: text("investment_rationale_ai_original"),
+
+  valueNarrativeText: text("value_narrative_text"),
+  valueNarrativeAiOriginal: text("value_narrative_ai_original"),
+
+  riskAssumptionsText: text("risk_assumptions_text"),
+  riskAssumptionsAiOriginal: text("risk_assumptions_ai_original"),
+
+  /** "conservative" | "central" | "optimistic" */
+  recommendedScenario: varchar("recommended_scenario", { length: 20 }).notNull().default("central"),
+
+  isConfirmed: tinyint("is_confirmed").notNull().default(0),
+  confirmedAt: bigint("confirmed_at", { mode: "number" }),
+  isStale: tinyint("is_stale").notNull().default(0),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_reward_business_case_tenant").on(t.tenantId),
+}));
+export type RewardBusinessCase = typeof rewardBusinessCase.$inferSelect;
+export type RewardBusinessCaseInsert = typeof rewardBusinessCase.$inferInsert;
