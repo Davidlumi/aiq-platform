@@ -602,7 +602,8 @@ export const rewardInitiativesRouter = router({
     const previous = [...runs].reverse().find((r) => r.inputsHash !== latest.inputsHash);
     if (!previous) return null;
 
-    type RunJson = { recommended: { initiativeId: string; fitSignal: string; title: string }[]; notRecommended: { initiativeId: string; title: string }[] };
+    type RunRec = { initiativeId: string; fitSignal: string; fitScore?: number; title: string };
+    type RunJson = { recommended: RunRec[]; notRecommended: { initiativeId: string; title: string }[] };
     const latestRecs = latest.recommendationsJson as unknown as RunJson;
     const prevRecs = previous.recommendationsJson as unknown as RunJson;
 
@@ -614,6 +615,8 @@ export const rewardInitiativesRouter = router({
     const prevNotRecIds = new Set(prevRecs.notRecommended.map((r) => r.initiativeId));
 
     const prevFitById = new Map(prevRecs.recommended.map((r) => [r.initiativeId, r.fitSignal]));
+    const prevScoreById = new Map(prevRecs.recommended.map((r) => [r.initiativeId, r.fitScore ?? 0]));
+    const latestScoreById = new Map(latestRecs.recommended.map((r) => [r.initiativeId, r.fitScore ?? 0]));
     const latestFitById = new Map(latestRecs.recommended.map((r) => [r.initiativeId, r.fitSignal]));
     const latestTitleById = new Map([
       ...latestRecs.recommended.map((r) => [r.initiativeId, r.title] as [string, string]),
@@ -644,7 +647,30 @@ export const rewardInitiativesRouter = router({
         currentFit: r.fitSignal,
       }));
 
-    const hasDiff = newlyRecommended.length > 0 || noLongerRecommended.length > 0 || changedFitLevel.length > 0;
+    // Changed fit score: in both recommended lists, same fitSignal but score changed by ≥0.05
+    // Surfaces principle-driven reordering that doesn't cross a signal threshold
+    const changedFitLevelIds = new Set(changedFitLevel.map((r) => r.initiativeId));
+    const changedFitScore = latestRecs.recommended
+      .filter((r) => {
+        if (!prevRecIds.has(r.initiativeId)) return false;
+        if (changedFitLevelIds.has(r.initiativeId)) return false; // already in changedFitLevel
+        const prevScore = prevScoreById.get(r.initiativeId) ?? 0;
+        const latestScore = latestScoreById.get(r.initiativeId) ?? 0;
+        return Math.abs(latestScore - prevScore) >= 0.05;
+      })
+      .map((r) => ({
+        initiativeId: r.initiativeId,
+        title: latestTitleById.get(r.initiativeId) ?? r.initiativeId,
+        previousScore: Math.round((prevScoreById.get(r.initiativeId) ?? 0) * 100) / 100,
+        currentScore: Math.round((latestScoreById.get(r.initiativeId) ?? 0) * 100) / 100,
+        fitSignal: r.fitSignal,
+      }));
+
+    const hasDiff =
+      newlyRecommended.length > 0 ||
+      noLongerRecommended.length > 0 ||
+      changedFitLevel.length > 0 ||
+      changedFitScore.length > 0;
 
     return {
       hasDiff,
@@ -653,6 +679,7 @@ export const rewardInitiativesRouter = router({
       newlyRecommended,
       noLongerRecommended,
       changedFitLevel,
+      changedFitScore,
     };
   }),
 

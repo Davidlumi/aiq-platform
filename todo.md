@@ -4364,14 +4364,14 @@ test
 - [x] Full test suite: 1,444 tests passing
 
 ## QA Pre-flight Fixes (Stage 2–4 + Principle Boost)
-- [ ] Populate supportsPrincipleIds for all 14 missing initiatives (9,11,17,18,20,21,22,23,24,25,26,27,29,30)
-- [ ] Switch principle boost to cumulative: +0.1 per aligned principle, capped at +0.3
-- [ ] Fix Stage 3 MAX_SHIFTS from 7 to 4 (spec: 3–4 default 3)
-- [ ] Add manual-write fallback in generate error state (Stage 2, 3, 4): show textarea even when text is empty after failed generation
-- [ ] Add comprehensive test suite for Stage 2 (rewardVision.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
-- [ ] Add comprehensive test suite for Stage 3 (rewardStrategy.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
-- [ ] Add comprehensive test suite for Stage 4 (rewardPrinciples.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
-- [ ] Add principle boost tests: cumulative scoring, cap at 0.3, alignedPrincipleTexts, wontDoReassuranceNotes
+- [x] Populate supportsPrincipleIds for all 14 missing initiatives (9,11,17,18,20,21,22,23,24,25,26,27,29,30)
+- [x] Switch principle boost to cumulative: +0.1 per aligned principle, capped at +0.3
+- [x] Fix Stage 3 MAX_SHIFTS from 7 to 4 (spec: 3–4 default 3)
+- [x] Add manual-write fallback in generate error state (Stage 2, 3, 4): show textarea even when text is empty after failed generation
+- [x] Add comprehensive test suite for Stage 2 (rewardVision.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
+- [x] Add comprehensive test suite for Stage 3 (rewardStrategy.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
+- [x] Add comprehensive test suite for Stage 4 (rewardPrinciples.test.ts): generation, affordances, confirm gate, staleness cascade, keepAsIs
+- [x] Add principle boost tests: cumulative scoring, cap at 0.3, alignedPrincipleTexts, wontDoReassuranceNotes
 
 ## QA Pre-flight Fixes — Completed (May 2026)
 
@@ -4383,3 +4383,7 @@ test
 - [x] Comprehensive tests added: rewardVision.test.ts (28 tests), rewardStrategy.test.ts (28 tests), rewardPrinciples.test.ts (27 tests) = 83 new tests
 - [x] TypeScript errors fixed: totalEmployeeHeadcount→ukEmployeeHeadcount, source enum, selected field, content type cast, Set.forEach
 - [x] All 1,524 tests pass; zero TS errors
+
+## QA Item 4 Fixes (Diff Banner)
+- [x] Fix diff banner copy: "Your Stage 1 inputs have changed" → "Your inputs have changed since the last run"
+- [x] Add changedFitScore to getDiff: fires when fitScore delta ≥0.05 even if fitSignal stays same (surfaces principle-driven reordering in violet row)

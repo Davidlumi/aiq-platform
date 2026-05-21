@@ -699,7 +699,7 @@ export default function RewardInitiativesPage() {
               Recommendations updated
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Your Stage 1 inputs have changed since the last run. Here’s what changed:
+              Your inputs have changed since the last run. Here’s what changed:
             </p>
             <div className="mt-2 space-y-1">
               {diffQuery.data.newlyRecommended.length > 0 && (
@@ -729,6 +729,20 @@ export default function RewardInitiativesPage() {
                     <strong>{diffQuery.data.changedFitLevel.length}</strong> changed fit level:{" "}
                     {diffQuery.data.changedFitLevel.slice(0, 3).map((r) => `${r.title} (${FIT_SIGNAL_CONFIG[r.previousFit]?.label ?? r.previousFit} → ${FIT_SIGNAL_CONFIG[r.currentFit]?.label ?? r.currentFit})`).join(", ")}
                     {diffQuery.data.changedFitLevel.length > 3 && ` +${diffQuery.data.changedFitLevel.length - 3} more`}
+                  </span>
+                </div>
+              )}
+              {/* Principle-driven reordering: score changed ≥0.05 but signal didn't flip */}
+              {(diffQuery.data as any).changedFitScore?.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400">
+                  <TrendingUp className="w-3 h-3 flex-shrink-0" />
+                  <span>
+                    <strong>{(diffQuery.data as any).changedFitScore.length}</strong> reordered by principle alignment:{" "}
+                    {(diffQuery.data as any).changedFitScore.slice(0, 3).map((r: any) => {
+                      const delta = r.currentScore - r.previousScore;
+                      return `${r.title} (${delta > 0 ? "+" : ""}${delta.toFixed(2)})`;
+                    }).join(", ")}
+                    {(diffQuery.data as any).changedFitScore.length > 3 && ` +${(diffQuery.data as any).changedFitScore.length - 3} more`}
                   </span>
                 </div>
               )}
