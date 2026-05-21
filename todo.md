@@ -4430,3 +4430,18 @@ test
 - [x] Fix charts-in-PDF: embed chart images via html2canvas
 - [x] Fix export-outdated banner: render isExportStale in UI, pass real stateHash to recordExport
 - [x] Fix investment-case section: strip strategic "why now" rationale, financial-only
+
+## Stage 6 — Reward Success Measures
+- [x] DB schema: reward_success_measures and reward_success_measures_stage tables (migration 0045)
+- [x] suggestedMeasures field added to all 30 library initiatives (2-3 measures each, TBE/external_reference baselines only)
+- [x] SuggestedMeasure type added to rewardInitiativeLibrary.ts
+- [x] Stage 6 tRPC router: getStatus, generateMeasures, saveMeasure, deleteMeasure, reorderMeasures, affordance, saveStrategyOutcomes, generateStrategyOutcomes, confirm, markStale, keepAsIs
+- [x] Stage 6 router registered in server/routers.ts
+- [x] Stage 6 UI page: RewardSuccessMeasuresPage (per-initiative measure cards, baseline dropdown, affordances, strategy-level outcomes, confirm gate)
+- [x] StrategyTopNav Stage 6 route override for reward mode → /strategy/reward-success-measures
+- [x] App.tsx route added for /strategy/reward-success-measures
+- [x] Stage 10 wiring: assembleReport success_measures section populated from Stage 6 data (no Stage 10 rework needed)
+- [x] checkStageCompleteness updated: stage6 = confirmed && !stale
+- [x] computeStateHash updated: successMeasuresStage included in hash (export-stale banner fires on Stage 6 changes)
+- [x] All 3 assembleReport call sites in rewardOutputs router updated to pass s6stage and s6measures
+- [x] Tests: 17 Stage 6 library tests + 10 assembleReport wiring tests (1,613 total passing)

@@ -472,3 +472,225 @@ describe("rewardOutputs router", () => {
     expect(keys).toContain("risks");
   });
 });
+
+// ─── Stage 6 success-measures wiring tests ────────────────────────────────────
+describe("assembleReport — Stage 6 success measures", () => {
+  const S6_MEASURES = [
+    {
+      measureId: "m-001",
+      initiativeId: "ai_compensation_recommendation_engine",
+      name: "Manager adoption rate",
+      baselineType: "to_be_established",
+      baselineValue: null,
+      baselineSourceNote: null,
+      target: "80% of managers using AI recommendations within 12 months",
+      timeframe: "12 months post-launch",
+      howMeasured: "HRIS usage logs",
+      valueLink: "efficiency",
+      isChallenged: 0,
+      isArchived: 0,
+    },
+    {
+      measureId: "m-002",
+      initiativeId: "ai_compensation_recommendation_engine",
+      name: "Merit cycle time",
+      baselineType: "external_reference",
+      baselineValue: "6 weeks",
+      baselineSourceNote: "Industry median (Mercer 2024)",
+      target: "3 weeks",
+      timeframe: "First full cycle post-launch",
+      howMeasured: "HRIS cycle timestamps",
+      valueLink: "efficiency",
+      isChallenged: 0,
+      isArchived: 0,
+    },
+    {
+      measureId: "m-003",
+      initiativeId: "ai_pay_band_design",
+      name: "Pay band coverage",
+      baselineType: "known",
+      baselineValue: "62%",
+      baselineSourceNote: null,
+      target: "95%",
+      timeframe: "18 months",
+      howMeasured: "Reward team audit",
+      valueLink: "risk_mitigation",
+      isChallenged: 0,
+      isArchived: 0,
+    },
+    {
+      // Archived measure — must NOT appear in section content
+      measureId: "m-004",
+      initiativeId: "ai_pay_band_design",
+      name: "Old archived measure",
+      baselineType: "to_be_established",
+      baselineValue: null,
+      baselineSourceNote: null,
+      target: null,
+      timeframe: null,
+      howMeasured: null,
+      valueLink: null,
+      isChallenged: 0,
+      isArchived: 1,
+    },
+  ];
+
+  const S6_STAGE_CONFIRMED = {
+    isConfirmed: 1,
+    isStale: 0,
+    strategyOutcomesJson: [
+      { id: "o1", text: "All pay decisions are data-evidenced within 24 months." },
+    ],
+  };
+
+  const S6_STAGE_STALE = {
+    isConfirmed: 1,
+    isStale: 1,
+    strategyOutcomesJson: [],
+  };
+
+  it("success_measures section is placeholder when no measures are provided", () => {
+    const report = buildFullReport();
+    const section = report.sections.find(s => s.key === "success_measures")!;
+    expect(section).toBeDefined();
+    expect(section.isPlaceholder).toBe(true);
+    expect(section.content).toBeNull();
+  });
+
+  it("success_measures section is populated when measures exist", () => {
+    const report = assembleReport({
+      profile: MAYA_PROFILE,
+      prework: MAYA_PREWORK,
+      vision: MAYA_VISION,
+      strategy: MAYA_STRATEGY,
+      principles: MAYA_PRINCIPLES,
+      portfolio: MAYA_PORTFOLIO,
+      businessCase: MAYA_BC,
+      successMeasures: S6_MEASURES,
+      successMeasuresStage: S6_STAGE_CONFIRMED,
+    });
+    const section = report.sections.find(s => s.key === "success_measures")!;
+    expect(section.isPlaceholder).toBe(false);
+    expect(section.content).not.toBeNull();
+    // Active measures appear
+    expect(section.content).toContain("Manager adoption rate");
+    expect(section.content).toContain("Merit cycle time");
+    expect(section.content).toContain("Pay band coverage");
+    // Archived measure must NOT appear
+    expect(section.content).not.toContain("Old archived measure");
+  });
+
+  it("external_reference baseline is labelled as such (never presented as Maya's figure)", () => {
+    const report = assembleReport({
+      profile: MAYA_PROFILE,
+      prework: MAYA_PREWORK,
+      vision: MAYA_VISION,
+      strategy: MAYA_STRATEGY,
+      principles: MAYA_PRINCIPLES,
+      portfolio: MAYA_PORTFOLIO,
+      businessCase: MAYA_BC,
+      successMeasures: S6_MEASURES,
+      successMeasuresStage: S6_STAGE_CONFIRMED,
+    });
+    const section = report.sections.find(s => s.key === "success_measures")!;
+    // External reference label must appear
+    expect(section.content).toContain("external ref");
+    // Source note must appear
+    expect(section.content).toContain("Mercer 2024");
+  });
+
+  it("to_be_established baseline is labelled TBE (not a fabricated number)", () => {
+    const report = assembleReport({
+      profile: MAYA_PROFILE,
+      prework: MAYA_PREWORK,
+      vision: MAYA_VISION,
+      strategy: MAYA_STRATEGY,
+      principles: MAYA_PRINCIPLES,
+      portfolio: MAYA_PORTFOLIO,
+      businessCase: MAYA_BC,
+      successMeasures: S6_MEASURES,
+      successMeasuresStage: S6_STAGE_CONFIRMED,
+    });
+    const section = report.sections.find(s => s.key === "success_measures")!;
+    expect(section.content).toContain("TBE");
+  });
+
+  it("strategy-level outcomes appear in section when provided", () => {
+    const report = assembleReport({
+      profile: MAYA_PROFILE,
+      prework: MAYA_PREWORK,
+      vision: MAYA_VISION,
+      strategy: MAYA_STRATEGY,
+      principles: MAYA_PRINCIPLES,
+      portfolio: MAYA_PORTFOLIO,
+      businessCase: MAYA_BC,
+      successMeasures: S6_MEASURES,
+      successMeasuresStage: S6_STAGE_CONFIRMED,
+    });
+    const section = report.sections.find(s => s.key === "success_measures")!;
+    expect(section.content).toContain("All pay decisions are data-evidenced");
+  });
+
+  it("stageCompleteness.stage6 is true when Stage 6 is confirmed and not stale", () => {
+    const result = checkStageCompleteness(
+      { isCompleted: 1 },
+      { state: "confirmed" },
+      { state: "confirmed" },
+      { state: "confirmed" },
+      { isCompleted: 1 },
+      { isConfirmed: 1 },
+      { isConfirmed: 1, isStale: 0 },
+    );
+    expect(result.stage6).toBe(true);
+  });
+
+  it("stageCompleteness.stage6 is false when Stage 6 is stale", () => {
+    const result = checkStageCompleteness(
+      { isCompleted: 1 },
+      { state: "confirmed" },
+      { state: "confirmed" },
+      { state: "confirmed" },
+      { isCompleted: 1 },
+      { isConfirmed: 1 },
+      S6_STAGE_STALE,
+    );
+    expect(result.stage6).toBe(false);
+  });
+
+  it("stageCompleteness.stage6 is false when successMeasuresStage is undefined", () => {
+    const result = checkStageCompleteness(
+      { isCompleted: 1 },
+      { state: "confirmed" },
+      { state: "confirmed" },
+      { state: "confirmed" },
+      { isCompleted: 1 },
+      { isConfirmed: 1 },
+      undefined,
+    );
+    expect(result.stage6).toBe(false);
+  });
+
+  it("computeStateHash changes when successMeasuresStage changes", () => {
+    const base = computeStateHash({
+      profile: MAYA_PROFILE,
+      prework: MAYA_PREWORK,
+      vision: MAYA_VISION,
+      strategy: MAYA_STRATEGY,
+      principles: MAYA_PRINCIPLES,
+      portfolio: MAYA_PORTFOLIO,
+      businessCase: MAYA_BC,
+      successMeasuresStage: null,
+    });
+    const withS6 = computeStateHash({
+      profile: MAYA_PROFILE,
+      prework: MAYA_PREWORK,
+      vision: MAYA_VISION,
+      strategy: MAYA_STRATEGY,
+      principles: MAYA_PRINCIPLES,
+      portfolio: MAYA_PORTFOLIO,
+      businessCase: MAYA_BC,
+      successMeasuresStage: S6_STAGE_CONFIRMED,
+    });
+    expect(base).not.toBe(withS6);
+  });
+});

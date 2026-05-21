@@ -281,6 +281,13 @@ export default function StrategyTopNav() {
         route: "/strategy/reward-initiatives",
         what: "Build your Reward initiative portfolio from AI-powered recommendations",
       };
+      if (s.number === 6) return {
+        ...s,
+        label: "Success Measures",
+        shortLabel: "Measures",
+        route: "/strategy/reward-success-measures",
+        what: "Define success measures for each initiative in your portfolio",
+      };
       if (s.number === 7) return {
         ...s,
         label: "Business Case",

@@ -135,6 +135,23 @@ export interface CostCalibration {
   costNote?: string;
 }
 
+/**
+ * A default success measure for an initiative — pre-populated as an editable suggestion in Stage 6.
+ * Maya owns the final set; these are never auto-confirmed.
+ */
+export interface SuggestedMeasure {
+  /** Short name of the measure, e.g. "% pay decisions with documented rationale" */
+  name: string;
+  /** Which Stage 7 value category this measure evidences */
+  valueLink: "efficiency" | "decision_quality" | "risk_mitigation" | "retention" | "strategic";
+  /** Suggested target description, e.g. "95%" or "-30%" */
+  suggestedTarget: string;
+  /** Suggested timeframe, e.g. "12 months" */
+  suggestedTimeframe: string;
+  /** How it would typically be measured */
+  howMeasured: string;
+}
+
 export interface ReasoningTemplates {
   strong_fit: string[];
   moderate_fit: string[];
@@ -179,6 +196,12 @@ export interface RewardInitiative {
    * Defaults: Foundation=6, Build=12, Optimise=18
    */
   timeToFirstValueMonths: number;
+  /**
+   * 2–3 default success measures for Stage 6.
+   * Pre-populated as editable suggestions; Maya owns the final set.
+   * Never auto-confirmed.
+   */
+  suggestedMeasures: SuggestedMeasure[];
 }
 
 // ─── Library ──────────────────────────────────────────────────────────────────
@@ -258,9 +281,30 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     prerequisiteOf: ["ai_bonus_pool_optimisation"],
     supportsPrincipleIds: ["explainable_pay", "evidence_based", "manager_authority"],
     primaryValueType: "decision_quality",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "% pay decisions with documented AI rationale",
+        valueLink: "decision_quality",
+        suggestedTarget: "90%",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Audit of pay decisions logged in the recommendation engine; % with rationale field completed",
+      },
+      {
+        name: "Merit cycle pay equity gap (unexplained)",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "<2% unexplained gap",
+        suggestedTimeframe: "First merit cycle post-go-live",
+        howMeasured: "Regression analysis of merit outcomes controlling for performance, level, and tenure",
+      },
+      {
+        name: "Time-to-offer for external hires",
+        valueLink: "efficiency",
+        suggestedTarget: "-25% vs baseline",
+        suggestedTimeframe: "12 months",
+        howMeasured: "ATS data: days from offer approval to candidate acceptance; baseline to be established at go-live",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your sector ({sector}) and pay structure maturity make this a high-value initiative.",
@@ -342,9 +386,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     prerequisiteOf: [],
     supportsPrincipleIds: ["evidence_based", "manager_authority"],
     primaryValueType: "efficiency",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Merit cycle end-to-end duration",
+        valueLink: "efficiency",
+        suggestedTarget: "-30% vs prior year",
+        suggestedTimeframe: "First cycle post-go-live",
+        howMeasured: "Days from cycle open to payroll handoff; baseline from last completed cycle",
+      },
+      {
+        name: "% manager submissions within budget",
+        valueLink: "decision_quality",
+        suggestedTarget: "98%",
+        suggestedTimeframe: "First cycle post-go-live",
+        howMeasured: "Cycle management system: count of manager submissions requiring budget override",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Paired with the Compensation Recommendation Engine, this completes the merit cycle modernisation.",
@@ -438,9 +496,30 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     prerequisiteOf: [],
     supportsPrincipleIds: ["continuous_fairness", "equal_pay_commitment"],
     primaryValueType: "risk_mitigation",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Mean gender pay gap (%)",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "Reduction to be defined after baseline established",
+        suggestedTimeframe: "12 months",
+        howMeasured: "HRIS/payroll: mean gender pay gap calculated monthly; baseline from last annual GPG report",
+      },
+      {
+        name: "Number of pay equity anomalies detected and remediated",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "100% of flagged anomalies reviewed within 30 days",
+        suggestedTimeframe: "Ongoing",
+        howMeasured: "Platform dashboard: count of anomalies flagged vs reviewed vs remediated; baseline to be established",
+      },
+      {
+        name: "Time to produce annual gender pay gap report",
+        valueLink: "efficiency",
+        suggestedTarget: "-70% vs manual baseline",
+        suggestedTimeframe: "First reporting cycle post-go-live",
+        howMeasured: "Hours logged by Reward/HR team for GPG report preparation; baseline from last cycle",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your sector ({sector}) faces significant regulatory scrutiny on pay equity.",
@@ -523,9 +602,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     prerequisiteOf: [],
     supportsPrincipleIds: ["continuous_fairness", "transparency_default"],
     primaryValueType: "risk_mitigation",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Number of protected characteristics with documented pay gap analysis",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "All reportable characteristics covered",
+        suggestedTimeframe: "6 months",
+        howMeasured: "Annual reporting cycle: count of characteristics with published or board-reviewed analysis",
+      },
+      {
+        name: "Time to produce multi-characteristic pay gap report",
+        valueLink: "efficiency",
+        suggestedTarget: "-60% vs manual baseline",
+        suggestedTimeframe: "First reporting cycle post-go-live",
+        howMeasured: "Hours logged by Reward team for report production; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Often deployed alongside Pay Equity Continuous Monitoring (#3) for complete coverage.",
@@ -597,9 +690,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["equal_pay_commitment"],
     primaryValueType: "risk_mitigation",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Number of high-risk job families identified and remediated",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "100% of high-risk families with documented remediation plan",
+        suggestedTimeframe: "12 months post-audit",
+        howMeasured: "Audit output: risk-ranked job family list; remediation tracker updated quarterly",
+      },
+      {
+        name: "Estimated equal pay tribunal exposure (modelled)",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "Reduction to be defined after baseline audit",
+        suggestedTimeframe: "Post-audit",
+        howMeasured: "Modelled liability from audit output; baseline established at first audit",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your current pay equity capability ({payEquityCapability}) means equal pay risk may be unquantified.",
@@ -686,9 +793,30 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     prerequisiteOf: ["ai_skills_based_pay_modelling"],
     supportsPrincipleIds: ["clear_structure"],
     primaryValueType: "strategic",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "% roles mapped to a defined pay band",
+        valueLink: "strategic",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "12 months",
+        howMeasured: "HRIS audit: count of active roles with a valid pay band assignment",
+      },
+      {
+        name: "% employees within band range",
+        valueLink: "risk_mitigation",
+        suggestedTarget: ">85%",
+        suggestedTimeframe: "18 months",
+        howMeasured: "HRIS: salary vs band range; baseline to be established at band launch",
+      },
+      {
+        name: "Cost of moving employees to new band minimums (programme funding)",
+        valueLink: "strategic",
+        suggestedTarget: "Within approved programme budget",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Payroll: total uplift cost vs approved programme funding envelope",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your pay structure maturity ({payStructureMaturity}) means formal pay bands are either absent or overdue for refresh.",
@@ -760,9 +888,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["evidence_based", "competitive_pay"],
     primaryValueType: "decision_quality",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Time to produce market benchmarking update",
+        valueLink: "efficiency",
+        suggestedTarget: "-70% vs annual survey cycle",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Hours logged by Reward team for benchmarking refresh; baseline from last survey cycle",
+      },
+      {
+        name: "% roles with current market data (within 6 months)",
+        valueLink: "decision_quality",
+        suggestedTarget: "95%",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Platform dashboard: count of roles with market data refreshed in last 6 months",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "You already use {externalCompDataSources} — this initiative automates and enriches that process.",
@@ -827,9 +969,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["clear_structure", "transparency_default"],
     primaryValueType: "retention",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "% job postings with compliant pay range disclosure",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "6 months",
+        howMeasured: "ATS audit: count of live postings with pay range field populated and within band",
+      },
+      {
+        name: "Manager confidence in handling pay questions (survey)",
+        valueLink: "decision_quality",
+        suggestedTarget: ">70% confident",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Annual manager survey question; baseline to be established at launch",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Pay transparency regulation is advancing — this initiative positions you ahead of mandatory requirements.",
@@ -902,9 +1058,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["competitive_pay"],
     primaryValueType: "decision_quality",
-
     timeToFirstValueMonths: 18,
-
+    suggestedMeasures: [
+      {
+        name: "Time to prepare RemCo benchmarking pack",
+        valueLink: "efficiency",
+        suggestedTarget: "-50% vs manual baseline",
+        suggestedTimeframe: "First RemCo cycle post-go-live",
+        howMeasured: "Hours logged by Reward team for RemCo pack preparation; baseline from last cycle",
+      },
+      {
+        name: "Number of peer comparators covered in benchmarking",
+        valueLink: "decision_quality",
+        suggestedTarget: "Full FTSE peer group",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Platform dashboard: count of peer companies with current data",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "As a listed company, remuneration committee support and peer benchmarking are high-value activities.",
@@ -985,9 +1155,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["competitive_pay"],
     primaryValueType: "strategic",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "AI talent voluntary attrition rate",
+        valueLink: "retention",
+        suggestedTarget: "Reduction to be defined after baseline established",
+        suggestedTimeframe: "12 months",
+        howMeasured: "HRIS: voluntary leavers in AI/digital roles as % of AI/digital headcount; baseline to be established",
+      },
+      {
+        name: "% AI roles with documented pay positioning vs market",
+        valueLink: "decision_quality",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "6 months",
+        howMeasured: "Reward team audit: AI role pay band vs market P50/P75 benchmark",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population ({criticalAiDigitalTalentPopulation}) makes this a high-priority initiative.",
@@ -1069,9 +1253,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     requiresPrerequisite: "ai_pay_band_design",
     supportsPrincipleIds: ["clear_structure", "evidence_based"],
     primaryValueType: "strategic",
-
     timeToFirstValueMonths: 18,
-
+    suggestedMeasures: [
+      {
+        name: "% roles with skills-based pay premium applied",
+        valueLink: "strategic",
+        suggestedTarget: "Pilot cohort defined at project start",
+        suggestedTimeframe: "18 months",
+        howMeasured: "HRIS: roles with skills premium flag vs total roles in scope",
+      },
+      {
+        name: "Skills premium cost vs retention improvement (ROI)",
+        valueLink: "retention",
+        suggestedTarget: "Positive ROI within 24 months",
+        suggestedTimeframe: "24 months",
+        howMeasured: "Finance: skills premium payroll cost vs modelled attrition saving; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your knowledge-worker workforce ({workforceKnowledgePct}% knowledge workers) and mature pay structure make this viable.",
@@ -1150,9 +1348,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["individual_needs"],
     primaryValueType: "retention",
-
     timeToFirstValueMonths: 18,
-
+    suggestedMeasures: [
+      {
+        name: "Employee perceived value of total rewards (survey)",
+        valueLink: "retention",
+        suggestedTarget: "+10pp vs baseline",
+        suggestedTimeframe: "18 months",
+        howMeasured: "Annual engagement survey: % rating total rewards as good or excellent; baseline to be established",
+      },
+      {
+        name: "Benefits cost per employee vs perceived value score",
+        valueLink: "efficiency",
+        suggestedTarget: "Improved ratio vs baseline",
+        suggestedTimeframe: "24 months",
+        howMeasured: "Finance: total benefits cost / headcount vs survey perceived value score; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your knowledge-worker population and high AI ambition make personalisation viable and high-value.",
@@ -1214,9 +1426,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     bundleWith: "ai_pay_decision_explainer",
     supportsPrincipleIds: ["explainable_pay", "transparency_default"],
     primaryValueType: "efficiency",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "% employees with a current total rewards statement",
+        valueLink: "efficiency",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Platform dashboard: count of employees with statement generated in last 12 months",
+      },
+      {
+        name: "Employee awareness of total rewards value (survey)",
+        valueLink: "retention",
+        suggestedTarget: "+15pp vs baseline",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Annual engagement survey: % correctly estimating total rewards value; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Total rewards statements are a high-impact, relatively low-complexity initiative that improves EVP perception.",
@@ -1277,9 +1503,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     bundleWith: "ai_total_rewards_statement_generation",
     supportsPrincipleIds: ["explainable_pay", "transparency_default"],
     primaryValueType: "retention",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "% pay decisions with employee-facing explanation generated",
+        valueLink: "decision_quality",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "First merit cycle post-go-live",
+        howMeasured: "Platform dashboard: count of pay decisions with explanation generated vs total decisions",
+      },
+      {
+        name: "Employee satisfaction with pay communication (survey)",
+        valueLink: "retention",
+        suggestedTarget: "+10pp vs baseline",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Annual engagement survey: % satisfied with how pay decisions are communicated; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Pay decision explainers reduce HR query volume and improve pay satisfaction — high ROI relative to complexity.",
@@ -1348,9 +1588,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["amplify_team"],
     primaryValueType: "efficiency",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Reward team query resolution time (routine queries)",
+        valueLink: "efficiency",
+        suggestedTarget: "-50% vs baseline",
+        suggestedTimeframe: "6 months",
+        howMeasured: "Helpdesk/ticketing system: average time to resolve Reward queries; baseline to be established",
+      },
+      {
+        name: "% routine Reward queries handled without specialist escalation",
+        valueLink: "efficiency",
+        suggestedTarget: "70%",
+        suggestedTimeframe: "6 months",
+        howMeasured: "Helpdesk: count of queries closed without escalation to Reward specialist",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "A Reward Operations Assistant is a quick win — low complexity, fast to deploy, immediate capacity release.",
@@ -1417,9 +1671,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     requiresPrerequisite: "ai_compensation_recommendation_engine",
     supportsPrincipleIds: ["evidence_based"],
     primaryValueType: "decision_quality",
-
     timeToFirstValueMonths: 18,
-
+    suggestedMeasures: [
+      {
+        name: "Bonus pool utilisation rate",
+        valueLink: "efficiency",
+        suggestedTarget: ">95%",
+        suggestedTimeframe: "First bonus cycle post-go-live",
+        howMeasured: "Finance: actual bonus paid vs approved pool; baseline from last cycle",
+      },
+      {
+        name: "Correlation between bonus allocation and performance rating",
+        valueLink: "decision_quality",
+        suggestedTarget: "Statistically significant positive correlation",
+        suggestedTimeframe: "First bonus cycle post-go-live",
+        howMeasured: "Statistical analysis of bonus outcomes vs performance ratings; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Bonus pool optimisation delivers significant value in your sector ({sector}) where bonus is a major component of total comp.",
@@ -1500,9 +1768,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["evidence_based"],
     primaryValueType: "decision_quality",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Quota attainment distribution (% sellers at 80-120% of quota)",
+        valueLink: "decision_quality",
+        suggestedTarget: ">60% in target zone",
+        suggestedTimeframe: "First plan year post-redesign",
+        howMeasured: "CRM/sales ops: attainment distribution; baseline from prior year",
+      },
+      {
+        name: "Sales comp cost as % of revenue",
+        valueLink: "efficiency",
+        suggestedTarget: "Within approved cost-of-sales budget",
+        suggestedTimeframe: "First plan year post-redesign",
+        howMeasured: "Finance: total sales comp cost / total revenue; baseline from prior year",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your sales workforce composition ({materialSalesWorkforce}) makes sales comp design a high-value initiative.",
@@ -1573,9 +1855,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["evidence_based"],
     primaryValueType: "strategic",
-
     timeToFirstValueMonths: 18,
-
+    suggestedMeasures: [
+      {
+        name: "Time to model LTIP vesting scenarios for RemCo",
+        valueLink: "efficiency",
+        suggestedTarget: "-60% vs manual baseline",
+        suggestedTimeframe: "First RemCo cycle post-go-live",
+        howMeasured: "Hours logged by Reward/Finance team for LTIP scenario modelling; baseline from last cycle",
+      },
+      {
+        name: "Number of LTIP scenarios modelled per RemCo cycle",
+        valueLink: "decision_quality",
+        suggestedTarget: ">5 scenarios per cycle",
+        suggestedTimeframe: "First RemCo cycle post-go-live",
+        howMeasured: "Platform dashboard: count of scenarios run per cycle",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "As a listed company, LTIP modelling is a high-value initiative for remuneration committee support.",
@@ -1650,9 +1946,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["individual_needs"],
     primaryValueType: "retention",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Average employee pension contribution rate",
+        valueLink: "retention",
+        suggestedTarget: "+0.5pp vs baseline",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Payroll: average employee contribution as % of salary; baseline to be established at go-live",
+      },
+      {
+        name: "% employees who have reviewed pension settings in last 12 months",
+        valueLink: "retention",
+        suggestedTarget: ">40%",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Pension platform: count of employees with login/settings review in last 12 months",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your DC pension architecture ({pensionSchemeArchitecture}) is well-suited to AI-driven engagement.",
@@ -1712,9 +2022,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["individual_needs"],
     primaryValueType: "efficiency",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Benefits cost per employee",
+        valueLink: "efficiency",
+        suggestedTarget: "Reduction or reallocation to higher-value benefits",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Finance: total benefits cost / headcount; baseline from current benefits spend",
+      },
+      {
+        name: "% benefits with utilisation data available",
+        valueLink: "decision_quality",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "6 months",
+        howMeasured: "Platform dashboard: count of benefits with utilisation data vs total benefits offered",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: ["Benefits utilisation analytics is a low-complexity, high-insight initiative."],
       moderate_fit: ["Benefits analytics delivers value across most organisations."],
@@ -1774,9 +2098,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["transparency_default", "equal_pay_commitment"],
     primaryValueType: "risk_mitigation",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "% pay decisions with complete audit record",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "6 months",
+        howMeasured: "Platform dashboard: count of pay decisions with rationale, approvals, and market context recorded",
+      },
+      {
+        name: "Time to respond to equal pay information request",
+        valueLink: "efficiency",
+        suggestedTarget: "-70% vs manual baseline",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Legal/HR ops: hours to compile pay history for a specific employee; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your regulatory context ({fcaSysc19InScope}) makes a comprehensive audit trail a compliance necessity.",
@@ -1841,9 +2179,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["competitive_pay", "evidence_based"],
     primaryValueType: "efficiency",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Benchmarking cycle time (roles matched and positioned)",
+        valueLink: "efficiency",
+        suggestedTarget: "-80% vs manual baseline",
+        suggestedTimeframe: "First benchmarking cycle post-go-live",
+        howMeasured: "Hours logged by Reward team for annual benchmarking cycle; baseline from last cycle",
+      },
+      {
+        name: "% roles with current market positioning data",
+        valueLink: "decision_quality",
+        suggestedTarget: "95%",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Platform dashboard: count of roles with market data updated in last 12 months",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "You already use external comp data — automating the benchmarking process delivers immediate capacity savings.",
@@ -1902,9 +2254,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["evidence_based"],
     primaryValueType: "decision_quality",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Reward budget forecast accuracy (merit + bonus)",
+        valueLink: "decision_quality",
+        suggestedTarget: "Within ±3% of actual spend",
+        suggestedTimeframe: "First full forecast cycle post-go-live",
+        howMeasured: "Finance: forecast vs actual reward spend at year-end; baseline from prior year variance",
+      },
+      {
+        name: "Time to produce annual reward budget forecast",
+        valueLink: "efficiency",
+        suggestedTarget: "-50% vs baseline",
+        suggestedTimeframe: "First cycle post-go-live",
+        howMeasured: "Hours logged by Reward/Finance team for budget forecast; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: ["Reward budget forecasting delivers significant value in organisations with complex, multi-component reward structures."],
       moderate_fit: ["Budget forecasting automation delivers value across most organisations."],
@@ -1973,9 +2339,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["individual_needs"],
     primaryValueType: "strategic",
-
     timeToFirstValueMonths: 18,
-
+    suggestedMeasures: [
+      {
+        name: "Number of pension strategy scenarios modelled for board/trustee",
+        valueLink: "decision_quality",
+        suggestedTarget: ">3 scenarios per strategic review",
+        suggestedTimeframe: "First strategic review post-go-live",
+        howMeasured: "Platform dashboard: count of scenarios run for each strategic decision",
+      },
+      {
+        name: "Time to model pension strategy scenario",
+        valueLink: "efficiency",
+        suggestedTarget: "-60% vs manual/actuarial baseline",
+        suggestedTimeframe: "First strategic review post-go-live",
+        howMeasured: "Hours logged by Reward/Finance team for scenario modelling; baseline from last review",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your pension architecture ({pensionSchemeArchitecture}) involves significant strategic decisions that benefit from scenario modelling.",
@@ -2034,9 +2414,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["explainable_pay", "transparency_default"],
     primaryValueType: "efficiency",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Time to produce reward communications at merit cycle",
+        valueLink: "efficiency",
+        suggestedTarget: "-80% vs manual baseline",
+        suggestedTimeframe: "First merit cycle post-go-live",
+        howMeasured: "Hours logged by Reward team for communications production; baseline from last cycle",
+      },
+      {
+        name: "Employee open rate on personalised reward communications",
+        valueLink: "retention",
+        suggestedTarget: ">60%",
+        suggestedTimeframe: "First cycle post-go-live",
+        howMeasured: "Email platform: open rate on reward communications; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: ["Reward communications automation is a quick win — low complexity, immediate capacity release."],
       moderate_fit: ["Communications automation delivers value across most organisations."],
@@ -2100,9 +2494,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["competitive_pay", "evidence_based"],
     primaryValueType: "retention",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Voluntary attrition rate in high-risk cohort",
+        valueLink: "retention",
+        suggestedTarget: "-20% vs baseline in flagged cohort",
+        suggestedTimeframe: "12 months",
+        howMeasured: "HRIS: voluntary leavers in model-flagged high-risk cohort vs prior period; baseline to be established",
+      },
+      {
+        name: "% high-risk employees who received targeted retention action",
+        valueLink: "decision_quality",
+        suggestedTarget: ">80%",
+        suggestedTimeframe: "6 months",
+        howMeasured: "Platform dashboard: count of flagged employees with documented retention action",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your AI talent population and sector make pay-related attrition risk a significant concern.",
@@ -2162,9 +2570,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["clear_structure"],
     primaryValueType: "strategic",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "Number of distinct job titles (before vs after)",
+        valueLink: "efficiency",
+        suggestedTarget: "-60% vs baseline",
+        suggestedTimeframe: "Project completion",
+        howMeasured: "HRIS: count of distinct job titles; baseline from current HRIS extract",
+      },
+      {
+        name: "% roles with a valid market benchmark match",
+        valueLink: "decision_quality",
+        suggestedTarget: ">90%",
+        suggestedTimeframe: "6 months post-rationalisation",
+        howMeasured: "Benchmarking platform: count of roles with matched survey equivalent",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: ["Job architecture rationalisation is a foundational initiative that enables most downstream compensation improvements."],
       moderate_fit: ["Job architecture rationalisation delivers value across most organisations with complex role structures."],
@@ -2227,9 +2649,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["amplify_team"],
     primaryValueType: "decision_quality",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Manager confidence in pay conversations (survey)",
+        valueLink: "decision_quality",
+        suggestedTarget: ">75% confident",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Annual manager survey: % rating themselves confident in pay conversations; baseline to be established",
+      },
+      {
+        name: "Employee satisfaction with pay conversation quality (survey)",
+        valueLink: "retention",
+        suggestedTarget: "+10pp vs baseline",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Annual engagement survey: % satisfied with quality of pay conversations; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: ["Manager pay conversation coaching is a high-impact initiative for pay transparency readiness."],
       moderate_fit: ["Pay conversation coaching delivers value across most organisations."],
@@ -2292,9 +2728,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["evidence_based", "transparency_default"],
     primaryValueType: "efficiency",
-
     timeToFirstValueMonths: 12,
-
+    suggestedMeasures: [
+      {
+        name: "Time to produce monthly Reward metrics report",
+        valueLink: "efficiency",
+        suggestedTarget: "-90% vs manual baseline",
+        suggestedTimeframe: "3 months post-go-live",
+        howMeasured: "Hours logged by Reward team for monthly reporting; baseline to be established",
+      },
+      {
+        name: "Number of Reward anomalies detected proactively (before escalation)",
+        valueLink: "decision_quality",
+        suggestedTarget: "Increase vs baseline",
+        suggestedTimeframe: "12 months",
+        howMeasured: "Platform dashboard: count of anomaly alerts acted on before manager/employee escalation; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: ["A unified Reward analytics dashboard delivers significant value once foundational data is in place."],
       moderate_fit: ["Reward analytics delivers value across most organisations."],
@@ -2374,9 +2824,23 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
     },
     supportsPrincipleIds: ["competitive_pay", "equal_pay_commitment"],
     primaryValueType: "risk_mitigation",
-
     timeToFirstValueMonths: 6,
-
+    suggestedMeasures: [
+      {
+        name: "NLW compliance rate across all frontline roles",
+        valueLink: "risk_mitigation",
+        suggestedTarget: "100%",
+        suggestedTimeframe: "Immediate",
+        howMeasured: "Payroll: count of employees paid below NLW threshold; baseline from current payroll audit",
+      },
+      {
+        name: "Frontline voluntary attrition rate",
+        valueLink: "retention",
+        suggestedTarget: "Reduction to be defined after baseline established",
+        suggestedTimeframe: "12 months",
+        howMeasured: "HRIS: voluntary leavers in frontline roles as % of frontline headcount; baseline to be established",
+      },
+    ],
     reasoningTemplates: {
       strong_fit: [
         "Your frontline workforce ({workforceFrontlinePct}% frontline) makes this a high-value initiative.",

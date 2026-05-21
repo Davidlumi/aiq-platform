@@ -26,6 +26,8 @@ import {
   rewardPrework,
   companyProfile,
   rewardCustomInitiative,
+  rewardSuccessMeasures,
+  rewardSuccessMeasuresStage,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
@@ -67,8 +69,12 @@ async function buildContext(tenantId: string) {
   const [bc]          = await db.select().from(rewardBusinessCase).where(eq(rewardBusinessCase.tenantId, tenantId));
   const [outputs]     = await db.select().from(rewardOutputs).where(eq(rewardOutputs.tenantId, tenantId));
   const customs       = await db.select().from(rewardCustomInitiative).where(eq(rewardCustomInitiative.tenantId, tenantId));
+  // Stage 6
+  const [s6stage]     = await db.select().from(rewardSuccessMeasuresStage).where(eq(rewardSuccessMeasuresStage.tenantId, tenantId));
+  const s6measures    = await db.select().from(rewardSuccessMeasures)
+    .where(eq(rewardSuccessMeasures.tenantId, tenantId));
 
-  return { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs };
+  return { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures };
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────
@@ -78,7 +84,7 @@ export const rewardOutputsRouter = router({
   // ── get ─────────────────────────────────────────────────────────────────────
   get: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs } =
+    const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures } =
       await buildContext(tenantId);
 
     const report = assembleReport({
@@ -96,10 +102,12 @@ export const rewardOutputsRouter = router({
           }
         : undefined,
       customInitiatives: customs,
+      successMeasures: s6measures,
+      successMeasuresStage: s6stage,
     });
 
     // Compute current state hash
-    const currentHash = computeStateHash({ profile, prework, vision, strategy, principles, portfolio, businessCase: bc });
+    const currentHash = computeStateHash({ profile, prework, vision, strategy, principles, portfolio, businessCase: bc, successMeasuresStage: s6stage });
 
     return {
       report,
@@ -118,7 +126,7 @@ export const rewardOutputsRouter = router({
   // ── generateSummary ──────────────────────────────────────────────────────────
   generateSummary: protectedProcedure.mutation(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    const { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs } =
+    const { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures } =
       await buildContext(tenantId);
 
     if (!portfolio?.isCompleted) {
@@ -138,6 +146,8 @@ export const rewardOutputsRouter = router({
           }
         : undefined,
       customInitiatives: customs,
+      successMeasures: s6measures,
+      successMeasuresStage: s6stage,
     });
 
     const audience = (outputs?.audience ?? "board") as Audience;
@@ -211,7 +221,7 @@ Return a single string: 3–5 paragraphs of plain text.`;
     }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs } =
+      const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures } =
         await buildContext(tenantId);
 
       const report = assembleReport({
@@ -224,6 +234,8 @@ Return a single string: 3–5 paragraphs of plain text.`;
             }
           : undefined,
         customInitiatives: customs,
+        successMeasures: s6measures,
+        successMeasuresStage: s6stage,
       });
 
       const audience = (outputs?.audience ?? "board") as Audience;

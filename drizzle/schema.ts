@@ -14,6 +14,7 @@ import {
   unique,
   smallint,
   bigint,
+  primaryKey,
 } from "drizzle-orm/mysql-core";
 
 // --- Tenants -----------------------------------------------------------------
@@ -2562,6 +2563,78 @@ export const rewardWontDoTemplates = mysqlTable("reward_wont_do_templates", {
   noteText: text("note_text"),
 });
 export type RewardWontDoTemplate = typeof rewardWontDoTemplates.$inferSelect;
+
+// ─── Reward Stage 6 — Success Measures ─────────────────────────────────────────
+export const rewardSuccessMeasures = mysqlTable("reward_success_measures", {
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  measureId: varchar("measure_id", { length: 36 }).notNull(),
+  initiativeId: varchar("initiative_id", { length: 80 }).notNull(),
+
+  /** User-edited measure name */
+  name: varchar("name", { length: 200 }).notNull(),
+
+  /**
+   * "to_be_established" | "known" | "external_reference"
+   * "to_be_established" = Maya doesn't know yet (first-class valid state)
+   * "known" = Maya has an actual baseline figure
+   * "external_reference" = AI suggested an industry-typical figure (labelled, not Maya's actual)
+   */
+  baselineType: varchar("baseline_type", { length: 30 }).notNull().default("to_be_established"),
+  /** Only populated when baselineType = "known" or "external_reference" */
+  baselineValue: varchar("baseline_value", { length: 200 }),
+  /** Source note for external_reference baselines */
+  baselineSourceNote: varchar("baseline_source_note", { length: 400 }),
+
+  target: varchar("target", { length: 200 }),
+  timeframe: varchar("timeframe", { length: 200 }),
+  howMeasured: text("how_measured"),
+
+  /**
+   * Links to Stage 7 value category — stored now, surfaced in v2.
+   * "efficiency" | "decision_quality" | "risk_mitigation" | "retention" | "strategic"
+   */
+  valueLink: varchar("value_link", { length: 30 }),
+
+  /** Affordance flags */
+  isChallenged: tinyint("is_challenged").notNull().default(0),
+  challengeNote: text("challenge_note"),
+  isEdited: tinyint("is_edited").notNull().default(0),
+  isAccepted: tinyint("is_accepted").notNull().default(0),
+  isRejected: tinyint("is_rejected").notNull().default(0),
+  rejectionReason: text("rejection_reason"),
+
+  /** Position within initiative (1-3) */
+  sortOrder: int("sort_order").notNull().default(1),
+
+  /** Archived when initiative is removed from portfolio */
+  isArchived: tinyint("is_archived").notNull().default(0),
+
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.tenantId, t.measureId] }),
+  tenantInitiativeIdx: index("idx_rsm_tenant_initiative").on(t.tenantId, t.initiativeId),
+}));
+export type RewardSuccessMeasure = typeof rewardSuccessMeasures.$inferSelect;
+export type RewardSuccessMeasureInsert = typeof rewardSuccessMeasures.$inferInsert;
+
+export const rewardSuccessMeasuresStage = mysqlTable("reward_success_measures_stage", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+
+  /** JSON: strategy-level outcome statements (optional, up to 3) */
+  strategyOutcomesJson: json("strategy_outcomes_json").$type<Array<{ id: string; text: string }>>(),
+  strategyOutcomesAiOriginal: json("strategy_outcomes_ai_original_json").$type<Array<{ id: string; text: string }>>(),
+
+  isConfirmed: tinyint("is_confirmed").notNull().default(0),
+  confirmedAt: bigint("confirmed_at", { mode: "number" }),
+  isStale: tinyint("is_stale").notNull().default(0),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_rsms_tenant").on(t.tenantId),
+}));
+export type RewardSuccessMeasuresStage = typeof rewardSuccessMeasuresStage.$inferSelect;
+export type RewardSuccessMeasuresStageInsert = typeof rewardSuccessMeasuresStage.$inferInsert;
 
 // ─── Reward Stage 7 — Business Case ──────────────────────────────────────────
 export const rewardBusinessCase = mysqlTable("reward_business_case", {

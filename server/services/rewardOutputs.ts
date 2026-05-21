@@ -104,7 +104,7 @@ export interface AssembledReport {
     stage3: boolean;
     stage4: boolean;
     stage5: boolean;
-    stage6: boolean;  // not yet built
+    stage6: boolean;
     stage7: boolean;
     stage8: boolean;  // not yet built
     stage9: boolean;  // not yet built
@@ -122,6 +122,7 @@ export function checkStageCompleteness(
   principles: { state?: string | null } | undefined,
   portfolio: { isCompleted?: number | null } | undefined,
   businessCase: { isConfirmed?: number | null } | undefined,
+  successMeasuresStage?: { isConfirmed?: number | null; isStale?: number | null } | undefined,
 ) {
   return {
     stage1: !!prework?.isCompleted,
@@ -129,7 +130,7 @@ export function checkStageCompleteness(
     stage3: strategy?.state === "confirmed",
     stage4: principles?.state === "confirmed",
     stage5: !!portfolio?.isCompleted,
-    stage6: false,   // not yet built
+    stage6: !!successMeasuresStage?.isConfirmed && !successMeasuresStage?.isStale,
     stage7: !!businessCase?.isConfirmed,
     stage8: false,   // not yet built
     stage9: false,   // not yet built
@@ -192,10 +193,32 @@ export function assembleReport(params: {
     principlesAlignment?: string | null;
     risks?: string | null;
   }>;
+  // Stage 6 data (optional — placeholder rendered when absent)
+  successMeasures?: Array<{
+    measureId: string;
+    initiativeId: string;
+    name: string;
+    baselineType: string;
+    baselineValue: string | null;
+    baselineSourceNote: string | null;
+    target: string | null;
+    timeframe: string | null;
+    howMeasured: string | null;
+    valueLink: string | null;
+    isChallenged: number | null;
+    isArchived: number | null;
+  }>;
+  successMeasuresStage?: {
+    isConfirmed?: number | null;
+    isStale?: number | null;
+    strategyOutcomesJson?: Array<{ id: string; text: string }> | null;
+  } | undefined;
 }): AssembledReport {
   const {
     profile, prework, vision, strategy, principles, portfolio, businessCase,
     customInitiatives = [],
+    successMeasures = [],
+    successMeasuresStage,
   } = params;
 
   // ── Compute Stage 7 model (shared calibration function) ──────────────────
@@ -279,7 +302,7 @@ export function assembleReport(params: {
 
   // ── Completeness ─────────────────────────────────────────────────────────
   const stageCompleteness = checkStageCompleteness(
-    prework, vision, strategy, principles, portfolio, businessCase
+    prework, vision, strategy, principles, portfolio, businessCase, successMeasuresStage
   );
 
   // ── Sections ─────────────────────────────────────────────────────────────
@@ -336,9 +359,48 @@ export function assembleReport(params: {
     {
       key: "success_measures",
       title: "Success measures",
-      content: null,
-      isPlaceholder: true,
-      placeholderText: "Success measures to be defined (Stage 6 — coming soon).",
+      content: (() => {
+        const activeMeasures = successMeasures.filter(m => !m.isArchived);
+        if (activeMeasures.length === 0) return null;
+        // Group by initiative
+        const byInitiative: Record<string, typeof activeMeasures> = {};
+        for (const m of activeMeasures) {
+          if (!byInitiative[m.initiativeId]) byInitiative[m.initiativeId] = [];
+          byInitiative[m.initiativeId].push(m);
+        }
+        const lines: string[] = [];
+        for (const id of selectedIds) {
+          const ms = byInitiative[id];
+          if (!ms?.length) continue;
+          const initiative = initiatives.find(i => i.id === id);
+          const title = initiative?.title ?? id;
+          lines.push(`${title}:`);
+          for (const m of ms) {
+            const baselineStr = m.baselineType === "to_be_established"
+              ? "Baseline: TBE"
+              : m.baselineType === "external_reference"
+                ? `Baseline (external ref): ${m.baselineValue ?? ""} ${m.baselineSourceNote ? `(${m.baselineSourceNote})` : ""}`
+                : `Baseline: ${m.baselineValue ?? ""}`;
+            const targetStr = m.target ? `Target: ${m.target}` : null;
+            const timeframeStr = m.timeframe ? `Timeframe: ${m.timeframe}` : null;
+            const howStr = m.howMeasured ? `Measured by: ${m.howMeasured}` : null;
+            const parts = [m.name, baselineStr, targetStr, timeframeStr, howStr].filter(Boolean);
+            lines.push(`  - ${parts.join(" | ")}`);
+          }
+        }
+        // Strategy-level outcomes
+        const outcomes = successMeasuresStage?.strategyOutcomesJson ?? [];
+        if (outcomes.length > 0) {
+          lines.push("");
+          lines.push("Programme-level outcomes:");
+          for (const o of outcomes) {
+            if (o.text.trim()) lines.push(`  - ${o.text}`);
+          }
+        }
+        return lines.join("\n");
+      })(),
+      isPlaceholder: successMeasures.filter(m => !m.isArchived).length === 0,
+      placeholderText: "Success measures to be defined (Stage 6).",
       sourceStage: 6,
     },
     {
@@ -531,6 +593,7 @@ export function computeStateHash(data: {
   principles?: object | null;
   portfolio?: object | null;
   businessCase?: object | null;
+  successMeasuresStage?: object | null;
 }): string {
   const payload = JSON.stringify({
     profile: data.profile ?? null,
@@ -540,6 +603,7 @@ export function computeStateHash(data: {
     principles: data.principles ?? null,
     portfolio: data.portfolio ?? null,
     businessCase: data.businessCase ?? null,
+    successMeasuresStage: data.successMeasuresStage ?? null,
   });
   return createHash("sha256").update(payload).digest("hex");
 }
