@@ -347,22 +347,32 @@ export default function AssessmentResultsPage() {
   const profileFiredRef = useRef<string | null>(null);
   useEffect(() => {
     const key = `${activeSessionId}-${domainScoresForProfile.length}`;
+    // Allow retry if the previous attempt for this key failed
+    const alreadySucceeded = profileFiredRef.current === key && profileMutation.isSuccess;
     if (
       activeSessionId &&
       domainScoresForProfile.length > 0 &&
       resultsQuery.data &&
-      profileFiredRef.current !== key &&
+      !alreadySucceeded &&
       !profileMutation.isPending
     ) {
       profileFiredRef.current = key;
-      profileMutation.mutate({
-        sessionId: activeSessionId,
-        domainScores: domainScoresForProfile,
-        overallScore: resultsQuery.data?.score?.overallScore ?? 0,
-        roleLabel: (user as any)?.role ?? undefined,
-      });
+      profileMutation.mutate(
+        {
+          sessionId: activeSessionId,
+          domainScores: domainScoresForProfile,
+          overallScore: resultsQuery.data?.score?.overallScore ?? 0,
+          roleLabel: (user as any)?.role ?? undefined,
+        },
+        {
+          onError: () => {
+            // Reset ref so a subsequent render can retry
+            profileFiredRef.current = null;
+          },
+        }
+      );
     }
-  }, [activeSessionId, domainScoresForProfile, resultsQuery.data]);
+  }, [activeSessionId, domainScoresForProfile, resultsQuery.data, profileMutation.isSuccess, profileMutation.isPending]);
   // Alias to keep template references unchanged
   const profileQuery = {
     isLoading: profileMutation.isPending,
@@ -563,6 +573,15 @@ export default function AssessmentResultsPage() {
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Generating insights…
                 </span>
+              )}
+              {profileQuery.error && !profileQuery.isLoading && (
+                <button
+                  onClick={() => { profileFiredRef.current = null; profileMutation.reset(); }}
+                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground/80 transition-colors"
+                  type="button"
+                >
+                  <RefreshCw className="w-3 h-3" /> Retry insights
+                </button>
               )}
             </div>
             <Button
