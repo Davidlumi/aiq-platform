@@ -647,3 +647,42 @@ describe("buildNarrativePromptData — figures match computed model (S7-QA-002)"
     expect(prompt).not.toHaveProperty("investmentAsRevenuePercent");
   });
 });
+
+// ─── unknownIds guard — silent data loss detection ────────────────────────────
+describe("computeBusinessCase — unknownIds guard", () => {
+  it("unknownIds is empty when all IDs are valid library entries", () => {
+    const model = computeBusinessCase(
+      ["ai_compensation_recommendation_engine", "ai_pay_band_design"],
+      MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS
+    );
+    expect(model.unknownIds).toHaveLength(0);
+    expect(model.initiativeCount).toBe(2);
+  });
+
+  it("unknownIds lists fabricated IDs that are not in the library", () => {
+    const model = computeBusinessCase(
+      ["ai_compensation_recommendation_engine", "ai_gender_pay_gap_root_cause", "ai_job_architecture_automation"],
+      MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS
+    );
+    // Only 1 valid ID; 2 fabricated
+    expect(model.unknownIds).toContain("ai_gender_pay_gap_root_cause");
+    expect(model.unknownIds).toContain("ai_job_architecture_automation");
+    expect(model.unknownIds).toHaveLength(2);
+    expect(model.initiativeCount).toBe(1);
+  });
+
+  it("rollup figures are only computed from found initiatives (not inflated by unknown IDs)", () => {
+    const modelFull = computeBusinessCase(
+      ["ai_compensation_recommendation_engine"],
+      MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS
+    );
+    const modelWithBadIds = computeBusinessCase(
+      ["ai_compensation_recommendation_engine", "ai_fabricated_id_1", "ai_fabricated_id_2"],
+      MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS
+    );
+    // Rollup must be identical — bad IDs contribute zero
+    expect(modelWithBadIds.rollup.central.tco3yr).toBe(modelFull.rollup.central.tco3yr);
+    expect(modelWithBadIds.rollup.central.grossValue3yr).toBe(modelFull.rollup.central.grossValue3yr);
+    expect(modelWithBadIds.unknownIds).toEqual(["ai_fabricated_id_1", "ai_fabricated_id_2"]);
+  });
+});

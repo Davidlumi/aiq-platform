@@ -114,6 +114,8 @@ export interface BusinessCaseModel {
   initiativeCount: number;
   portfolioSubDomains: string[];
   computedAt: number;
+  /** IDs passed to computeBusinessCase that were not found in the library. Non-empty means silent data loss. */
+  unknownIds: string[];
 }
 
 export interface ScenarioRollup {
@@ -359,10 +361,11 @@ export function computeBusinessCase(
   programmeFundingAssumptions: ProgrammeFundingAssumptions
 ): BusinessCaseModel {
   const lines: InitiativeCostValue[] = [];
+  const unknownIds: string[] = [];
 
   for (const id of selectedInitiativeIds) {
     const initiative = REWARD_INITIATIVE_LIBRARY.find(i => i.id === id);
-    if (!initiative) continue;
+    if (!initiative) { unknownIds.push(id); continue; }
 
     // Calibrate model figures
     const modelCost = calibrateCost(initiative.costCalibration, inputs);
@@ -510,6 +513,7 @@ export function computeBusinessCase(
     initiativeCount: lines.length,
     portfolioSubDomains: Array.from(new Set(lines.map(l => l.subDomain))),
     computedAt: Date.now(),
+    unknownIds,
   };
 }
 
