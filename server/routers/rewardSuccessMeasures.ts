@@ -172,7 +172,7 @@ export const rewardSuccessMeasuresRouter = router({
     const existingInitiativeIds = new Set(allMeasures.map(m => m.initiativeId));
     const selectedSet = new Set(selectedIds);
 
-    const removedIds = [...existingInitiativeIds].filter(id => !selectedSet.has(id));
+    const removedIds = Array.from(existingInitiativeIds).filter(id => !selectedSet.has(id));
     if (removedIds.length > 0) {
       await db.update(rewardSuccessMeasures)
         .set({ isArchived: 1, updatedAt: Date.now() })

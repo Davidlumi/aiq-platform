@@ -122,7 +122,7 @@ function MeasureEditDialog({ open, onClose, initiativeId, initiativeTitle, measu
   const [target, setTarget] = useState(measure?.target ?? "");
   const [timeframe, setTimeframe] = useState(measure?.timeframe ?? "");
   const [howMeasured, setHowMeasured] = useState(measure?.howMeasured ?? "");
-  const [valueLink, setValueLink] = useState<string>(measure?.valueLink ?? "");
+  const [valueLink, setValueLink] = useState<"efficiency" | "decision_quality" | "risk_mitigation" | "retention" | "strategic" | "">(measure?.valueLink as "efficiency" | "decision_quality" | "risk_mitigation" | "retention" | "strategic" ?? "");
 
   // Affordance state
   const [affordanceField, setAffordanceField] = useState<AffordanceField | null>(null);
@@ -193,7 +193,7 @@ function MeasureEditDialog({ open, onClose, initiativeId, initiativeTitle, measu
       target: target.trim() || null,
       timeframe: timeframe.trim() || null,
       howMeasured: howMeasured.trim() || null,
-      valueLink: valueLink || null,
+      valueLink: (valueLink as "efficiency" | "decision_quality" | "risk_mitigation" | "retention" | "strategic" | null) || null,
     });
   };
 
@@ -357,7 +357,7 @@ function MeasureEditDialog({ open, onClose, initiativeId, initiativeTitle, measu
                 </Tooltip>
               </TooltipProvider>
             </Label>
-            <Select value={valueLink || "none"} onValueChange={(v) => setValueLink(v === "none" ? "" : v)}>
+            <Select value={valueLink || "none"} onValueChange={(v) => setValueLink(v === "none" ? "" : v as "efficiency" | "decision_quality" | "risk_mitigation" | "retention" | "strategic")}>
               <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Select value category (optional)" />
               </SelectTrigger>
@@ -743,12 +743,13 @@ export default function RewardSuccessMeasuresPage() {
       upstreamStageLabel="Stage 5 (Portfolio)"
       stageProgress={isLocked ? undefined : {
         stageNumber: 6,
-        taskDescription: `Define 1–3 success measures for each initiative in your portfolio. Honest baselines — "to be established" is a first-class state.`,
-        ctaLabel: isConfirmed ? "Confirmed ✓" : "Confirm Stage 6",
-        ctaDisabled: totalMeasures === 0 || confirmMutation.isPending,
-        ctaLoading: confirmMutation.isPending,
-        onCtaClick: () => setConfirmDialogOpen(true),
-        isComplete: isConfirmed && !isStale,
+        title: "Success Measures",
+        description: `Define 1–3 success measures for each initiative in your portfolio. Honest baselines — "to be established" is a first-class state.`,
+        isCleared: !!(isConfirmed && !isStale),
+        isEdited: !!(isConfirmed && isStale),
+        canConfirm: totalMeasures > 0 && !confirmMutation.isPending,
+        isPending: confirmMutation.isPending,
+        onConfirm: () => setConfirmDialogOpen(true),
       }}
       actions={
         !isLocked && (
