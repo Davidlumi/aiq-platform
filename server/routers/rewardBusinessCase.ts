@@ -187,7 +187,8 @@ export const rewardBusinessCaseRouter = router({
       vision?.visionText ?? null,
       strategyShifts,
       confirmedPrincipleTitles,
-      (bc?.recommendedScenario ?? "central") as Scenario
+      (bc?.recommendedScenario ?? "central") as Scenario,
+      profile?.annualRevenueGbp ?? null
     );
 
     const systemPrompt = `You are a senior Reward Director writing a CFO-ready business case for an AI-powered Reward transformation programme.
@@ -317,7 +318,8 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
         vision?.visionText ?? null,
         strategyShifts,
         confirmedPrincipleTitles,
-        (bc?.recommendedScenario ?? "central") as Scenario
+        (bc?.recommendedScenario ?? "central") as Scenario,
+        profile?.annualRevenueGbp ?? null
       );
 
       const actionInstructions: Record<string, string> = {

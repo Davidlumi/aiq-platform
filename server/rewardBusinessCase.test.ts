@@ -562,3 +562,83 @@ describe("rewardBusinessCase — full Maya portfolio scenario", () => {
     expect(central.tco3yr).toBeLessThanOrEqual(optimistic.tco3yr);
   });
 });
+
+// ─── S7-QA-002: Narrative prompt figures match computed model ─────────────────
+// This is the guardrail for the no-hallucination guarantee:
+// the LLM receives ONLY computed figures, never invents them.
+
+import { buildNarrativePromptData } from "./services/rewardBusinessCaseEngine";
+
+describe("buildNarrativePromptData — figures match computed model (S7-QA-002)", () => {
+  const PORTFOLIO = [
+    "ai_compensation_recommendation_engine",
+    "ai_driven_merit_cycle_orchestration",
+    "ai_pay_equity_continuous_monitoring",
+    "ai_multi_characteristic_pay_gap_reporting",
+  ];
+
+  it("financials.grossValue3yr in prompt matches model.rollup.central.grossValue3yr", () => {
+    const model = computeBusinessCase(PORTFOLIO, MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS);
+    const prompt = buildNarrativePromptData(model, "Acme Ltd", null, null, [], "central") as Record<string, unknown>;
+    const financials = prompt.financials as Record<string, string>;
+    const expectedFmt = `£${(model.rollup.central.grossValue3yr / 1_000_000).toFixed(1)}m`;
+    expect(financials.grossValue3yr).toBe(expectedFmt);
+  });
+
+  it("financials.netBenefit3yr in prompt matches model.rollup.central.netBenefit3yr", () => {
+    const model = computeBusinessCase(PORTFOLIO, MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS);
+    const prompt = buildNarrativePromptData(model, "Acme Ltd", null, null, [], "central") as Record<string, unknown>;
+    const financials = prompt.financials as Record<string, string>;
+    const expectedFmt = `£${(model.rollup.central.netBenefit3yr / 1_000_000).toFixed(1)}m`;
+    expect(financials.netBenefit3yr).toBe(expectedFmt);
+  });
+
+  it("financials.tco3yr in prompt matches model.rollup.central.tco3yr", () => {
+    const model = computeBusinessCase(PORTFOLIO, MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS);
+    const prompt = buildNarrativePromptData(model, "Acme Ltd", null, null, [], "central") as Record<string, unknown>;
+    const financials = prompt.financials as Record<string, string>;
+    const expectedFmt = `£${(model.rollup.central.tco3yr / 1_000_000).toFixed(1)}m`;
+    expect(financials.tco3yr).toBe(expectedFmt);
+  });
+
+  it("financials.overlapDiscountTotal in prompt matches model.rollup.central.overlapDiscountTotal", () => {
+    const model = computeBusinessCase(PORTFOLIO, MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS);
+    const prompt = buildNarrativePromptData(model, "Acme Ltd", null, null, [], "central") as Record<string, unknown>;
+    const financials = prompt.financials as Record<string, string>;
+    const d = model.rollup.central.overlapDiscountTotal;
+    const expectedFmt = d >= 1_000_000
+      ? `£${(d / 1_000_000).toFixed(1)}m`
+      : `£${Math.round(d / 1000)}k`;
+    expect(financials.overlapDiscountTotal).toBe(expectedFmt);
+  });
+
+  it("prompt uses conservative scenario figures when recommendedScenario=conservative", () => {
+    const model = computeBusinessCase(PORTFOLIO, MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS);
+    const prompt = buildNarrativePromptData(model, "Acme Ltd", null, null, [], "conservative") as Record<string, unknown>;
+    const financials = prompt.financials as Record<string, string>;
+    const expectedFmt = `£${(model.rollup.conservative.netBenefit3yr / 1_000_000).toFixed(1)}m`;
+    expect(financials.netBenefit3yr).toBe(expectedFmt);
+    // Must NOT equal central figures (unless they happen to be equal)
+    const centralFmt = `£${(model.rollup.central.netBenefit3yr / 1_000_000).toFixed(1)}m`;
+    // Conservative should be less than or equal to central
+    expect(model.rollup.conservative.netBenefit3yr).toBeLessThanOrEqual(model.rollup.central.netBenefit3yr);
+  });
+
+  it("investmentAsRevenuePercent is included when annualRevenueGbp is provided", () => {
+    const model = computeBusinessCase(PORTFOLIO, MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS);
+    const annualRevenue = 500_000_000; // £500m
+    const prompt = buildNarrativePromptData(model, "Acme Ltd", null, null, [], "central", annualRevenue) as Record<string, unknown>;
+    expect(prompt).toHaveProperty("investmentAsRevenuePercent");
+    const pct = prompt.investmentAsRevenuePercent as string;
+    expect(pct).toMatch(/% of annual revenue$/);
+    // Verify the percentage is computed from model TCO, not invented
+    const expectedPct = ((model.rollup.central.tco3yr / annualRevenue) * 100).toFixed(2);
+    expect(pct).toBe(`${expectedPct}% of annual revenue`);
+  });
+
+  it("investmentAsRevenuePercent is omitted when annualRevenueGbp is null", () => {
+    const model = computeBusinessCase(PORTFOLIO, MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS);
+    const prompt = buildNarrativePromptData(model, "Acme Ltd", null, null, [], "central", null) as Record<string, unknown>;
+    expect(prompt).not.toHaveProperty("investmentAsRevenuePercent");
+  });
+});

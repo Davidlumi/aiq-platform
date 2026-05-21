@@ -255,11 +255,13 @@ function effectiveCostForTco(
 function computeOverlapDiscounts(
   lines: InitiativeCostValue[]
 ): OverlapDiscountDetail[] {
-  // Group by sub-domain (exclude programme-funding lines and per_deal excluded lines)
+  // Group by sub-domain. Only exclude per_deal lines (excludedFromStandingTco).
+  // excludesProgrammeFunding only separates the payroll uplift from the headline TCO;
+  // it does NOT exclude an initiative from the overlap discount group. #6 Pay Band Design
+  // belongs in the Compensation sub-domain and its value is discounted accordingly.
   const bySubDomain = new Map<string, InitiativeCostValue[]>();
   for (const line of lines) {
     if (line.excludedFromStandingTco) continue;
-    if (line.excludesProgrammeFunding) continue;
     const existing = bySubDomain.get(line.subDomain) ?? [];
     existing.push(line);
     bySubDomain.set(line.subDomain, existing);
@@ -521,7 +523,8 @@ export function buildNarrativePromptData(
   visionText: string | null,
   strategyShifts: Array<{ title: string }> | null,
   confirmedPrincipleTitles: string[],
-  recommendedScenario: Scenario
+  recommendedScenario: Scenario,
+  annualRevenueGbp?: number | null
 ): object {
   const rollup = model.rollup[recommendedScenario];
   const fmt = (n: number) => `£${(n / 1_000_000).toFixed(1)}m`;
@@ -531,6 +534,9 @@ export function buildNarrativePromptData(
     companyName,
     recommendedScenario,
     initiativeCount: model.initiativeCount,
+    ...(annualRevenueGbp && annualRevenueGbp > 0 ? {
+      investmentAsRevenuePercent: `${((model.rollup[recommendedScenario].tco3yr / annualRevenueGbp) * 100).toFixed(2)}% of annual revenue`,
+    } : {}),
     portfolioSubDomains: model.portfolioSubDomains,
     visionSummary: visionText ?? "(not yet defined)",
     strategicShifts: strategyShifts?.map(s => s.title) ?? [],

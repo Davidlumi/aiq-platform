@@ -4399,3 +4399,13 @@ test
 - [x] Update StrategyTopNav Stage 7 route in reward mode
 - [x] Write comprehensive tests for computation service and router (34 tests, all passing)
 - [x] Fix 6 failing tests: wrong initiative IDs, snake_case sub-domain strings, programme funding TCO exclusion engine bug
+
+## Stage 7 QA Fixes (post-deployment)
+- [x] S7-QA-006: Value-by-category now groups by five canonical value types (efficiency/decision_quality/risk_mitigation/retention/strategic) with per-type uncertainty notes
+- [x] S7-QA-005: Net-negative soft prompt added — shown when conservative scenario netBenefit3yr < 0
+- [x] S7-QA-003: Override dialog now shows model estimate as read-only reference with "adjusted from model estimate" label when value differs
+- [x] S7-QA-002: 7 new tests added asserting buildNarrativePromptData figures match computed model exactly (no-hallucination guardrail)
+- [x] S7-QA-008: annualRevenueGbp passed to buildNarrativePromptData — "investment as % of revenue" framing included in prompt when available
+- [x] S7-QA-004: markStale called on Stage 5 portfolio re-confirm — staleness banner fires correctly when portfolio changes
+- [x] Value recalibration: 1.8× low / 1.7× high applied to all 30 library initiatives (#1 first-principles anchor: 1.79×/1.69×)
+- [x] #6 overlap group fix: removed excludesProgrammeFunding exclusion from overlap discount (Compensation now 4 members: #1, #2, #6, #16)

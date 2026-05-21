@@ -534,6 +534,14 @@ function ProgrammeFundingSection({
 
 // ─── Value by category ────────────────────────────────────────────────────────
 
+const VALUE_TYPE_META: Record<string, { label: string; colour: string; uncertainty: string }> = {
+  efficiency:       { label: "Efficiency",       colour: "from-blue-500 to-cyan-500",    uncertainty: "Medium — time savings are measurable but adoption rate varies" },
+  decision_quality: { label: "Decision Quality", colour: "from-violet-500 to-purple-500", uncertainty: "High — quality improvements are directional; hard to isolate AI attribution" },
+  risk_mitigation:  { label: "Risk Mitigation",  colour: "from-amber-500 to-orange-500", uncertainty: "High — avoided costs depend on claim frequency assumptions" },
+  retention:        { label: "Retention",        colour: "from-emerald-500 to-teal-500", uncertainty: "High — retention is multi-causal; AI contribution is partial" },
+  strategic:        { label: "Strategic",        colour: "from-rose-500 to-pink-500",    uncertainty: "Very high — strategic value is real but not directly quantifiable" },
+};
+
 function ValueByCategory({
   model,
   scenario,
@@ -541,38 +549,48 @@ function ValueByCategory({
   model: BusinessCaseModel;
   scenario: Scenario;
 }) {
-  // Group by sub-domain
-  const bySubDomain = model.lines.reduce<Record<string, { value: number; count: number }>>((acc, line) => {
+  // Group by primaryValueType (five canonical value types)
+  const byType = model.lines.reduce<Record<string, { value: number; count: number }>>((acc, line) => {
     const v = scenario === "conservative" ? line.value3yrConservative
       : scenario === "optimistic" ? line.value3yrOptimistic
       : line.value3yrCentral;
-    if (!acc[line.subDomain]) acc[line.subDomain] = { value: 0, count: 0 };
-    acc[line.subDomain].value += v;
-    acc[line.subDomain].count += 1;
+    const key = (line.primaryValueType as string) || "strategic";
+    if (!acc[key]) acc[key] = { value: 0, count: 0 };
+    acc[key].value += v;
+    acc[key].count += 1;
     return acc;
   }, {});
 
-  const sorted = Object.entries(bySubDomain).sort((a, b) => b[1].value - a[1].value);
+  const sorted = Object.entries(byType).sort((a, b) => b[1].value - a[1].value);
   const maxValue = sorted[0]?.[1].value ?? 1;
 
   return (
-    <div className="space-y-2">
-      {sorted.map(([domain, { value, count }]) => (
-        <div key={domain}>
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="font-medium">{domain}</span>
-            <span className="text-muted-foreground tabular-nums">
-              {fmt(value)} · {count} initiative{count !== 1 ? "s" : ""}
-            </span>
+    <div className="space-y-3">
+      {sorted.map(([typeKey, { value, count }]) => {
+        const meta = VALUE_TYPE_META[typeKey] ?? { label: typeKey, colour: "from-slate-500 to-slate-400", uncertainty: "" };
+        return (
+          <div key={typeKey}>
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="font-medium">{meta.label}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {fmt(value)} · {count} initiative{count !== 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-500", meta.colour)}
+                style={{ width: `${Math.round((value / maxValue) * 100)}%` }}
+              />
+            </div>
+            {meta.uncertainty && (
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{meta.uncertainty}</p>
+            )}
           </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500 transition-all duration-500"
-              style={{ width: `${Math.round((value / maxValue) * 100)}%` }}
-            />
-          </div>
-        </div>
-      ))}
+        );
+      })}
+      <p className="text-[10px] text-muted-foreground border-t border-border/40 pt-2 mt-1">
+        Value estimates are directional. Efficiency figures are more tractable; decision quality and strategic value carry higher uncertainty and should not be presented as precise forecasts.
+      </p>
     </div>
   );
 }
@@ -717,6 +735,16 @@ function OverrideDialog({
   const line = model.lines.find(l => l.initiativeId === initiativeId);
   const [fields, setFields] = useState<Record<string, string>>({});
 
+  // Store model estimates separately so the dialog can show "adjusted from £X"
+  const modelEstimates = line ? {
+    year1Low:    line.modelYear1Low ?? line.effectiveYear1Low,
+    year1High:   line.modelYear1High ?? line.effectiveYear1High,
+    ongoingLow:  line.modelOngoingLow ?? line.effectiveOngoingLow,
+    ongoingHigh: line.modelOngoingHigh ?? line.effectiveOngoingHigh,
+    valueLow:    line.modelValueLow ?? line.effectiveValueLow,
+    valueHigh:   line.modelValueHigh ?? line.effectiveValueHigh,
+  } : null;
+
   useEffect(() => {
     if (!line) return;
     setFields({
@@ -753,25 +781,35 @@ function OverrideDialog({
             Model figures are shown as defaults. Edit any field to override. Leave blank to use the model value.
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              { key: "year1Low",   label: "Year 1 Low (£)" },
-              { key: "year1High",  label: "Year 1 High (£)" },
-              { key: "ongoingLow", label: "Ongoing Low / yr (£)" },
-              { key: "ongoingHigh",label: "Ongoing High / yr (£)" },
-              { key: "valueLow",   label: "3yr Value Low (£)" },
-              { key: "valueHigh",  label: "3yr Value High (£)" },
-            ].map(({ key, label }) => (
-              <div key={key}>
-                <Label className="text-xs">{label}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={fields[key] ?? ""}
-                  onChange={e => setFields(f => ({ ...f, [key]: e.target.value }))}
-                  className="h-8 text-sm mt-1"
-                />
-              </div>
-            ))}
+            {([
+              { key: "year1Low",    label: "Year 1 Low (£)",         modelKey: "year1Low" as const },
+              { key: "year1High",   label: "Year 1 High (£)",        modelKey: "year1High" as const },
+              { key: "ongoingLow",  label: "Ongoing Low / yr (£)",   modelKey: "ongoingLow" as const },
+              { key: "ongoingHigh", label: "Ongoing High / yr (£)",  modelKey: "ongoingHigh" as const },
+              { key: "valueLow",    label: "3yr Value Low (£)",       modelKey: "valueLow" as const },
+              { key: "valueHigh",   label: "3yr Value High (£)",      modelKey: "valueHigh" as const },
+            ] as Array<{ key: string; label: string; modelKey: keyof typeof modelEstimates }>).map(({ key, label, modelKey }) => {
+              const modelVal = modelEstimates?.[modelKey];
+              const currentVal = parseFloat(fields[key] ?? "");
+              const isOverridden = modelVal != null && !isNaN(currentVal) && currentVal !== modelVal;
+              return (
+                <div key={key}>
+                  <Label className="text-xs">{label}</Label>
+                  {modelVal != null && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Model: {fmt(modelVal)}{isOverridden ? " (adjusted from model estimate)" : ""}
+                    </p>
+                  )}
+                  <Input
+                    type="number"
+                    min={0}
+                    value={fields[key] ?? ""}
+                    onChange={e => setFields(f => ({ ...f, [key]: e.target.value }))}
+                    className={cn("h-8 text-sm mt-1", isOverridden && "border-amber-500/60 focus-visible:ring-amber-500/30")}
+                  />
+                </div>
+              );
+            })}
           </div>
           <div>
             <Label className="text-xs">Override note (optional)</Label>
@@ -1049,7 +1087,7 @@ export default function RewardBusinessCasePage() {
         {/* Value by category */}
         {model && model.lines.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Value by Sub-domain</h3>
+            <h3 className="text-sm font-semibold">Value by Type</h3>
             <Card className="border-border/60">
               <CardContent className="pt-4 pb-3">
                 <ValueByCategory model={model} scenario={activeScenario} />
@@ -1091,6 +1129,17 @@ export default function RewardBusinessCasePage() {
               />
             ))}
           </div>
+        )}
+
+        {/* S7-QA-005: Net-negative soft prompt — shown when conservative scenario is net-negative */}
+        {model && model.rollup.conservative.netBenefit3yr < 0 && (
+          <Alert className="border-amber-500/40 bg-amber-500/5">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-sm">
+              <span className="font-medium">Conservative scenario is net-negative ({fmt(model.rollup.conservative.netBenefit3yr)}).</span>{" "}
+              This is an honest outcome, not a model error. Consider leading the narrative with risk and compliance rationale (pay equity obligations, regulatory exposure, equal pay claims), or rebalancing the portfolio to include initiatives with shorter payback periods before presenting to a board.
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Confirm gate */}

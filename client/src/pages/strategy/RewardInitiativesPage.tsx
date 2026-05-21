@@ -514,10 +514,14 @@ export default function RewardInitiativesPage() {
     onSuccess: () => { utils.rewardInitiatives.getPortfolio.invalidate(); },
     onError: (e) => toast.error(e.message),
   });
+  const markStaleMutation = trpc.rewardBusinessCase.markStale.useMutation();
+
   const completeMutation = trpc.rewardInitiatives.complete.useMutation({
     onSuccess: () => {
       utils.rewardInitiatives.getStatus.invalidate();
       utils.gate.getState.invalidate();
+      // Mark Stage 7 business case stale so the banner fires if portfolio changed
+      markStaleMutation.mutate();
       setShowCompleteModal(false);
       setSoftGateWarnings([]);
       setOverrideSoftGates(false);
