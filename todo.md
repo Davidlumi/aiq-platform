@@ -4409,3 +4409,17 @@ test
 - [x] S7-QA-004: markStale called on Stage 5 portfolio re-confirm — staleness banner fires correctly when portfolio changes
 - [x] Value recalibration: 1.8× low / 1.7× high applied to all 30 library initiatives (#1 first-principles anchor: 1.79×/1.69×)
 - [x] #6 overlap group fix: removed excludesProgrammeFunding exclusion from overlap discount (Compensation now 4 members: #1, #2, #6, #16)
+
+## Stage 10 — Outputs (Board Report, Dashboard, Deep Dives)
+- [ ] Add reward_outputs table to drizzle/schema.ts, generate migration, apply SQL
+- [ ] Build server/services/rewardOutputs.ts: assembleReport, generateCharts, state hash
+- [ ] Build server/routers/rewardOutputs.ts: get, generate-summary, affordance, set-audience, mark-stale, export procedures
+- [ ] Register rewardOutputs router in server/routers.ts
+- [ ] Build client/src/pages/strategy/RewardOutputsPage.tsx: Dashboard tab, Report tab, Deep Dives tab
+- [ ] Build ChartSet components: portfolio-by-phase, value-by-category, cost-vs-value, payback timeline, investment-by-phase
+- [ ] Build AudienceSelector component (board/remco/leadership)
+- [ ] Build ExportButton with PDF export (server-side generation)
+- [ ] Build DeepDive per-initiative panel
+- [ ] Wire /strategy/reward-outputs route in App.tsx
+- [ ] Update StrategyTopNav Stage 10 route for reward mode to /strategy/reward-outputs
+- [ ] Write tests for assembleReport, chart data, state hash

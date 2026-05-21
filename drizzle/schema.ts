@@ -2609,3 +2609,27 @@ export const rewardBusinessCase = mysqlTable("reward_business_case", {
 }));
 export type RewardBusinessCase = typeof rewardBusinessCase.$inferSelect;
 export type RewardBusinessCaseInsert = typeof rewardBusinessCase.$inferInsert;
+
+// ── Stage 10: Outputs ─────────────────────────────────────────────────────────
+export const rewardOutputs = mysqlTable("reward_outputs", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  /** "board" | "remco" | "leadership" */
+  audience: varchar("audience", { length: 20 }).notNull().default("board"),
+  /** AI-generated strategy-level executive summary (broader than Stage 7 biz-case summary) */
+  execSummaryText: text("exec_summary_text"),
+  execSummaryAiOriginal: text("exec_summary_ai_original"),
+  /** Light connective narrative for section transitions: Record<sectionKey, text> */
+  connectiveNarrativeJson: json("connective_narrative_json").$type<Record<string, string>>(),
+  /** SHA-256 of all upstream stage data at last export — used to detect stale exports */
+  lastExportStateHash: varchar("last_export_state_hash", { length: 64 }),
+  lastExportAt: bigint("last_export_at", { mode: "number" }),
+  lastExportAudience: varchar("last_export_audience", { length: 20 }),
+  /** 1 when upstream stages changed after summary was generated */
+  isSummaryStale: tinyint("is_summary_stale").notNull().default(0),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_reward_outputs_tenant").on(t.tenantId),
+}));
+export type RewardOutputs = typeof rewardOutputs.$inferSelect;
+export type RewardOutputsInsert = typeof rewardOutputs.$inferInsert;

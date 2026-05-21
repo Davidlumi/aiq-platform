@@ -35,6 +35,7 @@ import { rewardVisionRouter } from "./routers/rewardVision";
 import { rewardStrategyRouter } from "./routers/rewardStrategy";
 import { rewardPrinciplesRouter } from "./routers/rewardPrinciples";
 import { rewardBusinessCaseRouter } from "./routers/rewardBusinessCase";
+import { rewardOutputsRouter } from "./routers/rewardOutputs";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -72,6 +73,7 @@ export const appRouter = router({
   rewardStrategy: rewardStrategyRouter,
   rewardPrinciples: rewardPrinciplesRouter,
   rewardBusinessCase: rewardBusinessCaseRouter,
+  rewardOutputs: rewardOutputsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -290,7 +290,16 @@ export default function StrategyTopNav() {
       };
     }
     if (s.number === 9) return { ...s, label: modeLabels.stage9Label, what: modeLabels.stage9What };
-    if (s.number === 10) return { ...s, label: modeLabels.stage10Label, shortLabel: modeLabels.stage10ShortLabel, what: modeLabels.stage10What };
+    if (s.number === 10) {
+      if (tenantMode === "reward") return {
+        ...s,
+        label: "Outputs",
+        shortLabel: "Outputs",
+        route: "/strategy/reward-outputs",
+        what: "Generate your board-ready Reward AI strategy report and deep dives",
+      };
+      return { ...s, label: modeLabels.stage10Label, shortLabel: modeLabels.stage10ShortLabel, what: modeLabels.stage10What };
+    }
     return s;
   });
 
