@@ -4426,7 +4426,7 @@ test
 
 ## Stage 10 Post-QA Fixes
 
-- [ ] Fix TCO rollup bug: remove excludesProgrammeFunding from standingLines filter (affects #6, #19, #20, #21)
-- [ ] Fix charts-in-PDF: embed chart images via html2canvas
-- [ ] Fix export-outdated banner: render isExportStale in UI, pass real stateHash to recordExport
-- [ ] Fix investment-case section: strip strategic "why now" rationale, financial-only
+- [x] Fix TCO rollup bug: remove excludesProgrammeFunding from standingLines filter (affects #6, #19, #20, #21)
+- [x] Fix charts-in-PDF: embed chart images via html2canvas
+- [x] Fix export-outdated banner: render isExportStale in UI, pass real stateHash to recordExport
+- [x] Fix investment-case section: strip strategic "why now" rationale, financial-only
