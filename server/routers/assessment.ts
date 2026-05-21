@@ -2942,7 +2942,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       overallScore: z.number(),
       roleLabel: z.string().optional(),
     }))
-    .query(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { profile: null };
       // Verify session belongs to user

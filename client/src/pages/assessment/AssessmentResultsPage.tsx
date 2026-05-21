@@ -342,20 +342,33 @@ export default function AssessmentResultsPage() {
     });
   }, [resultsQuery.data]);
 
-  // Capability profile (cross-cutting + per-domain narratives) — loads independently
-  const profileQuery = trpc.assessment.generateCapabilityProfile.useQuery(
-    {
-      sessionId: activeSessionId!,
-      domainScores: domainScoresForProfile,
-      overallScore: resultsQuery.data?.score?.overallScore ?? 0,
-      roleLabel: (user as any)?.role ?? undefined,
-    },
-    {
-      enabled: !!activeSessionId && domainScoresForProfile.length > 0 && !!resultsQuery.data,
-      retry: 0,
-      staleTime: 1000 * 60 * 10,
+  // Capability profile (cross-cutting + per-domain narratives) — uses mutation to avoid URL-too-long on GET
+  const profileMutation = trpc.assessment.generateCapabilityProfile.useMutation();
+  const profileFiredRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${activeSessionId}-${domainScoresForProfile.length}`;
+    if (
+      activeSessionId &&
+      domainScoresForProfile.length > 0 &&
+      resultsQuery.data &&
+      profileFiredRef.current !== key &&
+      !profileMutation.isPending
+    ) {
+      profileFiredRef.current = key;
+      profileMutation.mutate({
+        sessionId: activeSessionId,
+        domainScores: domainScoresForProfile,
+        overallScore: resultsQuery.data?.score?.overallScore ?? 0,
+        roleLabel: (user as any)?.role ?? undefined,
+      });
     }
-  );
+  }, [activeSessionId, domainScoresForProfile, resultsQuery.data]);
+  // Alias to keep template references unchanged
+  const profileQuery = {
+    isLoading: profileMutation.isPending,
+    data: profileMutation.data,
+    error: profileMutation.error,
+  };
 
   // Telemetry: dashboard viewed
   const telemetryFired = useRef(false);
