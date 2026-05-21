@@ -409,6 +409,9 @@ Output as a JSON array of ${toCreate.length} objects.`;
             howMeasured: input.howMeasured ?? null,
             valueLink: input.valueLink ?? null,
             isEdited: 1,
+            // C3: editing a challenged measure resolves the challenge flag
+            isChallenged: 0,
+            challengeNote: null,
             updatedAt: now,
           })
           .where(and(
