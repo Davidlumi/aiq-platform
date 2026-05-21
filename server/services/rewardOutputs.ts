@@ -325,8 +325,11 @@ export function assembleReport(params: {
     {
       key: "investment_case",
       title: "The investment case",
-      content: stage7Narratives.investmentRationale ?? stage7Narratives.execSummary,
-      isPlaceholder: !stage7Narratives.investmentRationale && !stage7Narratives.execSummary,
+      // Use valueNarrative (financial outcomes: TCO, value, ROI, payback) not investmentRationale
+      // (which contains strategic "why now" content already covered by case_for_change — S10-10).
+      // Fall back to execSummary if valueNarrative not yet generated.
+      content: stage7Narratives.valueNarrative ?? stage7Narratives.execSummary,
+      isPlaceholder: !stage7Narratives.valueNarrative && !stage7Narratives.execSummary,
       placeholderText: "Business case narrative to be generated (Stage 7).",
       sourceStage: 7,
     },

@@ -108,6 +108,7 @@ export const rewardOutputsRouter = router({
       execSummaryText: outputs?.execSummaryText ?? null,
       isSummaryStale: !!outputs?.isSummaryStale,
       lastExportAt: outputs?.lastExportAt ?? null,
+      currentHash,
       isExportStale: outputs?.lastExportStateHash
         ? outputs.lastExportStateHash !== currentHash
         : false,

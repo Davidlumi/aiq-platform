@@ -4411,15 +4411,22 @@ test
 - [x] #6 overlap group fix: removed excludesProgrammeFunding exclusion from overlap discount (Compensation now 4 members: #1, #2, #6, #16)
 
 ## Stage 10 — Outputs (Board Report, Dashboard, Deep Dives)
-- [ ] Add reward_outputs table to drizzle/schema.ts, generate migration, apply SQL
-- [ ] Build server/services/rewardOutputs.ts: assembleReport, generateCharts, state hash
-- [ ] Build server/routers/rewardOutputs.ts: get, generate-summary, affordance, set-audience, mark-stale, export procedures
-- [ ] Register rewardOutputs router in server/routers.ts
-- [ ] Build client/src/pages/strategy/RewardOutputsPage.tsx: Dashboard tab, Report tab, Deep Dives tab
-- [ ] Build ChartSet components: portfolio-by-phase, value-by-category, cost-vs-value, payback timeline, investment-by-phase
-- [ ] Build AudienceSelector component (board/remco/leadership)
-- [ ] Build ExportButton with PDF export (server-side generation)
-- [ ] Build DeepDive per-initiative panel
-- [ ] Wire /strategy/reward-outputs route in App.tsx
-- [ ] Update StrategyTopNav Stage 10 route for reward mode to /strategy/reward-outputs
-- [ ] Write tests for assembleReport, chart data, state hash
+- [x] Add reward_outputs table to drizzle/schema.ts, generate migration, apply SQL
+- [x] Build server/services/rewardOutputs.ts: assembleReport, generateCharts, state hash
+- [x] Build server/routers/rewardOutputs.ts: get, generate-summary, affordance, set-audience, mark-stale, export procedures
+- [x] Register rewardOutputs router in server/routers.ts
+- [x] Build client/src/pages/strategy/RewardOutputsPage.tsx: Dashboard tab, Report tab, Deep Dives tab
+- [x] Build ChartSet components: portfolio-by-phase, value-by-category, cost-vs-value, payback timeline, investment-by-phase
+- [x] Build AudienceSelector component (board/remco/leadership)
+- [x] Build ExportButton with PDF export (server-side generation)
+- [x] Build DeepDive per-initiative panel
+- [x] Wire /strategy/reward-outputs route in App.tsx
+- [x] Update StrategyTopNav Stage 10 route for reward mode to /strategy/reward-outputs
+- [x] Write tests for assembleReport, chart data, state hash (28 tests passing)
+
+## Stage 10 Post-QA Fixes
+
+- [ ] Fix TCO rollup bug: remove excludesProgrammeFunding from standingLines filter (affects #6, #19, #20, #21)
+- [ ] Fix charts-in-PDF: embed chart images via html2canvas
+- [ ] Fix export-outdated banner: render isExportStale in UI, pass real stateHash to recordExport
+- [ ] Fix investment-case section: strip strategic "why now" rationale, financial-only

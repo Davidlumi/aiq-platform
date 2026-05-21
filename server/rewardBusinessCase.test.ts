@@ -264,15 +264,20 @@ describe("computeBusinessCase — programme funding", () => {
     expect(pfLine!.note).toContain("10–30%");
   });
 
-  it("excludes pay_band_design from standing TCO rollup", () => {
+  it("includes pay_band_design implementation cost in TCO, separates payroll uplift in programmeFundingLines", () => {
     const model = computeBusinessCase(
       ["ai_pay_band_design"],
       MAYA_INPUTS, EMPTY_OVERRIDES, EMPTY_ASSUMPTIONS
     );
     const line = model.lines.find(l => l.initiativeId === "ai_pay_band_design");
+    // excludesProgrammeFunding means ADDITIONAL payroll uplift is shown separately
+    // — it does NOT exclude the initiative's implementation cost from TCO
     expect(line!.excludesProgrammeFunding).toBe(true);
-    // Should not appear in standing TCO
-    expect(model.rollup.central.tco3yr).toBe(0);
+    // Implementation cost IS included in standing TCO (costType: project, not per_deal)
+    expect(model.rollup.central.tco3yr).toBeGreaterThan(0);
+    // Payroll uplift appears separately in programmeFundingLines
+    const pfLine = model.programmeFundingLines.find(l => l.initiativeId === "ai_pay_band_design");
+    expect(pfLine).toBeDefined();
   });
 });
 

@@ -15,6 +15,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
+import html2canvas from "html2canvas";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -157,7 +158,7 @@ function PlaceholderSection({ text }: { text: string }) {
 
 // ─── Dashboard tab ────────────────────────────────────────────────────────────
 
-function DashboardTab({ report }: { report: AssembledReport }) {
+function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; chartContainerRef?: React.RefObject<HTMLDivElement | null> }) {
   const central = report.model.rollup.central;
   const conservative = report.model.rollup.conservative;
   const optimistic = report.model.rollup.optimistic;
@@ -207,7 +208,7 @@ function DashboardTab({ report }: { report: AssembledReport }) {
       )}
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div ref={chartContainerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Cost vs Value by scenario */}
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
@@ -378,6 +379,8 @@ function ReportTab({
   audience,
   execSummaryText,
   isSummaryStale,
+  isExportStale,
+  lastExportAt,
   onGenerateSummary,
   onAffordance,
   onSaveSummary,
@@ -391,6 +394,8 @@ function ReportTab({
   audience: Audience;
   execSummaryText: string | null;
   isSummaryStale: boolean;
+  isExportStale: boolean;
+  lastExportAt: number | null;
   onGenerateSummary: () => void;
   onAffordance: (action: "expand" | "refine" | "challenge" | "suggest", text: string) => void;
   onSaveSummary: (text: string) => void;
@@ -435,6 +440,19 @@ function ReportTab({
           Export PDF
         </Button>
       </div>
+
+      {/* Export-outdated banner */}
+      {isExportStale && lastExportAt && (
+        <div className="flex items-start gap-3 rounded-lg bg-orange-500/8 border border-orange-500/20 p-3">
+          <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-orange-300/90 font-medium">
+              Strategy has changed since last export ({new Date(lastExportAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}).
+            </p>
+            <p className="text-xs text-orange-300/70 mt-0.5">Re-export to share the current version with your audience.</p>
+          </div>
+        </div>
+      )}
 
       {/* Stale banner */}
       {isSummaryStale && (
@@ -712,6 +730,7 @@ export default function RewardOutputsPage() {
   const [summaryOverride, setSummaryOverride] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Debounced save
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -731,28 +750,42 @@ export default function RewardOutputsPage() {
     if (!data) return;
     setIsExporting(true);
     try {
-      // Build a printable HTML version and trigger browser print
       const audience = data.audience;
       const report = data.report;
       const central = report.model.rollup.central;
       const summaryText = summaryOverride ?? data.execSummaryText ?? "";
 
-      const html = buildPrintHtml(report, audience, summaryText, central);
+      // Capture chart container as a base64 PNG via html2canvas
+      let chartDataUrl: string | null = null;
+      if (chartContainerRef.current) {
+        try {
+          const canvas = await html2canvas(chartContainerRef.current, {
+            backgroundColor: "#0f172a",
+            scale: 1.5,
+            logging: false,
+          });
+          chartDataUrl = canvas.toDataURL("image/png");
+        } catch {
+          // Non-fatal: export without charts if capture fails
+        }
+      }
+
+      const html = buildPrintHtml(report, audience, summaryText, central, chartDataUrl);
       const win = window.open("", "_blank");
       if (win) {
         win.document.write(html);
         win.document.close();
         setTimeout(() => win.print(), 800);
       }
-      // Record the export
+      // Record the export with the real state hash (not Date.now)
       recordExportMutation.mutate({
         audience,
-        stateHash: String(Date.now()),
+        stateHash: data.currentHash ?? String(Date.now()),
       });
     } finally {
       setIsExporting(false);
     }
-  }, [data, summaryOverride, recordExportMutation]);
+  }, [data, summaryOverride, recordExportMutation, chartContainerRef]);
 
   if (isLoading) {
     return (
@@ -773,7 +806,7 @@ export default function RewardOutputsPage() {
     );
   }
 
-  const { report, audience, execSummaryText, isSummaryStale } = data;
+  const { report, audience, execSummaryText, isSummaryStale, isExportStale, lastExportAt, currentHash: _currentHash } = data;
   const effectiveSummary = summaryOverride ?? execSummaryText;
 
   return (
@@ -807,7 +840,7 @@ export default function RewardOutputsPage() {
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-6">
-          <DashboardTab report={report} />
+          <DashboardTab report={report} chartContainerRef={chartContainerRef} />
         </TabsContent>
 
         <TabsContent value="report" className="mt-6">
@@ -816,6 +849,8 @@ export default function RewardOutputsPage() {
             audience={audience}
             execSummaryText={effectiveSummary}
             isSummaryStale={isSummaryStale}
+            isExportStale={isExportStale}
+            lastExportAt={lastExportAt ?? null}
             onGenerateSummary={() => generateSummaryMutation.mutate()}
             onAffordance={handleAffordance}
             onSaveSummary={handleSaveSummary}
@@ -845,7 +880,8 @@ function buildPrintHtml(
   report: AssembledReport,
   audience: Audience,
   summaryText: string,
-  central: AssembledReport["model"]["rollup"]["central"]
+  central: AssembledReport["model"]["rollup"]["central"],
+  chartDataUrl?: string | null
 ): string {
   const audienceLabel = { board: "Board", remco: "RemCo", leadership: "Leadership" }[audience];
   const date = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -888,6 +924,8 @@ function buildPrintHtml(
 </div>
 
 ${summaryText ? `<div class="exec-summary"><h2>Executive Summary</h2><p style="font-size:12px;line-height:1.7;white-space:pre-wrap;">${summaryText}</p></div>` : ""}
+
+${chartDataUrl ? `<div style="margin-bottom:2rem;page-break-inside:avoid;"><h2 style="font-size:14px;font-weight:700;margin-bottom:0.5rem;border-bottom:1px solid #e2e8f0;padding-bottom:0.25rem;">Portfolio Charts</h2><img src="${chartDataUrl}" style="width:100%;border-radius:6px;border:1px solid #e2e8f0;" alt="Portfolio charts" /></div>` : ""}
 
 ${sections}
 

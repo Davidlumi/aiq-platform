@@ -446,9 +446,11 @@ export function computeBusinessCase(
   const programmeFundingLines = buildProgrammeFundingLines(lines, inputs, programmeFundingAssumptions);
 
   // Portfolio rollup
-  // Standing lines: exclude per_deal (excludedFromStandingTco) and programme-funding lines
-  // (excludesProgrammeFunding). Programme funding is shown as a separate section.
-  const standingLines = lines.filter(l => !l.excludedFromStandingTco && !l.excludesProgrammeFunding);
+  // Standing lines: exclude only per_deal initiatives (excludedFromStandingTco).
+  // excludesProgrammeFunding means the initiative has ADDITIONAL programme funding (payroll uplift)
+  // beyond its CostCalibration figures — the implementation cost still belongs in standing TCO.
+  // The separately-computed programmeFundingLines capture the payroll uplift.
+  const standingLines = lines.filter(l => !l.excludedFromStandingTco);
 
   function buildRollup(scenario: Scenario): ScenarioRollup {
     const grossValue3yr = standingLines.reduce((sum, l) => {
