@@ -113,15 +113,33 @@ function maxLevel(levels: CapabilityLevel[]): CapabilityLevel {
  * 3. FCA governance escalation: if fcaSysc19=true, governance required += 1 (capped at very_high).
  * 4. team_skills: derived from portfolio breadth (1-3 → low, 4-6 → medium, 7+ → high). No escalation.
  */
+/** A capability profile for a custom initiative (user-supplied ratings, defaulting to medium) */
+export interface CustomInitiativeCapabilityProfile {
+  id: string;
+  capabilityProfile: CapabilityProfile;
+}
+
 export function computeRequiredLevels(
   initiativeIds: string[],
-  options: { fcaSysc19?: boolean } = {}
+  options: { fcaSysc19?: boolean; customProfiles?: CustomInitiativeCapabilityProfile[] } = {}
 ): DimensionRequirement[] {
-  const { fcaSysc19 = false } = options;
+  const { fcaSysc19 = false, customProfiles = [] } = options;
 
-  const profiles = initiativeIds
+  // Library profiles for known IDs
+  const libraryProfiles = initiativeIds
     .map((id) => REWARD_INITIATIVE_LIBRARY.find((i) => i.id === id))
     .filter((i): i is NonNullable<typeof i> => i !== undefined);
+
+  // Custom initiative profiles (IDs not in library)
+  const customProfilesForUnknown = customProfiles.filter(
+    (cp) => !REWARD_INITIATIVE_LIBRARY.find((i) => i.id === cp.id)
+  );
+
+  // Merge: library profiles + custom profiles as synthetic objects
+  const profiles: Array<{ id: string; capabilityProfile: CapabilityProfile }> = [
+    ...libraryProfiles,
+    ...customProfilesForUnknown,
+  ];
 
   // Map from dimension to { levels, drivingIds }
   const dimensionData: Record<CapabilityDimension, { levels: CapabilityLevel[]; drivingIds: string[] }> = {

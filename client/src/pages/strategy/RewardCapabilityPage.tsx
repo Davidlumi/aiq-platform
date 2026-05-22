@@ -490,6 +490,46 @@ export default function RewardCapabilityPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  // E2: Custom initiative capability ratings
+  const { data: customCapData, refetch: refetchCustomCap } = trpc.rewardCapabilityAssessment.getCustomInitiativeCapability.useQuery();
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState<{ id: string; title: string } | null>(null);
+  const [ratingValues, setRatingValues] = useState<{
+    dataIntensity: "low" | "medium" | "high";
+    changeImpact: "low" | "medium" | "high";
+    integrationNeed: "low" | "medium" | "high";
+    governanceSensitivity: "low" | "medium" | "high";
+  }>({
+    dataIntensity: "medium",
+    changeImpact: "medium",
+    integrationNeed: "medium",
+    governanceSensitivity: "medium",
+  });
+
+  const rateCustomMutation = trpc.rewardCapabilityAssessment.rateCustomInitiative.useMutation({
+    onSuccess: () => {
+      utils.rewardCapabilityAssessment.getStatus.invalidate();
+      refetchCustomCap();
+      setRatingDialogOpen(false);
+      toast.success("Capability ratings saved — required levels updated");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const openRatingDialog = (ci: { id: string; title: string; dataIntensity: string; changeImpact: string; integrationNeed: string; governanceSensitivity: string }) => {
+    setRatingTarget({ id: ci.id, title: ci.title });
+    setRatingValues({
+      dataIntensity: ci.dataIntensity as "low" | "medium" | "high",
+      changeImpact: ci.changeImpact as "low" | "medium" | "high",
+      integrationNeed: ci.integrationNeed as "low" | "medium" | "high",
+      governanceSensitivity: ci.governanceSensitivity as "low" | "medium" | "high",
+    });
+    setRatingDialogOpen(true);
+  };
+
+  const unratedCustom = (customCapData ?? []).filter((ci) => !ci.isRated);
+  const hasUnratedCustom = unratedCustom.length > 0;
+
   const isLocked = !data?.canStart;
   const isStale = data?.stage?.isStale ?? false;
   const isConfirmed = data?.stage?.isConfirmed ?? false;
@@ -587,6 +627,46 @@ export default function RewardCapabilityPage() {
             >
               Keep as-is
             </Button>
+          </div>
+        )}
+
+        {/* E2: Custom initiative capability rating prompt */}
+        {!isLocked && hasUnratedCustom && (
+          <div className="rounded-xl border border-violet-500/40 bg-violet-500/5 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <CircleDot className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">Rate your custom initiatives</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Your portfolio includes custom initiatives. Rate their capability demand so they are included in the required-level calculation.
+                  Until rated, they default to <strong>medium</strong> on all dimensions.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {unratedCustom.map((ci) => (
+                <div key={ci.id} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Badge variant="outline" className="text-xs bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30 flex-shrink-0">Custom</Badge>
+                    <span className="text-sm font-medium truncate">{ci.title}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-shrink-0 ml-2 gap-1.5"
+                    onClick={() => openRatingDialog(ci)}
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    Rate demand
+                  </Button>
+                </div>
+              ))}
+            </div>
+            {(customCapData ?? []).filter((ci) => ci.isRated).length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {(customCapData ?? []).filter((ci) => ci.isRated).length} of {(customCapData ?? []).length} rated.
+              </p>
+            )}
           </div>
         )}
 
@@ -730,6 +810,63 @@ export default function RewardCapabilityPage() {
           </div>
         )}
       </div>
+
+      {/* E2: Custom initiative rating dialog */}
+      <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-violet-500" />
+              Rate capability demand
+            </DialogTitle>
+          </DialogHeader>
+          {ratingTarget && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Rate how demanding <strong>{ratingTarget.title}</strong> is on each capability dimension.
+                This affects the required level calculation for your portfolio.
+              </p>
+              {([
+                { key: "dataIntensity" as const, label: "Data intensity", description: "Volume and quality of data required" },
+                { key: "changeImpact" as const, label: "Change impact", description: "Degree of organisational change involved" },
+                { key: "integrationNeed" as const, label: "Integration need", description: "Systems and API integration complexity" },
+                { key: "governanceSensitivity" as const, label: "Governance sensitivity", description: "Risk, compliance, and oversight requirements" },
+              ] as const).map(({ key, label, description }) => (
+                <div key={key} className="space-y-1.5">
+                  <div>
+                    <Label className="text-xs font-medium">{label}</Label>
+                    <p className="text-xs text-muted-foreground">{description}</p>
+                  </div>
+                  <Select
+                    value={ratingValues[key]}
+                    onValueChange={(v) => setRatingValues((prev) => ({ ...prev, [key]: v as "low" | "medium" | "high" }))}
+                  >
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRatingDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => ratingTarget && rateCustomMutation.mutate({ id: ratingTarget.id, ...ratingValues })}
+              disabled={rateCustomMutation.isPending || !ratingTarget}
+              className="gap-2"
+            >
+              {rateCustomMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              Save ratings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>

@@ -672,7 +672,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       dataIntensity: 'high',
       changeImpact: 'low',
       integrationNeed: 'medium',
-      governanceSensitivity: 'high',
+      governanceSensitivity: 'medium', // Reporting tool, not live decision system — moderate governance
     },
   },
 
@@ -766,7 +766,7 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       dataIntensity: 'high',
       changeImpact: 'low',
       integrationNeed: 'medium',
-      governanceSensitivity: 'high',
+      governanceSensitivity: 'medium', // Periodic audit tool, not live decision system — moderate governance
     },
   },
 

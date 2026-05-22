@@ -23,6 +23,7 @@ import {
   rewardInitiativePortfolio,
   rewardCapabilityDimensions,
   rewardCapabilityStage,
+  rewardCustomInitiative,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
@@ -39,6 +40,7 @@ import {
   type CapabilityDimension,
   type CapabilityLevel,
   type GapStatus,
+  type CustomInitiativeCapabilityProfile,
 } from "../services/rewardCapabilityService";
 
 // ── Vocabulary blacklist ──────────────────────────────────────────────────────
@@ -154,7 +156,24 @@ export const rewardCapabilityAssessmentRouter = router({
       .where(eq(companyProfile.tenantId, tenantId));
     const fcaSysc19 = profileForGate?.fcaSysc19InScope === "yes";
 
-    const requirements = computeRequiredLevels(initiativeIds, { fcaSysc19 });
+    // Load custom initiatives in portfolio and build their capability profiles
+    const customInPortfolio = await db
+      .select()
+      .from(rewardCustomInitiative)
+      .where(and(eq(rewardCustomInitiative.tenantId, tenantId), eq(rewardCustomInitiative.inPortfolio, 1)));
+    const customProfiles: CustomInitiativeCapabilityProfile[] = customInPortfolio.map((ci) => ({
+      id: ci.id,
+      capabilityProfile: {
+        dataIntensity: (ci.capDataIntensity ?? "medium") as "low" | "medium" | "high",
+        changeImpact: (ci.capChangeImpact ?? "medium") as "low" | "medium" | "high",
+        integrationNeed: (ci.capIntegrationNeed ?? "medium") as "low" | "medium" | "high",
+        governanceSensitivity: (ci.capGovernanceSensitivity ?? "medium") as "low" | "medium" | "high",
+      },
+    }));
+
+    // Merge library IDs + custom initiative IDs for portfolio breadth
+    const allIds = [...initiativeIds, ...customInPortfolio.map((ci) => ci.id)];
+    const requirements = computeRequiredLevels(allIds, { fcaSysc19, customProfiles });
 
     // Merge saved rows with requirements
     const dimensions = requirements.map((req) => {
@@ -243,13 +262,30 @@ export const rewardCapabilityAssessmentRouter = router({
       preworkForGen?.aiMaturityInRewardToday,
     );
 
-    const requirements = computeRequiredLevels(initiativeIds, { fcaSysc19: fcaSysc19ForGen });
+    // Load custom initiatives in portfolio
+    const customInPortfolioForGen = await db
+      .select()
+      .from(rewardCustomInitiative)
+      .where(and(eq(rewardCustomInitiative.tenantId, tenantId), eq(rewardCustomInitiative.inPortfolio, 1)));
+    const customProfilesForGen: CustomInitiativeCapabilityProfile[] = customInPortfolioForGen.map((ci) => ({
+      id: ci.id,
+      capabilityProfile: {
+        dataIntensity: (ci.capDataIntensity ?? "medium") as "low" | "medium" | "high",
+        changeImpact: (ci.capChangeImpact ?? "medium") as "low" | "medium" | "high",
+        integrationNeed: (ci.capIntegrationNeed ?? "medium") as "low" | "medium" | "high",
+        governanceSensitivity: (ci.capGovernanceSensitivity ?? "medium") as "low" | "medium" | "high",
+      },
+    }));
+    const allIdsForGen = [...initiativeIds, ...customInPortfolioForGen.map((ci) => ci.id)];
+
+    const requirements = computeRequiredLevels(allIdsForGen, { fcaSysc19: fcaSysc19ForGen, customProfiles: customProfilesForGen });
     const context = await buildContextString(tenantId);
 
-    const initiativeTitles = initiativeIds
+    const libraryTitles = initiativeIds
       .map((id) => getRewardInitiative(id)?.title)
-      .filter(Boolean)
-      .join(", ");
+      .filter(Boolean);
+    const customTitles = customInPortfolioForGen.map((ci) => ci.title + " (custom)");
+    const initiativeTitles = [...libraryTitles, ...customTitles].join(", ");
 
     const dimensionSummary = requirements
       .map((r) => `${r.label} (required: ${r.requiredLevel})`)
@@ -648,5 +684,76 @@ Task: ${actionInstructions[input.action]}${input.reason ? `\nAdditional context:
       .where(eq(rewardCapabilityStage.tenantId, tenantId));
 
     return { ok: true };
+  }),
+
+  // ── rateCustomInitiative ────────────────────────────────────────────────────────────
+  /** Save user-supplied capability ratings for a custom initiative (E2) */
+  rateCustomInitiative: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      dataIntensity: z.enum(["low", "medium", "high"]),
+      changeImpact: z.enum(["low", "medium", "high"]),
+      integrationNeed: z.enum(["low", "medium", "high"]),
+      governanceSensitivity: z.enum(["low", "medium", "high"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.user.tenantId;
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      const [ci] = await db
+        .select({ id: rewardCustomInitiative.id })
+        .from(rewardCustomInitiative)
+        .where(and(eq(rewardCustomInitiative.id, input.id), eq(rewardCustomInitiative.tenantId, tenantId)));
+      if (!ci) throw new TRPCError({ code: "NOT_FOUND", message: "Custom initiative not found" });
+
+      await db.update(rewardCustomInitiative)
+        .set({
+          capDataIntensity: input.dataIntensity,
+          capChangeImpact: input.changeImpact,
+          capIntegrationNeed: input.integrationNeed,
+          capGovernanceSensitivity: input.governanceSensitivity,
+          capabilityRated: 1,
+          updatedAt: Date.now(),
+        })
+        .where(and(eq(rewardCustomInitiative.id, input.id), eq(rewardCustomInitiative.tenantId, tenantId)));
+
+      // Mark Stage 8 as stale so required levels recompute
+      await db.update(rewardCapabilityStage)
+        .set({ isStale: 1, updatedAt: Date.now() })
+        .where(eq(rewardCapabilityStage.tenantId, tenantId));
+
+      return { ok: true };
+    }),
+
+  // ── getCustomInitiativeCapability ──────────────────────────────────────────────────
+  /** Get capability ratings for all custom initiatives in portfolio (for E2 UI prompt) */
+  getCustomInitiativeCapability: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.user.tenantId;
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+    const rows = await db
+      .select({
+        id: rewardCustomInitiative.id,
+        title: rewardCustomInitiative.title,
+        capabilityRated: rewardCustomInitiative.capabilityRated,
+        capDataIntensity: rewardCustomInitiative.capDataIntensity,
+        capChangeImpact: rewardCustomInitiative.capChangeImpact,
+        capIntegrationNeed: rewardCustomInitiative.capIntegrationNeed,
+        capGovernanceSensitivity: rewardCustomInitiative.capGovernanceSensitivity,
+      })
+      .from(rewardCustomInitiative)
+      .where(and(eq(rewardCustomInitiative.tenantId, tenantId), eq(rewardCustomInitiative.inPortfolio, 1)));
+
+    return rows.map((ci) => ({
+      id: ci.id,
+      title: ci.title,
+      isRated: ci.capabilityRated === 1,
+      dataIntensity: (ci.capDataIntensity ?? "medium") as "low" | "medium" | "high",
+      changeImpact: (ci.capChangeImpact ?? "medium") as "low" | "medium" | "high",
+      integrationNeed: (ci.capIntegrationNeed ?? "medium") as "low" | "medium" | "high",
+      governanceSensitivity: (ci.capGovernanceSensitivity ?? "medium") as "low" | "medium" | "high",
+    }));
   }),
 });

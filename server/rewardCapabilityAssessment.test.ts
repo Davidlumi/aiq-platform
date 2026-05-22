@@ -614,3 +614,91 @@ describe("Stage 10 assembleReport — capability section", () => {
     expect(hash1).not.toBe(hash2);
   });
 });
+
+// ── E2: Custom initiative capability profile tests ────────────────────────────
+
+describe("computeRequiredLevels — custom initiative profiles (E2)", () => {
+  it("includes custom initiative profiles in required-level computation", () => {
+    // A custom initiative with high dataIntensity should contribute to data_foundations
+    const customId = "custom-initiative-abc123";
+    const customProfiles = [
+      {
+        id: customId,
+        capabilityProfile: {
+          dataIntensity: "high" as const,
+          changeImpact: "medium" as const,
+          integrationNeed: "low" as const,
+          governanceSensitivity: "low" as const,
+        },
+      },
+    ];
+    // Use 2 library initiatives with high dataIntensity + 1 custom high-data → escalation should fire
+    const highDataIds = REWARD_INITIATIVE_LIBRARY
+      .filter((i) => i.capabilityProfile?.dataIntensity === "high")
+      .map((i) => i.id)
+      .slice(0, 2);
+    const result = computeRequiredLevels([...highDataIds, customId], { customProfiles });
+    const dataFoundations = result.find((r) => r.dimension === "data_foundations");
+    // 2 library + 1 custom = 3 high → escalation fires
+    expect(dataFoundations?.requiredLevel).toBe("very_high");
+    expect(dataFoundations?.escalated).toBe(true);
+  });
+
+  it("does NOT escalate when custom initiative has medium dataIntensity", () => {
+    const customId = "custom-initiative-medium";
+    const customProfiles = [
+      {
+        id: customId,
+        capabilityProfile: {
+          dataIntensity: "medium" as const,
+          changeImpact: "medium" as const,
+          integrationNeed: "medium" as const,
+          governanceSensitivity: "medium" as const,
+        },
+      },
+    ];
+    // 2 library high-data + 1 custom medium-data → only 2 high, no escalation
+    const highDataIds = REWARD_INITIATIVE_LIBRARY
+      .filter((i) => i.capabilityProfile?.dataIntensity === "high")
+      .map((i) => i.id)
+      .slice(0, 2);
+    const result = computeRequiredLevels([...highDataIds, customId], { customProfiles });
+    const dataFoundations = result.find((r) => r.dimension === "data_foundations");
+    expect(dataFoundations?.requiredLevel).toBe("high");
+    expect(dataFoundations?.escalated).toBe(false);
+  });
+
+  it("defaults to medium on all dimensions when no custom profile is provided for an unknown ID", () => {
+    // Unknown ID with no customProfiles entry → silently excluded from computation
+    // (not defaulted to medium — unknown IDs without profiles are excluded)
+    const unknownId = "custom-initiative-no-profile";
+    const highDataIds = REWARD_INITIATIVE_LIBRARY
+      .filter((i) => i.capabilityProfile?.dataIntensity === "high")
+      .map((i) => i.id)
+      .slice(0, 2);
+    // Without customProfiles, unknown ID is excluded → only 2 high, no escalation
+    const result = computeRequiredLevels([...highDataIds, unknownId]);
+    const dataFoundations = result.find((r) => r.dimension === "data_foundations");
+    expect(dataFoundations?.requiredLevel).toBe("high");
+  });
+
+  it("custom initiative contributes to team_skills breadth count", () => {
+    // 6 library + 1 custom = 7 total → team_skills should be high (7+ threshold)
+    const sixIds = REWARD_INITIATIVE_LIBRARY.map((i) => i.id).slice(0, 6);
+    const customId = "custom-initiative-breadth";
+    const customProfiles = [
+      {
+        id: customId,
+        capabilityProfile: {
+          dataIntensity: "low" as const,
+          changeImpact: "low" as const,
+          integrationNeed: "low" as const,
+          governanceSensitivity: "low" as const,
+        },
+      },
+    ];
+    const result = computeRequiredLevels([...sixIds, customId], { customProfiles });
+    const teamSkills = result.find((r) => r.dimension === "team_skills");
+    expect(teamSkills?.requiredLevel).toBe("high");
+  });
+});

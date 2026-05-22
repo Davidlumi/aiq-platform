@@ -2459,6 +2459,13 @@ export const rewardCustomInitiative = mysqlTable("reward_custom_initiative", {
   notes: text("notes"),
   /** Whether this custom initiative is currently in the portfolio */
   inPortfolio: tinyint("in_portfolio").notNull().default(1),
+  /** Capability profile — user-rated dimensions (null = not yet rated, defaults to medium) */
+  capDataIntensity: mysqlEnum("cap_data_intensity", ["low", "medium", "high"]),
+  capChangeImpact: mysqlEnum("cap_change_impact", ["low", "medium", "high"]),
+  capIntegrationNeed: mysqlEnum("cap_integration_need", ["low", "medium", "high"]),
+  capGovernanceSensitivity: mysqlEnum("cap_governance_sensitivity", ["low", "medium", "high"]),
+  /** Whether the user has explicitly rated the capability profile (0 = unrated, 1 = rated) */
+  capabilityRated: tinyint("capability_rated").notNull().default(0),
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   updatedAt: bigint("updated_at", { mode: "number" }),
 }, (t) => ({
