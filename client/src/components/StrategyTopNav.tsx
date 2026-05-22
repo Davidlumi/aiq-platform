@@ -295,6 +295,13 @@ export default function StrategyTopNav() {
         route: "/strategy/reward-business-case",
         what: "Build the financial business case for your Reward AI programme",
       };
+      if (s.number === 8) return {
+        ...s,
+        label: "Capability",
+        shortLabel: "Capability",
+        route: "/strategy/reward-capability",
+        what: "Assess organisational capability to deliver the portfolio",
+      };
     }
     if (s.number === 9) return { ...s, label: modeLabels.stage9Label, what: modeLabels.stage9What };
     if (s.number === 10) {

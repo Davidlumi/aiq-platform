@@ -28,6 +28,8 @@ import {
   rewardCustomInitiative,
   rewardSuccessMeasures,
   rewardSuccessMeasuresStage,
+  rewardCapabilityDimensions,
+  rewardCapabilityStage,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
@@ -73,8 +75,11 @@ async function buildContext(tenantId: string) {
   const [s6stage]     = await db.select().from(rewardSuccessMeasuresStage).where(eq(rewardSuccessMeasuresStage.tenantId, tenantId));
   const s6measures    = await db.select().from(rewardSuccessMeasures)
     .where(eq(rewardSuccessMeasures.tenantId, tenantId));
+  // Stage 8
+  const [s8stage]     = await db.select().from(rewardCapabilityStage).where(eq(rewardCapabilityStage.tenantId, tenantId));
+  const s8dims        = await db.select().from(rewardCapabilityDimensions).where(eq(rewardCapabilityDimensions.tenantId, tenantId));
 
-  return { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures };
+  return { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims };
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────
@@ -84,7 +89,7 @@ export const rewardOutputsRouter = router({
   // ── get ─────────────────────────────────────────────────────────────────────
   get: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures } =
+    const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims } =
       await buildContext(tenantId);
 
     const report = assembleReport({
@@ -104,10 +109,17 @@ export const rewardOutputsRouter = router({
       customInitiatives: customs,
       successMeasures: s6measures,
       successMeasuresStage: s6stage,
+      capabilityDimensions: s8dims,
+      capabilityStage: s8stage ? {
+        ...s8stage,
+        sequencingFlagsJson: s8stage.sequencingFlagsJson as Array<{ initiativeId: string; status: string; reason?: string }> | null,
+        enablementCostJson: s8stage.enablementCostJson as { low: number; high: number; note: string } | null,
+        capabilityRiskNoteJson: s8stage.capabilityRiskNoteJson as string | null,
+      } : undefined,
     });
 
     // Compute current state hash
-    const currentHash = computeStateHash({ profile, prework, vision, strategy, principles, portfolio, businessCase: bc, successMeasuresStage: s6stage });
+    const currentHash = computeStateHash({ profile, prework, vision, strategy, principles, portfolio, businessCase: bc, successMeasuresStage: s6stage, capabilityStage: s8stage });
 
     return {
       report,
@@ -126,7 +138,7 @@ export const rewardOutputsRouter = router({
   // ── generateSummary ──────────────────────────────────────────────────────────
   generateSummary: protectedProcedure.mutation(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    const { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures } =
+    const { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims } =
       await buildContext(tenantId);
 
     if (!portfolio?.isCompleted) {
@@ -148,6 +160,13 @@ export const rewardOutputsRouter = router({
       customInitiatives: customs,
       successMeasures: s6measures,
       successMeasuresStage: s6stage,
+      capabilityDimensions: s8dims,
+      capabilityStage: s8stage ? {
+        ...s8stage,
+        sequencingFlagsJson: s8stage.sequencingFlagsJson as Array<{ initiativeId: string; status: string; reason?: string }> | null,
+        enablementCostJson: s8stage.enablementCostJson as { low: number; high: number; note: string } | null,
+        capabilityRiskNoteJson: s8stage.capabilityRiskNoteJson as string | null,
+      } : undefined,
     });
 
     const audience = (outputs?.audience ?? "board") as Audience;
@@ -221,7 +240,7 @@ Return a single string: 3–5 paragraphs of plain text.`;
     }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures } =
+      const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims } =
         await buildContext(tenantId);
 
       const report = assembleReport({
@@ -236,6 +255,13 @@ Return a single string: 3–5 paragraphs of plain text.`;
         customInitiatives: customs,
         successMeasures: s6measures,
         successMeasuresStage: s6stage,
+        capabilityDimensions: s8dims,
+        capabilityStage: s8stage ? {
+          ...s8stage,
+          sequencingFlagsJson: s8stage.sequencingFlagsJson as Array<{ initiativeId: string; status: string; reason?: string }> | null,
+          enablementCostJson: s8stage.enablementCostJson as { low: number; high: number; note: string } | null,
+          capabilityRiskNoteJson: s8stage.capabilityRiskNoteJson as string | null,
+        } : undefined,
       });
 
       const audience = (outputs?.audience ?? "board") as Audience;

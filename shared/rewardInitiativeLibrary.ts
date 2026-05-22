@@ -136,6 +136,22 @@ export interface CostCalibration {
 }
 
 /**
+ * Per-initiative capability demand profile for Stage 8 assessment.
+ * Rates how demanding the initiative is on each capability dimension.
+ * Team & skills is derived from overall portfolio complexity, not per-initiative.
+ */
+export interface CapabilityProfile {
+  /** How data-intensive this initiative is — fuel requirement */
+  dataIntensity: 'low' | 'medium' | 'high';
+  /** How much change management / adoption effort this requires */
+  changeImpact: 'low' | 'medium' | 'high';
+  /** How deeply it needs to integrate with HRIS / systems estate */
+  integrationNeed: 'low' | 'medium' | 'high';
+  /** How sensitive it is to governance, auditability, and regulatory requirements */
+  governanceSensitivity: 'low' | 'medium' | 'high';
+}
+
+/**
  * A default success measure for an initiative — pre-populated as an editable suggestion in Stage 6.
  * Maya owns the final set; these are never auto-confirmed.
  */
@@ -202,6 +218,12 @@ export interface RewardInitiative {
    * Never auto-confirmed.
    */
   suggestedMeasures: SuggestedMeasure[];
+  /**
+   * Capability demand profile for Stage 8 assessment.
+   * Rates how demanding this initiative is on data, change, integration, and governance.
+   * Team & skills requirement is derived from portfolio complexity, not per-initiative.
+   */
+  capabilityProfile: CapabilityProfile;
 }
 
 // ─── Library ──────────────────────────────────────────────────────────────────
@@ -322,6 +344,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
         "Workforce composition or current capability suggests other initiatives should come first.",
       ],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'high',
+      integrationNeed: 'high',
+      governanceSensitivity: 'high',
+    },
   },
 
   // ── #2 AI-Driven Merit Cycle Orchestration ───────────────────────────────
@@ -415,6 +443,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
         "Pay structure maturity needs strengthening before merit orchestration can work effectively.",
       ],
       not_recommended: ["Current capability profile suggests foundational work is needed first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'high',
+      integrationNeed: 'high',
+      governanceSensitivity: 'medium',
     },
   },
 
@@ -537,6 +571,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
         "You already have continuous monitoring capability. Consider extending to multi-characteristic reporting instead.",
       ],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'medium',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'high',
+    },
   },
 
   // ── #4 AI Multi-Characteristic Pay Gap Reporting ─────────────────────────
@@ -628,6 +668,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Consider building continuous monitoring capability first."],
       not_recommended: ["Current pay equity capability suggests foundational monitoring should come first."],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'high',
+    },
   },
 
   // ── #5 AI Equal Pay Risk Audit ───────────────────────────────────────────
@@ -715,6 +761,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Equal pay risk audit is valuable as a periodic check even with existing equity processes."],
       weak_fit: ["Your existing equity monitoring may already cover this ground."],
       not_recommended: ["Existing continuous monitoring capability covers this."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'high',
     },
   },
 
@@ -826,6 +878,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Your existing pay structure may not need a full redesign."],
       not_recommended: ["Your actively maintained pay bands mean this initiative's value is limited. Consider market data intelligence instead."],
     },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'high',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'medium',
+    },
   },
 
   // ── #7 AI Market Data Intelligence ──────────────────────────────────────
@@ -914,6 +972,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Limited external data use suggests other priorities first."],
       not_recommended: ["Public sector pay structures typically don't benefit from market data automation."],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'low',
+    },
   },
 
   // ── #8 AI Pay Transparency Engine ───────────────────────────────────────
@@ -994,6 +1058,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Pay transparency preparation is increasingly important across all sectors."],
       weak_fit: ["Transparency requirements may be less immediate for your sector."],
       not_recommended: ["Current regulatory context suggests limited near-term requirement."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'high',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'high',
     },
   },
 
@@ -1083,6 +1153,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Executive benchmarking delivers value for PE/VC-backed organisations preparing for exit or IPO."],
       weak_fit: ["Executive benchmarking value is limited for your ownership structure."],
       not_recommended: ["Executive pay benchmarking against listed peers is not applicable for your ownership structure."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'low',
+      governanceSensitivity: 'high',
     },
   },
 
@@ -1180,6 +1256,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["AI talent pay strategy is increasingly relevant as AI roles grow."],
       weak_fit: ["Limited AI talent population reduces the urgency of this initiative."],
       not_recommended: ["Minimal AI talent population means this initiative has limited applicability right now."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'medium',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'medium',
     },
   },
 
@@ -1279,6 +1361,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Your workforce composition or pay structure maturity suggests this is premature."],
       not_recommended: ["Formal pay band architecture is required before skills-based pay modelling can work. Build AI Pay Band Design (#6) first."],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'high',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'medium',
+    },
   },
 
   // ── #12 AI Total Rewards Personalisation ─────────────────────────────────
@@ -1373,6 +1461,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["AI maturity or ambition level suggests this initiative is premature. Build foundational capability first."],
       not_recommended: ["Current AI maturity and ambition profile suggests other initiatives should come first."],
     },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'medium',
+      integrationNeed: 'high',
+      governanceSensitivity: 'low',
+    },
   },
 
   // ── #13 AI Total Rewards Statement Generation ─────────────────────────────
@@ -1452,6 +1546,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Consider whether employee self-service infrastructure is in place."],
       not_recommended: ["Current capability profile suggests other priorities first."],
     },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'low',
+      integrationNeed: 'high',
+      governanceSensitivity: 'low',
+    },
   },
 
   // ── #14 AI Pay Decision Explainer ────────────────────────────────────────
@@ -1527,6 +1627,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Pay decision explainers deliver value across most organisations."],
       weak_fit: ["Consider whether pay band architecture is in place to support explanations."],
       not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'medium',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'high',
     },
   },
 
@@ -1614,6 +1720,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Consider whether HRIS integration is in place to support the assistant."],
       not_recommended: ["Current capability profile suggests other priorities first."],
     },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'medium',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'low',
+    },
   },
 
   // ── #16 AI Bonus Pool Optimisation ───────────────────────────────────────
@@ -1696,6 +1808,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Bonus pool optimisation delivers value across most organisations with significant variable pay."],
       weak_fit: ["Reward AI ambition level suggests this initiative may be premature."],
       not_recommended: ["Current AI ambition profile suggests foundational initiatives should come first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'high',
+      integrationNeed: 'high',
+      governanceSensitivity: 'high',
     },
   },
 
@@ -1794,6 +1912,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Limited sales workforce reduces the value of this initiative."],
       not_recommended: ["Minimal sales workforce means this initiative has limited applicability."],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'high',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'medium',
+    },
   },
 
   // ── #18 AI LTIP Modelling ─────────────────────────────────────────────────
@@ -1879,6 +2003,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["LTIP modelling delivers value for organisations with complex long-term incentive structures."],
       weak_fit: ["LTIP modelling value is limited for your ownership structure."],
       not_recommended: ["LTIP modelling is designed for listed companies. Not applicable for your ownership structure."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'low',
+      governanceSensitivity: 'high',
     },
   },
 
@@ -1971,6 +2101,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Pension scheme architecture may limit the scope of AI-driven engagement."],
       not_recommended: ["No employer pension scheme means this initiative is not applicable."],
     },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'medium',
+      integrationNeed: 'high',
+      governanceSensitivity: 'high',
+    },
   },
 
   // ── #20 AI Benefits Utilisation Analytics ────────────────────────────────
@@ -2044,6 +2180,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Benefits analytics delivers value across most organisations."],
       weak_fit: ["Limited benefits data may constrain the analysis."],
       not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'low',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'low',
     },
   },
 
@@ -2123,6 +2265,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Reward governance audit trail delivers value across most organisations."],
       weak_fit: ["Current regulatory context suggests limited near-term urgency."],
       not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'low',
+      integrationNeed: 'high',
+      governanceSensitivity: 'high',
     },
   },
 
@@ -2204,6 +2352,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Limited external data use reduces the value of this initiative."],
       not_recommended: ["No external comp data use means this initiative has limited applicability."],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'low',
+    },
   },
 
   // ── #23 AI Reward Budget Forecasting ─────────────────────────────────────
@@ -2276,6 +2430,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Budget forecasting automation delivers value across most organisations."],
       weak_fit: ["Consider whether workforce planning data is available to support forecasting."],
       not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'medium',
+      integrationNeed: 'high',
+      governanceSensitivity: 'medium',
     },
   },
 
@@ -2364,6 +2524,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Pension scheme architecture suggests limited scope for strategic modelling."],
       not_recommended: ["No employer pension scheme means this initiative is not applicable."],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'high',
+    },
   },
 
   // ── #25 AI Reward Communications Generator ───────────────────────────────
@@ -2436,6 +2602,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Communications automation delivers value across most organisations."],
       weak_fit: ["Consider whether HRIS integration is in place to support personalisation."],
       not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'medium',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'low',
     },
   },
 
@@ -2520,6 +2692,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Consider whether HRIS data quality supports attrition modelling."],
       not_recommended: ["Current talent profile suggests limited applicability."],
     },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'medium',
+      integrationNeed: 'high',
+      governanceSensitivity: 'medium',
+    },
   },
 
   // ── #27 AI Job Architecture Rationalisation ───────────────────────────────
@@ -2592,6 +2770,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Job architecture rationalisation delivers value across most organisations with complex role structures."],
       weak_fit: ["Consider whether job architecture complexity justifies this initiative."],
       not_recommended: ["Current capability profile suggests other priorities first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'medium',
+      changeImpact: 'high',
+      integrationNeed: 'medium',
+      governanceSensitivity: 'low',
     },
   },
 
@@ -2672,6 +2856,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       weak_fit: ["Build foundational AI capability before investing in manager coaching tools."],
       not_recommended: ["Current AI maturity suggests foundational initiatives should come first."],
     },
+    capabilityProfile: {
+      dataIntensity: 'low',
+      changeImpact: 'high',
+      integrationNeed: 'low',
+      governanceSensitivity: 'medium',
+    },
   },
 
   // ── #29 AI Reward Analytics Dashboard ────────────────────────────────────
@@ -2750,6 +2940,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Reward analytics delivers value across most organisations."],
       weak_fit: ["Build foundational Reward processes before investing in analytics infrastructure."],
       not_recommended: ["Current Reward function maturity suggests foundational work is needed first."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'low',
+      integrationNeed: 'high',
+      governanceSensitivity: 'medium',
     },
   },
 
@@ -2849,6 +3045,12 @@ export const REWARD_INITIATIVE_LIBRARY: RewardInitiative[] = [
       moderate_fit: ["Frontline pay optimisation delivers value where there is a meaningful frontline workforce."],
       weak_fit: ["Limited frontline workforce reduces the value of this initiative."],
       not_recommended: ["Minimal frontline workforce means this initiative has limited applicability."],
+    },
+    capabilityProfile: {
+      dataIntensity: 'high',
+      changeImpact: 'medium',
+      integrationNeed: 'high',
+      governanceSensitivity: 'medium',
     },
   },
 ];

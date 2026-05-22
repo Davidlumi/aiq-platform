@@ -123,6 +123,7 @@ export function checkStageCompleteness(
   portfolio: { isCompleted?: number | null } | undefined,
   businessCase: { isConfirmed?: number | null } | undefined,
   successMeasuresStage?: { isConfirmed?: number | null; isStale?: number | null } | undefined,
+  capabilityStage?: { isConfirmed?: number | null; isStale?: number | null } | undefined,
 ) {
   return {
     stage1: !!prework?.isCompleted,
@@ -132,7 +133,7 @@ export function checkStageCompleteness(
     stage5: !!portfolio?.isCompleted,
     stage6: !!successMeasuresStage?.isConfirmed && !successMeasuresStage?.isStale,
     stage7: !!businessCase?.isConfirmed,
-    stage8: false,   // not yet built
+    stage8: !!capabilityStage?.isConfirmed && !capabilityStage?.isStale,
     stage9: false,   // not yet built
   };
 }
@@ -213,12 +214,33 @@ export function assembleReport(params: {
     isStale?: number | null;
     strategyOutcomesJson?: Array<{ id: string; text: string }> | null;
   } | undefined;
+  // Stage 8 data (optional — placeholder rendered when absent)
+  capabilityDimensions?: Array<{
+    dimension: string;
+    requiredLevel: string;
+    currentLevel: string | null;
+    gapStatus: string | null;
+    gapStatement: string | null;
+    actionNote: string | null;
+    owner: string | null;
+    isChallenged: number | null;
+    challengeNote: string | null;
+  }>;
+  capabilityStage?: {
+    isConfirmed?: number | null;
+    isStale?: number | null;
+    sequencingFlagsJson?: Array<{ initiativeId: string; status: string; reason?: string }> | null;
+    enablementCostJson?: { low: number; high: number; note: string } | null;
+    capabilityRiskNoteJson?: string | null;
+  } | undefined;
 }): AssembledReport {
   const {
     profile, prework, vision, strategy, principles, portfolio, businessCase,
     customInitiatives = [],
     successMeasures = [],
     successMeasuresStage,
+    capabilityDimensions = [],
+    capabilityStage,
   } = params;
 
   // ── Compute Stage 7 model (shared calibration function) ──────────────────
@@ -302,7 +324,7 @@ export function assembleReport(params: {
 
   // ── Completeness ─────────────────────────────────────────────────────────
   const stageCompleteness = checkStageCompleteness(
-    prework, vision, strategy, principles, portfolio, businessCase, successMeasuresStage
+    prework, vision, strategy, principles, portfolio, businessCase, successMeasuresStage, capabilityStage
   );
 
   // ── Sections ─────────────────────────────────────────────────────────────
@@ -406,9 +428,36 @@ export function assembleReport(params: {
     {
       key: "capability",
       title: "Capability and delivery",
-      content: null,
-      isPlaceholder: true,
-      placeholderText: "Capability assessment to be completed (Stage 8 — coming soon).",
+      content: (() => {
+        if (!capabilityStage?.isConfirmed) return null;
+        const assessedDims = capabilityDimensions.filter(d => d.currentLevel !== null);
+        if (assessedDims.length === 0) return null;
+        const seqFlags = capabilityStage.sequencingFlagsJson ?? [];
+        const enablement = capabilityStage.enablementCostJson;
+        const lines: string[] = [];
+        lines.push("**Capability assessment across five dimensions:**\n");
+        for (const dim of assessedDims) {
+          const gapLabel = dim.gapStatus === "no_gap" ? "No gap" : dim.gapStatus === "minor_gap" ? "Minor gap" : "Significant gap";
+          lines.push(`**${dim.dimension.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}** — Required: ${dim.requiredLevel}, Current: ${dim.currentLevel} (${gapLabel})`);
+          if (dim.gapStatement) lines.push(dim.gapStatement);
+          if (dim.actionNote) lines.push(`_Action: ${dim.actionNote}_`);
+          lines.push("");
+        }
+        if (seqFlags.length > 0) {
+          lines.push("**Advisory sequencing:**");
+          for (const f of seqFlags) {
+            lines.push(`- ${f.initiativeId}: ${f.status.replace(/_/g, " ")}${f.reason ? ` — ${f.reason}` : ""}`);
+          }
+          lines.push("");
+        }
+        if (enablement && enablement.low > 0) {
+          lines.push(`**Enablement investment estimate:** £${Math.round(enablement.low / 1000)}k–£${Math.round(enablement.high / 1000)}k`);
+          lines.push(enablement.note);
+        }
+        return lines.join("\n").trim() || null;
+      })(),
+      isPlaceholder: !capabilityStage?.isConfirmed,
+      placeholderText: "Capability assessment to be completed (Stage 8).",
       sourceStage: 8,
     },
     {
@@ -594,6 +643,7 @@ export function computeStateHash(data: {
   portfolio?: object | null;
   businessCase?: object | null;
   successMeasuresStage?: object | null;
+  capabilityStage?: object | null;
 }): string {
   const payload = JSON.stringify({
     profile: data.profile ?? null,
@@ -604,6 +654,7 @@ export function computeStateHash(data: {
     portfolio: data.portfolio ?? null,
     businessCase: data.businessCase ?? null,
     successMeasuresStage: data.successMeasuresStage ?? null,
+    capabilityStage: data.capabilityStage ?? null,
   });
   return createHash("sha256").update(payload).digest("hex");
 }

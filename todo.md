@@ -4445,3 +4445,13 @@ test
 - [x] computeStateHash updated: successMeasuresStage included in hash (export-stale banner fires on Stage 6 changes)
 - [x] All 3 assembleReport call sites in rewardOutputs router updated to pass s6stage and s6measures
 - [x] Tests: 17 Stage 6 library tests + 10 assembleReport wiring tests (1,613 total passing)
+
+## Stage 8 — Capability Assessment
+- [ ] Add capabilityProfile field to all 30 library initiatives
+- [ ] DB schema: reward_capability_assessment table + migration
+- [ ] rewardCapabilityAssessment service: computeRequiredLevels, seedCurrentLevels, computeStatus, deriveSequencingFlags
+- [ ] Stage 8 tRPC router: generateAssessment, saveDimension, affordance, complete, markStale, keepAsIs
+- [ ] Stage 8 UI page: RewardCapabilityPage with per-dimension cards, enablement summary, confirm gate
+- [ ] Wire Stage 7 risk feed (additive, no computation change)
+- [ ] Wire Stage 10 capability placeholder from Stage 8 data
+- [ ] Stage 8 tests

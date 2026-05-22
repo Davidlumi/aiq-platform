@@ -2636,6 +2636,73 @@ export const rewardSuccessMeasuresStage = mysqlTable("reward_success_measures_st
 export type RewardSuccessMeasuresStage = typeof rewardSuccessMeasuresStage.$inferSelect;
 export type RewardSuccessMeasuresStageInsert = typeof rewardSuccessMeasuresStage.$inferInsert;
 
+// ─── Reward Stage 8 — Capability Assessment ─────────────────────────────────
+/**
+ * One row per tenant per capability dimension.
+ * Dimensions: data_foundations, change_management, systems_integration, governance, team_skills
+ */
+export const rewardCapabilityDimensions = mysqlTable("reward_capability_dimensions", {
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  dimension: varchar("dimension", { length: 64 }).notNull(), // 'data_foundations' | 'change_management' | 'systems_integration' | 'governance' | 'team_skills'
+  userId: varchar("user_id", { length: 36 }).notNull(),
+
+  /** Required level derived from portfolio: 'low' | 'medium' | 'high' */
+  requiredLevel: varchar("required_level", { length: 16 }).notNull().default('medium'),
+
+  /** Maya's assessed current level: 'low' | 'medium' | 'high' | null (not yet assessed) */
+  currentLevel: varchar("current_level", { length: 16 }),
+
+  /** Gap status: 'no_gap' | 'minor_gap' | 'significant_gap' | null */
+  gapStatus: varchar("gap_status", { length: 32 }),
+
+  /** Maya's gap statement (AI-generated, editable) */
+  gapStatement: text("gap_statement"),
+  gapStatementAiOriginal: text("gap_statement_ai_original"),
+
+  /** Maya's action note (AI-suggested, editable) */
+  actionNote: text("action_note"),
+  actionNoteAiOriginal: text("action_note_ai_original"),
+
+  /** Affordance flags */
+  isChallenged: tinyint("is_challenged").notNull().default(0),
+  challengeNote: text("challenge_note"),
+
+  /** Optional owner name */
+  owner: varchar("owner", { length: 255 }),
+
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.tenantId, t.dimension] }),
+  tenantIdx: index("idx_rcd_tenant").on(t.tenantId),
+}));
+export type RewardCapabilityDimension = typeof rewardCapabilityDimensions.$inferSelect;
+export type RewardCapabilityDimensionInsert = typeof rewardCapabilityDimensions.$inferInsert;
+
+/** Stage-level confirmation and staleness for Stage 8 */
+export const rewardCapabilityStage = mysqlTable("reward_capability_stage", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+
+  /** JSON: enablement cost estimate { low: number; high: number; note: string } */
+  enablementCostJson: json("enablement_cost_json").$type<{ low: number; high: number; note: string }>(),
+  enablementCostAiOriginal: json("enablement_cost_ai_original_json").$type<{ low: number; high: number; note: string }>(),
+
+  /** JSON: sequencing flags { initiativeId: 'ready' | 'needs_enablement' | 'blocked' }[] */
+  sequencingFlagsJson: json("sequencing_flags_json").$type<Array<{ initiativeId: string; status: 'ready' | 'needs_enablement' | 'blocked'; reason?: string }>>(),
+
+  /** JSON: capability risk note for Stage 7 risk feed */
+  capabilityRiskNoteJson: json("capability_risk_note_json").$type<{ summary: string; affectedInitiativeIds: string[] }>(),
+
+  isConfirmed: tinyint("is_confirmed").notNull().default(0),
+  confirmedAt: bigint("confirmed_at", { mode: "number" }),
+  isStale: tinyint("is_stale").notNull().default(0),
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_rcs_tenant").on(t.tenantId),
+}));
+export type RewardCapabilityStage = typeof rewardCapabilityStage.$inferSelect;
+export type RewardCapabilityStageInsert = typeof rewardCapabilityStage.$inferInsert;
+
 // ─── Reward Stage 7 — Business Case ──────────────────────────────────────────
 export const rewardBusinessCase = mysqlTable("reward_business_case", {
   tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),

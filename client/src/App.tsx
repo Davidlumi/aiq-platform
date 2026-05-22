@@ -90,6 +90,7 @@ import RewardPrinciplesPage from "./pages/strategy/RewardPrinciplesPage";
 import RewardInitiativesPage from "./pages/strategy/RewardInitiativesPage";
 import RewardBusinessCasePage from "./pages/strategy/RewardBusinessCasePage";
 import RewardSuccessMeasuresPage from "./pages/strategy/RewardSuccessMeasuresPage";
+import RewardCapabilityPage from "./pages/strategy/RewardCapabilityPage";
 import RewardOutputsPage from "./pages/strategy/RewardOutputsPage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
@@ -388,6 +389,9 @@ function Router() {
       </Route>
       <Route path="/strategy/reward-business-case">
         <ProtectedRoute component={RewardBusinessCasePage} />
+      </Route>
+      <Route path="/strategy/reward-capability">
+        <ProtectedRoute component={RewardCapabilityPage} />
       </Route>
       <Route path="/strategy/reward-outputs">
         <ProtectedRouteWithStrategyNav component={RewardOutputsPage} />
