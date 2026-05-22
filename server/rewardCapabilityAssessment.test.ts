@@ -13,6 +13,7 @@ import {
   CAPABILITY_DIMENSIONS,
   DIMENSION_META,
   computeRequiredLevels,
+  seedCurrentLevelsFromMaturity,
   deriveGapStatus,
   deriveSequencingFlags,
   computeEnablementCost,
@@ -45,7 +46,7 @@ describe("Stage 8 library — capabilityProfile", () => {
   });
 
   it("all capabilityProfile fields are valid levels (low | medium | high)", () => {
-    const VALID_LEVELS: CapabilityLevel[] = ["low", "medium", "high"];
+    const VALID_LEVELS: CapabilityLevel[] = ["low", "medium", "high", "very_high"];
     const invalid: string[] = [];
     for (const initiative of REWARD_INITIATIVE_LIBRARY) {
       const cp = initiative.capabilityProfile;
@@ -84,9 +85,82 @@ describe("computeRequiredLevels", () => {
     expect(result).toHaveLength(5);
     for (const req of result) {
       expect(CAPABILITY_DIMENSIONS).toContain(req.dimension);
-      expect(["low", "medium", "high"]).toContain(req.requiredLevel);
+      expect(["low", "medium", "high", "very_high"]).toContain(req.requiredLevel);
       expect(req.label).toBeTruthy();
     }
+  });
+
+  it("escalates to very_high when peak is high AND ≥3 initiatives are high on that dimension", () => {
+    // Find 3+ initiatives with high dataIntensity
+    const highDataIds = REWARD_INITIATIVE_LIBRARY
+      .filter((i) => i.capabilityProfile?.dataIntensity === "high")
+      .map((i) => i.id)
+      .slice(0, 4);
+    expect(highDataIds.length).toBeGreaterThanOrEqual(3);
+
+    const result = computeRequiredLevels(highDataIds);
+    const dataFoundations = result.find((r) => r.dimension === "data_foundations");
+    expect(dataFoundations?.requiredLevel).toBe("very_high");
+    expect(dataFoundations?.escalated).toBe(true);
+    expect(dataFoundations?.escalationReason).toContain("≥3 threshold");
+  });
+
+  it("does NOT escalate when only 1-2 initiatives are high on a dimension", () => {
+    // Find exactly 2 initiatives with high dataIntensity
+    const twoHighDataIds = REWARD_INITIATIVE_LIBRARY
+      .filter((i) => i.capabilityProfile?.dataIntensity === "high")
+      .map((i) => i.id)
+      .slice(0, 2);
+    // Pad with low-data initiatives to avoid team_skills escalation
+    const lowDataIds = REWARD_INITIATIVE_LIBRARY
+      .filter((i) => i.capabilityProfile?.dataIntensity === "low")
+      .map((i) => i.id)
+      .slice(0, 1);
+    const ids = [...twoHighDataIds, ...lowDataIds];
+
+    const result = computeRequiredLevels(ids);
+    const dataFoundations = result.find((r) => r.dimension === "data_foundations");
+    // 2 high initiatives → no escalation, stays at "high"
+    expect(dataFoundations?.requiredLevel).toBe("high");
+    expect(dataFoundations?.escalated).toBe(false);
+  });
+
+  it("FCA governance escalation: governance required += 1 when fcaSysc19=true", () => {
+    // Use 1 initiative with high governance sensitivity (peak=high, count=1 → no escalation rule)
+    const highGovId = REWARD_INITIATIVE_LIBRARY.find((i) => i.capabilityProfile?.governanceSensitivity === "high")?.id;
+    if (!highGovId) return;
+
+    const withoutFca = computeRequiredLevels([highGovId], { fcaSysc19: false });
+    const withFca = computeRequiredLevels([highGovId], { fcaSysc19: true });
+
+    const govWithout = withoutFca.find((r) => r.dimension === "governance");
+    const govWith = withFca.find((r) => r.dimension === "governance");
+
+    // Without FCA: governance = high (1 initiative, no escalation rule fires)
+    expect(govWithout?.requiredLevel).toBe("high");
+    // With FCA: governance escalated to very_high
+    expect(govWith?.requiredLevel).toBe("very_high");
+    expect(govWith?.escalated).toBe(true);
+    expect(govWith?.escalationReason).toContain("FCA SYSC 19 regulatory requirement");
+  });
+
+  it("FCA escalation is additive: already-very_high governance stays at very_high (capped)", () => {
+    // Use 3+ high-governance initiatives so escalation rule already fires → very_high
+    const highGovIds = REWARD_INITIATIVE_LIBRARY
+      .filter((i) => i.capabilityProfile?.governanceSensitivity === "high")
+      .map((i) => i.id)
+      .slice(0, 3);
+    if (highGovIds.length < 3) return;
+
+    const withoutFca = computeRequiredLevels(highGovIds, { fcaSysc19: false });
+    const withFca = computeRequiredLevels(highGovIds, { fcaSysc19: true });
+
+    const govWithout = withoutFca.find((r) => r.dimension === "governance");
+    const govWith = withFca.find((r) => r.dimension === "governance");
+
+    // Both should be very_high (FCA doesn't push beyond very_high)
+    expect(govWithout?.requiredLevel).toBe("very_high");
+    expect(govWith?.requiredLevel).toBe("very_high");
   });
 
   it("takes the maximum required level when multiple initiatives need the same dimension", () => {
@@ -120,6 +194,40 @@ describe("computeRequiredLevels", () => {
 
     const result7 = computeRequiredLevels(ids.slice(0, 8));
     expect(result7.find((r) => r.dimension === "team_skills")?.requiredLevel).toBe("high");
+  });
+});
+
+describe("seedCurrentLevelsFromMaturity", () => {
+  it("returns all 5 dimensions", () => {
+    const result = seedCurrentLevelsFromMaturity(3, 2);
+    expect(Object.keys(result)).toHaveLength(5);
+    for (const dim of CAPABILITY_DIMENSIONS) {
+      expect(result[dim]).toBeDefined();
+      expect(result[dim].isProvisional).toBe(true);
+      expect(["low", "medium", "high", "very_high"]).toContain(result[dim].level);
+    }
+  });
+
+  it("higher maturity rating produces higher seeded levels", () => {
+    const low = seedCurrentLevelsFromMaturity(1, 1);
+    const high = seedCurrentLevelsFromMaturity(4, 4);
+    // team_skills driven by rewardFunctionMaturityRating: 4 → high, 1 → low
+    expect(low.team_skills.level).toBe("low");
+    expect(high.team_skills.level).toBe("high");
+  });
+
+  it("returns low for all dimensions when both maturity inputs are null", () => {
+    const result = seedCurrentLevelsFromMaturity(null, null);
+    for (const dim of CAPABILITY_DIMENSIONS) {
+      expect(result[dim].level).toBe("low");
+    }
+  });
+
+  it("marks all seeded levels as provisional", () => {
+    const result = seedCurrentLevelsFromMaturity(3, 2);
+    for (const dim of CAPABILITY_DIMENSIONS) {
+      expect(result[dim].isProvisional).toBe(true);
+    }
   });
 });
 

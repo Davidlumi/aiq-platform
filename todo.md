@@ -4447,11 +4447,24 @@ test
 - [x] Tests: 17 Stage 6 library tests + 10 assembleReport wiring tests (1,613 total passing)
 
 ## Stage 8 — Capability Assessment
-- [ ] Add capabilityProfile field to all 30 library initiatives
-- [ ] DB schema: reward_capability_assessment table + migration
-- [ ] rewardCapabilityAssessment service: computeRequiredLevels, seedCurrentLevels, computeStatus, deriveSequencingFlags
-- [ ] Stage 8 tRPC router: generateAssessment, saveDimension, affordance, complete, markStale, keepAsIs
-- [ ] Stage 8 UI page: RewardCapabilityPage with per-dimension cards, enablement summary, confirm gate
-- [ ] Wire Stage 7 risk feed (additive, no computation change)
-- [ ] Wire Stage 10 capability placeholder from Stage 8 data
-- [ ] Stage 8 tests
+- [x] Add capabilityProfile field to all 30 library initiatives
+- [x] DB schema: reward_capability_assessment table + migration
+- [x] rewardCapabilityAssessment service: computeRequiredLevels, seedCurrentLevels, computeStatus, deriveSequencingFlags
+- [x] Stage 8 tRPC router: generateAssessment, saveDimension, affordance, complete, markStale, keepAsIs
+- [x] Stage 8 UI page: RewardCapabilityPage with per-dimension cards, enablement summary, confirm gate
+- [x] Wire Stage 7 risk feed (additive, no computation change)
+- [x] Wire Stage 10 capability placeholder from Stage 8 data
+- [x] Stage 8 tests
+## Stage 8 v2 Math Fix
+- [x] Rewrite rewardCapabilityService with 4-level scale (low/medium/high/very_high)
+- [x] Escalation rule: ≥3 initiatives at high on a dimension → escalate to very_high
+- [x] FCA governance escalation: fcaSysc19InScope="yes" → governance escalated to very_high
+- [x] current-level seeding from Stage 1 maturity inputs (seedCurrentLevelsFromMaturity)
+- [x] Router: load fcaSysc19InScope from companyProfile (correct column name, varchar "yes"/"no")
+- [x] Router: seed current levels from rewardPrework.rewardFunctionMaturityRating + aiMaturityInRewardToday
+- [x] UI: add very_high to CapabilityLevel type and LEVEL_CONFIG
+- [x] Tests: escalation path tests (≥3 high → very_high, 2 high → no escalation)
+- [x] Tests: FCA governance escalation tests (with/without FCA, additive/capped)
+- [x] Tests: seedCurrentLevelsFromMaturity tests (all 5 dims, higher maturity → higher levels, null → low, all provisional)
+- [x] TypeScript: 0 errors after fix
+- [x] Tests: 1,662/1,662 passing

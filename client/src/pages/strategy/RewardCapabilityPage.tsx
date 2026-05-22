@@ -43,7 +43,7 @@ import { getRewardInitiative } from "@/../../shared/rewardInitiativeLibrary";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type CapabilityLevel = "low" | "medium" | "high";
+type CapabilityLevel = "low" | "medium" | "high" | "very_high";
 type GapStatus = "no_gap" | "minor_gap" | "significant_gap";
 type SequencingStatus = "ready" | "needs_enablement" | "blocked";
 type CapabilityDimension = "data_foundations" | "change_management" | "systems_integration" | "governance" | "team_skills";
@@ -104,6 +104,11 @@ const LEVEL_CONFIG: Record<CapabilityLevel, { label: string; badge: string; dot:
     label: "High",
     badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
     dot: "bg-emerald-500",
+  },
+  very_high: {
+    label: "Very High",
+    badge: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30",
+    dot: "bg-violet-500",
   },
 };
 
@@ -295,6 +300,7 @@ function DimensionCard({ dim, isLocked, onSave, isSaving }: DimensionCardProps) 
                   <SelectItem value="low">Low — significant development needed</SelectItem>
                   <SelectItem value="medium">Medium — some capability exists</SelectItem>
                   <SelectItem value="high">High — well-established capability</SelectItem>
+                  <SelectItem value="very_high">Very High — advanced, proven capability</SelectItem>
                 </SelectContent>
               </Select>
             </div>

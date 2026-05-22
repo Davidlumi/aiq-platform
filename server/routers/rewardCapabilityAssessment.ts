@@ -31,6 +31,7 @@ import {
   CAPABILITY_DIMENSIONS,
   DIMENSION_META,
   computeRequiredLevels,
+  seedCurrentLevelsFromMaturity,
   deriveGapStatus,
   deriveSequencingFlags,
   computeEnablementCost,
@@ -146,7 +147,14 @@ export const rewardCapabilityAssessmentRouter = router({
       .where(eq(rewardCapabilityStage.tenantId, tenantId));
 
     // Compute required levels from portfolio
-    const requirements = computeRequiredLevels(initiativeIds);
+    // Load FCA flag from company profile
+    const [profileForGate] = await db
+      .select({ fcaSysc19InScope: companyProfile.fcaSysc19InScope })
+      .from(companyProfile)
+      .where(eq(companyProfile.tenantId, tenantId));
+    const fcaSysc19 = profileForGate?.fcaSysc19InScope === "yes";
+
+    const requirements = computeRequiredLevels(initiativeIds, { fcaSysc19 });
 
     // Merge saved rows with requirements
     const dimensions = requirements.map((req) => {
@@ -176,10 +184,11 @@ export const rewardCapabilityAssessmentRouter = router({
     const assessedDimensions = dimensions.map((d) => ({
       dimension: d.dimension,
       gapStatus: d.gapStatus,
+      requiredLevel: d.requiredLevel,
     }));
     const sequencingFlags = deriveSequencingFlags(initiativeIds, assessedDimensions);
 
-    // Compute enablement cost
+    // Compute enablement cost (pass requiredLevel for very_high critical band)
     const enablementCost = stage?.enablementCostJson ?? computeEnablementCost(assessedDimensions);
 
     return {
@@ -214,7 +223,27 @@ export const rewardCapabilityAssessmentRouter = router({
     }
 
     const initiativeIds: string[] = portfolio.selectedInitiativesJson ?? [];
-    const requirements = computeRequiredLevels(initiativeIds);
+
+    // Load FCA flag and Stage 1 maturity inputs for seeding
+    const [profileForGen] = await db
+      .select({ fcaSysc19InScope: companyProfile.fcaSysc19InScope })
+      .from(companyProfile)
+      .where(eq(companyProfile.tenantId, tenantId));
+    const [preworkForGen] = await db
+      .select({
+        rewardFunctionMaturityRating: rewardPrework.rewardFunctionMaturityRating,
+        aiMaturityInRewardToday: rewardPrework.aiMaturityInRewardToday,
+      })
+      .from(rewardPrework)
+      .where(eq(rewardPrework.tenantId, tenantId));
+
+    const fcaSysc19ForGen = profileForGen?.fcaSysc19InScope === "yes";
+    const seededLevels = seedCurrentLevelsFromMaturity(
+      preworkForGen?.rewardFunctionMaturityRating,
+      preworkForGen?.aiMaturityInRewardToday,
+    );
+
+    const requirements = computeRequiredLevels(initiativeIds, { fcaSysc19: fcaSysc19ForGen });
     const context = await buildContextString(tenantId);
 
     const initiativeTitles = initiativeIds
@@ -305,13 +334,18 @@ Output JSON:
             eq(rewardCapabilityDimensions.dimension, req.dimension),
           ));
       } else {
+        // Seed current level from Stage 1 maturity inputs (provisional estimate)
+        const seeded = seededLevels[req.dimension as CapabilityDimension];
+        const seededCurrentLevel = seeded?.level ?? null;
+        const seededGapStatus = deriveGapStatus(req.requiredLevel, seededCurrentLevel);
+
         await db.insert(rewardCapabilityDimensions).values({
           tenantId,
           dimension: req.dimension,
           userId: ctx.user.id,
           requiredLevel: req.requiredLevel,
-          currentLevel: null,
-          gapStatus: null,
+          currentLevel: seededCurrentLevel,
+          gapStatus: seededGapStatus,
           gapStatement,
           gapStatementAiOriginal: gapStatement,
           actionNote,
@@ -340,7 +374,7 @@ Output JSON:
   saveDimension: protectedProcedure
     .input(z.object({
       dimension: z.enum(CAPABILITY_DIMENSIONS),
-      currentLevel: z.enum(["low", "medium", "high"]).optional().nullable(),
+      currentLevel: z.enum(["low", "medium", "high", "very_high"]).optional().nullable(),
       gapStatement: z.string().max(2000).optional().nullable(),
       actionNote: z.string().max(2000).optional().nullable(),
       owner: z.string().max(255).optional().nullable(),
@@ -524,9 +558,25 @@ Task: ${actionInstructions[input.action]}${input.reason ? `\nAdditional context:
     }
 
     // Compute final sequencing flags and enablement cost
+    // Load requirements for requiredLevel (needed for very_high critical band in enablement cost)
+    const [portfolioForConfirm] = await db
+      .select({ selectedInitiativesJson: rewardInitiativePortfolio.selectedInitiativesJson })
+      .from(rewardInitiativePortfolio)
+      .where(eq(rewardInitiativePortfolio.tenantId, tenantId));
+    const [profileForConfirm] = await db
+      .select({ fcaSysc19InScope: companyProfile.fcaSysc19InScope })
+      .from(companyProfile)
+      .where(eq(companyProfile.tenantId, tenantId));
+    const requirementsForConfirm = computeRequiredLevels(
+      portfolioForConfirm?.selectedInitiativesJson ?? [],
+      { fcaSysc19: profileForConfirm?.fcaSysc19InScope === "yes" }
+    );
+    const reqMap = new Map(requirementsForConfirm.map((r) => [r.dimension, r.requiredLevel]));
+
     const assessedDimensions = assessedRows.map((r) => ({
       dimension: r.dimension as CapabilityDimension,
       gapStatus: (r.gapStatus as GapStatus | null) ?? null,
+      requiredLevel: (reqMap.get(r.dimension as CapabilityDimension) ?? r.requiredLevel) as CapabilityLevel,
     }));
     const sequencingFlags = deriveSequencingFlags(initiativeIds, assessedDimensions);
     const enablementCost = computeEnablementCost(assessedDimensions);
