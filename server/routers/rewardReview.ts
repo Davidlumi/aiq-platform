@@ -114,7 +114,18 @@ function buildStageStateData(ctx: Awaited<ReturnType<typeof buildContext>>): {
     const pfAssumptions = (bc.programmeFundingAssumptionsJson ?? {}) as {
       offBandPopulationPct?: number; programmeFundingNote?: string;
     };
-    bcModel = computeBusinessCase(selectedIds, inputs, overrides, pfAssumptions);
+    // Include custom initiatives in portfolio with user-provided figures
+    const customInputs = (ctx.customs ?? []).filter(c => c.inPortfolio === 1 && c.costLow != null && c.valueLow != null).map(c => ({
+      id: c.id,
+      title: c.title,
+      subDomain: c.subDomain,
+      phase: c.phase,
+      costLow:  c.costLow  ?? 0,
+      costHigh: c.costHigh ?? c.costLow ?? 0,
+      valueLow:  c.valueLow!,
+      valueHigh: c.valueHigh,
+    }));
+    bcModel = computeBusinessCase(selectedIds, inputs, overrides, pfAssumptions, customInputs);
   }
 
   const stageData: StageStateData = {

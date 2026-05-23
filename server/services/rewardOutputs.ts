@@ -24,6 +24,7 @@ import {
   type CostValueOverrides,
   type ProgrammeFundingAssumptions,
   type Scenario,
+  type CustomInitiativeInput,
 } from "./rewardBusinessCaseEngine";
 import { REWARD_INITIATIVE_LIBRARY } from "../../shared/rewardInitiativeLibrary";
 
@@ -252,7 +253,20 @@ export function assembleReport(params: {
   };
   const overrides: CostValueOverrides = businessCase?.costValueOverridesJson ?? {};
   const pfAssumptions: ProgrammeFundingAssumptions = businessCase?.programmeFundingAssumptionsJson ?? {};
-  const model = computeBusinessCase(selectedIds, inputs, overrides, pfAssumptions);
+  // Include custom initiatives with user-provided figures (single-source rule — §3.8)
+  const customInputsForModel: CustomInitiativeInput[] = (customInitiatives ?? [])
+    .filter(c => c.valueLow != null)
+    .map(c => ({
+      id: c.id,
+      title: c.title,
+      subDomain: c.subDomain,
+      phase: c.phase,
+      costLow:  c.costLow  ?? 0,
+      costHigh: c.costHigh ?? c.costLow ?? 0,
+      valueLow:  c.valueLow,
+      valueHigh: c.valueHigh,
+    }));
+  const model = computeBusinessCase(selectedIds, inputs, overrides, pfAssumptions, customInputsForModel);
   const recommendedScenario = (businessCase?.recommendedScenario ?? "central") as Scenario;
 
   // ── Build initiative list ─────────────────────────────────────────────────
@@ -278,29 +292,30 @@ export function assembleReport(params: {
           ? modelLine.value3yrCentral - modelLine.tco3yrCentral
           : 0,
       });
-    } else {
-      // Custom initiative
-      const custom = customInitiatives.find(c => c.id === id);
-      if (custom) {
-        const centralValue = (custom.valueLow + custom.valueHigh) / 2;
-        const centralCost = ((custom.costLow ?? 0) + (custom.costHigh ?? 0)) / 2;
-        initiatives.push({
-          id: custom.id,
-          title: custom.title,
-          shortDescription: custom.description,
-          fullDescription: custom.description,
-          subDomain: custom.subDomain,
-          phase: custom.phase,
-          complexity: custom.complexity,
-          primaryValueType: "strategic",
-          principlesAlignment: [],
-          risks: custom.risks ? [custom.risks] : [],
-          tco3yrCentral: centralCost,
-          value3yrCentral: centralValue,
-          netBenefit3yrCentral: centralValue - centralCost,
-        });
-      }
     }
+    // Note: custom initiative IDs are NOT in selectedInitiativesJson — handled below
+  }
+  // ── Custom initiatives in portfolio (single-source: figures come from model.lines) ──
+  for (const custom of customInitiatives) {
+    if (!custom.valueLow) continue; // skip unrated custom initiatives
+    const modelLine = model.lines.find(l => l.initiativeId === custom.id);
+    const centralValue = modelLine ? modelLine.value3yrCentral : (custom.valueLow + custom.valueHigh) / 2;
+    const centralCost  = modelLine ? modelLine.tco3yrCentral  : ((custom.costLow ?? 0) + (custom.costHigh ?? 0)) / 2;
+    initiatives.push({
+      id: custom.id,
+      title: custom.title,
+      shortDescription: custom.description,
+      fullDescription: custom.description,
+      subDomain: custom.subDomain,
+      phase: custom.phase,
+      complexity: custom.complexity,
+      primaryValueType: "strategic",
+      principlesAlignment: [],
+      risks: custom.risks ? [custom.risks] : [],
+      tco3yrCentral: centralCost,
+      value3yrCentral: centralValue,
+      netBenefit3yrCentral: centralValue - centralCost,
+    });
   }
 
   // ── Principles and won't-dos ──────────────────────────────────────────────

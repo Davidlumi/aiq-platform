@@ -28,6 +28,7 @@ import {
   rewardPrework,
   companyProfile,
   rewardPrincipleTemplates,
+  rewardCustomInitiative,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
@@ -37,6 +38,7 @@ import {
   type CostValueOverrides,
   type ProgrammeFundingAssumptions,
   type Scenario,
+  type CustomInitiativeInput,
 } from "../services/rewardBusinessCaseEngine";
 
 // ── Vocabulary blacklist ──────────────────────────────────────────────────────
@@ -78,8 +80,13 @@ async function buildContext(tenantId: string) {
   const [strategy] = await db.select().from(rewardStrategy).where(eq(rewardStrategy.tenantId, tenantId));
   const [principles] = await db.select().from(rewardPrinciples).where(eq(rewardPrinciples.tenantId, tenantId));
   const [portfolio]  = await db.select().from(rewardInitiativePortfolio).where(eq(rewardInitiativePortfolio.tenantId, tenantId));
+  // Custom initiatives in portfolio (inPortfolio = 1, costLow/costHigh/valueLow/valueHigh provided)
+  const customInits = await db.select().from(rewardCustomInitiative)
+    .where(eq(rewardCustomInitiative.tenantId, tenantId));
+  const customInitiativesInPortfolio = customInits
+    .filter(c => c.inPortfolio === 1 && c.costLow != null && c.valueLow != null);
 
-  return { db, profile, prework, vision, strategy, principles, portfolio };
+  return { db, profile, prework, vision, strategy, principles, portfolio, customInitiativesInPortfolio };
 }
 
 // ── Compute model helper ──────────────────────────────────────────────────────
@@ -88,7 +95,8 @@ function computeModel(
   portfolio: { selectedInitiativesJson?: string[] | null },
   profile: { sector?: string | null; ukEmployeeHeadcount?: number | null; annualPayrollCostGbp?: number | null } | undefined,
   overrides: CostValueOverrides,
-  programmeFundingAssumptions: ProgrammeFundingAssumptions
+  programmeFundingAssumptions: ProgrammeFundingAssumptions,
+  customInitiativesInPortfolio: Array<{ id: string; title: string; subDomain: string; phase: string; costLow: number | null; costHigh: number | null; valueLow: number; valueHigh: number }> = []
 ) {
   const selectedIds = portfolio?.selectedInitiativesJson ?? [];
   const inputs = {
@@ -96,7 +104,17 @@ function computeModel(
     totalEmployeeHeadcount: profile?.ukEmployeeHeadcount ?? 3000,
     totalPayrollGbp: profile?.annualPayrollCostGbp ?? 0,
   };
-  return computeBusinessCase(selectedIds, inputs, overrides, programmeFundingAssumptions);
+  const customInputs: CustomInitiativeInput[] = customInitiativesInPortfolio.map(c => ({
+    id: c.id,
+    title: c.title,
+    subDomain: c.subDomain,
+    phase: c.phase,
+    costLow:  c.costLow  ?? 0,
+    costHigh: c.costHigh ?? c.costLow ?? 0,
+    valueLow:  c.valueLow,
+    valueHigh: c.valueHigh,
+  }));
+  return computeBusinessCase(selectedIds, inputs, overrides, programmeFundingAssumptions, customInputs);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,17 +124,14 @@ export const rewardBusinessCaseRouter = router({
   // ── getStatus ───────────────────────────────────────────────────────────────
   getStatus: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    const { db, profile, portfolio, principles } = await buildContext(tenantId);
-
+        const { db, profile, portfolio, principles, customInitiativesInPortfolio } = await buildContext(tenantId);
     const [bc] = await db.select().from(rewardBusinessCase).where(eq(rewardBusinessCase.tenantId, tenantId));
-
     const portfolioComplete = !!(portfolio?.isCompleted);
     const bcState = bc?.isConfirmed ? "confirmed" : bc?.isStale ? "stale" : bc ? "unconfirmed" : "unconfirmed";
-
     // Compute model for display
     const overrides: CostValueOverrides = bc?.costValueOverridesJson ?? {};
     const programmeFundingAssumptions: ProgrammeFundingAssumptions = bc?.programmeFundingAssumptionsJson ?? {};
-    const model = computeModel(portfolio ?? { selectedInitiativesJson: [] }, profile, overrides, programmeFundingAssumptions);
+    const model = computeModel(portfolio ?? { selectedInitiativesJson: [] }, profile, overrides, programmeFundingAssumptions, customInitiativesInPortfolio);
 
     // Confirmed principle titles for narrative context
     const confirmedPrincipleIds: string[] = [];
@@ -155,8 +170,7 @@ export const rewardBusinessCaseRouter = router({
   // ── generateNarrative ───────────────────────────────────────────────────────
   generateNarrative: protectedProcedure.mutation(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    const { db, profile, portfolio, vision, strategy, principles } = await buildContext(tenantId);
-
+        const { db, profile, portfolio, vision, strategy, principles, customInitiativesInPortfolio } = await buildContext(tenantId);
     if (!portfolio?.isCompleted) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Complete Stage 5 before generating the Business Case narrative." });
     }
@@ -164,8 +178,7 @@ export const rewardBusinessCaseRouter = router({
     const [bc] = await db.select().from(rewardBusinessCase).where(eq(rewardBusinessCase.tenantId, tenantId));
     const overrides: CostValueOverrides = bc?.costValueOverridesJson ?? {};
     const programmeFundingAssumptions: ProgrammeFundingAssumptions = bc?.programmeFundingAssumptionsJson ?? {};
-    const model = computeModel(portfolio, profile, overrides, programmeFundingAssumptions);
-
+        const model = computeModel(portfolio, profile, overrides, programmeFundingAssumptions, customInitiativesInPortfolio);
     // Confirmed principle titles
     const confirmedPrincipleIds: string[] = [];
     if (principles?.principlesJson) {
@@ -293,13 +306,11 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
     }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      const { db, profile, portfolio, vision, strategy, principles } = await buildContext(tenantId);
-
+            const { db, profile, portfolio, vision, strategy, principles, customInitiativesInPortfolio } = await buildContext(tenantId);
       const [bc] = await db.select().from(rewardBusinessCase).where(eq(rewardBusinessCase.tenantId, tenantId));
       const overrides: CostValueOverrides = bc?.costValueOverridesJson ?? {};
       const programmeFundingAssumptions: ProgrammeFundingAssumptions = bc?.programmeFundingAssumptionsJson ?? {};
-      const model = computeModel(portfolio ?? { selectedInitiativesJson: [] }, profile, overrides, programmeFundingAssumptions);
-
+      const model = computeModel(portfolio ?? { selectedInitiativesJson: [] }, profile, overrides, programmeFundingAssumptions, customInitiativesInPortfolio);
       const confirmedPrincipleIds: string[] = [];
       if (principles?.principlesJson) {
         for (const p of principles.principlesJson as Array<{ selected?: boolean; principleId?: string }>) {

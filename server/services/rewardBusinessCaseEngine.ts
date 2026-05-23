@@ -149,6 +149,23 @@ export interface ProgrammeFundingAssumptions {
   programmeFundingNote?: string;
 }
 
+/**
+ * A custom (user-defined) initiative to be included in the business case.
+ * The user has already provided cost and value figures — no library calibration needed.
+ */
+export interface CustomInitiativeInput {
+  id: string;
+  title: string;
+  subDomain: string;
+  phase: string;
+  /** Year-1 cost range (GBP) — both required */
+  costLow: number;
+  costHigh: number;
+  /** 3-year value range (GBP) — both required */
+  valueLow: number;
+  valueHigh: number;
+}
+
 // ─── Helpers (re-implemented from engine to keep service self-contained) ──────
 
 function clamp(v: number, min: number, max: number): number {
@@ -358,7 +375,8 @@ export function computeBusinessCase(
   selectedInitiativeIds: string[],
   inputs: Pick<RewardEngineInputs, "sector" | "totalEmployeeHeadcount" | "totalPayrollGbp">,
   overrides: CostValueOverrides,
-  programmeFundingAssumptions: ProgrammeFundingAssumptions
+  programmeFundingAssumptions: ProgrammeFundingAssumptions,
+  customInitiatives: CustomInitiativeInput[] = []
 ): BusinessCaseModel {
   const lines: InitiativeCostValue[] = [];
   const unknownIds: string[] = [];
@@ -436,6 +454,52 @@ export function computeBusinessCase(
       value3yrOptimistic,
 
       excludedFromStandingTco,
+    });
+  }
+
+  // Inject custom initiative lines (user-provided figures, no library calibration)
+  for (let ci = 0; ci < customInitiatives.length; ci++) {
+    const c = customInitiatives[ci];
+    const year1Low  = c.costLow;
+    const year1High = c.costHigh;
+    // Custom initiatives: no ongoing cost (one-time implementation cost only, unless user specifies)
+    const ongoingLow  = 0;
+    const ongoingHigh = 0;
+    const valueLow  = c.valueLow;
+    const valueHigh = c.valueHigh;
+    lines.push({
+      initiativeId: c.id,
+      number: 9000 + ci,  // synthetic number — sorts after all library initiatives
+      title: c.title,
+      subDomain: c.subDomain,
+      phase: c.phase,
+      primaryValueType: "custom",
+      timeToFirstValueMonths: 12,
+      costType: "one_off",
+      excludesProgrammeFunding: false,
+      programmeFundingNote: null,
+      costNote: "User-provided estimate",
+      modelYear1Low:    year1Low,
+      modelYear1High:   year1High,
+      modelOngoingLow:  ongoingLow,
+      modelOngoingHigh: ongoingHigh,
+      modelValueLow:    valueLow,
+      modelValueHigh:   valueHigh,
+      effectiveYear1Low:    year1Low,
+      effectiveYear1High:   year1High,
+      effectiveOngoingLow:  ongoingLow,
+      effectiveOngoingHigh: ongoingHigh,
+      effectiveValueLow:    valueLow,
+      effectiveValueHigh:   valueHigh,
+      hasOverride: false,
+      overrideNote: null,
+      tco3yrConservative: tco3yr(year1Low,  ongoingLow),
+      tco3yrCentral:      tco3yr(midpoint(year1Low, year1High), midpoint(ongoingLow, ongoingHigh)),
+      tco3yrOptimistic:   tco3yr(year1High, ongoingHigh),
+      value3yrConservative: valueLow,
+      value3yrCentral:      midpoint(valueLow, valueHigh),
+      value3yrOptimistic:   valueHigh,
+      excludedFromStandingTco: false,
     });
   }
 
