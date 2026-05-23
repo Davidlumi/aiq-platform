@@ -4470,16 +4470,16 @@ test
 - [x] Tests: 1,662/1,662 passing
 
 ## Stage 9 — Review & Lock
-- [ ] Schema: reward_review table (check_results, acknowledgments, review_summary, strategy_locked, locked_at)
-- [ ] Service: rewardReviewService.ts — runStalenessChecks (S1)
-- [ ] Service: runCompletenessChecks (C1, C2, C3, C4)
-- [ ] Service: runCoherenceChecks (H1 shift coverage, H2 principle support, H3 won't-do, H4 ambition match AI)
-- [ ] Service: runReadinessChecks (R1 conservative net-negative, R2 capability reds, R3 enablement cost, R4 programme funding)
-- [ ] Service: canLock — zero hard flags + all soft flags resolved/acknowledged
-- [ ] Service: acknowledgment persistence — keyed to checkId + result state hash
-- [ ] Router: rewardReview.ts — runReview, acknowledge, affordance, lock, unlock procedures
-- [ ] UI: RewardReviewPage.tsx — check cards, pass/flag display, hard/soft distinction, lock CTA
-- [ ] UI: review summary with Expand/Refine/Challenge/Suggest affordances
-- [ ] Stage 10: wire draft-marker to strategy_locked; revert to draft on lock break
-- [ ] Navigation: add Stage 9 to strategy nav
-- [ ] Tests: all 12 checks, canLock gate, acknowledgment persistence, lock/unlock
+- [x] Schema: reward_review table (check_results, acknowledgments, review_summary, strategy_locked, locked_at)
+- [x] Service: rewardReviewService.ts — runStalenessChecks (S1)
+- [x] Service: runCompletenessChecks (C1, C2, C3, C4)
+- [x] Service: runCoherenceChecks (H1 shift coverage, H2 principle support, H3 won't-do, H4 ambition match AI)
+- [x] Service: runReadinessChecks (R1 conservative net-negative, R2 capability reds, R3 enablement cost, R4 programme funding)
+- [x] Service: canLock — zero hard flags + all soft flags resolved/acknowledged
+- [x] Service: acknowledgment persistence — keyed to checkId + result state hash
+- [x] Router: rewardReview.ts — runReview, acknowledge, affordance, lock, unlock procedures
+- [x] UI: RewardReviewPage.tsx — check cards, pass/flag display, hard/soft distinction, lock CTA
+- [x] UI: review summary with Expand/Refine/Challenge/Suggest affordances
+- [x] Stage 10: wire draft-marker to strategy_locked; revert to draft on lock break
+- [x] Navigation: add Stage 9 to strategy nav
+- [x] Tests: all 12 checks, canLock gate, acknowledgment persistence, lock/unlock
