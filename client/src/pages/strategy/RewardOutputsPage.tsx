@@ -156,52 +156,119 @@ function PlaceholderSection({ text }: { text: string }) {
   );
 }
 
+// ─── Scenario type ────────────────────────────────────────────────────────────
+
+type DashScenario = "conservative" | "central" | "optimistic";
+
+const DASH_SCENARIOS: Array<{ key: DashScenario; label: string; description: string }> = [
+  { key: "conservative", label: "Conservative", description: "Low-end cost and value estimates" },
+  { key: "central",      label: "Central",      description: "Midpoint estimates — recommended baseline" },
+  { key: "optimistic",   label: "Optimistic",   description: "High-end value, low-end cost" },
+];
+
+/** Build a simple payback timeline from a rollup (linear accrual approximation). */
+function buildPaybackTimeline(
+  tco3yr: number,
+  netValue3yr: number
+): Array<{ month: number; cumulativeCost: number; cumulativeValue: number }> {
+  const monthlyTco = tco3yr / 36;
+  const monthlyValue = netValue3yr / 36;
+  return Array.from({ length: 37 }, (_, m) => ({
+    month: m,
+    cumulativeCost: monthlyTco * m,
+    cumulativeValue: monthlyValue * m,
+  }));
+}
+
 // ─── Dashboard tab ────────────────────────────────────────────────────────────
 
 function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; chartContainerRef?: React.RefObject<HTMLDivElement | null> }) {
-  const central = report.model.rollup.central;
-  const conservative = report.model.rollup.conservative;
-  const optimistic = report.model.rollup.optimistic;
+  const [activeScenario, setActiveScenario] = useState<DashScenario>("central");
+  const rollup = report.model.rollup[activeScenario];
   const charts = report.charts;
+
+  const isNegative = rollup.netBenefit3yr < 0;
+  const isConservative = activeScenario === "conservative";
+
+  // Compute scenario-specific payback timeline (linear accrual approximation)
+  const paybackTimeline = buildPaybackTimeline(rollup.tco3yr, rollup.netValue3yr);
 
   return (
     <div className="space-y-6">
+      {/* ── Scenario toggle ── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide mr-1">Scenario:</span>
+        {DASH_SCENARIOS.map(s => (
+          <button
+            key={s.key}
+            onClick={() => setActiveScenario(s.key)}
+            title={s.description}
+            className={[
+              "px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors",
+              activeScenario === s.key
+                ? s.key === "conservative"
+                  ? "bg-amber-500/15 border-amber-500/50 text-amber-300"
+                  : s.key === "optimistic"
+                  ? "bg-emerald-500/15 border-emerald-500/50 text-emerald-300"
+                  : "bg-primary/15 border-primary/50 text-primary"
+                : "bg-transparent border-border/40 text-muted-foreground hover:border-border hover:text-foreground",
+            ].join(" ")}
+          >
+            {s.label}
+          </button>
+        ))}
+        <span className="text-xs text-muted-foreground ml-1">
+          {DASH_SCENARIOS.find(s => s.key === activeScenario)?.description}
+        </span>
+      </div>
+
+      {/* Conservative net-negative warning */}
+      {isNegative && isConservative && (
+        <div className="flex items-start gap-3 rounded-lg bg-amber-500/10 border border-amber-500/30 p-3">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-300/90">
+            <span className="font-semibold">Conservative scenario is net-negative ({fmtM(rollup.netBenefit3yr)})</span>
+            {" "}— the downside case does not recover investment within 3 years. Lead with the risk-mitigation and compliance rationale, or consider rebalancing the portfolio toward Foundation-phase initiatives with lower implementation cost.
+          </p>
+        </div>
+      )}
+
       {/* KPI grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
-          label="3yr Net Benefit (Central)"
-          value={fmtM(central.netBenefit3yr)}
-          sub={`ROI ${fmtPct(central.roi3yr)}`}
-          trend={central.netBenefit3yr >= 0 ? "up" : "down"}
-          tooltip="Post-overlap-discount net benefit over 3 years at the central scenario. Computed from the Stage 7 model."
+          label="3yr Net Benefit"
+          value={fmtM(rollup.netBenefit3yr)}
+          sub={`ROI ${fmtPct(rollup.roi3yr)}`}
+          trend={rollup.netBenefit3yr >= 0 ? "up" : "down"}
+          tooltip={`Post-overlap-discount net benefit over 3 years — ${activeScenario} scenario.`}
         />
         <KpiCard
           label="3yr Investment"
-          value={fmtM(central.tco3yr)}
+          value={fmtM(rollup.tco3yr)}
           sub={`${report.initiatives.length} initiatives`}
           tooltip="Total cost of ownership over 3 years, excluding programme funding (shown separately in Stage 7)."
         />
         <KpiCard
           label="Payback"
-          value={central.paybackMonths !== null ? `${central.paybackMonths} months` : "Beyond 3yr"}
-          sub="Central scenario"
+          value={rollup.paybackMonths !== null ? `${rollup.paybackMonths} months` : "Beyond 3yr"}
+          sub={`${activeScenario.charAt(0).toUpperCase() + activeScenario.slice(1)} scenario`}
           tooltip="Months from programme start to cumulative value exceeding cumulative cost."
         />
         <KpiCard
-          label="Conservative"
-          value={fmtM(conservative.netBenefit3yr)}
-          sub={`Optimistic: ${fmtM(optimistic.netBenefit3yr)}`}
-          trend={conservative.netBenefit3yr >= 0 ? "up" : "down"}
-          tooltip="Conservative scenario net benefit. Overlap discount applied to all scenarios."
+          label="Adjusted Value"
+          value={fmtM(rollup.netValue3yr)}
+          sub={`Gross: ${fmtM(rollup.grossValue3yr)}`}
+          trend={rollup.netValue3yr >= 0 ? "up" : "down"}
+          tooltip="Post-overlap-discount adjusted value over 3 years."
         />
       </div>
 
       {/* Overlap discount callout */}
-      {central.overlapDiscountTotal > 0 && (
+      {rollup.overlapDiscountTotal > 0 && (
         <div className="flex items-start gap-3 rounded-lg bg-amber-500/8 border border-amber-500/20 p-3">
           <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <p className="text-xs text-amber-300/90">
-            <span className="font-semibold">Overlap discount applied: {fmtM(central.overlapDiscountTotal)}</span>
+            <span className="font-semibold">Overlap discount applied: {fmtM(rollup.overlapDiscountTotal)}</span>
             {" "}— initiatives in the same sub-domain share data and workflows, so a conservative discount is applied to avoid double-counting value. All portfolio figures above are post-discount.
           </p>
         </div>
@@ -235,7 +302,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
         {/* Value by category */}
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Value by Type — Central Scenario</CardTitle>
+            <CardTitle className="text-sm font-semibold">Value by Type — {activeScenario.charAt(0).toUpperCase() + activeScenario.slice(1)} Scenario</CardTitle>
             <p className="text-xs text-muted-foreground">Proportional distribution of adjusted value across the five value types.</p>
           </CardHeader>
           <CardContent className="pt-0">
@@ -262,15 +329,17 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
         </Card>
       </div>
 
-      {/* Payback timeline */}
-      <Card className="bg-card border-border/50">
+      {/* Payback timeline — scenario-aware */}
+      <Card className={`border-border/50 ${isNegative && isConservative ? "bg-amber-500/5 border-amber-500/20" : "bg-card"}` }>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Cumulative Cost vs Value — Central Scenario (36 months)</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            Cumulative Cost vs Value — {activeScenario.charAt(0).toUpperCase() + activeScenario.slice(1)} Scenario (36 months)
+          </CardTitle>
           <p className="text-xs text-muted-foreground">Illustrative monthly accrual. Actual timing depends on initiative sequencing and adoption pace.</p>
         </CardHeader>
         <CardContent className="pt-0">
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={charts.paybackTimeline}>
+            <LineChart data={paybackTimeline}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} label={{ value: "Month", position: "insideBottom", offset: -2, fontSize: 10, fill: "#94a3b8" }} />
               <YAxis tickFormatter={v => fmtM(v)} tick={{ fontSize: 10, fill: "#94a3b8" }} width={60} />
@@ -280,7 +349,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
               />
               <Legend wrapperStyle={{ fontSize: "11px", color: "#94a3b8" }} />
               <Line type="monotone" dataKey="cumulativeCost" name="Cumulative Cost" stroke="#6366f1" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="cumulativeValue" name="Cumulative Value" stroke="#10b981" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="cumulativeValue" name="Cumulative Value" stroke={isNegative && isConservative ? "#f59e0b" : "#10b981"} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>

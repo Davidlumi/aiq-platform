@@ -4483,3 +4483,9 @@ test
 - [x] Stage 10: wire draft-marker to strategy_locked; revert to draft on lock break
 - [x] Navigation: add Stage 9 to strategy nav
 - [x] Tests: all 12 checks, canLock gate, acknowledgment persistence, lock/unlock
+
+## Dashboard Scenario Toggle (Stage 10 — RewardOutputsPage)
+- [x] Dashboard: add Conservative / Central / Optimistic scenario toggle to ROI/financial KPI cards
+- [x] Dashboard: all financial metrics (TCO, net value, net benefit, ROI, payback) switch with the toggle
+- [x] Dashboard: toggle persists in component state (not URL); default = Central
+- [x] Dashboard: conservative scenario shows amber/red colouring when net benefit is negative
