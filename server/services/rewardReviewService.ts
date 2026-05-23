@@ -397,7 +397,27 @@ export function runH4AmbitionMatch(data: StageStateData): CheckResult {
 
 /**
  * H1 — Shift coverage: every strategic shift is served by ≥1 selected initiative.
- * Since shifts are free-text (not a fixed enum), this uses an AI judgment call in the router.
+ *
+ * LIMITATION — read before relying on this check:
+ *
+ * H1 is an independent AI judgment, not a deterministic mapping. The LLM receives the
+ * shift texts and initiative titles from the library and decides whether coverage is
+ * adequate. Stage 5’s recommendation engine makes the same kind of judgment using the
+ * same library titles, so the two calls usually agree — but they are separate LLM
+ * invocations answering different questions and can disagree.
+ *
+ * Stage 5 asks “which initiatives best fit this profile?”; H1 asks “do the selected
+ * initiatives cover these shifts?”. If the user curated a portfolio that differs from
+ * Stage 5’s recommendations, H1 may flag a shift that Stage 5 considered served by an
+ * initiative the user chose not to select — and that flag is correct.
+ *
+ * There is NO structural guarantee that H1 will never contradict Stage 5. A real
+ * guarantee would require a deterministic shift→initiative mapping (e.g. a lookup table
+ * in the library) that both stages share. That mapping does not currently exist.
+ *
+ * For beta: H1 is a soft, dismissible flag. Its value is as a prompt to review
+ * coverage, not as an authoritative verdict. Users can acknowledge and proceed.
+ *
  * This function returns a placeholder that the router replaces with the AI result.
  */
 export function runH1ShiftCoverageSync(data: StageStateData): CheckResult {
