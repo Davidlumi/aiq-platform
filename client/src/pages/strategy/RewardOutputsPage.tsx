@@ -806,7 +806,7 @@ export default function RewardOutputsPage() {
     );
   }
 
-  const { report, audience, execSummaryText, isSummaryStale, isExportStale, lastExportAt, currentHash: _currentHash } = data;
+  const { report, audience, execSummaryText, isSummaryStale, isExportStale, lastExportAt, currentHash: _currentHash, strategyLocked } = data;
   const effectiveSummary = summaryOverride ?? execSummaryText;
 
   return (
@@ -821,6 +821,19 @@ export default function RewardOutputsPage() {
           {report.companyName} · {report.initiatives.length} initiative{report.initiatives.length !== 1 ? "s" : ""} · Assembled {new Date(report.assembledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
         </p>
       </div>
+
+      {/* Strategy unlocked banner */}
+      {!strategyLocked && (
+        <div className="flex items-start gap-3 rounded-lg bg-amber-500/8 border border-amber-500/20 p-3">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-amber-300/90 font-medium">Strategy not yet locked</p>
+            <p className="text-xs text-amber-300/70 mt-0.5">
+              Complete Stage 9 (Review &amp; Lock) to lock the strategy before generating your final output. You can still generate outputs, but they may change if you return to earlier stages.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

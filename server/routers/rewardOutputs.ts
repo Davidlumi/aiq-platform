@@ -30,6 +30,7 @@ import {
   rewardSuccessMeasuresStage,
   rewardCapabilityDimensions,
   rewardCapabilityStage,
+  rewardReview,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
@@ -78,8 +79,9 @@ async function buildContext(tenantId: string) {
   // Stage 8
   const [s8stage]     = await db.select().from(rewardCapabilityStage).where(eq(rewardCapabilityStage.tenantId, tenantId));
   const s8dims        = await db.select().from(rewardCapabilityDimensions).where(eq(rewardCapabilityDimensions.tenantId, tenantId));
+  const [review]      = await db.select().from(rewardReview).where(eq(rewardReview.tenantId, tenantId));
 
-  return { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims };
+  return { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims, review };
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ export const rewardOutputsRouter = router({
   // ── get ─────────────────────────────────────────────────────────────────────
   get: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims } =
+    const { profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims, review } =
       await buildContext(tenantId);
 
     const report = assembleReport({
@@ -132,6 +134,7 @@ export const rewardOutputsRouter = router({
       isExportStale: outputs?.lastExportStateHash
         ? outputs.lastExportStateHash !== currentHash
         : false,
+      strategyLocked: review?.strategyLocked === 1,
     };
   }),
 

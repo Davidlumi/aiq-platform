@@ -2780,3 +2780,52 @@ export const rewardOutputs = mysqlTable("reward_outputs", {
 }));
 export type RewardOutputs = typeof rewardOutputs.$inferSelect;
 export type RewardOutputsInsert = typeof rewardOutputs.$inferInsert;
+
+// ── Stage 9: Review & Lock ────────────────────────────────────────────────────
+export const rewardReview = mysqlTable("reward_review", {
+  tenantId: varchar("tenant_id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+
+  /**
+   * JSON: Array of check results from the last run.
+   * Each: { checkId, category, status: 'pass'|'flag', flagType: 'hard'|'soft', message, sourceStage, resultStateHash }
+   */
+  checkResultsJson: json("check_results_json").$type<Array<{
+    checkId: string;
+    category: 'staleness' | 'completeness' | 'coherence' | 'readiness';
+    status: 'pass' | 'flag';
+    flagType: 'hard' | 'soft' | null;
+    message: string;
+    sourceStage: number | null;
+    resultStateHash: string; // hash of the check's result data — used for acknowledgment persistence
+  }>>(),
+
+  /**
+   * JSON: Acknowledgments keyed to checkId + resultStateHash.
+   * { [checkId_resultHash]: { acknowledgedAt: number; rationale: string | null } }
+   */
+  acknowledgmentsJson: json("acknowledgments_json").$type<Record<string, {
+    acknowledgedAt: number;
+    rationale: string | null;
+  }>>(),
+
+  /** AI-generated review summary narrative */
+  reviewSummaryText: text("review_summary_text"),
+  reviewSummaryAiOriginal: text("review_summary_ai_original"),
+
+  /** Whether the strategy is locked (Stage 10 becomes final when true) */
+  strategyLocked: tinyint("strategy_locked").notNull().default(0),
+  lockedAt: bigint("locked_at", { mode: "number" }),
+
+  /** State hash at lock time — used to detect upstream changes that break the lock */
+  lockedStateHash: varchar("locked_state_hash", { length: 64 }),
+
+  /** Timestamp of last review run */
+  lastRunAt: bigint("last_run_at", { mode: "number" }),
+
+  updatedAt: bigint("updated_at", { mode: "number" }),
+}, (t) => ({
+  tenantIdx: index("idx_reward_review_tenant").on(t.tenantId),
+}));
+export type RewardReview = typeof rewardReview.$inferSelect;
+export type RewardReviewInsert = typeof rewardReview.$inferInsert;

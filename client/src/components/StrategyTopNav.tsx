@@ -303,7 +303,16 @@ export default function StrategyTopNav() {
         what: "Assess organisational capability to deliver the portfolio",
       };
     }
-    if (s.number === 9) return { ...s, label: modeLabels.stage9Label, what: modeLabels.stage9What };
+    if (s.number === 9) {
+      if (tenantMode === "reward") return {
+        ...s,
+        label: "Review & Lock",
+        shortLabel: "Review",
+        route: "/strategy/reward-review",
+        what: "Review all stages and lock the strategy before generating your final output",
+      };
+      return { ...s, label: modeLabels.stage9Label, what: modeLabels.stage9What };
+    }
     if (s.number === 10) {
       if (tenantMode === "reward") return {
         ...s,
