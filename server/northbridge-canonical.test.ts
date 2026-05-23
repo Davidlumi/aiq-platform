@@ -1,35 +1,42 @@
 /**
- * Golden-master test: Northbridge canonical fixture
+ * Golden-master test: Canonical Maya / Northbridge portfolio.
  *
- * This test locks the exact financial output of computeBusinessCase for the
- * ONE canonical Northbridge scenario. Any change to initiative cost/value
- * calibration, overlap-discount rules, or the business-case formula that
- * shifts these figures will fail this test — surfacing the drift immediately
- * instead of rounds later.
+ * This test locks the exact financial figures for the canonical 8-initiative
+ * Northbridge portfolio. Any change to initiative cost/value calibration,
+ * overlap-discount rules, or the business-case formula will fail this test —
+ * surfacing the drift immediately instead of rounds later.
  *
  * ── Canonical fixture ────────────────────────────────────────────────────────
  * Company:   Northbridge Financial
  * Profile:   8,000 UK employees · £95M annual payroll · Financial Services
- * Portfolio: 8 initiatives (pay equity, market intelligence, total rewards,
- *            incentives, retention, analytics)
+ * Portfolio: 8 initiatives (see MAYA_IDS below)
+ *   #1  ai_compensation_recommendation_engine
+ *   #2  ai_driven_merit_cycle_orchestration
+ *   #3  ai_pay_equity_continuous_monitoring
+ *   #4  ai_multi_characteristic_pay_gap_reporting
+ *   #6  ai_pay_band_design
+ *   #15 ai_reward_operations_assistant
+ *   #16 ai_bonus_pool_optimisation
+ *   #17 ai_sales_compensation_plan_design
  *
- * ── Locked figures (central scenario) ───────────────────────────────────────
- * TCO 3yr:       £8,064,564   (~£8.06M)
- * Net value 3yr: £10,018,703  (~£10.02M)
- * Net benefit:   £1,954,139   (~£1.95M)
- * ROI:           24%
- * Payback:       29 months
+ * ── Locked figures (central scenario, 3-year) ────────────────────────────────
+ * TCO 3yr:            £7,146,469   (~£7.15M)
+ * Net value 3yr:      £12,964,485  (~£12.96M)
+ * Net benefit 3yr:    £5,818,016   (~£5.82M)
+ * ROI:                81%
+ * Payback:            20 months
+ * Overlap discount:   £1,758,476   (two groups — see below)
  *
- * ── Overlap discounts applied ────────────────────────────────────────────────
- * Group 1: pay_equity_monitoring + multi_char_pay_gap + equal_pay_risk_audit → 25% → £414,610
- * Group 2: market_data_intelligence + bonus_pool_optimisation + attrition_risk → 25% → £652,583
+ * ── Overlap discounts ────────────────────────────────────────────────────────
+ * Compensation group (25%): #1, #2, #6, #16 → £1,603,720 central
+ * Pay Equity group (15%):   #3, #4           → £154,756 central
  *
  * ── Conservative / Optimistic ────────────────────────────────────────────────
- * Conservative net benefit: −£2,208,604  (R1 check fires: negative conservative case)
- * Optimistic net benefit:   £6,116,896
+ * Conservative ROI:       −5%  (negative → R1 check fires)
+ * Optimistic ROI:         133%
  *
- * To update these figures intentionally: run `npx tsx diag_canonical_fixture.mts`,
- * verify the new numbers are correct, then update the constants below and commit.
+ * To update intentionally: run `npx tsx diag_maya_canonical.mts`, verify the
+ * new numbers, update the LOCKED constants below, and commit.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -37,15 +44,15 @@ import { describe, it, expect } from "vitest";
 import { computeBusinessCase } from "./services/rewardBusinessCaseEngine";
 
 // ── Fixture definition ────────────────────────────────────────────────────────
-const NORTHBRIDGE_IDS = [
-  "ai_pay_equity_continuous_monitoring",
-  "ai_multi_characteristic_pay_gap_reporting",
-  "ai_equal_pay_risk_audit",
-  "ai_total_rewards_personalisation",
-  "ai_market_data_intelligence",
-  "ai_bonus_pool_optimisation",
-  "ai_attrition_risk_modelling_reward",
-  "ai_reward_analytics_dashboard",
+const MAYA_IDS = [
+  "ai_compensation_recommendation_engine",     // #1  Compensation Recommendation Engine
+  "ai_driven_merit_cycle_orchestration",       // #2  Merit Cycle Orchestration
+  "ai_pay_equity_continuous_monitoring",       // #3  Pay Equity Continuous Monitoring
+  "ai_multi_characteristic_pay_gap_reporting", // #4  Multi-Characteristic Pay Gap Reporting
+  "ai_pay_band_design",                        // #6  Pay Band Design
+  "ai_reward_operations_assistant",            // #15 Reward Operations Assistant
+  "ai_bonus_pool_optimisation",                // #16 Bonus Pool Optimisation
+  "ai_sales_compensation_plan_design",         // #17 Sales Compensation Plan Design
 ] as const;
 
 const NORTHBRIDGE_PROFILE = {
@@ -57,27 +64,31 @@ const NORTHBRIDGE_PROFILE = {
 // ── Locked figures ────────────────────────────────────────────────────────────
 const LOCKED = {
   central: {
-    tco3yr:        8_064_564,
-    netValue3yr:  10_018_703,
-    netBenefit3yr: 1_954_139,
-    roi3yr:        0.24,          // 24%
-    paybackMonths: 29,
+    tco3yr:             7_146_469,
+    netValue3yr:       12_964_485,
+    netBenefit3yr:      5_818_016,
+    roi3yr:             0.81,          // 81%
+    paybackMonths:      20,
+    overlapDiscountTotal: 1_758_476,
   },
   conservative: {
-    netBenefit3yr: -2_208_604,    // negative → R1 check fires
+    roi3yr: -0.05,                     // −5% → R1 check fires
   },
   optimistic: {
-    netBenefit3yr:  6_116_896,
+    roi3yr: 1.33,                      // 133%
   },
-  overlapDiscountCount: 2,
+  overlap: {
+    compensationCentral: 1_603_720,    // Compensation group (25%), 4 initiatives
+    payEquityCentral:      154_756,    // Pay Equity group (15%), 2 initiatives
+  },
   lineCount: 8,
   unknownIdCount: 0,
 } as const;
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
-describe("Northbridge canonical fixture — golden master", () => {
+describe("Canonical Maya / Northbridge golden-master", () => {
   const model = computeBusinessCase(
-    [...NORTHBRIDGE_IDS],
+    [...MAYA_IDS],
     NORTHBRIDGE_PROFILE,
     {},
     {}
@@ -88,70 +99,74 @@ describe("Northbridge canonical fixture — golden master", () => {
     expect(model.lines).toHaveLength(LOCKED.lineCount);
   });
 
-  it("central TCO 3yr = £8,064,564", () => {
+  // ── Central scenario ──────────────────────────────────────────────────────
+  it("central TCO 3yr = £7,146,469", () => {
     expect(model.rollup.central.tco3yr).toBe(LOCKED.central.tco3yr);
   });
 
-  it("central net value 3yr = £10,018,703", () => {
+  it("central net value 3yr = £12,964,485", () => {
     expect(model.rollup.central.netValue3yr).toBe(LOCKED.central.netValue3yr);
   });
 
-  it("central net benefit 3yr = £1,954,139", () => {
+  it("central net benefit 3yr = £5,818,016", () => {
     expect(model.rollup.central.netBenefit3yr).toBe(LOCKED.central.netBenefit3yr);
   });
 
-  it("central ROI = 24%", () => {
-    // roi3yr is a fraction; round to nearest integer percent for the assertion
-    expect(Math.round((model.rollup.central.roi3yr ?? 0) * 100)).toBe(
-      Math.round(LOCKED.central.roi3yr * 100)
-    );
+  it("central ROI = 81% (0.81)", () => {
+    expect(model.rollup.central.roi3yr).toBe(LOCKED.central.roi3yr);
   });
 
-  it("central payback = 29 months", () => {
+  it("central payback = 20 months", () => {
     expect(model.rollup.central.paybackMonths).toBe(LOCKED.central.paybackMonths);
   });
 
-  it("conservative net benefit is negative (R1 check must fire for this portfolio)", () => {
-    expect(model.rollup.conservative.netBenefit3yr).toBe(LOCKED.conservative.netBenefit3yr);
+  it("central overlap discount total = £1,758,476", () => {
+    expect(model.rollup.central.overlapDiscountTotal).toBe(LOCKED.central.overlapDiscountTotal);
+  });
+
+  // ── Conservative scenario ─────────────────────────────────────────────────
+  it("conservative ROI = −5% (R1 check fires for this portfolio)", () => {
+    expect(model.rollup.conservative.roi3yr).toBe(LOCKED.conservative.roi3yr);
     expect(model.rollup.conservative.netBenefit3yr).toBeLessThan(0);
   });
 
-  it("optimistic net benefit = £6,116,896", () => {
-    expect(model.rollup.optimistic.netBenefit3yr).toBe(LOCKED.optimistic.netBenefit3yr);
+  // ── Optimistic scenario ───────────────────────────────────────────────────
+  it("optimistic ROI = 133% (1.33)", () => {
+    expect(model.rollup.optimistic.roi3yr).toBe(LOCKED.optimistic.roi3yr);
   });
 
+  // ── Overlap discount structure ────────────────────────────────────────────
   it("exactly 2 overlap discount groups are applied", () => {
-    expect(model.overlapDiscounts).toHaveLength(LOCKED.overlapDiscountCount);
+    expect(model.overlapDiscounts).toHaveLength(2);
   });
 
-  it("overlap group 1: pay-equity trio at 25%", () => {
-    const g1 = model.overlapDiscounts.find(d =>
-      d.initiativeIds.includes("ai_pay_equity_continuous_monitoring") &&
-      d.initiativeIds.includes("ai_multi_characteristic_pay_gap_reporting") &&
-      d.initiativeIds.includes("ai_equal_pay_risk_audit")
-    );
-    expect(g1).toBeDefined();
-    expect(g1!.discountPct).toBe(0.25);
-    expect(g1!.discountAmountCentral).toBe(414_610); // £414,610
+  it("Compensation group (25%): #1, #2, #6, #16 → £1,603,720 central", () => {
+    const g = model.overlapDiscounts.find(d => d.subDomain === "Compensation");
+    expect(g).toBeDefined();
+    expect(g!.discountPct).toBe(0.25);
+    expect(g!.discountAmountCentral).toBe(LOCKED.overlap.compensationCentral);
+    expect(g!.initiativeIds).toContain("ai_compensation_recommendation_engine");
+    expect(g!.initiativeIds).toContain("ai_driven_merit_cycle_orchestration");
+    expect(g!.initiativeIds).toContain("ai_pay_band_design");
+    expect(g!.initiativeIds).toContain("ai_bonus_pool_optimisation");
   });
 
-  it("overlap group 2: market/incentive/retention trio at 25%", () => {
-    const g2 = model.overlapDiscounts.find(d =>
-      d.initiativeIds.includes("ai_market_data_intelligence") &&
-      d.initiativeIds.includes("ai_bonus_pool_optimisation") &&
-      d.initiativeIds.includes("ai_attrition_risk_modelling_reward")
-    );
-    expect(g2).toBeDefined();
-    expect(g2!.discountPct).toBe(0.25);
-    expect(g2!.discountAmountCentral).toBe(652_583); // £652,583
+  it("Pay Equity group (15%): #3, #4 → £154,756 central", () => {
+    const g = model.overlapDiscounts.find(d => d.subDomain === "Pay Equity");
+    expect(g).toBeDefined();
+    expect(g!.discountPct).toBe(0.15);
+    expect(g!.discountAmountCentral).toBe(LOCKED.overlap.payEquityCentral);
+    expect(g!.initiativeIds).toContain("ai_pay_equity_continuous_monitoring");
+    expect(g!.initiativeIds).toContain("ai_multi_characteristic_pay_gap_reporting");
   });
 
-  it("netBenefit = netValue − TCO (structural invariant)", () => {
+  // ── Structural invariants ─────────────────────────────────────────────────
+  it("netBenefit = netValue − TCO (formula invariant)", () => {
     const r = model.rollup.central;
     expect(r.netBenefit3yr).toBe(r.netValue3yr - r.tco3yr);
   });
 
-  it("conservative ≤ central ≤ optimistic for all rollup metrics", () => {
+  it("conservative ≤ central ≤ optimistic (ordering invariant)", () => {
     expect(model.rollup.conservative.netBenefit3yr).toBeLessThanOrEqual(
       model.rollup.central.netBenefit3yr
     );
