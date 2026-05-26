@@ -105,6 +105,35 @@ describe("S1 — Staleness", () => {
     expect(results[0].status).toBe("flag");
     expect(results[0].message).toContain("7");
   });
+
+  it("flags hard when Stage 6 (success measures) is stale", () => {
+    const data = makeCleanData({ successMeasuresStage: { isConfirmed: true, isStale: true } });
+    const results = runStalenessChecks(data);
+    expect(results[0].status).toBe("flag");
+    expect(results[0].flagType).toBe("hard");
+    expect(results[0].message).toContain("6");
+  });
+
+  it("flags hard when Stage 8 (capability) is stale", () => {
+    const data = makeCleanData({ capabilityStage: { isConfirmed: true, isStale: true, enablementCostJson: null } });
+    const results = runStalenessChecks(data);
+    expect(results[0].status).toBe("flag");
+    expect(results[0].flagType).toBe("hard");
+    expect(results[0].message).toContain("8");
+  });
+
+  it("flags hard listing all three stale stages (6, 7, 8) when all are stale", () => {
+    const data = makeCleanData({
+      successMeasuresStage: { isConfirmed: true, isStale: true },
+      businessCase: { isConfirmed: true, isStale: true },
+      capabilityStage: { isConfirmed: true, isStale: true, enablementCostJson: null },
+    });
+    const results = runStalenessChecks(data);
+    expect(results[0].status).toBe("flag");
+    expect(results[0].message).toContain("6");
+    expect(results[0].message).toContain("7");
+    expect(results[0].message).toContain("8");
+  });
 });
 
 // ── C1 — All stages confirmed ─────────────────────────────────────────────────

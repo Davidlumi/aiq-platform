@@ -4495,9 +4495,21 @@ test
 - [x] Item 1: Fix mode-isolation routing leak — StrategyOverviewPage GateFlowStrip stages 9-10 hardcoded to CPO routes
 - [x] Item 1: Audit all 10 stage links in GateFlowStrip for mode-isolation (stages 1-8 too)
 - [x] Item 1: Audit sidebar, deep links, and any other hardcoded /strategy/* references for mode-isolation
-- [ ] Item 2: Run per-stage Reward QA walks (Stages 2-4, 5, 6, 7, 8, 10) against Northbridge fixture
-- [ ] Item 2: Run pre-ship integration QA walk (cross-stage seams)
-- [ ] Item 3: Vacuous-test sweep of Reward test suite
-- [ ] Item 4: Verify Reward sub-domain taxonomy and confirm golden-master overlap groups
-- [ ] Item 5: Replace inline vocab blacklist copies with shared import in Reward routers
-- [ ] Item 6: Produce corrected, complete as-built reference document
+- [x] Item 2: Run per-stage Reward QA walks (Stages 2-4, 5, 6, 7, 8, 10) against Northbridge fixture
+- [x] Item 2: Run pre-ship integration QA walk (cross-stage seams)
+- [x] Item 3: Vacuous-test sweep of Reward test suite
+- [x] Item 4: Verify Reward sub-domain taxonomy and confirm golden-master overlap groups
+- [x] Item 5: Replace inline vocab blacklist copies with shared import in Reward routers
+- [x] Item 6: Produce corrected, complete as-built reference document
+
+## Beta-Readiness Round 2
+
+- [ ] Item 1: Run verbatim engine dump — confirm fixture inputs, paste full computeBusinessCase output, reconcile all prior discrepancies
+- [ ] Item 2: Move all client-side staleness cascades server-side; add server tests
+- [ ] Item 3: Run real cross-stage integration walk (5→7→9→10 figures, custom initiative, cascade, shift/principle)
+- [ ] Item 4: Paste full 50-term vocab list with replacements and flag risky terms; paste real per-file test counts
+## Beta-Readiness Round 2 (Completed)
+- [x] Item 1: Move Stage 5→6/7/8 staleness cascade server-side in rewardInitiatives.complete; remove client-side markStale calls from RewardInitiativesPage.tsx
+- [x] Item 2: Cross-stage integration walk — verified S1 detects Stage 6/8 stale; added 3 missing S1 tests to rewardReviewService.test.ts
+- [x] Item 3: Extract and document full 49-term vocab blacklist with replacements
+- [x] Item 4: Produce Beta-Readiness Round 2 findings report (aiq-beta-readiness-round2.md)

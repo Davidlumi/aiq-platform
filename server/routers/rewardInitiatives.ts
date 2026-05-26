@@ -29,6 +29,9 @@ import {
   rewardPrinciples,
   rewardPrincipleTemplates,
   rewardWontDoTemplates,
+  rewardSuccessMeasuresStage,
+  rewardBusinessCase,
+  rewardCapabilityStage,
 } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import {
@@ -564,10 +567,53 @@ export const rewardInitiativesRouter = router({
         }
       }
 
+      const now = Date.now();
+
       await db
         .update(rewardInitiativePortfolio)
-        .set({ isCompleted: 1, completedAt: Date.now(), updatedAt: Date.now() })
+        .set({ isCompleted: 1, completedAt: now, updatedAt: now })
         .where(eq(rewardInitiativePortfolio.tenantId, tenantId));
+
+      // ── Server-side staleness cascade ────────────────────────────────────────
+      // Stage 5 completion invalidates downstream stages 6, 7, and 8.
+      // We mark each as stale only if it has already been confirmed, so the
+      // stale banner fires on next visit without touching unstarted stages.
+
+      // Stage 6 — Success Measures
+      const [sm] = await db
+        .select({ isConfirmed: rewardSuccessMeasuresStage.isConfirmed })
+        .from(rewardSuccessMeasuresStage)
+        .where(eq(rewardSuccessMeasuresStage.tenantId, tenantId));
+      if (sm?.isConfirmed) {
+        await db
+          .update(rewardSuccessMeasuresStage)
+          .set({ isStale: 1, updatedAt: now })
+          .where(eq(rewardSuccessMeasuresStage.tenantId, tenantId));
+      }
+
+      // Stage 7 — Business Case
+      const [bc] = await db
+        .select({ isConfirmed: rewardBusinessCase.isConfirmed })
+        .from(rewardBusinessCase)
+        .where(eq(rewardBusinessCase.tenantId, tenantId));
+      if (bc?.isConfirmed) {
+        await db
+          .update(rewardBusinessCase)
+          .set({ isStale: 1, updatedAt: now })
+          .where(eq(rewardBusinessCase.tenantId, tenantId));
+      }
+
+      // Stage 8 — Capability Assessment
+      const [cap] = await db
+        .select({ isConfirmed: rewardCapabilityStage.isConfirmed })
+        .from(rewardCapabilityStage)
+        .where(eq(rewardCapabilityStage.tenantId, tenantId));
+      if (cap?.isConfirmed) {
+        await db
+          .update(rewardCapabilityStage)
+          .set({ isStale: 1, updatedAt: now })
+          .where(eq(rewardCapabilityStage.tenantId, tenantId));
+      }
 
       return { success: true };
     }),
