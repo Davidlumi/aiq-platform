@@ -880,9 +880,10 @@ function GateFlowStrip() {
     { num: 7, label: "Business case", href: "/strategy/business-case", isAccessible: gate.isStage7Accessible, isCleared: gate.stage7Cleared },
     { num: 8, label: "Capability",    href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
   ];
+  const isReward = gate.tenantMode === "reward";
   const row3: StageInfo[] = [
-    { num: 9,  label: modeLabels.stage9Label,  href: "/strategy/review",        isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
-    { num: 10, label: modeLabels.stage10Label, href: "/strategy/board-report",  isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
+    { num: 9,  label: modeLabels.stage9Label,  href: isReward ? "/strategy/reward-review"  : "/strategy/review",        isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
+    { num: 10, label: modeLabels.stage10Label, href: isReward ? "/strategy/reward-outputs" : "/strategy/board-report",  isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
   ];
 
   function StageRow({ stages }: { stages: StageInfo[] }) {
@@ -1882,7 +1883,7 @@ export default function StrategyOverviewPage() {
                     </>
                   ) : (
                     <button
-                      onClick={() => navigate("/strategy/board-report")}
+                      onClick={() => navigate(gate.tenantMode === "reward" ? "/strategy/reward-outputs" : "/strategy/board-report")}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                     >
                       Open {modeLabels.stage10Label} →

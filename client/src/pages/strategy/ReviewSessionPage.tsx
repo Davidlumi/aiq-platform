@@ -101,12 +101,16 @@ export default function ReviewSessionPage() {
   const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
   const reportTitle = modeLabels.stage10Label;
 
-  // Gate redirect
+  // Mode-guard redirect: Reward tenants must not land on the CPO ReviewSessionPage
   useEffect(() => {
+    if (!gate.isLoading && gate.tenantMode === "reward") {
+      navigate("/strategy/reward-review");
+      return;
+    }
     if (!gate.isLoading && !gate.isStage9Accessible) {
       navigate("/strategy");
     }
-  }, [gate.isLoading, gate.isStage9Accessible, navigate]);
+  }, [gate.isLoading, gate.isStage9Accessible, gate.tenantMode, navigate]);
 
   // Data
   const sessionQ = trpc.intelligence.getReviewSession.useQuery(undefined, {

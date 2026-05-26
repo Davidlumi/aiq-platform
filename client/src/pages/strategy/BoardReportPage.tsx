@@ -241,7 +241,12 @@ export default function BoardReportPage() {
   const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
   const reportTitle = modeLabels.stage10Label;
 
-  // No hard redirect — we show a blocking gate screen instead
+  // Mode-guard redirect: Reward tenants must not land on the CPO BoardReportPage
+  useEffect(() => {
+    if (!gate.isLoading && gate.tenantMode === "reward") {
+      navigate("/strategy/reward-outputs");
+    }
+  }, [gate.isLoading, gate.tenantMode, navigate]);
 
   // Data
   const reportQ = trpc.intelligence.getBoardReport.useQuery(undefined, {

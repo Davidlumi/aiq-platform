@@ -4489,3 +4489,15 @@ test
 - [x] Dashboard: all financial metrics (TCO, net value, net benefit, ROI, payback) switch with the toggle
 - [x] Dashboard: toggle persists in component state (not URL); default = Central
 - [x] Dashboard: conservative scenario shows amber/red colouring when net benefit is negative
+
+## Beta-Readiness Work Package (Reward-first)
+
+- [x] Item 1: Fix mode-isolation routing leak — StrategyOverviewPage GateFlowStrip stages 9-10 hardcoded to CPO routes
+- [x] Item 1: Audit all 10 stage links in GateFlowStrip for mode-isolation (stages 1-8 too)
+- [x] Item 1: Audit sidebar, deep links, and any other hardcoded /strategy/* references for mode-isolation
+- [ ] Item 2: Run per-stage Reward QA walks (Stages 2-4, 5, 6, 7, 8, 10) against Northbridge fixture
+- [ ] Item 2: Run pre-ship integration QA walk (cross-stage seams)
+- [ ] Item 3: Vacuous-test sweep of Reward test suite
+- [ ] Item 4: Verify Reward sub-domain taxonomy and confirm golden-master overlap groups
+- [ ] Item 5: Replace inline vocab blacklist copies with shared import in Reward routers
+- [ ] Item 6: Produce corrected, complete as-built reference document

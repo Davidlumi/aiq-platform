@@ -25,23 +25,9 @@ import {
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
+import { VOCAB_BLACKLIST, sanitizeOutput as enforceVocab } from "../../shared/vocabBlacklist";
 
-// ── Vocabulary blacklist ──────────────────────────────────────────────────────
-const VOCAB_BLACKLIST = [
-  "leverage", "synergy", "paradigm", "holistic", "ecosystem", "robust",
-  "scalable", "best-in-class", "world-class", "cutting-edge", "game-changer",
-  "transformational", "impactful", "seamless", "empower", "unlock potential",
-  "drive value", "move the needle", "boil the ocean",
-];
-
-function enforceVocab(text: string): string {
-  let result = text;
-  for (const word of VOCAB_BLACKLIST) {
-    const re = new RegExp(`\\b${word}\\b`, "gi");
-    result = result.replace(re, "");
-  }
-  return result.replace(/\s{2,}/g, " ").trim();
-}
+// Vocab blacklist and sanitizeOutput imported from shared/vocabBlacklist
 
 // ── Ambition ladder ───────────────────────────────────────────────────────────
 const AMBITION_LADDER: Record<number, string> = {
