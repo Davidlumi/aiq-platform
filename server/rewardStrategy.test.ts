@@ -280,24 +280,38 @@ describe("rewardStrategy.save", () => {
 
 // ─── 4. confirm ───────────────────────────────────────────────────────────────
 describe("rewardStrategy.confirm", () => {
+  it("throws FORBIDDEN when vision is not confirmed", async () => {
+    const db = makeDb([[{ state: "unconfirmed" }]]); // vision not confirmed
+    vi.mocked(getDb).mockResolvedValue(db as any);
+    const caller = appRouter.createCaller(makeCtx());
+    await expect(caller.rewardStrategy.confirm()).rejects.toThrow(/Stage 2/i);
+  });
+
   it("throws BAD_REQUEST when no shifts exist", async () => {
-    const db = makeDb([[{ strategicShiftsJson: [] }]]);
+    const db = makeDb([
+      [{ state: "confirmed" }],             // vision confirmed
+      [{ strategicShiftsJson: [] }],        // no shifts
+    ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.rewardStrategy.confirm()).rejects.toThrow(/required/i);
   });
 
   it("throws when strategy row does not exist", async () => {
-    const db = makeDb([[]]); // no row
+    const db = makeDb([
+      [{ state: "confirmed" }], // vision confirmed
+      [],                       // no strategy row
+    ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.rewardStrategy.confirm()).rejects.toThrow();
   });
 
-  it("returns ok:true when shifts exist", async () => {
+  it("returns ok:true when vision confirmed and shifts exist", async () => {
     const db = makeDb([
-      [{ strategicShiftsJson: makeShifts(3) }],
-      [{ state: "unconfirmed" }], // principles not confirmed
+      [{ state: "confirmed" }],             // 1st select: vision confirmed
+      [{ strategicShiftsJson: makeShifts(3) }], // 2nd select: strategy
+      [{ state: "unconfirmed" }],           // 3rd select: principles not confirmed
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
@@ -307,8 +321,9 @@ describe("rewardStrategy.confirm", () => {
 
   it("cascades staleness to confirmed Principles", async () => {
     const db = makeDb([
-      [{ strategicShiftsJson: makeShifts(3) }],
-      [{ state: "confirmed" }], // principles confirmed → should be staled
+      [{ state: "confirmed" }],             // 1st select: vision confirmed
+      [{ strategicShiftsJson: makeShifts(3) }], // 2nd select: strategy
+      [{ state: "confirmed" }],             // 3rd select: principles confirmed → should be staled
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
@@ -319,8 +334,9 @@ describe("rewardStrategy.confirm", () => {
 
   it("does NOT cascade when Principles are unconfirmed", async () => {
     const db = makeDb([
-      [{ strategicShiftsJson: makeShifts(3) }],
-      [{ state: "unconfirmed" }],
+      [{ state: "confirmed" }],             // 1st select: vision confirmed
+      [{ strategicShiftsJson: makeShifts(3) }], // 2nd select: strategy
+      [{ state: "unconfirmed" }],           // 3rd select: principles
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());

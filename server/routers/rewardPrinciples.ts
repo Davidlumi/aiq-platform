@@ -666,6 +666,18 @@ Output as JSON: { "wontDoId": "..." | null, "text": "..." }`;
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
     const tenantId = ctx.user.tenantId;
 
+    // Server-side gate: Stage 3 (Strategy) must be confirmed before Stage 4 can be confirmed
+    const [strategy] = await db
+      .select({ state: rewardStrategy.state })
+      .from(rewardStrategy)
+      .where(eq(rewardStrategy.tenantId, tenantId));
+    if (strategy?.state !== "confirmed") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Stage 3 (Strategy) must be confirmed before confirming your principles.",
+      });
+    }
+
     const [current] = await db
       .select({ principlesJson: rewardPrinciples.principlesJson })
       .from(rewardPrinciples)

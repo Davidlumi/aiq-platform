@@ -471,6 +471,18 @@ Output as JSON: { "headline": "...", "rationale": "..." }`;
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
     const tenantId = ctx.user.tenantId;
 
+    // Server-side gate: Stage 2 (Vision) must be confirmed before Stage 3 can be confirmed
+    const [vision] = await db
+      .select({ state: rewardVision.state })
+      .from(rewardVision)
+      .where(eq(rewardVision.tenantId, tenantId));
+    if (vision?.state !== "confirmed") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Stage 2 (Vision) must be confirmed before confirming your strategy.",
+      });
+    }
+
     const [strategy] = await db
       .select({ strategicShiftsJson: rewardStrategy.strategicShiftsJson })
       .from(rewardStrategy)

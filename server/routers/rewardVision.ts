@@ -312,6 +312,18 @@ Output the result now:`;
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
     const tenantId = ctx.user.tenantId;
 
+    // Server-side gate: Stage 1 (Pre-work) must be completed before Stage 2 can be confirmed
+    const [prework] = await db
+      .select({ isCompleted: rewardPrework.isCompleted })
+      .from(rewardPrework)
+      .where(eq(rewardPrework.tenantId, tenantId));
+    if (!prework?.isCompleted) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Stage 1 (Reward Pre-work) must be completed before confirming your vision.",
+      });
+    }
+
     const [vision] = await db
       .select({ visionText: rewardVision.visionText })
       .from(rewardVision)

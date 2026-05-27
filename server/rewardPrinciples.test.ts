@@ -237,24 +237,40 @@ describe("rewardPrinciples.suggestWontDo", () => {
 
 // ─── 4. confirm ───────────────────────────────────────────────────────────────
 describe("rewardPrinciples.confirm", () => {
+  it("throws FORBIDDEN when strategy is not confirmed", async () => {
+    const db = makeDb([[{ state: "unconfirmed" }]]); // strategy not confirmed
+    vi.mocked(getDb).mockResolvedValue(db as any);
+    const caller = appRouter.createCaller(makeCtx());
+    await expect(caller.rewardPrinciples.confirm()).rejects.toThrow(/Stage 3/i);
+  });
+
   it("throws BAD_REQUEST when no principles exist", async () => {
-    const db = makeDb([[{ principlesJson: [] }]]);
+    const db = makeDb([
+      [{ state: "confirmed" }],        // strategy confirmed
+      [{ principlesJson: [] }],         // no principles
+    ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.rewardPrinciples.confirm()).rejects.toThrow(/required/i);
   });
 
   it("throws when principles row does not exist", async () => {
-    const db = makeDb([[]]); // no row
+    const db = makeDb([
+      [{ state: "confirmed" }], // strategy confirmed
+      [],                       // no principles row
+    ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.rewardPrinciples.confirm()).rejects.toThrow();
   });
 
-  it("returns ok:true when principles exist", async () => {
-    const db = makeDb([[{
-      principlesJson: [{ id: "p1", principleId: "pay_explainability", text: "We will ensure explainability.", selected: true, source: "ai_suggested" }],
-    }]]);
+  it("returns ok:true when strategy confirmed and principles exist", async () => {
+    const db = makeDb([
+      [{ state: "confirmed" }],  // 1st select: strategy confirmed
+      [{
+        principlesJson: [{ id: "p1", principleId: "pay_explainability", text: "We will ensure explainability.", selected: true, source: "ai_suggested" }],
+      }],                        // 2nd select: principles
+    ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     const result = await caller.rewardPrinciples.confirm();

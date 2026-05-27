@@ -290,25 +290,39 @@ describe("rewardVision.save", () => {
 
 // ─── 4. confirm ───────────────────────────────────────────────────────────────
 describe("rewardVision.confirm", () => {
+  it("throws FORBIDDEN when prework is not completed", async () => {
+    const db = makeDb([[{ isCompleted: 0 }]]); // prework not done
+    vi.mocked(getDb).mockResolvedValue(db as any);
+    const caller = appRouter.createCaller(makeCtx());
+    await expect(caller.rewardVision.confirm()).rejects.toThrow(/Stage 1/i);
+  });
+
   it("throws BAD_REQUEST when vision text is empty", async () => {
-    const db = makeDb([[{ visionText: "" }]]);
+    const db = makeDb([
+      [{ isCompleted: 1 }],   // prework done
+      [{ visionText: "" }],   // vision is empty
+    ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.rewardVision.confirm()).rejects.toThrow(/empty/i);
   });
 
   it("throws when vision row does not exist", async () => {
-    const db = makeDb([[]]); // no vision row
+    const db = makeDb([
+      [{ isCompleted: 1 }], // prework done
+      [],                   // no vision row
+    ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.rewardVision.confirm()).rejects.toThrow();
   });
 
-  it("returns ok:true when vision has content", async () => {
+  it("returns ok:true when prework done and vision has content", async () => {
     const db = makeDb([
-      [{ visionText: "We will use AI to make pay decisions equitable." }], // 1st select: vision
-      [{ state: "unconfirmed" }], // 2nd select: strategy
-      [{ state: "unconfirmed" }], // 3rd select: principles
+      [{ isCompleted: 1 }],                                                   // 1st select: prework done
+      [{ visionText: "We will use AI to make pay decisions equitable." }],   // 2nd select: vision
+      [{ state: "unconfirmed" }],                                             // 3rd select: strategy
+      [{ state: "unconfirmed" }],                                             // 4th select: principles
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
@@ -318,9 +332,10 @@ describe("rewardVision.confirm", () => {
 
   it("cascades staleness to confirmed Strategy", async () => {
     const db = makeDb([
-      [{ visionText: "Vision text." }],          // 1st select: vision
-      [{ state: "confirmed" }],                   // 2nd select: strategy IS confirmed → staled
-      [{ state: "unconfirmed" }],                 // 3rd select: principles
+      [{ isCompleted: 1 }],              // 1st select: prework done
+      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ state: "confirmed" }],          // 3rd select: strategy IS confirmed → staled
+      [{ state: "unconfirmed" }],        // 4th select: principles
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
@@ -331,9 +346,10 @@ describe("rewardVision.confirm", () => {
 
   it("cascades staleness to confirmed Principles", async () => {
     const db = makeDb([
-      [{ visionText: "Vision text." }],          // 1st select: vision
-      [{ state: "unconfirmed" }],                 // 2nd select: strategy
-      [{ state: "confirmed" }],                   // 3rd select: principles IS confirmed → staled
+      [{ isCompleted: 1 }],              // 1st select: prework done
+      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ state: "unconfirmed" }],        // 3rd select: strategy
+      [{ state: "confirmed" }],          // 4th select: principles IS confirmed → staled
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
@@ -344,9 +360,10 @@ describe("rewardVision.confirm", () => {
 
   it("cascades staleness to BOTH Strategy and Principles when both confirmed", async () => {
     const db = makeDb([
-      [{ visionText: "Vision text." }],  // 1st select: vision
-      [{ state: "confirmed" }],           // 2nd select: strategy
-      [{ state: "confirmed" }],           // 3rd select: principles
+      [{ isCompleted: 1 }],              // 1st select: prework done
+      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ state: "confirmed" }],          // 3rd select: strategy
+      [{ state: "confirmed" }],          // 4th select: principles
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
@@ -357,9 +374,10 @@ describe("rewardVision.confirm", () => {
 
   it("does NOT cascade when Strategy and Principles are unconfirmed", async () => {
     const db = makeDb([
-      [{ visionText: "Vision text." }],  // 1st select: vision
-      [{ state: "unconfirmed" }],         // 2nd select: strategy
-      [{ state: "unconfirmed" }],         // 3rd select: principles
+      [{ isCompleted: 1 }],              // 1st select: prework done
+      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ state: "unconfirmed" }],        // 3rd select: strategy
+      [{ state: "unconfirmed" }],        // 4th select: principles
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());

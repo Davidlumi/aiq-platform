@@ -329,6 +329,13 @@ export function computeCpoBusinessCase(
       paybackMonths = months <= 36 ? months : null;
     }
 
+    // KNOWN CALIBRATION DEFECT (founder decision required):
+    // The conservative scenario's ROI currently exceeds the central scenario's ROI
+    // (e.g. 17.8× conservative vs 13.01× central for the Meridian fixture).
+    // Root cause: cost scales down faster than value in the conservative case —
+    // tco3yrConservative uses the LOW end of cost ranges, which reduces the denominator
+    // more than the LOW end of value ranges reduces the numerator.
+    // This is a calibration artefact, not a code bug. Do not change the methodology here.
     const roi3yr = tco3yrTotal > 0
       ? Math.round(((netValue3yr - tco3yrTotal) / tco3yrTotal) * 100) / 100
       : null;

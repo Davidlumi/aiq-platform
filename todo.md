@@ -4559,3 +4559,23 @@ test
 - [x] I: Dark/light mode toggle — added theme toggle to both sidebar account dropdown and mobile header dropdown in AppShell
 - [x] J: Chart accessibility — added role="img" + aria-label to all 3 Recharts ResponsiveContainers in RewardOutputsPage
 - [x] K: Print stylesheet — buildPrintHtml now uses @page A4 margins, page-break-inside:avoid on sections/kpi-grid, print-color-adjust:exact, .footer class
+
+## Beta-Hardening Brief (AiQBuildBriefv2)
+
+### Section 1 — Fixes
+- [ ] 1.1: Correct as-built doc Reward stage list (verify from router/gate code, file:line, separate CPO list)
+- [ ] 1.2: CPO formula coverage dump — run engine over all 50 CPO initiatives, dump qualitativeOnlyIds + formula-covered count
+- [ ] 1.3: Add comment at CPO scenario-calculation site documenting conservative > central ROI inversion
+
+### Section 2 — Pre-beta Verification
+- [ ] 2.1: Full Maya/Northbridge 10-stage walkthrough with output dumps (gate status, figures, single-source check, capability-link, custom initiative, review/lock)
+- [ ] 2.2: Cross-tenant isolation — create second tenant (CPO mode), verify no data leakage, confirm aggregateTeamCapability filters by tenantId, add regression tests
+
+### Section 3 — Hardening & Cleanup
+- [ ] 3.1: Reward surface hardening — loading/empty/error states, LLM fallback, gate validation audit
+- [ ] 3.2: Legacy/dead-code audit — report only, delete nothing
+- [ ] 3.3: Cross-model aggregation validity — investigate adaptive-v2 vs v2.0 scale compatibility, propose fix
+
+### Final
+- [ ] Golden-master dump: Northbridge + Meridian figures unchanged
+- [ ] Deliver full beta-hardening report
