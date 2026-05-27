@@ -99,6 +99,119 @@ function getHeroHeadline(score: number, priorityCount: number, growthThemes: str
   };
 }
 
+// ─── Hexagonal Radar (v2.1: compact 6-axis radar for domain-at-a-glance) ────
+function HexRadar({ domains, size = 160 }: { domains: { key: string; score: number; colour: string }[]; size?: number }) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size * 0.38;
+  const n = domains.length;
+  if (n < 3) return null;
+
+  // Generate polygon points for a given radius
+  const polyPoints = (radius: number) =>
+    domains.map((_, i) => {
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      return `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`;
+    }).join(" ");
+
+  // Data polygon
+  const dataPoints = domains.map((d, i) => {
+    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+    const dr = (d.score / 100) * r;
+    return `${cx + dr * Math.cos(angle)},${cy + dr * Math.sin(angle)}`;
+  }).join(" ");
+
+  return (
+    <svg width={size} height={size} className="shrink-0" aria-label="Domain radar chart">
+      {/* Grid rings at 25%, 50%, 75%, 100% */}
+      {[0.25, 0.5, 0.75, 1].map(pct => (
+        <polygon
+          key={pct}
+          points={polyPoints(r * pct)}
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth={pct === 1 ? 1 : 0.5}
+          opacity={0.5}
+        />
+      ))}
+      {/* Axis lines */}
+      {domains.map((_, i) => {
+        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+        return (
+          <line
+            key={i}
+            x1={cx} y1={cy}
+            x2={cx + r * Math.cos(angle)} y2={cy + r * Math.sin(angle)}
+            stroke="var(--border)" strokeWidth={0.5} opacity={0.4}
+          />
+        );
+      })}
+      {/* Data area */}
+      <polygon
+        points={dataPoints}
+        fill="rgba(96,165,250,0.15)"
+        stroke="rgba(96,165,250,0.7)"
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      {/* Data points */}
+      {domains.map((d, i) => {
+        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+        const dr = (d.score / 100) * r;
+        return (
+          <circle
+            key={d.key}
+            cx={cx + dr * Math.cos(angle)}
+            cy={cy + dr * Math.sin(angle)}
+            r={3}
+            fill={d.colour}
+            stroke="var(--background)"
+            strokeWidth={1.5}
+          />
+        );
+      })}
+      {/* Labels */}
+      {domains.map((d, i) => {
+        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+        const labelR = r + 14;
+        const x = cx + labelR * Math.cos(angle);
+        const y = cy + labelR * Math.sin(angle);
+        const anchor = Math.abs(Math.cos(angle)) < 0.1 ? "middle" : Math.cos(angle) > 0 ? "start" : "end";
+        return (
+          <text
+            key={d.key}
+            x={x} y={y + 3}
+            textAnchor={anchor}
+            fill="var(--muted-foreground)"
+            fontSize={9}
+            fontFamily="Inter, sans-serif"
+          >
+            {(d.score / 10).toFixed(1)}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── Confidence Indicator (v2.1: response pattern mini-bar) ─────────────────
+function ConfidenceIndicator({ strong, acceptable, weak, total }: { strong: number; acceptable: number; weak: number; total: number }) {
+  if (!total) return null;
+  const strongPct = (strong / total) * 100;
+  const acceptablePct = (acceptable / total) * 100;
+  const weakPct = (weak / total) * 100;
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1 rounded-full overflow-hidden flex" aria-label={`Response confidence: ${strong} strong, ${acceptable} acceptable, ${weak} needs work out of ${total}`}>
+        <div className="h-full bg-emerald-500/70" style={{ width: `${strongPct}%` }} />
+        <div className="h-full bg-blue-500/50" style={{ width: `${acceptablePct}%` }} />
+        <div className="h-full bg-amber-500/50" style={{ width: `${weakPct}%` }} />
+      </div>
+      <span className="text-[9px] text-foreground/30 tabular-nums shrink-0">{strong}/{total}</span>
+    </div>
+  );
+}
+
 // ─── Score Doughnut (v2: r=50 scaled, sw=11 scaled, level-appropriate colour) ──
 function ScoreDoughnut({ score, size = 120 }: { score: number; size?: number }) {
   const cx = size / 2;
@@ -537,21 +650,28 @@ export default function AssessmentResultsPage() {
           )}
         </div>
 
-        {/* In-progress indicator — compact, no full-width banner */}
+        {/* In-progress indicator — visible resume banner (#17 save/resume) */}
         {inProgressSession && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>
-              New assessment
-              {(inProgressSession as any).answeredCount !== undefined
-                ? ` · ${(inProgressSession as any).answeredCount} questions answered`
-                : ""} in progress
-            </span>
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center shrink-0">
+              <Play className="w-3 h-3 text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-foreground/80">
+                Assessment in progress
+              </span>
+              {(inProgressSession as any).answeredCount !== undefined && (
+                <span className="text-[10px] text-muted-foreground ml-1.5">
+                  · {(inProgressSession as any).answeredCount} questions answered
+                </span>
+              )}
+            </div>
             <Button
               size="sm" variant="outline"
-              className="h-6 px-2.5 text-xs border-border text-foreground/70 hover:text-foreground hover:border-border/80 bg-transparent"
+              className="h-7 px-3 text-xs border-blue-500/30 text-blue-400 hover:text-blue-300 hover:border-blue-500/50 bg-transparent"
               onClick={() => navigate(`/assessment/${(inProgressSession as any).id}`)}
             >
-              Resume
+              <Play className="w-3 h-3 mr-1" /> Resume
             </Button>
           </div>
         )}
@@ -592,10 +712,22 @@ export default function AssessmentResultsPage() {
               <RotateCcw className="w-3 h-3 mr-1" /> Reassess
             </Button>
           </div>
-          {/* Content strip — doughnut + narrative, no cohort anchor, no badges */}
+          {/* Content strip — doughnut + radar + narrative */}
           <div className="flex flex-col sm:flex-row gap-6 items-start px-6 py-5">
-            <div className="shrink-0">
+            <div className="flex items-center gap-4 shrink-0">
               <ScoreDoughnut score={overallScore} size={120} />
+              {sortedDomains.length >= 6 && (
+                <div className="hidden md:block">
+                  <HexRadar
+                    domains={DOMAIN_KEYS.map(k => ({
+                      key: k,
+                      score: capabilityScores[k]?.score ?? 0,
+                      colour: DOMAIN_COLOURS[k],
+                    }))}
+                    size={140}
+                  />
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold text-foreground leading-snug mb-2">{headline}</h1>
@@ -757,6 +889,14 @@ export default function AssessmentResultsPage() {
                   {/* Progress bar — domain colour fill (v2 spec) */}
                   <DomainBar score={domain.score} domainColour={domain.colour} />
 
+                  {/* Confidence indicator — response pattern mini-bar (v2.1 #20) */}
+                  {(() => {
+                    const patterns = (resultsQuery.data as any)?.domainResponsePatterns ?? {};
+                    const p = patterns[domain.key];
+                    if (!p || !p.total) return null;
+                    return <ConfidenceIndicator strong={p.strong ?? 0} acceptable={p.acceptable ?? 0} weak={p.weak ?? 0} total={p.total} />;
+                  })()}
+
                   {/* Inline narrative — surfaced by default, no click required */}
                   {profileQuery.isLoading ? (
                     <DomainNarrativeSkeleton />
@@ -790,7 +930,7 @@ export default function AssessmentResultsPage() {
           </h2>
           <Link
             href="/learning"
-            className="text-xs text-muted-foreground hover:text-foreground/70 transition-colors flex items-center gap-1"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-3 py-1.5 rounded-md border border-primary/20 hover:border-primary/40 bg-primary/5"
           >
             View full learning plan <ChevronRight className="w-3 h-3" />
           </Link>

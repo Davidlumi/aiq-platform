@@ -75,18 +75,21 @@ function ScenarioToggle({
   onChange: (s: Scenario) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1">
+    <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1" role="tablist" aria-label="Scenario sensitivity">
       {SCENARIOS.map(s => (
         <button
           key={s.key}
           onClick={() => onChange(s.key)}
           className={cn(
-            "px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+            "px-3 py-1.5 rounded-md text-sm font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
             active === s.key
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
           title={s.description}
+          role="tab"
+          aria-selected={active === s.key}
+          aria-label={`${s.label} scenario: ${s.description}`}
         >
           {s.label}
         </button>
@@ -225,7 +228,8 @@ function InvestmentTable({
   };
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-lg border border-border overflow-x-auto">
+      <div className="min-w-[640px]">
       {/* Header */}
       <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-2 px-4 py-2.5 bg-muted/40 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
         <span>Initiative</span>
@@ -358,6 +362,7 @@ function InvestmentTable({
           {fmt(model.rollup[scenario].tco3yr)}
         </span>
       </div>
+      </div>{/* close min-w wrapper */}
     </div>
   );
 }
@@ -1051,9 +1056,94 @@ export default function RewardBusinessCasePage() {
           </div>
         </div>
 
-        {/* Headline metrics */}
+        {/* Headline metrics — always show central as primary reference */}
         {model && (
           <HeadlineMetrics rollup={model.rollup[activeScenario]} scenario={activeScenario} />
+        )}
+
+        {/* Scenario range visualisation — shows the spread from conservative to optimistic */}
+        {model && (
+          <Card className="border-border/60">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold">Scenario Range</h3>
+                <span className="text-xs text-muted-foreground">3-year net benefit spread</span>
+              </div>
+              {(() => {
+                const cons = model.rollup.conservative.netBenefit3yr;
+                const cent = model.rollup.central.netBenefit3yr;
+                const opt = model.rollup.optimistic.netBenefit3yr;
+                const min = Math.min(cons, 0);
+                const max = Math.max(opt, cent, cons);
+                const range = max - min || 1;
+                const consPos = ((cons - min) / range) * 100;
+                const centPos = ((cent - min) / range) * 100;
+                const optPos = ((opt - min) / range) * 100;
+                const zeroPos = min < 0 ? ((0 - min) / range) * 100 : 0;
+                return (
+                  <div className="relative">
+                    {/* Range bar */}
+                    <div className="relative h-8 rounded-full bg-muted/50 overflow-hidden">
+                      {/* Zero line if range crosses zero */}
+                      {min < 0 && (
+                        <div className="absolute top-0 bottom-0 w-px bg-muted-foreground/30" style={{ left: `${zeroPos}%` }} />
+                      )}
+                      {/* Conservative to optimistic gradient bar */}
+                      <div
+                        className="absolute top-1.5 bottom-1.5 rounded-full bg-gradient-to-r from-rose-500/60 via-emerald-500/60 to-emerald-400/60"
+                        style={{ left: `${Math.min(consPos, optPos)}%`, right: `${100 - Math.max(consPos, optPos)}%` }}
+                      />
+                      {/* Central marker */}
+                      <div
+                        className="absolute top-0 bottom-0 w-0.5 bg-primary"
+                        style={{ left: `${centPos}%` }}
+                      >
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm" />
+                      </div>
+                    </div>
+                    {/* Labels */}
+                    <div className="flex justify-between mt-2 text-xs">
+                      <div className="text-left">
+                        <span className={cn("font-medium tabular-nums", cons < 0 ? "text-rose-400" : "text-muted-foreground")}>
+                          {fmt(cons)}
+                        </span>
+                        <span className="text-muted-foreground/60 ml-1">Conservative</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="font-semibold tabular-nums text-primary">{fmt(cent)}</span>
+                        <span className="text-muted-foreground/60 ml-1">Central</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-medium tabular-nums text-emerald-400">{fmt(opt)}</span>
+                        <span className="text-muted-foreground/60 ml-1">Optimistic</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Conservative downside context — always visible when conservative is weaker */}
+        {model && model.rollup.conservative.roi3yr != null && model.rollup.conservative.roi3yr < model.rollup.central.roi3yr! && (
+          <div className="rounded-lg border border-border/60 bg-muted/20 px-4 py-3">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-amber-500/10 shrink-0 mt-0.5">
+                <TrendingDown className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Conservative downside</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Under conservative assumptions: {Math.round(model.rollup.conservative.roi3yr! * 100)}% ROI,{" "}
+                  {model.rollup.conservative.netBenefit3yr >= 0 ? "+" : ""}{fmt(model.rollup.conservative.netBenefit3yr)} net benefit.
+                  {model.rollup.conservative.netBenefit3yr < 0
+                    ? " This scenario is net-negative — the case rests on risk/compliance rationale rather than pure financial return."
+                    : " Even in the downside case, the programme delivers positive returns."}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Investment table */}

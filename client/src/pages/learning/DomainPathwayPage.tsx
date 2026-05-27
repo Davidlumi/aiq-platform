@@ -28,45 +28,18 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_DESCRIPTIONS, DOMAIN_ICON_NAMES } from "@shared/brand";
 
-const DOMAIN_META: Record<string, { label: string; color: string; description: string; icon: string }> = {
-  ai_interaction: {
-    label: "AI Interaction",
-    color: "#3B82F6",
-    description: "Craft effective prompts, manage AI conversations, and get consistent high-quality outputs.",
-    icon: "💬",
-  },
-  ai_output_evaluation: {
-    label: "AI Output Evaluation",
-    color: "#8B5CF6",
-    description: "Critically assess AI-generated content for accuracy, bias, and fitness for purpose.",
-    icon: "🔍",
-  },
-  ai_workflow_design: {
-    label: "AI Workflow Design",
-    color: "#10B981",
-    description: "Design and optimise HR workflows that integrate AI tools effectively.",
-    icon: "⚙️",
-  },
-  ai_ethics_trust: {
-    label: "AI Ethics & Trust",
-    color: "#F59E0B",
-    description: "Apply ethical frameworks to AI use in HR, manage risk, and build stakeholder trust.",
-    icon: "⚖️",
-  },
-  workforce_ai_readiness: {
-    label: "Workforce AI Readiness",
-    color: "#EF4444",
-    description: "Assess and develop your organisation's readiness to adopt and scale AI capabilities.",
-    icon: "🏢",
-  },
-  ai_change_leadership: {
-    label: "AI Change Leadership",
-    color: "#EC4899",
-    description: "Lead AI transformation initiatives, manage resistance, and build a culture of AI fluency.",
-    icon: "🚀",
-  },
-};
+const DOMAIN_META: Record<string, { label: string; color: string; description: string }> = Object.fromEntries(
+  Object.entries(DOMAIN_LABELS).map(([key, label]) => [
+    key,
+    {
+      label,
+      color: (DOMAIN_COLOURS as Record<string, string>)[key] ?? "#3B82F6",
+      description: (DOMAIN_DESCRIPTIONS as Record<string, string>)[key] ?? "",
+    },
+  ])
+);
 
 const FORMAT_ICONS: Record<string, string> = {
   tutorial: "📖",
@@ -137,7 +110,7 @@ export default function DomainPathwayPage() {
               className="h-14 w-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
               style={{ background: `${domainMeta.color}20` }}
             >
-              {domainMeta.icon}
+              <Target className="h-6 w-6" style={{ color: domainMeta.color }} />
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-foreground">{domainMeta.label}</h1>

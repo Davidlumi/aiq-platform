@@ -1,78 +1,39 @@
 /**
  * AiQ v10 - Capability Domain Constants
- * Single source of truth for all domain labels, colours, icons, and descriptions.
+ * Re-exports canonical tokens from @shared/brand and adds client-specific metadata.
+ * DO NOT define domain keys, labels, colours, or descriptions here — they live in brand.ts.
  */
 
-export type CapabilityKey =
-  | "ai_interaction"
-  | "ai_output_evaluation"
-  | "ai_workflow_design"
-  | "workforce_ai_readiness"
-  | "ai_ethics_trust"
-  | "ai_change_leadership";
+// ─── Re-exports from canonical source ────────────────────────────────────────
+export {
+  DOMAIN_KEYS,
+  DOMAIN_LABELS,
+  DOMAIN_SHORT_LABELS,
+  DOMAIN_COLOURS,
+  DOMAIN_BG_COLOURS,
+  DOMAIN_DESCRIPTIONS,
+  DOMAIN_ICON_NAMES,
+  LEVEL_LABELS,
+  LEVEL_COLOURS,
+  HEATMAP_THRESHOLDS,
+  scoreToLevel,
+  rawScoreToLevel,
+  scoreColours,
+  READINESS_COLOURS,
+  READINESS_LABELS,
+} from "@shared/brand";
 
-export const DOMAIN_KEYS: CapabilityKey[] = [
-  "ai_interaction",
-  "ai_output_evaluation",
-  "ai_workflow_design",
-  "workforce_ai_readiness",
-  "ai_ethics_trust",
-  "ai_change_leadership",
-];
+export type { DomainKey as CapabilityKey, LevelKey } from "@shared/brand";
 
-export const DOMAIN_LABELS: Record<CapabilityKey, string> = {
-  ai_interaction:        "AI Interaction",
-  ai_output_evaluation:  "AI Output Evaluation",
-  ai_workflow_design:    "AI Workflow Design",
-  workforce_ai_readiness:"Workforce AI Readiness",
-  ai_ethics_trust:       "AI Ethics & Trust",
-  ai_change_leadership:  "AI Change Leadership",
-};
-
-export const DOMAIN_SHORT_LABELS: Record<CapabilityKey, string> = {
-  ai_interaction:        "Interaction",
-  ai_output_evaluation:  "Output Eval",
-  ai_workflow_design:    "Workflow",
-  workforce_ai_readiness:"Readiness",
-  ai_ethics_trust:       "Ethics & Trust",
-  ai_change_leadership:  "Change",
-};
-
-/** Colorblind-safe palette - Paul Tol Bright scheme (canonical — matches brand.ts) */
-export const DOMAIN_COLOURS: Record<CapabilityKey, string> = {
-  ai_interaction:         "#4477AA",  // Tol blue
-  ai_output_evaluation:   "#EE6677",  // Tol rose
-  ai_workflow_design:     "#228833",  // Tol green
-  workforce_ai_readiness: "#CCBB44",  // Tol yellow
-  ai_ethics_trust:        "#AA3377",  // Tol purple
-  ai_change_leadership:   "#66CCEE",  // Tol cyan
-};
-
-/** Background-safe versions (with opacity) */
-export const DOMAIN_BG_COLOURS: Record<CapabilityKey, string> = {
-  ai_interaction:        "rgba(68,119,170,0.12)",
-  ai_output_evaluation:  "rgba(238,102,119,0.12)",
-  ai_workflow_design:    "rgba(34,136,51,0.12)",
-  workforce_ai_readiness:"rgba(204,187,68,0.12)",
-  ai_ethics_trust:       "rgba(170,51,119,0.12)",
-  ai_change_leadership:  "rgba(102,204,238,0.12)",
-};
-
-export const DOMAIN_DESCRIPTIONS: Record<CapabilityKey, string> = {
-  ai_interaction:        "How effectively you communicate with AI tools - prompting, iterating, and directing AI to produce useful outputs.",
-  ai_output_evaluation:  "Your ability to critically assess AI-generated content for accuracy, fitness for purpose, and hidden errors.",
-  ai_workflow_design:    "How well you can identify where AI adds value in a process and design appropriate human-AI handoff points.",
-  workforce_ai_readiness:"Your capability to diagnose team AI skill gaps, design interventions, and advise leaders on readiness.",
-  ai_ethics_trust:       "How you navigate ethical dilemmas involving AI, maintain employee trust, and hold firm under pressure.",
-  ai_change_leadership:  "Your ability to lead AI-driven change - managing resistance, calibrating pace, and designing sustainable transformation.",
-};
+// ─── Foundation / Strategic domain groupings ─────────────────────────────────
+import type { DomainKey } from "@shared/brand";
 
 /** Foundation domains must reach ≥3 signals before strategic domains are assessed */
-export const FOUNDATION_DOMAINS: CapabilityKey[] = ["ai_interaction", "ai_output_evaluation"];
-export const STRATEGIC_DOMAINS: CapabilityKey[] = ["ai_workflow_design", "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"];
+export const FOUNDATION_DOMAINS: DomainKey[] = ["ai_interaction", "ai_output_evaluation"];
+export const STRATEGIC_DOMAINS: DomainKey[] = ["ai_workflow_design", "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"];
 
 /** Development recommendations per domain */
-export const DOMAIN_RECOMMENDATIONS: Record<CapabilityKey, string> = {
+export const DOMAIN_RECOMMENDATIONS: Record<DomainKey, string> = {
   ai_interaction:        "Practice structured prompting with real HR tasks. Start with simple requests and progressively add constraints, context, and format specifications. Review the AI Communication module in your learning plan.",
   ai_output_evaluation:  "Develop a systematic review checklist for AI outputs: check facts, verify sources, assess tone, and test fitness for purpose. Complete the Output Evaluation module and practice with the error detection exercises.",
   ai_workflow_design:    "Map your current workflows and identify the 3 highest-value AI integration points. Focus on the Workflow Design module and practice designing human-AI handoff points for real processes.",
@@ -81,7 +42,8 @@ export const DOMAIN_RECOMMENDATIONS: Record<CapabilityKey, string> = {
   ai_change_leadership:  "Study change management frameworks applied to AI transformation. Complete the Change Leadership module and practice designing change interventions for AI adoption scenarios.",
 };
 
-/** Interaction type metadata for the assessment session UI */
+// ─── Interaction type metadata ───────────────────────────────────────────────
+
 export type InteractionType =
   | "prompt_construction"
   | "prompt_diagnosis"

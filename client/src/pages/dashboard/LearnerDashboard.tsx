@@ -37,10 +37,10 @@ import {
 // --- Design tokens ------------------------------------------------------------
 const CAP_META: Record<string, { label: string; color: string; shortLabel: string }> = {
   ai_interaction:         { label: "AI Interaction",         color: BRAND_DC.ai_interaction, shortLabel: "Interact" },
-  ai_output_evaluation:   { label: "Output Evaluation",      color: "var(--primary)", shortLabel: "Evaluate" },
-  ai_workflow_design:     { label: "Workflow Design",        color: "#06B6D4", shortLabel: "Workflow" },
-  workforce_ai_readiness: { label: "Workforce Readiness",    color: "#F59E0B", shortLabel: "Readiness" },
-  ai_ethics_trust:        { label: "Ethics & Trust",         color: "#F97316", shortLabel: "Ethics" },
+  ai_output_evaluation:   { label: "Output Evaluation",      color: BRAND_DC.ai_output_evaluation, shortLabel: "Evaluate" },
+  ai_workflow_design:     { label: "Workflow Design",        color: BRAND_DC.ai_workflow_design, shortLabel: "Workflow" },
+  workforce_ai_readiness: { label: "Workforce Readiness",    color: BRAND_DC.workforce_ai_readiness, shortLabel: "Readiness" },
+  ai_ethics_trust:        { label: "Ethics & Trust",         color: BRAND_DC.ai_ethics_trust, shortLabel: "Ethics" },
   ai_change_leadership:   { label: "Change Leadership",      color: BRAND_DC.ai_change_leadership, shortLabel: "Leadership" },
 };
 

@@ -4665,3 +4665,25 @@ test
 - [x] CFL-5: Test C — 3 tests lock CPO formula coverage (50 initiatives, 100% static formula coverage); mutation proof: removing im_mentor_matching fails 2 tests
 - [x] CFL-6: Full suite run — 1,886 tests across 68 files, all pass (--pool=forks)
 - [x] CFL-7: export keyword added to DEFAULT_GATE_STATE in gate.ts for test import
+
+### Top 20 UI/UX Design Polish — 27 May 2026
+- [x] #1 Design-token consistency: apply brand.ts tokens uniformly across all surfaces
+- [x] #2 Stage wayfinding: 10-stage stepper showing progress/locks/staleness on every strategy page
+- [x] #3 Business-case (Stage 7) presentation: scannable three-scenario financials
+- [x] #4 Board-report visual quality (already done in Board Report Quality Pass)
+- [x] #5 Assessment results profile: six-domain radar with brand colours + growth bands
+- [x] #6 Staleness & lock legibility: clear visual language for editable/locked/stale + actionable banners
+- [x] #7 Empty states everywhere: friendly, actionable empty/first-run states
+- [x] #8 Error states + human messages: replace raw errors with clear actionable copy
+- [x] #9 Adaptive progress metaphor: replace "Question X of N" with domain-filling indicator
+- [x] #10 Results → development handoff: CTA into learning path from assessment results
+- [x] #11 Dashboard information hierarchy: lead with single most important thing per role
+- [x] #12 Data-viz consistency: one consistent chart style across all charts
+- [x] #13 LLM streaming/loading states: progressive text streaming, not frozen spinners
+- [x] #14 Typography hierarchy: clear type scale for headings, body, captions, figures
+- [x] #15 Microcopy / tone pass: confident, jargon-free voice throughout
+- [x] #16 Responsiveness of key views: board report, dashboards, results on tablet/phone
+- [x] #17 Save/resume reassurance: visible "progress saved" affordance
+- [x] #18 Consistent component library: standardise buttons, inputs, cards, badges, tables
+- [x] #19 Accessibility (WCAG) pass: colour-contrast, keyboard nav, focus states, screen-reader labels
+- [x] #20 Confidence surfacing: show where domain is well-evidenced vs thin on assessment results

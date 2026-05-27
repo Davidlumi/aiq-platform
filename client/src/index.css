@@ -784,29 +784,86 @@
   z-index: 0;
 }
 
-/* AiQ utility typography classes */
+/* ─── AiQ Type Scale ─────────────────────────────────────────────────────────
+   Consistent hierarchy for a number- and text-heavy product.
+   Sora for headings (geometric, modern), Inter for body (high x-height, legible).
+   JetBrains Mono for financial figures (tabular-nums, monospace).
+   ─────────────────────────────────────────────────────────────────────────── */
+.aiq-display {
+  font-family: 'Sora', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
 .aiq-h1 {
   font-family: 'Sora', sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+}
+.aiq-h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.aiq-h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
   color: var(--foreground);
 }
 .aiq-body {
+  font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+.aiq-body-sm {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8125rem;
   line-height: 1.5;
   color: var(--foreground);
 }
 .aiq-caption {
+  font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
   line-height: 1.4;
   color: var(--muted-foreground);
 }
 .aiq-label {
-  font-size: 0.75rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6875rem;
   font-weight: 500;
   line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--muted-foreground);
+}
+.aiq-figure {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.aiq-figure-sm {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
 }
 
 /* UX Deep Dive: Global polish */

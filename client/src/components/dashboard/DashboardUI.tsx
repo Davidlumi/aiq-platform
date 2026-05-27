@@ -7,7 +7,7 @@
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info, ChevronRight, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { Info, ChevronRight, ArrowUpRight, ArrowDownRight, Minus, AlertCircle } from "lucide-react";
 import { scoreToColor, scoreToTint, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 import { DOMAIN_COLOURS as _BRAND_DOMAIN_COLOURS } from "@shared/brand";
 
@@ -465,7 +465,38 @@ export function EmptyState({ title, description, action }: { title: string; desc
 }
 
 // --- Drill-down Chevron ------------------------------------------------------
-
 export function DrillChevron() {
   return <ChevronRight className="w-4 h-4 dark:text-neutral-400 text-neutral-600 shrink-0" />;
+}
+
+// --- Error State (v2.1 #8: consistent error presentation) --------------------
+export function ErrorState({ title, description, onRetry }: { title: string; description: string; onRetry?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center mb-4">
+        <AlertCircle className="w-7 h-7 text-rose-400" />
+      </div>
+      <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
+      <p className="text-xs text-muted-foreground max-w-sm">{description}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-3 py-1.5 rounded-md border border-primary/20 hover:border-primary/40 bg-primary/5"
+          type="button"
+        >
+          Try again
+        </button>
+      )}
+    </div>
+  );
+}
+
+// --- LLM Generating State (v2.1 #13: consistent AI generation indicator) -----
+export function LLMGeneratingState({ message = "Generating with AI\u2026" }: { message?: string }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-primary/20 bg-primary/5">
+      <span className="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
+      <span className="text-sm text-foreground/70">{message}</span>
+    </div>
+  );
 }
