@@ -4759,3 +4759,9 @@ test
 - [x] Integrate into LeaderDashboardV2 between heatmap and worth-your-attention sections
 - [x] Add sector selector dropdown to compare against different industries
 - [x] Percentile position badges (Top Quartile, Above Median, Below Median, Bottom Quartile)
+
+## Case Studies Page
+- [x] Create /case-studies page with 4 fictional beta partner narratives
+- [x] Each case study: company profile, challenge, solution, before/after metrics, quote
+- [x] Wire route in App.tsx and add to marketing navigation
+- [x] Match visual style of other marketing pages
