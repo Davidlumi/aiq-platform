@@ -4777,3 +4777,6 @@ test
 - [x] Add email capture modal to ROI calculator after viewing results
 - [x] Add downloadable ROI PDF report generation (branded, client-side jsPDF with full breakdown)
 - [x] Wire /compare route and add to marketing nav
+
+## Animated ROI Counters
+- [x] Add animated number counters to ROI results that count up from zero on scroll into view

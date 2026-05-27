@@ -1,7 +1,7 @@
 /**
  * ROI Calculator — Interactive tool for prospects to estimate AiQ value
  */
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link } from "wouter";
 import { MarketingNav, MarketingFooter } from "./MarketingPage";
 import { Button } from "@/components/ui/button";
@@ -101,20 +101,81 @@ function SliderInput({ label, value, min, max, step, format, onChange, hint, ico
 interface ResultCardProps {
   label: string;
   value: string;
+  numericValue: number;
+  prefix?: string;
+  suffix?: string;
+  decimals?: number;
   subtitle: string;
   color: string;
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
 }
 
-function ResultCard({ label, value, subtitle, color, icon: Icon }: ResultCardProps) {
+function useCountUp(target: number, duration: number = 1800, enabled: boolean = true, decimals: number = 0) {
+  const [current, setCurrent] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!enabled || hasAnimated.current) return;
+    hasAnimated.current = true;
+    startTimeRef.current = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp;
+      const elapsed = timestamp - startTimeRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic for smooth deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCurrent(eased * target);
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        setCurrent(target);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration, enabled]);
+
+  // Update target if it changes after animation
+  useEffect(() => {
+    if (hasAnimated.current) setCurrent(target);
+  }, [target]);
+
+  return decimals > 0 ? parseFloat(current.toFixed(decimals)) : Math.round(current);
+}
+
+function ResultCard({ label, value, numericValue, prefix = "", suffix = "", decimals = 0, subtitle, color, icon: Icon }: ResultCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const animatedValue = useCountUp(numericValue, 1800, isVisible, decimals);
+
+  const displayValue = isVisible
+    ? `${prefix}${decimals > 0 ? animatedValue.toFixed(decimals) : animatedValue.toLocaleString()}${suffix}`
+    : `${prefix}0${suffix}`;
+
   return (
-    <div className="rounded-xl border p-5 relative overflow-hidden"
+    <div ref={cardRef} className="rounded-xl border p-5 relative overflow-hidden"
       style={{ background: "rgba(255,255,255,0.02)", borderColor: `${color}30` }}>
       <div className="absolute top-3 right-3 opacity-10">
         <Icon className="w-10 h-10" style={{ color }} />
       </div>
       <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">{label}</p>
-      <p className="text-2xl md:text-3xl font-black text-white mb-1">{value}</p>
+      <p className="text-2xl md:text-3xl font-black text-white mb-1 tabular-nums">{displayValue}</p>
       <p className="text-xs text-slate-400">{subtitle}</p>
     </div>
   );
@@ -283,6 +344,10 @@ export default function ROICalculatorPage() {
                 <ResultCard
                   label="Projected annual saving"
                   value={formatCurrency(results.totalAnnualSaving)}
+                  numericValue={results.totalAnnualSaving >= 1_000_000 ? results.totalAnnualSaving / 1_000_000 : results.totalAnnualSaving / 1_000}
+                  prefix="£"
+                  suffix={results.totalAnnualSaving >= 1_000_000 ? "M" : "k"}
+                  decimals={results.totalAnnualSaving >= 1_000_000 ? 1 : 0}
                   subtitle="Total value from capability intelligence"
                   color={greenHex}
                   icon={TrendingUp}
@@ -290,6 +355,9 @@ export default function ROICalculatorPage() {
                 <ResultCard
                   label="ROI multiple"
                   value={`${results.roiMultiple.toFixed(1)}x`}
+                  numericValue={results.roiMultiple}
+                  suffix="x"
+                  decimals={1}
                   subtitle="Return on platform investment"
                   color={indigo}
                   icon={Sparkles}
@@ -297,6 +365,8 @@ export default function ROICalculatorPage() {
                 <ResultCard
                   label="Payback period"
                   value={`${results.paybackMonths} months`}
+                  numericValue={results.paybackMonths}
+                  suffix=" months"
                   subtitle="Time to recover full investment"
                   color={cyan}
                   icon={Clock}
