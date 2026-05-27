@@ -4746,3 +4746,8 @@ test
 - [x] Overhaul How It Works page to match new marketing depth and visual style
 - [x] Add testimonial/quote cards section to marketing home page
 - [x] Add scroll-triggered animations to the 10-stage timeline section
+
+## Interactive Product Tour
+- [x] Build ProductTourPage with step-by-step guided walkthrough overlay showing platform in action
+- [x] Add /tour route and wire CTA from marketing hero
+- [x] Tour covers: Strategy Builder, Assessment, Diagnosis, Development, Team Intelligence, Board Report (6 steps)

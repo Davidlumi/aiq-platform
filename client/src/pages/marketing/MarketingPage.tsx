@@ -170,9 +170,9 @@ function Hero() {
                 Apply for the beta <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/demo">
+            <Link href="/tour">
               <Button size="lg" variant="outline" className="font-semibold px-8 text-base text-white border-white/20 hover:bg-white/10">
-                <Play className="mr-2 h-4 w-4" /> Watch platform demo
+                <Eye className="mr-2 h-4 w-4" /> Take the product tour
               </Button>
             </Link>
           </div>

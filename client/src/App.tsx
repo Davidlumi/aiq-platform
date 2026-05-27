@@ -102,6 +102,7 @@ import AboutPage from "./pages/marketing/AboutPage";
 import BetaApplicationPage from "./pages/marketing/BetaApplicationPage";
 import PricingPage from "./pages/marketing/PricingPage";
 import DemoPreviewPage from "./pages/marketing/DemoPreviewPage";
+import ProductTourPage from "./pages/marketing/ProductTourPage";
 import MethodologyPage from "./pages/methodology/MethodologyPage";
 import PeopleReportsPage from "./pages/people/PeopleReportsPage";
 import MemberReportPage from "./pages/people/MemberReportPage";
@@ -421,6 +422,7 @@ function Router() {
       <Route path="/methodology" component={MethodologyPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/demo" component={DemoPreviewPage} />
+      <Route path="/tour" component={ProductTourPage} />
       {/* Company HR AI Assessment routes */}
       <Route path="/company-assessment">
         <ProtectedRoute component={CompanyAssessmentLandingPage} />
