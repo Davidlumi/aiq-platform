@@ -4504,12 +4504,24 @@ test
 
 ## Beta-Readiness Round 2
 
-- [ ] Item 1: Run verbatim engine dump — confirm fixture inputs, paste full computeBusinessCase output, reconcile all prior discrepancies
-- [ ] Item 2: Move all client-side staleness cascades server-side; add server tests
-- [ ] Item 3: Run real cross-stage integration walk (5→7→9→10 figures, custom initiative, cascade, shift/principle)
-- [ ] Item 4: Paste full 50-term vocab list with replacements and flag risky terms; paste real per-file test counts
+- [x] Item 1: Run verbatim engine dump — confirm fixture inputs, paste full computeBusinessCase output, reconcile all prior discrepancies
+- [x] Item 2: Move all client-side staleness cascades server-side; add server tests
+- [x] Item 3: Run real cross-stage integration walk (5→7→9→10 figures, custom initiative, cascade, shift/principle)
+- [x] Item 4: Paste full 50-term vocab list with replacements and flag risky terms; paste real per-file test counts
 ## Beta-Readiness Round 2 (Completed)
 - [x] Item 1: Move Stage 5→6/7/8 staleness cascade server-side in rewardInitiatives.complete; remove client-side markStale calls from RewardInitiativesPage.tsx
 - [x] Item 2: Cross-stage integration walk — verified S1 detects Stage 6/8 stale; added 3 missing S1 tests to rewardReviewService.test.ts
 - [x] Item 3: Extract and document full 49-term vocab blacklist with replacements
 - [x] Item 4: Produce Beta-Readiness Round 2 findings report (aiq-beta-readiness-round2.md)
+
+## Capability Link (Reward Engine)
+- [ ] CL-1: Add `reward_team_capability_snapshots` table and `source` column to `reward_capability_dimensions`
+- [ ] CL-2: Write schema migration SQL and apply via webdev_execute_sql
+- [ ] CL-3: Build `teamCapabilityAggregator` pure service (per-domain mean, count, coverage)
+- [ ] CL-4: Build `CAPABILITY_LINK_CONFIG` named config object (domain→dimension mapping + score→level thresholds)
+- [ ] CL-5: Add `assessments` source path to Stage 8 (provenance string, low-coverage caveat)
+- [ ] CL-6: Build `generateRewardDevelopmentPlans` service (gap-driven, links to Stage 8 dimension)
+- [ ] CL-7: Add `capabilityAndDevelopment` section to `assembleReport` in `rewardOutputs.ts`
+- [ ] CL-8: Write closing-loop test (score improvement narrows gap)
+- [ ] CL-9: Write all locking tests for team aggregation and Stage 8 derived level
+- [ ] CL-10: Run all engine dumps and confirm Northbridge golden-master unchanged

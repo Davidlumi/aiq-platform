@@ -44,6 +44,20 @@ import {
 } from "../services/rewardCapabilityService";
 
 import { VOCAB_BLACKLIST, sanitizeOutput as enforceVocab } from "../../shared/vocabBlacklist";
+import {
+  aggregateTeamCapability,
+  CAPABILITY_LINK_CONFIG,
+  type UserDomainScores,
+  type AssessmentDomain,
+} from "../services/capabilityLinkConfig";
+import {
+  rewardTeamCapabilitySnapshots,
+  assessmentSessions,
+  assessmentScores,
+  users,
+} from "../../drizzle/schema";
+import { desc } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 // ── Context builder ───────────────────────────────────────────────────────────
 async function buildContextString(tenantId: string): Promise<string> {
@@ -711,6 +725,140 @@ Task: ${actionInstructions[input.action]}${input.reason ? `\nAdditional context:
 
       return { ok: true };
     }),
+
+  // ── computeFromAssessments ─────────────────────────────────────────────────
+  /**
+   * Aggregate team assessment scores into a team capability snapshot and
+   * derive suggested Stage 8 people-dimension levels.
+   *
+   * This procedure:
+   *   1. Loads all active users in the tenant.
+   *   2. For each user, fetches their most recent completed assessment score.
+   *   3. Calls aggregateTeamCapability (pure) to compute domain means + derived levels.
+   *   4. Persists a reward_team_capability_snapshots row.
+   *   5. Returns the snapshot + suggested levels + provenance strings.
+   *
+   * The caller (Stage 8 UI) decides whether to apply the suggested levels to
+   * reward_capability_dimensions rows — this procedure never writes to that table.
+   */
+  computeFromAssessments: protectedProcedure.mutation(async ({ ctx }) => {
+    const tenantId = ctx.user.tenantId;
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+    // 1. Load all active users in tenant
+    const teamMembers = await db
+      .select({ userId: users.id })
+      .from(users)
+      .where(and(eq(users.tenantId, tenantId), eq(users.status, "active")));
+
+    // 2. For each user, fetch their most recent completed assessment score
+    const userScores: UserDomainScores[] = [];
+    for (const member of teamMembers) {
+      // Find the most recent completed session
+      const [latestSession] = await db
+        .select({ id: assessmentSessions.id })
+        .from(assessmentSessions)
+        .where(and(
+          eq(assessmentSessions.userId, member.userId),
+          eq(assessmentSessions.tenantId, tenantId),
+          eq(assessmentSessions.state, "completed"),
+        ))
+        .orderBy(desc(assessmentSessions.completedAt))
+        .limit(1);
+
+      if (!latestSession) continue;
+
+      // Fetch the score for that session
+      const [scoreRow] = await db
+        .select({ scoreBreakdownJson: assessmentScores.scoreBreakdownJson })
+        .from(assessmentScores)
+        .where(eq(assessmentScores.sessionId, latestSession.id))
+        .limit(1);
+
+      if (!scoreRow) continue;
+
+      // Parse domain scores from scoreBreakdownJson
+      const breakdown = typeof scoreRow.scoreBreakdownJson === "string"
+        ? JSON.parse(scoreRow.scoreBreakdownJson as string)
+        : (scoreRow.scoreBreakdownJson ?? {}) as Record<string, unknown>;
+      const rawCaps = breakdown.capabilityScores as Record<string, unknown> | undefined;
+      if (!rawCaps) continue;
+
+      const scores: Partial<Record<AssessmentDomain, number>> = {};
+      for (const [k, v] of Object.entries(rawCaps)) {
+        const num = typeof v === "number" ? v : (v as any)?.score;
+        if (typeof num === "number" && isFinite(num)) {
+          scores[k as AssessmentDomain] = Math.min(100, Math.max(0, num));
+        }
+      }
+
+      userScores.push({ userId: member.userId, scores });
+    }
+
+    // 3. Aggregate
+    const aggregate = aggregateTeamCapability(teamMembers, userScores, CAPABILITY_LINK_CONFIG);
+
+    // 4. Persist snapshot
+    const snapshotId = nanoid();
+    const now = Date.now();
+    await db.insert(rewardTeamCapabilitySnapshots).values({
+      id: snapshotId,
+      tenantId,
+      teamSize: aggregate.teamSize,
+      assessedCount: aggregate.assessedCount,
+      coverageFraction: String(aggregate.coverageFraction) as any,
+      domainMeansJson: aggregate.domainMeans as any,
+      domainCountsJson: aggregate.domainCounts as any,
+      derivedLevelsJson: aggregate.derivedLevels as any,
+      provenanceJson: aggregate.provenance as any,
+      computedAt: now,
+    });
+
+    // 5. Return snapshot + suggested levels + provenance
+    return {
+      snapshotId,
+      teamSize: aggregate.teamSize,
+      assessedCount: aggregate.assessedCount,
+      coverageFraction: aggregate.coverageFraction,
+      isLowCoverage: aggregate.isLowCoverage,
+      domainMeans: aggregate.domainMeans,
+      domainCounts: aggregate.domainCounts,
+      suggestedLevels: aggregate.derivedLevels,
+      provenance: aggregate.provenance,
+      computedAt: now,
+    };
+  }),
+
+  // ── getLatestSnapshot ─────────────────────────────────────────────────────────
+  /** Return the most recent team capability snapshot for this tenant, if any. */
+  getLatestSnapshot: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.user.tenantId;
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+    const [row] = await db
+      .select()
+      .from(rewardTeamCapabilitySnapshots)
+      .where(eq(rewardTeamCapabilitySnapshots.tenantId, tenantId))
+      .orderBy(desc(rewardTeamCapabilitySnapshots.computedAt))
+      .limit(1);
+
+    if (!row) return null;
+
+    return {
+      snapshotId: row.id,
+      teamSize: row.teamSize,
+      assessedCount: row.assessedCount,
+      coverageFraction: parseFloat(String(row.coverageFraction)),
+      isLowCoverage: parseFloat(String(row.coverageFraction)) < CAPABILITY_LINK_CONFIG.lowCoverageThreshold,
+      domainMeans: row.domainMeansJson as Record<string, number | null>,
+      domainCounts: row.domainCountsJson as Record<string, number>,
+      suggestedLevels: row.derivedLevelsJson as Record<string, string | null>,
+      provenance: row.provenanceJson as Record<string, string>,
+      computedAt: row.computedAt,
+    };
+  }),
 
   // ── getCustomInitiativeCapability ──────────────────────────────────────────────────
   /** Get capability ratings for all custom initiatives in portfolio (for E2 UI prompt) */

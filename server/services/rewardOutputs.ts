@@ -27,6 +27,18 @@ import {
   type CustomInitiativeInput,
 } from "./rewardBusinessCaseEngine";
 import { REWARD_INITIATIVE_LIBRARY } from "../../shared/rewardInitiativeLibrary";
+import {
+  generateRewardDevelopmentPlans,
+  type DevelopmentPlanInput,
+  type GeneratedDevelopmentPlan,
+} from "./rewardDevelopmentPlans";
+import {
+  aggregateTeamCapability,
+  CAPABILITY_LINK_CONFIG,
+  type UserDomainScores,
+} from "./capabilityLinkConfig";
+
+export type { GeneratedDevelopmentPlan };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,6 +110,8 @@ export interface AssembledReport {
   sections: ReportSection[];
   // Charts
   charts: ChartData;
+  // Capability & Development (Capability Link)
+  developmentPlans: GeneratedDevelopmentPlan[];
   // Completeness
   stageCompleteness: {
     stage1: boolean;
@@ -107,7 +121,7 @@ export interface AssembledReport {
     stage5: boolean;
     stage6: boolean;
     stage7: boolean;
-    stage8: boolean;  // not yet built
+    stage8: boolean;
     stage9: boolean;  // not yet built
   };
   // Metadata
@@ -496,6 +510,27 @@ export function assembleReport(params: {
   // ── Charts ────────────────────────────────────────────────────────────────
   const charts = generateCharts(model, initiatives, recommendedScenario);
 
+  // ── Capability & Development plans (Capability Link) ─────────────────────
+  // Only generate plans when Stage 8 is confirmed and not stale.
+  // Plans are generated from the confirmed dimension rows (no DB access here).
+  let developmentPlans: GeneratedDevelopmentPlan[] = [];
+  if (stageCompleteness.stage8 && capabilityDimensions.length > 0) {
+    const dimInputs: DevelopmentPlanInput[] = capabilityDimensions.map(d => ({
+      dimension: d.dimension as import('./capabilityLinkConfig').PeopleDimension,
+      requiredLevel: d.requiredLevel as import('./rewardCapabilityService').CapabilityLevel,
+      currentLevel: (d.currentLevel as import('./rewardCapabilityService').CapabilityLevel | null) ?? null,
+      gapStatus: (d.gapStatus as "no_gap" | "minor_gap" | "significant_gap" | null) ?? null,
+    }));
+    // Build a minimal aggregate from the confirmed dimension data.
+    // We don't have per-user scores at this point, so we use an empty user list
+    // and let the aggregate reflect zero assessed users — the plan generator
+    // will still produce plans based on gapStatus.
+    const emptyUsers: Array<{ userId: string }> = [];
+    const emptyScores: UserDomainScores[] = [];
+    const aggregate = aggregateTeamCapability(emptyUsers, emptyScores, CAPABILITY_LINK_CONFIG);
+    developmentPlans = generateRewardDevelopmentPlans(dimInputs, aggregate);
+  }
+
   return {
     companyName: profile?.companyName ?? "Your Organisation",
     sector: profile?.sector ?? "",
@@ -515,6 +550,7 @@ export function assembleReport(params: {
     stage7Narratives,
     sections,
     charts,
+    developmentPlans,
     stageCompleteness,
     assembledAt: Date.now(),
   };

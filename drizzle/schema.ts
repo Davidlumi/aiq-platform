@@ -2829,3 +2829,128 @@ export const rewardReview = mysqlTable("reward_review", {
 }));
 export type RewardReview = typeof rewardReview.$inferSelect;
 export type RewardReviewInsert = typeof rewardReview.$inferInsert;
+
+// ─── Capability Link — Team Capability Snapshots ─────────────────────────────
+/**
+ * One row per tenant per compute run.
+ * Stores the aggregated per-domain means for the reward team so Stage 8 can
+ * derive a "from assessments" current level without re-querying individual scores.
+ *
+ * New columns added to reward_capability_dimensions:
+ *   source  VARCHAR(32)  — 'prework' | 'manual' | 'assessments'
+ *   assessmentProvenance  TEXT  — human-readable provenance string, e.g.
+ *     "Medium — derived from 6 of 8 team assessments (coverage: 75%)"
+ *   assessmentCoverage  DECIMAL(5,4)  — 0.0–1.0 fraction of team assessed
+ *
+ * These are added as ALTER TABLE statements in the migration below.
+ */
+export const rewardTeamCapabilitySnapshots = mysqlTable("reward_team_capability_snapshots", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+
+  /** Number of users in the tenant at snapshot time */
+  teamSize: int("team_size").notNull().default(0),
+
+  /** Number of team members with at least one completed assessment */
+  assessedCount: int("assessed_count").notNull().default(0),
+
+  /**
+   * Coverage fraction: assessedCount / teamSize (0.0–1.0).
+   * Coverage < 0.5 triggers the low-coverage caveat in Stage 8.
+   */
+  coverageFraction: decimal("coverage_fraction", { precision: 5, scale: 4 }).notNull().default("0"),
+
+  /**
+   * Per-domain mean scores (0–100 scale, matching assessmentScores.scoreBreakdownJson).
+   * Shape: { ai_interaction, ai_output_evaluation, ai_workflow_design,
+   *          workforce_ai_readiness, ai_ethics_trust, ai_change_leadership }
+   * Each value is the mean of the most-recent completed assessment score for each
+   * assessed team member; null if no team member has a score for that domain.
+   */
+  domainMeansJson: json("domain_means_json").$type<Record<string, number | null>>().notNull(),
+
+  /**
+   * Per-domain sample counts (how many team members contributed to each mean).
+   * Shape: same keys as domainMeansJson.
+   */
+  domainCountsJson: json("domain_counts_json").$type<Record<string, number>>().notNull(),
+
+  /**
+   * Derived Stage 8 levels from the mapping (CAPABILITY_LINK_CONFIG).
+   * Shape: { team_skills, change_management, governance } → CapabilityLevel | null
+   * null when coverage is below LOW_COVERAGE_THRESHOLD or no data.
+   */
+  derivedLevelsJson: json("derived_levels_json").$type<Record<string, string | null>>().notNull(),
+
+  /**
+   * Provenance strings per people-dimension.
+   * Shape: { team_skills, change_management, governance } → string
+   * e.g. "Medium — derived from 6 of 8 team assessments (coverage: 75%)"
+   */
+  provenanceJson: json("provenance_json").$type<Record<string, string>>().notNull(),
+
+  computedAt: bigint("computed_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  tenantIdx: index("idx_rtcs_tenant").on(t.tenantId),
+  tenantComputedIdx: index("idx_rtcs_tenant_computed").on(t.tenantId, t.computedAt),
+}));
+export type RewardTeamCapabilitySnapshot = typeof rewardTeamCapabilitySnapshots.$inferSelect;
+export type RewardTeamCapabilitySnapshotInsert = typeof rewardTeamCapabilitySnapshots.$inferInsert;
+
+/**
+ * Reward capability development plans — one row per (tenant, dimension).
+ * Generated when a Stage 8 people-dimension shows a gap (required > current).
+ * Links back to the Stage 8 dimension it serves.
+ *
+ * These are strategy-level plans (not individual adaptive plans).
+ * They surface in Stage 10 as the "development pathway" for each people-dimension.
+ */
+export const rewardCapabilityDevelopmentPlans = mysqlTable("reward_capability_development_plans", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+
+  /** The Stage 8 people-dimension this plan targets */
+  dimension: varchar("dimension", { length: 64 }).notNull(),
+
+  /** The Stage 8 gap status that triggered this plan */
+  gapStatus: varchar("gap_status", { length: 32 }).notNull(),
+
+  /** Required level at plan-generation time */
+  requiredLevel: varchar("required_level", { length: 16 }).notNull(),
+
+  /** Current level at plan-generation time */
+  currentLevel: varchar("current_level", { length: 16 }).notNull(),
+
+  /**
+   * Assessment domains that contribute to this dimension (from CAPABILITY_LINK_CONFIG).
+   * Shape: string[] — e.g. ["ai_interaction", "ai_output_evaluation", "ai_workflow_design"]
+   */
+  targetDomainsJson: json("target_domains_json").$type<string[]>().notNull(),
+
+  /** Number of team members who need development (assessedCount with gap) */
+  peopleCount: int("people_count").notNull().default(0),
+
+  /**
+   * Estimated time to close the gap (months), derived from gap severity and domain count.
+   * null when insufficient data.
+   */
+  estimatedMonths: int("estimated_months"),
+
+  /**
+   * Human-readable development pathway summary.
+   * e.g. "6 team members need development in AI Interaction and AI Output Evaluation
+   *       to reach Medium level for Team & Skills. Estimated 3–6 months."
+   */
+  pathwaySummary: text("pathway_summary"),
+
+  /** Whether this plan has been superseded by a newer snapshot */
+  state: mysqlEnum("state", ["active", "superseded"]).notNull().default("active"),
+
+  generatedAt: bigint("generated_at", { mode: "number" }).notNull().$defaultFn(() => Date.now()),
+  snapshotId: varchar("snapshot_id", { length: 36 }),  // FK to reward_team_capability_snapshots.id
+}, (t) => ({
+  tenantDimIdx: index("idx_rcdp_tenant_dim").on(t.tenantId, t.dimension),
+  tenantStateIdx: index("idx_rcdp_tenant_state").on(t.tenantId, t.state),
+}));
+export type RewardCapabilityDevelopmentPlan = typeof rewardCapabilityDevelopmentPlans.$inferSelect;
+export type RewardCapabilityDevelopmentPlanInsert = typeof rewardCapabilityDevelopmentPlans.$inferInsert;
