@@ -5,7 +5,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MarketingNav } from "./MarketingPage";
+import { MarketingNav, MarketingFooter } from "./MarketingPage";
 import {
   CheckCircle2,
   XCircle,
@@ -384,15 +384,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t py-8 text-center text-xs text-slate-600" style={{ borderColor: border }}>
-        <p>© {new Date().getFullYear()} AiQ. All rights reserved.</p>
-        <div className="flex justify-center gap-6 mt-3">
-          {[["How it works", "/how-it-works"], ["The product", "/product"], ["Methodology", "/methodology"], ["About", "/about"]].map(([l, h]) => (
-            <Link key={h} href={h}><span className="hover:text-slate-400 cursor-pointer transition-colors">{l}</span></Link>
-          ))}
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

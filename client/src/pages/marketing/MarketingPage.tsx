@@ -5,6 +5,7 @@
  */
 import { Link } from "wouter";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, ChevronRight, Target, TrendingUp, BarChart3,
@@ -12,6 +13,7 @@ import {
   MessageSquare, Brain, BookOpen, Shield, Layers,
   Building2, Compass, Zap, LineChart, Award,
   GitBranch, FileText, Eye, Lock, LayoutDashboard,
+  Menu, X,
 } from "lucide-react";
 
 // --- Brand tokens -------------------------------------------------------------
@@ -27,7 +29,19 @@ const amber   = "#F59E0B";
 const cyan    = "#06B6D4";
 
 // --- Shared components --------------------------------------------------------
+const NAV_LINKS: [string, string][] = [
+  ["Platform", "/product"],
+  ["How it works", "/how-it-works"],
+  ["Pricing", "/pricing"],
+  ["Case studies", "/case-studies"],
+  ["Compare", "/compare"],
+  ["ROI calculator", "/roi-calculator"],
+  ["About", "/about"],
+];
+
 export function MarketingNav() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <nav className="sticky top-0 z-50 border-b h-16 flex items-center px-6"
       style={{ background: navy, borderColor: border }}>
@@ -45,16 +59,9 @@ export function MarketingNav() {
             </span>
           </div>
         </Link>
+        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
-          {([
-            ["Platform", "/product"],
-            ["How it works", "/how-it-works"],
-            ["Pricing", "/pricing"],
-            ["Case studies", "/case-studies"],
-            ["Compare", "/compare"],
-            ["ROI calculator", "/roi-calculator"],
-            ["About", "/about"],
-          ] as [string, string][]).map(([label, href]) => (
+          {NAV_LINKS.map(([label, href]) => (
             <Link key={href} href={href}>
               <span className="text-slate-300 hover:text-white text-sm transition-colors cursor-pointer">{label}</span>
             </Link>
@@ -62,13 +69,44 @@ export function MarketingNav() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10">Sign in</Button>
+            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10 hidden sm:inline-flex">Sign in</Button>
           </Link>
           <Link href="/beta">
-            <Button size="sm" className="font-semibold" style={{ background: greenHex, color: "white" }}>Apply for beta</Button>
+            <Button size="sm" className="font-semibold hidden sm:inline-flex" style={{ background: greenHex, color: "white" }}>Apply for beta</Button>
           </Link>
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
+          </button>
         </div>
       </div>
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="absolute top-16 left-0 right-0 border-b md:hidden"
+          style={{ background: navy, borderColor: border }}>
+          <div className="flex flex-col px-6 py-4 gap-1">
+            {NAV_LINKS.map(([label, href]) => (
+              <Link key={href} href={href}>
+                <span
+                  className="block py-2.5 px-3 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 text-sm transition-colors cursor-pointer"
+                  onClick={() => setMobileOpen(false)}
+                >{label}</span>
+              </Link>
+            ))}
+            <div className="border-t my-2" style={{ borderColor: border }} />
+            <Link href="/login">
+              <span className="block py-2.5 px-3 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 text-sm cursor-pointer" onClick={() => setMobileOpen(false)}>Sign in</span>
+            </Link>
+            <Link href="/beta">
+              <span className="block py-2.5 px-3 rounded-lg font-semibold text-sm cursor-pointer" style={{ color: greenHex }} onClick={() => setMobileOpen(false)}>Apply for beta →</span>
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -118,7 +156,8 @@ export function MarketingFooter() {
             <h4 className="text-white font-semibold text-sm mb-4 uppercase tracking-wider">Legal</h4>
             <div className="flex flex-col gap-3">
               {["Privacy policy", "Data processing addendum", "Accessibility statement", "Terms of service"].map((l) => (
-                <span key={l} className="text-slate-400 text-sm cursor-pointer hover:text-white transition-colors">{l}</span>
+                <span key={l} className="text-slate-400 text-sm cursor-pointer hover:text-white transition-colors"
+                  onClick={() => toast.info(`${l} — coming soon`, { description: "This page is being prepared and will be available shortly." })}>{l}</span>
               ))}
             </div>
           </div>
@@ -331,9 +370,11 @@ function PlatformPillars() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {pillars.map(({ icon: Icon, color, title, subtitle, desc }) => (
-            <div key={title} className="rounded-2xl p-7 border bg-white hover:shadow-lg transition-shadow"
-              style={{ borderColor: borderL }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
+            <div key={title} className="rounded-2xl p-7 border bg-white hover:shadow-lg transition-all duration-300 group"
+              style={{ borderColor: borderL, ["--hover-color" as string]: `${color}60` }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = `${color}60`)}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = borderL)}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
                 style={{ background: `${color}15` }}>
                 <Icon className="w-6 h-6" style={{ color }} />
               </div>

@@ -40,6 +40,7 @@ import { rewardSuccessMeasuresRouter } from "./routers/rewardSuccessMeasures";
 import { rewardCapabilityAssessmentRouter } from "./routers/rewardCapabilityAssessment";
 import { rewardReviewRouter } from "./routers/rewardReview";
 import { initiativeDiscoveryRouter } from "./routers/initiativeDiscovery";
+import { leadsRouter } from "./routers/leads";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -82,6 +83,7 @@ export const appRouter = router({
   rewardCapabilityAssessment: rewardCapabilityAssessmentRouter,
   rewardReview: rewardReviewRouter,
   initiativeDiscovery: initiativeDiscoveryRouter,
+  leads: leadsRouter,
 });
 
 export type AppRouter = typeof appRouter;

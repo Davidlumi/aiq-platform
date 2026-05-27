@@ -195,8 +195,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section style={{ background: navy }} className="py-24 px-6">
+      {/* CTA / Contact */}
+      <section id="contact" style={{ background: navy }} className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
             The conversation starts with your situation.

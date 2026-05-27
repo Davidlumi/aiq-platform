@@ -3002,3 +3002,13 @@ export const discoveryCandidates = mysqlTable("discovery_candidates", {
 }));
 export type DiscoveryCandidate = typeof discoveryCandidates.$inferSelect;
 export type DiscoveryCandidateInsert = typeof discoveryCandidates.$inferInsert;
+
+// --- Marketing Leads ---------------------------------------------------------
+export const marketingLeads = mysqlTable("marketing_leads", {
+  id:        int("id").primaryKey().autoincrement(),
+  email:     varchar("email", { length: 255 }).notNull(),
+  company:   varchar("company", { length: 200 }),
+  source:    varchar("source", { length: 50 }).notNull().default("roi_calculator"),
+  metadata:  json("metadata"),
+  createdAt: int("created_at").notNull(),
+});

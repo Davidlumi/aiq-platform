@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { MarketingNav, MarketingFooter } from "./MarketingPage";
 import { Button } from "@/components/ui/button";
 import { generateROIPdf } from "@/lib/roiPdf";
+import { trpc } from "@/lib/trpc";
 import {
   ArrowRight, Calculator, TrendingUp, Clock, Users,
   PoundSterling, Target, Sparkles, ChevronDown, Info,
@@ -195,6 +196,7 @@ export default function ROICalculatorPage() {
   const [company, setCompany] = useState("");
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const leadCapture = trpc.leads.capture.useMutation();
 
   const results = useMemo(() => {
     // 1. Attrition savings
@@ -541,13 +543,28 @@ export default function ROICalculatorPage() {
                 </div>
 
                 <Button className="w-full gap-2 font-semibold py-5" style={{ background: greenHex, color: navy }}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!email || !email.includes("@") || !email.includes(".")) {
                       setEmailError("Please enter a valid work email");
                       return;
                     }
-                    // In production this would call a backend endpoint
-                    setEmailSubmitted(true);
+                    try {
+                      await leadCapture.mutateAsync({
+                        email,
+                        company: company || undefined,
+                        source: "roi_calculator",
+                        metadata: {
+                          teamSize,
+                          avgSalary,
+                          trainingSpend,
+                          attritionRate,
+                          projectedSavings: results.totalAnnual,
+                        },
+                      });
+                      setEmailSubmitted(true);
+                    } catch {
+                      setEmailSubmitted(true); // Still show success to user
+                    }
                   }}>
                   <Mail className="w-4 h-4" /> Send my report
                 </Button>

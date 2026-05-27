@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch, Redirect } from "wouter";
+import { Route, Switch, Redirect, useLocation } from "wouter";
+import { useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -192,8 +193,19 @@ function ProtectedRouteFullscreen({
   return <Component />;
 }
 
+/** Scroll to top on route change */
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+}
+
 function Router() {
   return (
+    <>
+    <ScrollToTop />
     <Switch>
       {/* Public auth routes */}
       <Route path="/login" component={LoginPage} />
@@ -445,6 +457,7 @@ function Router() {
       {/* 404 */}
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 

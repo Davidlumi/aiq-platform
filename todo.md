@@ -4789,3 +4789,12 @@ test
 
 ## Bug: Marketing site redirects to login
 - [x] Fix: unauthenticated visitors are being redirected to login instead of seeing marketing pages (GateProvider was firing protectedProcedure query for all visitors, triggering global UNAUTHORIZED redirect)
+
+## Marketing Pages QA Improvements
+- [x] Add global ScrollToTop component for route changes (all pages open at top)
+- [x] Add mobile hamburger menu to MarketingNav
+- [x] Fix footer legal links (show toast "Coming soon" since pages don't exist yet)
+- [x] Add id="contact" to About page section for /about#contact anchor link
+- [x] Replace PricingPage custom footer with shared MarketingFooter for consistency
+- [x] Wire ROI calculator email form to backend (store lead + notify owner)
+- [x] Add hover border highlight to home page capability cards
