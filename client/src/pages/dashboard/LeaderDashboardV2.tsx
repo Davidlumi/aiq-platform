@@ -16,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import BenchmarkComparison from "@/components/BenchmarkComparison";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, LabelList,
 } from "recharts";
@@ -635,6 +636,9 @@ export default function LeaderDashboardV2() {
           <FunctionHeatmap functions={heatmapData.functions} domains={heatmapData.domains} />
         </div>
       )}
+
+      {/* ── Industry Benchmark Comparison ── */}
+      <BenchmarkComparison />
 
       {/* ── Worth your attention ── */}
       {worthAttention.length > 0 && (

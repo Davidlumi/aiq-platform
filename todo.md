@@ -4751,3 +4751,11 @@ test
 - [x] Build ProductTourPage with step-by-step guided walkthrough overlay showing platform in action
 - [x] Add /tour route and wire CTA from marketing hero
 - [x] Tour covers: Strategy Builder, Assessment, Diagnosis, Development, Team Intelligence, Board Report (6 steps)
+
+## Benchmark Comparison Feature
+- [x] Use existing sector_benchmarks from content-library.json (8 sectors, P25/P50/P75 per domain)
+- [x] Create benchmarkComparison tRPC procedure in leader router (calculates tenant domain averages vs sector percentiles)
+- [x] Build BenchmarkComparison UI component with visual bars showing tenant vs P25/P50/P75 range
+- [x] Integrate into LeaderDashboardV2 between heatmap and worth-your-attention sections
+- [x] Add sector selector dropdown to compare against different industries
+- [x] Percentile position badges (Top Quartile, Above Median, Below Median, Bottom Quartile)

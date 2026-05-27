@@ -45,6 +45,7 @@ import {
   type RoleFamilyKey,
   ANONYMISATION_THRESHOLD,
 } from "../../shared/dashboard";
+import { getSectorBenchmark, getAllSectorBenchmarks } from "../contentLibrary";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -2330,6 +2331,137 @@ const leaderRouter = router({
       domains: DOMAIN_KEYS.map(k => ({ key: k, label: DOMAIN_LABELS[k] })),
     };
   }),
+
+  /** Benchmark comparison — tenant domain scores vs industry percentiles */
+  benchmarkComparison: protectedProcedure
+    .input(z.object({ sectorOverride: z.string().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Get tenant sector from org context
+      const orgCtxRows = await db.select().from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      const orgCtx = orgCtxRows[0] ?? null;
+      const tenantSector = input?.sectorOverride ?? orgCtx?.sector ?? "other";
+
+      // Get sector benchmark data
+      const benchmark = getSectorBenchmark(tenantSector);
+      const allBenchmarks = getAllSectorBenchmarks();
+      const availableSectors = allBenchmarks.map(b => ({ id: b.sector_id, name: b.display_name }));
+
+      // Calculate tenant's current domain averages
+      const allUsers = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.tenantId, ctx.user.tenantId));
+
+      const domainTotals: Record<string, { total: number; count: number }> = {};
+      for (const key of DOMAIN_KEYS) domainTotals[key] = { total: 0, count: 0 };
+      let overallTotal = 0;
+      let overallCount = 0;
+
+      for (const u of allUsers) {
+        const latestSession = await db
+          .select({ id: assessmentSessions.id })
+          .from(assessmentSessions)
+          .where(and(eq(assessmentSessions.userId, u.id), eq(assessmentSessions.state, "completed")))
+          .orderBy(desc(assessmentSessions.completedAt))
+          .limit(1);
+        if (!latestSession[0]) continue;
+        const score = await db
+          .select()
+          .from(assessmentScores)
+          .where(eq(assessmentScores.sessionId, latestSession[0].id))
+          .limit(1);
+        if (!score[0]) continue;
+        const domainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
+        if (!domainScores) continue;
+        overallTotal += parseFloat(String(score[0].overallScore));
+        overallCount++;
+        for (const key of DOMAIN_KEYS) {
+          if (domainScores[key] != null) {
+            domainTotals[key].total += domainScores[key];
+            domainTotals[key].count++;
+          }
+        }
+      }
+
+      // Map benchmark domain keys (ai_ethics_and_trust → ai_ethics_trust)
+      const mapBenchmarkKey = (k: string): string => {
+        if (k === "ai_ethics_and_trust") return "ai_ethics_trust";
+        return k;
+      };
+
+      // Build comparison per domain
+      const domainComparison = DOMAIN_KEYS.map(dk => {
+        const tenantAvg = domainTotals[dk].count > 0
+          ? Math.round((domainTotals[dk].total / domainTotals[dk].count) * 10) / 10
+          : null;
+        let benchmarkData: { p25: number; p50: number; p75: number } | null = null;
+        if (benchmark) {
+          const icb = benchmark.individual_capability_benchmarks;
+          for (const [bk, bv] of Object.entries(icb)) {
+            if (mapBenchmarkKey(bk) === dk) {
+              benchmarkData = { p25: bv.p25, p50: bv.p50, p75: bv.p75 };
+              break;
+            }
+          }
+        }
+        let percentilePosition: string | null = null;
+        if (tenantAvg !== null && benchmarkData) {
+          const tenantScaled = tenantAvg / 10;
+          if (tenantScaled >= benchmarkData.p75) percentilePosition = "top_quartile";
+          else if (tenantScaled >= benchmarkData.p50) percentilePosition = "above_median";
+          else if (tenantScaled >= benchmarkData.p25) percentilePosition = "below_median";
+          else percentilePosition = "bottom_quartile";
+        }
+        return {
+          domain: dk,
+          domainName: DOMAIN_LABELS[dk],
+          colour: DOMAIN_COLOURS[dk],
+          tenantScore: tenantAvg,
+          benchmarkP25: benchmarkData ? benchmarkData.p25 * 10 : null,
+          benchmarkP50: benchmarkData ? benchmarkData.p50 * 10 : null,
+          benchmarkP75: benchmarkData ? benchmarkData.p75 * 10 : null,
+          percentilePosition,
+          assessedCount: domainTotals[dk].count,
+        };
+      });
+
+      const tenantOverall = overallCount > 0 ? Math.round((overallTotal / overallCount) * 10) / 10 : null;
+      const overallBenchmark = benchmark?.overall_individual_benchmark ?? null;
+      let overallPercentile: string | null = null;
+      if (tenantOverall !== null && overallBenchmark) {
+        const tenantScaled = tenantOverall / 10;
+        if (tenantScaled >= overallBenchmark.p75) overallPercentile = "top_quartile";
+        else if (tenantScaled >= overallBenchmark.p50) overallPercentile = "above_median";
+        else if (tenantScaled >= overallBenchmark.p25) overallPercentile = "below_median";
+        else overallPercentile = "bottom_quartile";
+      }
+
+      return {
+        sector: tenantSector,
+        sectorName: benchmark?.display_name ?? tenantSector.replace(/_/g, " "),
+        availableSectors,
+        tenantOverallScore: tenantOverall,
+        overallBenchmark: overallBenchmark ? {
+          p25: overallBenchmark.p25 * 10,
+          p50: overallBenchmark.p50 * 10,
+          p75: overallBenchmark.p75 * 10,
+        } : null,
+        overallPercentile,
+        domainComparison,
+        assessedCount: overallCount,
+        totalHeadcount: allUsers.length,
+        organisationalMaturity: benchmark?.organisational_maturity_benchmark ?? null,
+      };
+    }),
 });
 
 // ─── Export combined router ──────────────────────────────────────────────────
