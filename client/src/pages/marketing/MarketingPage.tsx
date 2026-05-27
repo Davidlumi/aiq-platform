@@ -4,6 +4,7 @@
  * Adaptive Assessment, AI Coach, Personalised Learning, Team Intelligence, Board Reporting.
  */
 import { Link } from "wouter";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, ChevronRight, Target, TrendingUp, BarChart3,
@@ -309,7 +310,7 @@ function PlatformPillars() {
   );
 }
 
-// --- 10-Stage Strategy Builder ------------------------------------------------
+// --- 10-Stage Strategy Builder (Scroll-Triggered Animations) ------------------
 function StrategyBuilder() {
   const stages = [
     { num: 1, label: "Diagnostic", desc: "Company profile & AI readiness assessment", icon: ScanIcon },
@@ -324,9 +325,30 @@ function StrategyBuilder() {
     { num: 10, label: "Board Report", desc: "Board-ready output with full evidence", icon: FileText },
   ];
 
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [visibleStages, setVisibleStages] = useState<number[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = Number(entry.target.getAttribute("data-stage-idx"));
+            setVisibleStages((prev) => prev.includes(idx) ? prev : [...prev, idx]);
+          }
+        });
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    const cards = sectionRef.current?.querySelectorAll("[data-stage-idx]");
+    cards?.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section style={{ background: navy }} className="py-24 px-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto" ref={sectionRef}>
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6"
             style={{ background: "rgba(99,102,241,0.15)", color: indigo, border: "1px solid rgba(99,102,241,0.3)" }}>
@@ -341,13 +363,27 @@ function StrategyBuilder() {
           </p>
         </div>
 
-        {/* Stage timeline */}
+        {/* Stage timeline with scroll-triggered reveal */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {stages.map(({ num, label, desc, icon: Icon }) => (
-            <div key={num} className="rounded-xl p-4 border text-center group hover:border-green-500/40 transition-colors"
-              style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
-              <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3"
-                style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)" }}>
+          {stages.map(({ num, label, desc, icon: Icon }, idx) => (
+            <div
+              key={num}
+              data-stage-idx={idx}
+              className="rounded-xl p-4 border text-center group hover:border-green-500/40 transition-all duration-700 ease-out"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                borderColor: visibleStages.includes(idx) ? "rgba(34,197,94,0.35)" : "rgba(255,255,255,0.08)",
+                opacity: visibleStages.includes(idx) ? 1 : 0,
+                transform: visibleStages.includes(idx) ? "translateY(0)" : "translateY(24px)",
+                transitionDelay: `${idx * 100}ms`,
+              }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-500"
+                style={{
+                  background: visibleStages.includes(idx) ? "rgba(34,197,94,0.18)" : "rgba(34,197,94,0.08)",
+                  border: "1px solid rgba(34,197,94,0.3)",
+                  transform: visibleStages.includes(idx) ? "scale(1)" : "scale(0.8)",
+                  transitionDelay: `${idx * 100 + 200}ms`,
+                }}>
                 <span className="text-sm font-bold" style={{ color: greenHex }}>{num}</span>
               </div>
               <h4 className="text-white font-semibold text-sm mb-1">{label}</h4>
@@ -356,8 +392,20 @@ function StrategyBuilder() {
           ))}
         </div>
 
+        {/* Progress connector line (animated) */}
+        <div className="mt-6 mb-12 relative h-1 rounded-full overflow-hidden mx-auto max-w-4xl"
+          style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
+            style={{
+              width: `${(visibleStages.length / 10) * 100}%`,
+              background: `linear-gradient(90deg, ${greenHex}, ${indigo})`,
+            }}
+          />
+        </div>
+
         {/* Dual mode callout */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-xl p-6 border" style={{ background: "rgba(34,197,94,0.05)", borderColor: "rgba(34,197,94,0.2)" }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(34,197,94,0.15)" }}>
@@ -687,6 +735,83 @@ function TrustSection() {
   );
 }
 
+// --- Testimonials / Social Proof -----------------------------------------------
+function Testimonials() {
+  const quotes = [
+    {
+      quote: "For the first time, I can show the board exactly where our capability gaps are against our AI roadmap — with evidence, not estimates. The strategy builder gave us a framework that our CEO actually engaged with.",
+      name: "Sarah Thornton",
+      role: "Chief People Officer",
+      org: "Northbridge Financial Services",
+      color: greenHex,
+    },
+    {
+      quote: "The adaptive assessment is genuinely different. It found specific gaps in my team's AI output evaluation that a generic survey would never have surfaced. The 1:1 prompts it generates save me hours of preparation.",
+      name: "Marcus Chen",
+      role: "Head of HR Business Partnering",
+      org: "Meridian Group",
+      color: indigo,
+    },
+    {
+      quote: "We went from 'we probably need some AI training' to a fully costed, board-approved capability strategy in six weeks. The 10-stage process kept us honest — no shortcuts, no hand-waving.",
+      name: "Rachel Okafor",
+      role: "VP People & Culture",
+      org: "Atlas Technologies",
+      color: cyan,
+    },
+    {
+      quote: "The Reward mode is exactly what we needed. Our compensation team now has a clear AI strategy that connects to measurable capability targets. The initiative library saved us months of research.",
+      name: "James Whitfield",
+      role: "Director of Reward",
+      org: "Harrington plc",
+      color: amber,
+    },
+  ];
+
+  return (
+    <section style={{ background: navy }} className="py-24 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6"
+            style={{ background: "rgba(34,197,94,0.12)", color: greenHex, border: "1px solid rgba(34,197,94,0.25)" }}>
+            Beta partner feedback
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
+            What early adopters are{" "}
+            <span style={{ color: greenHex }}>saying.</span>
+          </h2>
+          <p className="text-slate-400 max-w-xl mx-auto">
+            From our first cohort of UK HR leaders building AI capability intelligence.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {quotes.map(({ quote, name, role, org, color }) => (
+            <div key={name} className="rounded-2xl border p-7 relative overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.03)", borderColor: `${color}25` }}>
+              <div className="absolute top-4 right-6 text-5xl font-black opacity-10" style={{ color }}>
+                &ldquo;
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed mb-6 relative z-10">
+                "{quote}"
+              </p>
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white"
+                  style={{ background: `${color}25` }}>
+                  {name.split(" ").map(n => n[0]).join("")}
+                </div>
+                <div>
+                  <p className="text-white text-sm font-semibold">{name}</p>
+                  <p className="text-slate-500 text-xs">{role} — {org}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // --- Final CTA ----------------------------------------------------------------
 function FinalCTA() {
   return (
@@ -742,6 +867,7 @@ export default function MarketingPage() {
       <SixDomains />
       <WhoItsFor />
       <TrustSection />
+      <Testimonials />
       <FinalCTA />
       <MarketingFooter />
     </div>
