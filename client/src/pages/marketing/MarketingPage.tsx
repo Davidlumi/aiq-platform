@@ -51,8 +51,8 @@ export function MarketingNav() {
             ["How it works", "/how-it-works"],
             ["Pricing", "/pricing"],
             ["Case studies", "/case-studies"],
+            ["Compare", "/compare"],
             ["ROI calculator", "/roi-calculator"],
-            ["See demo", "/demo"],
             ["About", "/about"],
           ] as [string, string][]).map(([label, href]) => (
             <Link key={href} href={href}>

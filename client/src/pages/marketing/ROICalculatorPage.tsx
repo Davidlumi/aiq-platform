@@ -5,9 +5,11 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import { MarketingNav, MarketingFooter } from "./MarketingPage";
 import { Button } from "@/components/ui/button";
+import { generateROIPdf } from "@/lib/roiPdf";
 import {
   ArrowRight, Calculator, TrendingUp, Clock, Users,
   PoundSterling, Target, Sparkles, ChevronDown, Info,
+  Mail, Download, CheckCircle2, X,
 } from "lucide-react";
 
 const navy = "#0a1628";
@@ -125,6 +127,13 @@ export default function ROICalculatorPage() {
   const [avgSalary, setAvgSalary] = useState(55000);
   const [trainingSpend, setTrainingSpend] = useState(200000);
   const [attritionRate, setAttritionRate] = useState(18);
+
+  // Email capture state
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [email, setEmail] = useState("");
+  const [company, setCompany] = useState("");
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const results = useMemo(() => {
     // 1. Attrition savings
@@ -383,19 +392,18 @@ export default function ROICalculatorPage() {
                 </div>
               </div>
 
-              {/* CTA */}
+              {/* Email capture CTA */}
               <div className="rounded-2xl p-7 text-center"
                 style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
-                <h3 className="text-lg font-bold text-white mb-2">Ready to realise this value?</h3>
+                <h3 className="text-lg font-bold text-white mb-2">Get your personalised ROI report</h3>
                 <p className="text-sm text-slate-400 mb-5 max-w-md mx-auto">
-                  Join our beta programme and start building evidence-based AI capability intelligence for your organisation.
+                  Enter your email to receive a detailed breakdown of these projections, tailored to your organisation, plus priority beta access.
                 </p>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
-                  <Link href="/beta">
-                    <Button size="lg" className="gap-2 font-semibold px-6" style={{ background: greenHex, color: navy }}>
-                      Apply for beta <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
+                  <Button size="lg" className="gap-2 font-semibold px-6" style={{ background: greenHex, color: navy }}
+                    onClick={() => setShowEmailCapture(true)}>
+                    <Mail className="w-4 h-4" /> Get my ROI report
+                  </Button>
                   <Link href="/case-studies">
                     <Button size="lg" variant="outline" className="gap-2 font-semibold px-6 border-slate-600 text-slate-200 hover:text-white">
                       See case studies
@@ -407,6 +415,104 @@ export default function ROICalculatorPage() {
           </div>
         </div>
       </section>
+
+      {/* Email Capture Modal */}
+      {showEmailCapture && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}>
+          <div className="relative w-full max-w-md rounded-2xl p-8" style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <button onClick={() => setShowEmailCapture(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            {!emailSubmitted ? (
+              <>
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(34,197,94,0.1)" }}>
+                    <Download className="w-5 h-5" style={{ color: greenHex }} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Your personalised ROI report</h3>
+                    <p className="text-xs text-slate-400">We'll send a detailed breakdown to your inbox</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl p-4 mb-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <p className="text-xs text-slate-400 mb-1">Your projected annual savings</p>
+                  <p className="text-2xl font-black" style={{ color: greenHex }}>
+                    £{(results.totalAnnualSaving / 1000).toFixed(0)}k
+                  </p>
+                  <p className="text-xs text-slate-500">{results.roiMultiple.toFixed(1)}x ROI · {results.paybackMonths} month payback</p>
+                </div>
+
+                <div className="space-y-3 mb-5">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 mb-1 block">Work email *</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setEmailError(""); }}
+                      placeholder="you@company.com"
+                      className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-slate-500 outline-none focus:ring-2"
+                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", focusRingColor: greenHex } as any}
+                    />
+                    {emailError && <p className="text-xs text-red-400 mt-1">{emailError}</p>}
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 mb-1 block">Company name</label>
+                    <input
+                      type="text"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      placeholder="Acme Corp"
+                      className="w-full px-4 py-2.5 rounded-lg text-sm text-white placeholder-slate-500 outline-none focus:ring-2"
+                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    />
+                  </div>
+                </div>
+
+                <Button className="w-full gap-2 font-semibold py-5" style={{ background: greenHex, color: navy }}
+                  onClick={() => {
+                    if (!email || !email.includes("@") || !email.includes(".")) {
+                      setEmailError("Please enter a valid work email");
+                      return;
+                    }
+                    // In production this would call a backend endpoint
+                    setEmailSubmitted(true);
+                  }}>
+                  <Mail className="w-4 h-4" /> Send my report
+                </Button>
+
+                <p className="text-[10px] text-slate-500 text-center mt-3">
+                  We'll also add you to our beta priority list. Unsubscribe anytime.
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <CheckCircle2 className="w-12 h-12 mx-auto mb-4" style={{ color: greenHex }} />
+                <h3 className="text-lg font-bold text-white mb-2">Report on its way!</h3>
+                <p className="text-sm text-slate-400 mb-1">
+                  We've sent your personalised ROI breakdown to
+                </p>
+                <p className="text-sm font-semibold" style={{ color: greenHex }}>{email}</p>
+                <p className="text-xs text-slate-500 mt-4">
+                  You've also been added to our beta priority list. We'll be in touch within 48 hours.
+                </p>
+                <div className="flex items-center justify-center gap-3 mt-5">
+                  <Button className="gap-2 font-semibold" style={{ background: greenHex, color: navy }}
+                    onClick={() => generateROIPdf({ ...results, teamSize, avgSalary, trainingSpend, attritionRate, email, company })}>
+                    <Download className="w-4 h-4" /> Download PDF
+                  </Button>
+                  <Button className="gap-2 font-semibold" variant="outline"
+                    style={{ borderColor: "rgba(255,255,255,0.2)" }}
+                    onClick={() => setShowEmailCapture(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <MarketingFooter />
 

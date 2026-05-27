@@ -105,6 +105,7 @@ import DemoPreviewPage from "./pages/marketing/DemoPreviewPage";
 import ProductTourPage from "./pages/marketing/ProductTourPage";
 import CaseStudiesPage from "./pages/marketing/CaseStudiesPage";
 import ROICalculatorPage from "./pages/marketing/ROICalculatorPage";
+import ComparePage from "./pages/marketing/ComparePage";
 import MethodologyPage from "./pages/methodology/MethodologyPage";
 import PeopleReportsPage from "./pages/people/PeopleReportsPage";
 import MemberReportPage from "./pages/people/MemberReportPage";
@@ -427,6 +428,7 @@ function Router() {
       <Route path="/tour" component={ProductTourPage} />
       <Route path="/case-studies" component={CaseStudiesPage} />
       <Route path="/roi-calculator" component={ROICalculatorPage} />
+      <Route path="/compare" component={ComparePage} />
       {/* Company HR AI Assessment routes */}
       <Route path="/company-assessment">
         <ProtectedRoute component={CompanyAssessmentLandingPage} />

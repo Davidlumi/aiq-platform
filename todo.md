@@ -4771,3 +4771,9 @@ test
 - [x] Calculate projected savings: reduced attrition, targeted training efficiency, productivity uplift, HR time savings
 - [x] Visual output: annual savings, ROI multiple, payback period, value breakdown bars
 - [x] Wire route in App.tsx and add to marketing nav
+
+## Compare Page, ROI PDF, and Email Capture
+- [x] Create /compare page with feature matrix (AiQ vs Generic LMS vs Competency Frameworks vs Manual Assessment)
+- [x] Add email capture modal to ROI calculator after viewing results
+- [x] Add downloadable ROI PDF report generation (branded, client-side jsPDF with full breakdown)
+- [x] Wire /compare route and add to marketing nav
