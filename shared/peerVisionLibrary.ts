@@ -15,6 +15,8 @@ export type PeerVisionEntry = {
   workforceCompositions?: string[];
   /** Archetype hint for the Strategy stage */
   archetypeHint?: "augmentation" | "transformation" | "differentiation" | "efficiency" | "defensive";
+  /** Platform mode this entry is relevant to (defaults to both) */
+  mode?: "cpo" | "reward" | "both";
 };
 
 export const PEER_VISION_LIBRARY: PeerVisionEntry[] = [
@@ -150,5 +152,114 @@ export const PEER_VISION_LIBRARY: PeerVisionEntry[] = [
     sectors: ["technology", "financial_services", "professional_services", "retail"],
     sizeBands: ["5k_25k", "25k_plus"],
     archetypeHint: "transformation",
+  },
+  // ── Reward-specific Peer Visions ─────────────────────────────────────────────
+  {
+    id: "pv_reward_equity_01",
+    visionText:
+      "By 2027, every pay decision in our organisation is supported by AI that surfaces equity risks before they become problems — making fair pay the default, not the exception.",
+    sectors: ["financial_services", "professional_services", "technology"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    archetypeHint: "defensive",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_efficiency_01",
+    visionText:
+      "Our annual reward cycle will shrink from 14 weeks to 4 — AI handles the data gathering, modelling, and compliance checks so our Reward team can focus on the conversations that matter.",
+    sectors: ["retail", "manufacturing", "financial_services"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    archetypeHint: "efficiency",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_transparency_01",
+    visionText:
+      "Every employee will understand exactly how their total reward is constructed, why it's fair, and what they can do to grow it — because AI makes personalised reward communication possible at scale.",
+    sectors: ["technology", "professional_services", "healthcare_pharma"],
+    sizeBands: ["500_5k", "5k_25k", "25k_plus"],
+    archetypeHint: "differentiation",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_retention_01",
+    visionText:
+      "We will use AI to identify compensation-driven flight risk 6 months before resignation — giving managers the insight and budget authority to retain critical talent before it's too late.",
+    sectors: ["technology", "financial_services", "professional_services"],
+    sizeBands: ["500_5k", "5k_25k", "25k_plus"],
+    archetypeHint: "augmentation",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_market_01",
+    visionText:
+      "Our compensation benchmarking will move from annual surveys to continuous market intelligence — AI monitors competitor moves and alerts us to market shifts before we lose people.",
+    sectors: ["technology", "financial_services", "retail"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    archetypeHint: "augmentation",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_benefits_01",
+    visionText:
+      "AI will help us move from one-size-fits-all benefits to truly personalised packages — recommending the right benefits at the right life stage, increasing utilisation from 40% to 80%.",
+    sectors: ["retail", "hospitality_leisure", "manufacturing", "technology"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    archetypeHint: "differentiation",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_governance_01",
+    visionText:
+      "Every compensation decision will have a complete audit trail — AI ensures we can demonstrate pay equity compliance to any regulator, at any time, without a manual data pull.",
+    sectors: ["financial_services", "healthcare_pharma", "energy_utilities"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    archetypeHint: "defensive",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_global_01",
+    visionText:
+      "We will use AI to harmonise reward principles across 30+ countries while respecting local market norms — achieving global consistency without sacrificing local competitiveness.",
+    sectors: ["manufacturing", "technology", "professional_services"],
+    sizeBands: ["25k_plus"],
+    archetypeHint: "efficiency",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_manager_01",
+    visionText:
+      "Line managers will have AI-powered reward guidance at the point of decision — seeing equity context, budget impact, and market data before making any pay or promotion recommendation.",
+    sectors: ["retail", "financial_services", "technology", "professional_services"],
+    sizeBands: ["500_5k", "5k_25k", "25k_plus"],
+    archetypeHint: "augmentation",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_sales_comp_01",
+    visionText:
+      "AI will model sales compensation scenarios in real time — letting us adjust incentive structures quarterly rather than annually, keeping our sales force motivated and aligned to shifting business priorities.",
+    sectors: ["technology", "financial_services", "retail"],
+    sizeBands: ["500_5k", "5k_25k"],
+    archetypeHint: "transformation",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_exec_comp_01",
+    visionText:
+      "Our executive compensation governance will be AI-augmented — modelling long-term incentive scenarios, peer benchmarking, and shareholder impact before any RemCo decision is made.",
+    sectors: ["financial_services", "energy_utilities", "technology"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    archetypeHint: "augmentation",
+    mode: "reward",
+  },
+  {
+    id: "pv_reward_cost_model_01",
+    visionText:
+      "The Reward function will become the organisation's workforce cost intelligence centre — using AI to model total people cost scenarios that inform every major business decision.",
+    sectors: ["manufacturing", "retail", "logistics_transport", "financial_services"],
+    sizeBands: ["5k_25k", "25k_plus"],
+    archetypeHint: "transformation",
+    mode: "reward",
   },
 ];

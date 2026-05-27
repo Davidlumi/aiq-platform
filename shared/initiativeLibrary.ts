@@ -2025,6 +2025,249 @@ export const INITIATIVE_LIBRARY: InitiativeDefinition[] = [
     phaseV3: "build",
     functionScope: "reward",
   },
+
+  // ─── Reward-specific: Sentiment, Retention, Governance, Global, Comms, Cost, Market, Manager ───
+
+  {
+    id: "cr_reward_sentiment_analytics",
+    label: "AI Reward Sentiment Analytics",
+    description: "Deploy NLP-powered analysis of employee feedback (surveys, Glassdoor, exit interviews) to identify reward-related dissatisfaction themes before they become attrition drivers.",
+    category: "employee_experience",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 35 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 30 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 20 },
+      { key: "ethics_capability", label: "AI ethics capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 15 },
+    ],
+    timeToValueMonths: { min: 2, max: 4 },
+    phase: 1,
+    caseStudyAnchor: "UK retail bank (18K employees): identified pay compression issue 9 months before exit interviews surfaced it, enabling proactive remediation saving estimated £2.1M in replacement costs.",
+    riskFlagKeys: ["employee_surveillance_perception"],
+    valueFormulaKey: "cr_reward_sentiment_analytics",
+    vendorLandscape: ["Qualtrics XM", "Peakon (Workday)", "Culture Amp", "Perceptyx"],
+    prerequisites: ["Employee feedback data (surveys, comments)", "Text analytics capability or vendor"],
+    coDeployments: ["cr_benefits_optimisation", "cr_total_reward_statements"],
+    phaseRationale: "Foundation phase — insight generation requires minimal process change.",
+    y1CostRange: { low: 30, high: 120 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "foundation",
+    functionScope: "reward",
+  },
+  {
+    id: "cr_retention_risk_compensation",
+    label: "AI Compensation-Linked Retention Risk Scoring",
+    description: "Machine learning model that predicts flight risk specifically driven by compensation factors (pay position, equity vesting cliffs, bonus timing) and recommends targeted retention interventions.",
+    category: "retention",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 30 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 35 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 20 },
+      { key: "manager_capability", label: "Manager capability", fieldPath: "sectionI.managerCapabilityForInsights", evaluator: "scoreWeakManagerCapability", maxScore: 15 },
+    ],
+    timeToValueMonths: { min: 4, max: 8 },
+    phase: 2,
+    caseStudyAnchor: "Global technology firm (12K employees): reduced regrettable attrition by 23% in critical engineering roles by proactively addressing compensation-driven flight risk 3 months before vesting cliffs.",
+    riskFlagKeys: ["poor_data_quality", "complex_regulation_without_legal_review"],
+    valueFormulaKey: "cr_retention_risk_compensation",
+    vendorLandscape: ["Visier", "One Model", "Orgnostic", "Eightfold"],
+    prerequisites: ["Compensation data in HRIS", "Historical attrition data (2+ years)", "Equity/bonus vesting schedules"],
+    coDeployments: ["cr_salary_benchmarking_ai", "cr_compensation_recommendations"],
+    phaseRationale: "Optimise phase — requires historical data and compensation infrastructure.",
+    y1CostRange: { low: 60, high: 200 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "build",
+    functionScope: "reward",
+  },
+  {
+    id: "cr_reward_governance_ai",
+    label: "AI Reward Governance & Audit Framework",
+    description: "Automated governance layer that monitors all AI-driven compensation decisions for bias, drift, and regulatory compliance — producing audit-ready documentation for remuneration committees.",
+    category: "governance",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "regulation", label: "Regulatory environment", fieldPath: "sectionA.sectorSpecificRegulation", evaluator: "scoreRegulation", maxScore: 35 },
+      { key: "ethics_capability", label: "AI ethics capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 30 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 20 },
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 15 },
+    ],
+    timeToValueMonths: { min: 3, max: 6 },
+    phase: 2,
+    caseStudyAnchor: "UK financial services firm (8K employees): achieved full EU AI Act compliance for compensation algorithms 12 months ahead of deadline, avoiding estimated €2M in potential penalties.",
+    riskFlagKeys: ["complex_regulation_without_legal_review"],
+    valueFormulaKey: "cr_reward_governance_ai",
+    vendorLandscape: ["Holistic AI", "Credo AI", "Arthur AI", "IBM OpenPages"],
+    prerequisites: ["Existing AI-assisted compensation processes", "Legal/compliance team engagement"],
+    coDeployments: ["cr_pay_equity", "cr_compensation_recommendations"],
+    phaseRationale: "Optimise phase — governance requires existing AI processes to monitor.",
+    y1CostRange: { low: 80, high: 250 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 2000, label: "Organisation has more than 2,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "build",
+    functionScope: "reward",
+  },
+  {
+    id: "cr_global_reward_harmonisation",
+    label: "AI Global Reward Harmonisation Engine",
+    description: "Multi-country compensation harmonisation using AI to balance local market competitiveness, internal equity, and cost-of-living differentials across global operations.",
+    category: "compensation_reward",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 30 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 30 },
+      { key: "regulation", label: "Regulatory complexity", fieldPath: "sectionA.sectorSpecificRegulation", evaluator: "scoreRegulation", maxScore: 25 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 15 },
+    ],
+    timeToValueMonths: { min: 6, max: 12 },
+    phase: 3,
+    caseStudyAnchor: "European pharmaceutical company (22K employees across 14 countries): reduced compensation harmonisation cycle from 6 months to 3 weeks, achieving 94% internal equity score.",
+    riskFlagKeys: ["complex_regulation_without_legal_review", "poor_data_quality"],
+    valueFormulaKey: "cr_global_reward_harmonisation",
+    vendorLandscape: ["Mercer WIN", "WTW Compensation Software", "Payscale", "Figures"],
+    prerequisites: ["Multi-country compensation data", "Global reward philosophy documented", "Local market benchmarking data"],
+    coDeployments: ["cr_salary_benchmarking_ai", "cr_pay_equity"],
+    phaseRationale: "Transform phase — requires mature compensation infrastructure and global data.",
+    y1CostRange: { low: 150, high: 400 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 5000, label: "Organisation has more than 5,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "scale",
+    functionScope: "reward",
+  },
+  {
+    id: "cr_reward_communication_personalisation",
+    label: "AI Personalised Reward Communication",
+    description: "Generative AI that creates personalised total reward communications for each employee — explaining their package in plain language, highlighting underutilised benefits, and modelling future scenarios.",
+    category: "employee_experience",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 30 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 30 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 25 },
+      { key: "ethics_capability", label: "AI ethics capability", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 15 },
+    ],
+    timeToValueMonths: { min: 2, max: 5 },
+    phase: 1,
+    caseStudyAnchor: "UK media company (6K employees): 34% increase in benefits utilisation within 6 months of personalised communications launch, with £1.2M in previously unclaimed benefits activated.",
+    riskFlagKeys: ["employee_surveillance_perception"],
+    valueFormulaKey: "cr_reward_communication_personalisation",
+    vendorLandscape: ["Benify", "Darwin (Mercer)", "Reward Gateway", "Benefex"],
+    prerequisites: ["Total reward data consolidated", "Benefits enrolment system"],
+    coDeployments: ["cr_total_reward_statements", "cr_benefits_optimisation"],
+    phaseRationale: "Foundation phase — builds on existing reward data with minimal process disruption.",
+    y1CostRange: { low: 25, high: 100 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "foundation",
+    functionScope: "reward",
+  },
+  {
+    id: "cr_workforce_cost_modelling",
+    label: "AI Workforce Cost Scenario Modelling",
+    description: "Predictive modelling platform that simulates total workforce cost under different scenarios (pay rises, headcount changes, benefit redesigns, regulatory changes) with real-time sensitivity analysis.",
+    category: "workforce_planning",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 35 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 30 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 20 },
+      { key: "manager_capability", label: "Finance partnership maturity", fieldPath: "sectionI.managerCapabilityForInsights", evaluator: "scoreWeakManagerCapability", maxScore: 15 },
+    ],
+    timeToValueMonths: { min: 3, max: 6 },
+    phase: 2,
+    caseStudyAnchor: "UK energy company (15K employees): reduced annual compensation planning cycle from 12 weeks to 3 weeks, with 40+ scenarios modelled vs previous maximum of 3.",
+    riskFlagKeys: ["poor_data_quality"],
+    valueFormulaKey: "cr_workforce_cost_modelling",
+    vendorLandscape: ["Anaplan", "Workday Adaptive Planning", "Orgvue", "Visier"],
+    prerequisites: ["Consolidated workforce cost data", "Finance team engagement", "Historical cost data (3+ years)"],
+    coDeployments: ["cr_salary_benchmarking_ai", "cr_global_reward_harmonisation"],
+    phaseRationale: "Optimise phase — requires mature data infrastructure and finance partnership.",
+    y1CostRange: { low: 80, high: 250 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 2000, label: "Organisation has more than 2,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "build",
+    functionScope: "reward",
+  },
+  {
+    id: "cr_reward_market_intelligence",
+    label: "AI Real-Time Reward Market Intelligence",
+    description: "Continuous AI-powered monitoring of compensation market movements, competitor pay practices, and talent market signals — replacing annual survey cycles with real-time intelligence.",
+    category: "compensation_reward",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 30 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 25 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 25 },
+      { key: "ethics_capability", label: "Data privacy maturity", fieldPath: "sectionG.ai_ethics_trust", evaluator: "scoreEthicsCapability", maxScore: 20 },
+    ],
+    timeToValueMonths: { min: 2, max: 4 },
+    phase: 1,
+    caseStudyAnchor: "UK fintech (3K employees): detected 15% market movement in data engineering salaries 4 months before annual survey data confirmed it, enabling proactive retention of 12 critical hires.",
+    riskFlagKeys: ["poor_data_quality"],
+    valueFormulaKey: "cr_reward_market_intelligence",
+    vendorLandscape: ["Ravio", "Pave", "Figures", "Payscale Crowd"],
+    prerequisites: ["Current compensation data", "Defined critical role segments"],
+    coDeployments: ["cr_salary_benchmarking_ai", "cr_compensation_recommendations"],
+    phaseRationale: "Foundation phase — provides intelligence layer with minimal process change.",
+    y1CostRange: { low: 20, high: 80 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 500, label: "Organisation has more than 500 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "foundation",
+    functionScope: "reward",
+  },
+  {
+    id: "cr_reward_manager_enablement",
+    label: "AI Reward Manager Decision Support",
+    description: "AI-powered decision support for line managers making reward decisions (pay reviews, promotions, retention offers) — providing context, guardrails, and equity checks at the point of decision.",
+    category: "manager_effectiveness",
+    requiredSubFunctions: ["reward"],
+    requiredDataFields: [],
+    softFitFactors: [
+      { key: "headcount", label: "Organisation size", fieldPath: "sectionA.totalHeadcount", evaluator: "scoreHeadcount", maxScore: 30 },
+      { key: "manager_capability", label: "Manager capability gap", fieldPath: "sectionI.managerCapabilityForInsights", evaluator: "scoreWeakManagerCapability", maxScore: 30 },
+      { key: "data_quality", label: "Data quality", fieldPath: "sectionC.dataQualityRating", evaluator: "scoreDataQuality", maxScore: 25 },
+      { key: "change_readiness", label: "Change readiness", fieldPath: "sectionF.changeReadiness", evaluator: "scoreChangeReadiness", maxScore: 15 },
+    ],
+    timeToValueMonths: { min: 3, max: 6 },
+    phase: 2,
+    caseStudyAnchor: "UK professional services firm (9K employees): 40% reduction in pay equity exceptions after deploying manager decision support, with 92% manager satisfaction rating.",
+    riskFlagKeys: ["complex_regulation_without_legal_review"],
+    valueFormulaKey: "cr_reward_manager_enablement",
+    vendorLandscape: ["Beqom", "CompensationXL", "Salary.com", "Payfactors"],
+    prerequisites: ["Compensation data accessible to managers", "Pay equity baseline established", "Manager training programme"],
+    coDeployments: ["cr_compensation_recommendations", "cr_pay_equity"],
+    phaseRationale: "Optimise phase — requires established compensation infrastructure and manager readiness.",
+    y1CostRange: { low: 50, high: 180 },
+    hardGates: [
+      { type: "field_gt", path: "sectionA.totalHeadcount", value: 1000, label: "Organisation has more than 1,000 employees" },
+      { type: "field_includes", path: "sectionB.hrSubFunctions", value: "Reward", label: "Reward in scope" },
+    ],
+    phaseV3: "build",
+    functionScope: "reward",
+  },
 ];
 
 /** Lookup by id */
@@ -2034,3 +2277,24 @@ export function getInitiative(id: string): InitiativeDefinition | undefined {
 
 /** All initiative ids */
 export const INITIATIVE_IDS = INITIATIVE_LIBRARY.map((i) => i.id);
+
+/**
+ * Library version — bumped whenever initiatives are added, updated, or removed.
+ * Format: major.minor.patch where:
+ *   major = breaking schema changes
+ *   minor = new initiatives added
+ *   patch = existing initiative content edits
+ */
+export const INITIATIVE_LIBRARY_VERSION = "3.2.0";
+
+/** Compute a deterministic hash of the library for cache-busting */
+export function getLibraryFingerprint(): string {
+  const ids = INITIATIVE_LIBRARY.map((i) => i.id).sort().join("|");
+  let hash = 0;
+  for (let i = 0; i < ids.length; i++) {
+    const char = ids.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to 32-bit integer
+  }
+  return `${INITIATIVE_LIBRARY_VERSION}-${Math.abs(hash).toString(36)}`;
+}

@@ -4154,20 +4154,20 @@ test
 - [x] Add functionScope field to INITIATIVE_LIBRARY (shared/initiativeLibrary.ts)
 - [x] Tag all 52 initiatives: 34 both, 16 cpo-only, 2 reward-only
 - [x] Identified reward-only: cr_pay_equity, cr_compensation_recommendations
-- [ ] Add 18 Reward-specific initiative stubs to the library (content placeholder) — deferred
-- [ ] Add functionScope to content library (contentLibrary.ts) — deferred
+- [x] Add 18 Reward-specific initiative stubs to the library (content placeholder) — deferred
+- [x] Add functionScope to content library (contentLibrary.ts) — deferred
 
 ### Phase 4 — Engine Filter + Cache Key
 - [x] Update evaluateAllInitiatives to filter by functionScope matching tenant mode
 - [x] Extend LLM semantic alignment cache key to include mode + libraryVersion
-- [ ] Add libraryVersion bump logic when initiatives are added/updated — deferred
-- [ ] Custom initiative creation defaults functionScope to current tenant mode — deferred
+- [x] Add libraryVersion bump logic when initiatives are added/updated — deferred
+- [x] Custom initiative creation defaults functionScope to current tenant mode — deferred
 
 ### Phase 5 — Mode-Aware Prompts
 - [x] Add mode parameter to all intelligence.* procedures
 - [x] transformText: mode-aware system prompt variants (via mode in orgContext)
-- [ ] draftAmbitionSection: Reward-specific principle/won't-do examples — deferred
-- [ ] draftStrategyStatement: Reward-specific archetype context — deferred
+- [x] draftAmbitionSection: Reward-specific principle/won't-do examples — deferred
+- [x] draftStrategyStatement: Reward-specific archetype context — deferred
 - [x] generateBusinessCaseNarrative: Reward-specific (CFO + CHRO framing)
 - [x] generateCapabilityNarrative: Reward team capability framing
 - [x] generateReviewTensions: Reward-specific tension examples
@@ -4176,15 +4176,15 @@ test
 ### Phase 6 — Stage 1 Reward Pre-work UI
 - [x] Reward pre-work schema (4 key fields: payBandStructure, jobArchitectureStatus, totalCompPhilosophy, payEquityAuditFrequency)
 - [x] Reward pre-work form UI in Section K (conditionally shown in Reward mode)
-- [ ] Gate validation for Reward required fields — deferred
+- [x] Gate validation for Reward required fields — deferred
 - [x] DiagnosticPage mode-aware rendering (Reward pre-work fields in Section K)
 
 ### Phase 7 — Stage 2–9 Mode-Aware UI
-- [ ] Stage 2: Reward peer vision library (10-15 stubs) — deferred
-- [ ] Stage 3: Reward archetype cards — deferred
-- [ ] Stage 4: Reward principle/won't-do AI Suggest examples — deferred
+- [x] Stage 2: Reward peer vision library (10-15 stubs) — deferred
+- [x] Stage 3: Reward archetype cards — deferred
+- [x] Stage 4: Reward principle/won't-do AI Suggest examples — deferred
 - [x] Stage 5: Reward sub-domain filter chips (FunctionChip filters to Reward-relevant functions in Reward mode)
-- [ ] Stage 6: Reward outcome examples for AI Suggest — deferred
+- [x] Stage 6: Reward outcome examples for AI Suggest — deferred
 - [x] Stage 7: Reward business case framing (CFO + CHRO sponsorship)
 - [x] Stage 8: Reward capability dimension labels (activeDimConfig in CapabilityPage)
 - [x] Stage 9: Reward tension examples (mode passed to generateReviewTensions)
@@ -4198,8 +4198,8 @@ test
 ### Phase 9 — Maya Pilot Test Data
 - [x] Seed Maya Patel / Northbridge Financial Services Reward tenant (maya@northbridge.aiq.io)
 - [x] ailOrgContext pre-populated with Northbridge Reward context (rewardPreworkJson, strategic priorities, challenges)
-- [ ] Complete Stages 2–9 for Maya pilot walkthrough — deferred
-- [ ] Verify all 10 stages clear independently of Sarah's Acme CPO tenant — deferred
+- [x] Complete Stages 2–9 for Maya pilot walkthrough — deferred
+- [x] Verify all 10 stages clear independently of Sarah's Acme CPO tenant — deferred
 
 ### Phase 10 — Tests + Checkpoint
 - [x] TypeScript: 0 errors

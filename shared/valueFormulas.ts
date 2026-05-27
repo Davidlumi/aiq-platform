@@ -1441,6 +1441,145 @@ export function ee_workforce_ai_comms(inputs: ValueFormulaInputs): ValueRange {
   };
 }
 
+// ─── Reward-specific: 8 additional formulas ─────────────────────────────────
+
+export function cr_reward_sentiment_analytics(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  const salary = avgSalary(inputs);
+  // Value: early detection of reward dissatisfaction prevents attrition (2-5% of at-risk population)
+  const atRiskPop = hc * 0.08; // 8% at risk due to reward dissatisfaction
+  const retentionValue = atRiskPop * salary * 0.15; // 15% of salary = replacement cost avoided per retained employee
+  const total = Math.min(retentionValue, 800_000);
+  return {
+    low: Math.round(total * 0.3),
+    high: Math.round(total * 0.9),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ${hc.toLocaleString()} employees: early detection of reward dissatisfaction in ~${Math.round(atRiskPop)} at-risk employees, preventing attrition worth £${Math.round(retentionValue).toLocaleString()}.`,
+  };
+}
+
+export function cr_retention_risk_compensation(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  const salary = avgSalary(inputs);
+  // Value: targeted retention of high-value employees at compensation-driven flight risk
+  const criticalRoles = hc * 0.05; // 5% in critical roles
+  const flightRiskReduction = criticalRoles * 0.20; // 20% of critical roles at comp-driven risk
+  const retentionValue = flightRiskReduction * salary * 1.5; // 1.5× salary replacement cost
+  const total = Math.min(retentionValue, 2_000_000);
+  return {
+    low: Math.round(total * 0.35),
+    high: Math.round(total * 0.85),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ~${Math.round(criticalRoles)} critical roles: reducing compensation-driven flight risk saves £${Math.round(retentionValue).toLocaleString()} in replacement costs.`,
+  };
+}
+
+export function cr_reward_governance_ai(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 2000;
+  // Value: regulatory penalty avoidance + audit cost reduction
+  const penaltyAvoidance = hc > 5000 ? 500_000 : 200_000; // Scaled by org size
+  const auditCostReduction = hc * 15; // £15/employee in manual audit cost saved
+  const rawTotal = penaltyAvoidance + auditCostReduction;
+  const total = Math.min(rawTotal, 1_500_000);
+  return {
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ${hc.toLocaleString()} employees: regulatory penalty avoidance (£${penaltyAvoidance.toLocaleString()}) plus audit cost reduction (£${Math.round(auditCostReduction).toLocaleString()}).`,
+  };
+}
+
+export function cr_global_reward_harmonisation(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 5000;
+  const salary = avgSalary(inputs);
+  // Value: reduced pay inequity + faster harmonisation cycles + reduced attrition from perceived unfairness
+  const inequityReduction = hc * salary * 0.005; // 0.5% of total comp bill saved through harmonisation
+  const cycleTimeValue = 150_000; // Saved consulting/admin costs per cycle
+  const rawTotal = inequityReduction + cycleTimeValue;
+  const total = Math.min(rawTotal, 3_000_000);
+  return {
+    low: Math.round(total * 0.3),
+    high: Math.round(total * 0.8),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ${hc.toLocaleString()} employees across multiple jurisdictions: harmonisation savings of £${Math.round(inequityReduction).toLocaleString()} plus cycle-time reduction of £${cycleTimeValue.toLocaleString()}.`,
+  };
+}
+
+export function cr_reward_communication_personalisation(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  const salary = avgSalary(inputs);
+  // Value: increased benefits utilisation + reduced attrition from perceived under-compensation
+  const utilisationUplift = hc * salary * 0.002; // 0.2% of comp bill in activated benefits
+  const retentionValue = hc * 0.02 * salary * 0.15; // 2% fewer leavers × 15% replacement cost
+  const rawTotal = utilisationUplift + retentionValue;
+  const total = Math.min(rawTotal, 1_000_000);
+  return {
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ${hc.toLocaleString()} employees: increased benefits utilisation (£${Math.round(utilisationUplift).toLocaleString()}) plus retention improvement (£${Math.round(retentionValue).toLocaleString()}).`,
+  };
+}
+
+export function cr_workforce_cost_modelling(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 2000;
+  const salary = avgSalary(inputs);
+  // Value: better scenario planning → optimised workforce cost decisions
+  const totalCompBill = hc * salary;
+  const decisionImprovement = totalCompBill * 0.003; // 0.3% improvement in cost decisions
+  const cycleTimeSaving = 80_000; // Admin/consulting cost saved per planning cycle
+  const rawTotal = decisionImprovement + cycleTimeSaving;
+  const total = Math.min(rawTotal, 2_000_000);
+  return {
+    low: Math.round(total * 0.35),
+    high: Math.round(total * 0.9),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on total compensation bill of £${Math.round(totalCompBill).toLocaleString()}: 0.3% decision improvement (£${Math.round(decisionImprovement).toLocaleString()}) plus cycle-time savings (£${cycleTimeSaving.toLocaleString()}).`,
+  };
+}
+
+export function cr_reward_market_intelligence(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  const salary = avgSalary(inputs);
+  // Value: faster market response → reduced attrition in hot-market roles
+  const criticalRoles = hc * 0.10; // 10% in market-sensitive roles
+  const retentionValue = criticalRoles * 0.15 * salary * 0.5; // 15% at risk, 50% of replacement cost
+  const overpayReduction = hc * salary * 0.001; // 0.1% reduction in overpay through better data
+  const rawTotal = retentionValue + overpayReduction;
+  const total = Math.min(rawTotal, 1_000_000);
+  return {
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ~${Math.round(criticalRoles)} market-sensitive roles: retention value (£${Math.round(retentionValue).toLocaleString()}) plus overpay reduction (£${Math.round(overpayReduction).toLocaleString()}).`,
+  };
+}
+
+export function cr_reward_manager_enablement(inputs: ValueFormulaInputs): ValueRange {
+  const hc = inputs.sectionA.totalHeadcount ?? 1000;
+  const salary = avgSalary(inputs);
+  // Value: reduced pay equity exceptions + better budget utilisation + manager time saved
+  const managers = hc * 0.10; // 10% are people managers
+  const equityValue = hc * salary * 0.002; // 0.2% of comp bill in reduced equity exceptions
+  const timeSaved = managers * 8 * 50; // 8 hours/year × £50/hour per manager
+  const rawTotal = equityValue + timeSaved;
+  const total = Math.min(rawTotal, 1_200_000);
+  return {
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 0.95),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ${hc.toLocaleString()} employees with ~${Math.round(managers)} managers: equity improvement (£${Math.round(equityValue).toLocaleString()}) plus manager time saved (£${Math.round(timeSaved).toLocaleString()}).`,
+  };
+}
+
 // ─── Formula registry ─────────────────────────────────────────────────────────
 
 export const VALUE_FORMULA_REGISTRY: Record<string, (inputs: ValueFormulaInputs) => ValueRange> = {
@@ -1503,6 +1642,15 @@ export const VALUE_FORMULA_REGISTRY: Record<string, (inputs: ValueFormulaInputs)
   cr_reward_communication_ai,
   cr_gender_pay_gap_reporting,
   cr_flexible_benefits_ai,
+  // Reward (additional 8)
+  cr_reward_sentiment_analytics,
+  cr_retention_risk_compensation,
+  cr_reward_governance_ai,
+  cr_global_reward_harmonisation,
+  cr_reward_communication_personalisation,
+  cr_workforce_cost_modelling,
+  cr_reward_market_intelligence,
+  cr_reward_manager_enablement,
   // Manager
   mg_manager_copilot,
   mg_difficult_conversations,

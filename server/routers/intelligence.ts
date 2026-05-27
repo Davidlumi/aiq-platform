@@ -1048,6 +1048,7 @@ Return JSON with this exact structure:
       hrDeliveryTier: z.number().int().min(1).max(4).nullable().optional(),
       visionStatement: z.string().nullable().optional(),
       existingPrinciples: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
+      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -1055,11 +1056,12 @@ Return JSON with this exact structure:
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
+      const isReward = input.mode === "reward";
       const BUSINESS_TIER_LABELS: Record<number, string> = { 1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative" };
       const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "Innovator" };
       const bLabel = input.businessAmbitionTier ? BUSINESS_TIER_LABELS[input.businessAmbitionTier] ?? "" : "";
       const hrLabel = input.hrDeliveryTier ? HR_TIER_LABELS[input.hrDeliveryTier] ?? "" : "";
-      const orgCtx = input.orgDescriptor ?? "an HR function";
+      const orgCtx = input.orgDescriptor ?? (isReward ? "a Reward function" : "an HR function");
       const visionCtx = input.visionStatement ? `Vision: ${input.visionStatement}` : "";
       const principlesCtx = input.existingPrinciples?.length
         ? `Guiding principles: ${input.existingPrinciples.map(p => p.title).join("; ")}`
@@ -1067,12 +1069,17 @@ Return JSON with this exact structure:
 
       const PROMPTS: Record<string, { system: string; user: string }> = {
         principles: {
-          system: `You are an HR strategy consultant writing guiding principles for an HR AI strategy. Principles must be CONSTRAINT-SHAPED — each title rules something IN or OUT and describes specific behaviour. They are NOT category labels or values.
+          system: `You are ${isReward ? "a Reward strategy consultant writing guiding principles for a Reward AI strategy" : "an HR strategy consultant writing guiding principles for an HR AI strategy"}. Principles must be CONSTRAINT-SHAPED — each title rules something IN or OUT and describes specific behaviour. They are NOT category labels or values.
 
-Good examples:
+Good examples:${isReward ? `
+- "Pay equity before pay optimisation" (rules in sequencing: fix fairness gaps before automating reward decisions)
+- "AI recommends, managers decide" (rules out fully automated compensation decisions)
+- "Transparency by default on reward logic" (rules in explainability for all AI-driven pay/benefit recommendations)
+- "Market data validated quarterly" (rules in freshness requirement for AI compensation benchmarking)
+- "No black-box bonus calculations" (rules out opaque AI models for variable pay)` : `
 - "Human-in-the-loop on consequential decisions" (rules in human oversight on hiring, promotion, termination)
 - "Reshape work, then add AI" (rules out bolting AI onto existing processes)
-- "Build skills first, deploy second" (rules in sequencing: literacy before deployment)
+- "Build skills first, deploy second" (rules in sequencing: literacy before deployment)`}
 
 Bad examples (do NOT produce these):
 - "People-Centric AI Innovation" (category label, not a constraint)
@@ -1089,15 +1096,20 @@ Return a JSON array of exactly 5 objects with these exact fields only. No markdo
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
         wontDo: {
-          system: `You are an HR strategy consultant writing strategic exclusions for an HR AI strategy. Exclusions are REAL strategic choices a peer CPO could plausibly debate — specific things being deferred or ruled out for this period.
+          system: `You are ${isReward ? "a Reward strategy consultant writing strategic exclusions for a Reward AI strategy. Exclusions are REAL strategic choices a peer Head of Reward could plausibly debate" : "an HR strategy consultant writing strategic exclusions for an HR AI strategy. Exclusions are REAL strategic choices a peer CPO could plausibly debate"} — specific things being deferred or ruled out for this period.
 
-Good examples:
+Good examples:${isReward ? `
+- "We will not automate pay review decisions without manager sign-off this year." (specific, some Reward leaders would disagree)
+- "We will not use AI to set executive compensation in this period." (specific domain exclusion)
+- "We will not deploy real-time pay benchmarking until data quality audit is complete." (sequencing choice)
+- "We will not use AI-generated total reward statements without human QA." (quality gate)
+- "We will not integrate AI into annual bonus calculations before Q3 2027." (time-bound deferral)` : `
 - "We will not let any vendor's AI make shortlist cuts without HR review." (specific, some CPOs would disagree)
 - "We will not use generative AI for performance reviews this fiscal year." (specific time-bound deferral)
-- "We will not deploy AI in payroll, benefits, or compensation in this period." (specific domain exclusion)
+- "We will not deploy AI in payroll, benefits, or compensation in this period." (specific domain exclusion)`}
 
 Bad examples (do NOT produce these):
-- "We will not use AI for biased hiring decisions." (anti-strawman — nobody plans to)
+- "We will not use AI for biased ${isReward ? "pay" : "hiring"} decisions." (anti-strawman — nobody plans to)
 - "We will not ignore employee concerns." (not a real strategic choice)
 - "We will not deploy AI without proper governance." (too vague)
 
@@ -1105,15 +1117,19 @@ Write exactly 5 exclusions. Each is one sentence (max 20 words) naming a specifi
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
         outcomes: {
-          system: `You are an HR strategy consultant writing measurable outcomes for an HR AI strategy. Outcomes are COMMITMENTS with a specific baseline (or scheduled baseline study), a specific target, and a specific date.
+          system: `You are ${isReward ? "a Reward strategy consultant writing measurable outcomes for a Reward AI strategy" : "an HR strategy consultant writing measurable outcomes for an HR AI strategy"}. Outcomes are COMMITMENTS with a specific baseline (or scheduled baseline study), a specific target, and a specific date.
 
-Good examples:
+Good examples:${isReward ? `
+- "Reduce pay equity gap — 8.2% today → 3% by Q4 2026" (specific baseline, specific target, specific date)
+- "Reward cycle completion time — 14 weeks today → 6 weeks by Q2 2027" (process efficiency)
+- "Employee understanding of total reward — 34% today → 75% by Q3 2027" (survey-based, measurable)
+- "Compensation market alignment — 62% within band today → 90% by Q4 2026" (data-driven)` : `
 - "Reduce admin time per hire — 6h today → 3h by Q4 2026" (specific baseline, specific target, specific date)
 - "HR team at AI Practitioner level — 22% today → 85% by Q4 2026" (measurable progression)
-- "Employee trust in HR's AI use — 48% today → 80% by Q3 2027" (survey-based, measurable)
+- "Employee trust in HR's AI use — 48% today → 80% by Q3 2027" (survey-based, measurable)`}
 
 Bad examples (do NOT produce these):
-- "Increase HR Team Productivity" (no baseline, no target, no date)
+- "Increase ${isReward ? "Reward" : "HR"} Team Productivity" (no baseline, no target, no date)
 - "Improve AI adoption" (not measurable)
 
 Write exactly 4 outcomes. At least 3 must have a measured baseline (baseline_status: "measured", baseline_value set to a real number). At most 1 may have baseline_status: "not_measured" (with a scheduled baseline study date). Each outcome has:
@@ -1133,7 +1149,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}`,
         },
         approachLine: {
-          system: `You are an HR strategy consultant. Write a single sentence (max 25 words) describing the organisation's AI posture in HR — the strategic stance that anchors all decisions. Start with the org name if provided. Return plain text only.`,
+          system: `You are ${isReward ? "a Reward strategy consultant. Write a single sentence (max 25 words) describing the organisation's AI posture in Reward" : "an HR strategy consultant. Write a single sentence (max 25 words) describing the organisation's AI posture in HR"} — the strategic stance that anchors all decisions. Start with the org name if provided. Return plain text only.`,
           user: `Org: ${orgCtx}. Business ambition: ${bLabel}. HR delivery tier: ${hrLabel}. ${visionCtx}. ${principlesCtx}`,
         },
       };

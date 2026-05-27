@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle2, RefreshCw, AlertTriangle, Lock,
   Sparkles, Plus, Trash2, ChevronRight, Info,
-  GripVertical,
+  GripVertical, Cpu, TrendingUp, Target, Zap, ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,63 @@ const AFFORDANCES: { key: Affordance; label: string; tooltip: string }[] = [
 
 const MIN_SHIFTS = 3;
 const MAX_SHIFTS = 4;
+
+// ── Reward Archetype Cards (strategic posture guidance) ───────────────────────
+type RewardArchetype = "augmentation" | "transformation" | "differentiation" | "efficiency" | "defensive";
+const REWARD_ARCHETYPES: Array<{
+  key: RewardArchetype;
+  label: string;
+  tagline: string;
+  description: string;
+  icon: React.ReactNode;
+  colour: string;
+}> = [
+  {
+    key: "augmentation",
+    label: "Augmentation",
+    tagline: "AI enhances reward decisions",
+    description:
+      "Reward professionals use AI to make better, faster pay and benefits decisions — humans remain accountable for equity and fairness outcomes.",
+    icon: <Cpu className="h-5 w-5" />,
+    colour: "border-blue-500/40 hover:border-blue-500/70",
+  },
+  {
+    key: "transformation",
+    label: "Transformation",
+    tagline: "AI reshapes reward operations",
+    description:
+      "AI fundamentally changes how reward is designed, delivered, and communicated — moving from annual cycles to continuous, data-driven compensation management.",
+    icon: <TrendingUp className="h-5 w-5" />,
+    colour: "border-violet-500/40 hover:border-violet-500/70",
+  },
+  {
+    key: "differentiation",
+    label: "Differentiation",
+    tagline: "AI creates reward advantage",
+    description:
+      "AI enables personalised total reward experiences that attract and retain talent — making your EVP impossible to replicate.",
+    icon: <Target className="h-5 w-5" />,
+    colour: "border-emerald-500/40 hover:border-emerald-500/70",
+  },
+  {
+    key: "efficiency",
+    label: "Efficiency",
+    tagline: "AI reduces reward admin burden",
+    description:
+      "AI automates routine reward processes — benchmarking, modelling, compliance checks — freeing the team for strategic work.",
+    icon: <Zap className="h-5 w-5" />,
+    colour: "border-amber-500/40 hover:border-amber-500/70",
+  },
+  {
+    key: "defensive",
+    label: "Defensive",
+    tagline: "AI manages pay risk & compliance",
+    description:
+      "AI is deployed primarily to ensure pay equity, regulatory compliance, and audit readiness — protecting the organisation from legal and reputational risk.",
+    icon: <ShieldCheck className="h-5 w-5" />,
+    colour: "border-rose-500/40 hover:border-rose-500/70",
+  },
+];
 
 // ── Staleness banner ──────────────────────────────────────────────────────────
 function StalenessBanner({
@@ -208,6 +265,7 @@ export default function RewardStrategyPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [activeAffordance, setActiveAffordance] = useState<{ id: string; affordance: Affordance } | null>(null);
   const [challengeCallout, setChallengeCallout] = useState<{ id: string; text: string } | null>(null);
+  const [selectedArchetype, setSelectedArchetype] = useState<RewardArchetype | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Populate from server on load
@@ -424,6 +482,53 @@ export default function RewardStrategyPage() {
               <span>Strategic shifts confirmed</span>
             </div>
           )}
+
+          {/* Reward archetype cards — strategic posture guidance */}
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <h2 className="text-sm font-medium">Strategic posture</h2>
+              <p className="text-xs text-muted-foreground">
+                Select the posture that best describes your AI-in-Reward ambition. This shapes how shifts are generated and prioritised.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {REWARD_ARCHETYPES.map((arch) => {
+                const isSelected = selectedArchetype === arch.key;
+                return (
+                  <button
+                    key={arch.key}
+                    type="button"
+                    disabled={isConfirmed && !isStale}
+                    onClick={() => setSelectedArchetype(isSelected ? null : arch.key)}
+                    className={cn(
+                      "text-left rounded-lg border-2 p-4 transition-all space-y-2",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : cn("border-border/60 bg-card", arch.colour),
+                      (isConfirmed && !isStale) && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className={cn("p-1.5 rounded-md", isSelected ? "text-primary" : "text-muted-foreground")}>
+                        {arch.icon}
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{arch.label}</p>
+                      <p className="text-xs text-muted-foreground">{arch.tagline}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground/80 leading-relaxed">
+                      {arch.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Generate / no-draft state */}
           {shifts.length === 0 && !generateMutation.isPending && (

@@ -1,8 +1,8 @@
 {
   "meta": {
-    "version": "1.3.0",
+    "version": "1.3.1",
     "built_at": "2026-05-08T00:00:00.000Z",
-    "git_sha": "aiq-v1.3.0",
+    "git_sha": "aiq-v1.3.1",
     "content_counts": {
       "sources": 15,
       "initiatives": 30,
@@ -2637,7 +2637,8 @@
           "Improved HR credibility"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_ethics_governance_framework": {
       "initiative_id": "ai_ethics_governance_framework",
@@ -2734,7 +2735,8 @@
           "Board confidence in AI programme"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "prompt_engineering_for_hr": {
       "initiative_id": "prompt_engineering_for_hr",
@@ -2836,7 +2838,8 @@
           "Improved employee experience"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_acceptable_use_policy": {
       "initiative_id": "ai_acceptable_use_policy",
@@ -2922,7 +2925,8 @@
           "Audit readiness"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "hr_data_quality_audit": {
       "initiative_id": "hr_data_quality_audit",
@@ -3016,7 +3020,8 @@
           "Compliance data integrity"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "ai_change_management_programme": {
       "initiative_id": "ai_change_management_programme",
@@ -3130,7 +3135,8 @@
           "Cultural readiness"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "bias_monitoring_and_auditing": {
       "initiative_id": "bias_monitoring_and_auditing",
@@ -3243,7 +3249,8 @@
           "Audit trail for AI decisions"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "hr_process_automation": {
       "initiative_id": "hr_process_automation",
@@ -3355,7 +3362,8 @@
           "Improved compliance"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_assisted_job_descriptions": {
       "initiative_id": "ai_assisted_job_descriptions",
@@ -3458,7 +3466,8 @@
           "Better candidate quality"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "hr_chatbot_employee_queries": {
       "initiative_id": "hr_chatbot_employee_queries",
@@ -3570,7 +3579,8 @@
           "HR team focus on complex queries"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "people_analytics_dashboard": {
       "initiative_id": "people_analytics_dashboard",
@@ -3683,7 +3693,8 @@
           "Proactive workforce planning"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_assisted_performance_feedback": {
       "initiative_id": "ai_assisted_performance_feedback",
@@ -3798,7 +3809,8 @@
           "Higher employee engagement"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_tool_adoption_programme": {
       "initiative_id": "ai_tool_adoption_programme",
@@ -3886,7 +3898,8 @@
           "Measurable adoption metrics"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "automated_onboarding_orchestration": {
       "initiative_id": "automated_onboarding_orchestration",
@@ -3994,7 +4007,8 @@
           "Reduced early attrition"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_assisted_cv_screening": {
       "initiative_id": "ai_assisted_cv_screening",
@@ -4109,7 +4123,8 @@
           "Better candidate shortlist quality"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "predictive_attrition_modelling": {
       "initiative_id": "predictive_attrition_modelling",
@@ -4225,7 +4240,8 @@
           "Workforce stability"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "skills_intelligence_platform": {
       "initiative_id": "skills_intelligence_platform",
@@ -4341,7 +4357,8 @@
           "Employee development clarity"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "workforce_scenario_planning": {
       "initiative_id": "workforce_scenario_planning",
@@ -4430,7 +4447,8 @@
           "Reduced reactive hiring costs"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "ai_powered_learning_personalisation": {
       "initiative_id": "ai_powered_learning_personalisation",
@@ -4533,7 +4551,8 @@
           "Reduced irrelevant training time"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_pay_equity_analysis": {
       "initiative_id": "ai_pay_equity_analysis",
@@ -4646,7 +4665,8 @@
           "Employer brand improvement"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_centre_of_excellence": {
       "initiative_id": "ai_centre_of_excellence",
@@ -4736,7 +4756,8 @@
           "Reduced duplication of AI efforts"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "hr_ai_operating_model_redesign": {
       "initiative_id": "hr_ai_operating_model_redesign",
@@ -4843,7 +4864,8 @@
           "Better AI-human collaboration"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_governance_maturity_programme": {
       "initiative_id": "ai_governance_maturity_programme",
@@ -4930,7 +4952,8 @@
           "Stakeholder confidence"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "manager_ai_coaching_toolkit": {
       "initiative_id": "manager_ai_coaching_toolkit",
@@ -5036,7 +5059,8 @@
           "Reduced manager burnout"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_talent_marketplace": {
       "initiative_id": "ai_talent_marketplace",
@@ -5153,7 +5177,8 @@
           "Career development visibility"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_performance_calibration": {
       "initiative_id": "ai_performance_calibration",
@@ -5269,7 +5294,8 @@
           "Faster cycle completion"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_employee_listening": {
       "initiative_id": "ai_employee_listening",
@@ -5368,7 +5394,8 @@
           "Evidence-based HR decisions"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "ai_job_architecture_redesign": {
       "initiative_id": "ai_job_architecture_redesign",
@@ -5484,7 +5511,8 @@
           "Improved pay equity foundation"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     },
     "ai_governance_continuous_monitoring": {
       "initiative_id": "ai_governance_continuous_monitoring",
@@ -5584,7 +5612,8 @@
           "Audit-ready documentation"
         ],
         "qualitative_value_only": true
-      }
+      },
+      "function_scope": "both"
     },
     "ai_hr_operating_model_redesign": {
       "initiative_id": "ai_hr_operating_model_redesign",
@@ -5701,7 +5730,8 @@
           "Better AI-human collaboration"
         ],
         "qualitative_value_only": false
-      }
+      },
+      "function_scope": "both"
     }
   },
   "risk_rules": {

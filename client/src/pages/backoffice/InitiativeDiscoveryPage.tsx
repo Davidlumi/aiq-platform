@@ -11,6 +11,7 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useGate } from "@/contexts/GateContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -749,12 +750,13 @@ function AddToLibraryModal({
   onClose: () => void;
 }) {
   const utils = trpc.useUtils();
+  const { tenantMode } = useGate();
   const [formData, setFormData] = useState({
     initiativeId: "",
     label: candidate.name || "",
     description: candidate.description || "",
     category: candidate.suggestedCategory || "talent_acquisition",
-    functionScope: candidate.suggestedScope || "cpo",
+    functionScope: candidate.suggestedScope || tenantMode || "cpo",
     phase: 1,
     timeToValueMonths: { min: 3, max: 6 },
     y1CostRange: { low: 50, high: 200 },

@@ -79,6 +79,8 @@ export interface Initiative {
   cross_functional_dependencies?: CrossFunctionalDependencies;
   // v1.3: manager function tags for E2 manager dashboard filtering
   function_tags?: string[];
+  // v1.3.1: function scope — which platform mode(s) this initiative applies to
+  function_scope?: "cpo" | "reward" | "both";
 }
 
 export interface RiskRule {

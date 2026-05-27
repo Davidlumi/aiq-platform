@@ -624,10 +624,16 @@ export const gateRouter = router({
       sector: z.string().optional(),
       sizeBand: z.enum(["lt500", "500_5k", "5k_25k", "25k_plus"]).optional(),
       workforceComposition: z.string().optional(),
+      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .query(async ({ input }) => {
-      const { sector, sizeBand, workforceComposition } = input;
+      const { sector, sizeBand, workforceComposition, mode } = input;
       let filtered = PEER_VISION_LIBRARY;
+
+      // Filter by mode if provided (entries without mode are available to both)
+      if (mode) {
+        filtered = filtered.filter(e => !e.mode || e.mode === mode || e.mode === "both");
+      }
 
       // Filter by sector if provided
       if (sector) {
@@ -912,10 +918,18 @@ export const gateRouter = router({
     .input(z.object({
       archetype: z.enum(["augmentation", "transformation", "differentiation", "efficiency", "defensive"]),
       visionStatement: z.string().optional(),
+      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
-      const archetypeDescriptions: Record<string, string> = {
+      const isReward = input.mode === "reward";
+      const archetypeDescriptions: Record<string, string> = isReward ? {
+        augmentation: "AI enhances Reward professionals' judgement — compensation analysts use AI to make better pay decisions but remain accountable for equity and fairness outcomes",
+        transformation: "AI fundamentally reshapes reward processes, pay cycles, and compensation operating models — the Reward function leads AI-driven total reward innovation",
+        differentiation: "AI creates a distinctive total reward experience and employer value proposition that competitors cannot easily replicate",
+        efficiency: "AI automates routine reward administration, reduces pay cycle burden, and frees Reward capacity for strategic compensation design",
+        defensive: "AI is deployed primarily to ensure pay equity compliance, reduce regulatory risk, and maintain audit trails across all compensation decisions",
+      } : {
         augmentation: "AI enhances human judgement — HR professionals use AI to make better decisions but remain accountable for every significant outcome",
         transformation: "AI fundamentally reshapes HR processes, roles, and operating models — HR leads the organisation's AI adoption",
         differentiation: "AI creates a distinctive employee experience, talent brand, or people capability that competitors cannot easily replicate",
@@ -924,8 +938,8 @@ export const gateRouter = router({
       };
 
       const systemPrompt = [
-        "You are an expert HR strategy consultant.",
-        "Write a concise strategy statement (20-40 words) for an HR AI strategy.",
+        `You are an expert ${isReward ? "Reward" : "HR"} strategy consultant.`,
+        `Write a concise strategy statement (20-40 words) for ${isReward ? "a Reward AI strategy" : "an HR AI strategy"}.`,
         `The chosen archetype is: ${input.archetype} — ${archetypeDescriptions[input.archetype]}.`,
         input.visionStatement ? `The organisation's vision is: "${input.visionStatement}".` : "",
         "The statement should describe HOW the organisation will achieve its vision through this archetype.",

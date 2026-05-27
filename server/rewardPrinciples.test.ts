@@ -268,8 +268,16 @@ describe("rewardPrinciples.confirm", () => {
     const db = makeDb([
       [{ state: "confirmed" }],  // 1st select: strategy confirmed
       [{
-        principlesJson: [{ id: "p1", principleId: "pay_explainability", text: "We will ensure explainability.", selected: true, source: "ai_suggested" }],
-      }],                        // 2nd select: principles
+        principlesJson: [
+          { id: "p1", principleId: "pay_explainability", text: "We will ensure explainability.", selected: true, source: "ai_suggested" },
+          { id: "p2", principleId: "fairness_first", text: "We will prioritise fairness in all pay decisions.", selected: true, source: "ai_suggested" },
+          { id: "p3", principleId: "transparency", text: "We will be transparent about how AI informs reward.", selected: true, source: "ai_suggested" },
+        ],
+        wontDosJson: [
+          { id: "w1", text: "We will not use AI to replace human judgment on promotions." },
+          { id: "w2", text: "We will not deploy untested models in production pay runs." },
+        ],
+      }],                        // 2nd select: principles + wontDos
     ]);
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());

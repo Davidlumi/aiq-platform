@@ -338,6 +338,14 @@ Output the result now:`;
       });
     }
 
+    const visionWordCount = vision.visionText.trim().split(/\s+/).filter(Boolean).length;
+    if (visionWordCount < 10) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Vision must be at least 10 words (currently ${visionWordCount}).`,
+      });
+    }
+
     const now = Date.now();
 
     // Mark vision confirmed

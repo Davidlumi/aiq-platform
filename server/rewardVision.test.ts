@@ -320,7 +320,7 @@ describe("rewardVision.confirm", () => {
   it("returns ok:true when prework done and vision has content", async () => {
     const db = makeDb([
       [{ isCompleted: 1 }],                                                   // 1st select: prework done
-      [{ visionText: "We will use AI to make pay decisions equitable." }],   // 2nd select: vision
+      [{ visionText: "We will use AI to make pay decisions equitable and fair for all employees." }],   // 2nd select: vision
       [{ state: "unconfirmed" }],                                             // 3rd select: strategy
       [{ state: "unconfirmed" }],                                             // 4th select: principles
     ]);
@@ -333,7 +333,7 @@ describe("rewardVision.confirm", () => {
   it("cascades staleness to confirmed Strategy", async () => {
     const db = makeDb([
       [{ isCompleted: 1 }],              // 1st select: prework done
-      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ visionText: "Our reward AI vision is to create fair and equitable pay for everyone." }],  // 2nd select: vision
       [{ state: "confirmed" }],          // 3rd select: strategy IS confirmed → staled
       [{ state: "unconfirmed" }],        // 4th select: principles
     ]);
@@ -347,7 +347,7 @@ describe("rewardVision.confirm", () => {
   it("cascades staleness to confirmed Principles", async () => {
     const db = makeDb([
       [{ isCompleted: 1 }],              // 1st select: prework done
-      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ visionText: "Our reward AI vision is to create fair and equitable pay for everyone." }],  // 2nd select: vision
       [{ state: "unconfirmed" }],        // 3rd select: strategy
       [{ state: "confirmed" }],          // 4th select: principles IS confirmed → staled
     ]);
@@ -361,7 +361,7 @@ describe("rewardVision.confirm", () => {
   it("cascades staleness to BOTH Strategy and Principles when both confirmed", async () => {
     const db = makeDb([
       [{ isCompleted: 1 }],              // 1st select: prework done
-      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ visionText: "Our reward AI vision is to create fair and equitable pay for everyone." }],  // 2nd select: vision
       [{ state: "confirmed" }],          // 3rd select: strategy
       [{ state: "confirmed" }],          // 4th select: principles
     ]);
@@ -375,7 +375,7 @@ describe("rewardVision.confirm", () => {
   it("does NOT cascade when Strategy and Principles are unconfirmed", async () => {
     const db = makeDb([
       [{ isCompleted: 1 }],              // 1st select: prework done
-      [{ visionText: "Vision text." }],  // 2nd select: vision
+      [{ visionText: "Our reward AI vision is to create fair and equitable pay for everyone." }],  // 2nd select: vision
       [{ state: "unconfirmed" }],        // 3rd select: strategy
       [{ state: "unconfirmed" }],        // 4th select: principles
     ]);

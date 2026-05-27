@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle2, RefreshCw, AlertTriangle, Lock,
-  Sparkles, RotateCcw, Info, ChevronRight,
+  Sparkles, RotateCcw, Info, ChevronRight, Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -105,6 +105,60 @@ function ChallengeCallout({ text, onDismiss }: { text: string; onDismiss: () => 
       <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed pr-4">
         {text}
       </p>
+    </div>
+  );
+}
+
+// ── Peer vision starters section ───────────────────────────────────────────────
+function PeerVisionSection({ onAdopt }: { onAdopt: (text: string) => void }) {
+  const { data: peers, isLoading } = trpc.gate.getPeerVisionStarters.useQuery({ mode: "reward" });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-40" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (!peers?.length) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Users className="h-4 w-4 text-muted-foreground" />
+        <h3 className="text-sm font-medium">Peer inspiration</h3>
+        <span className="text-xs text-muted-foreground">— see how others frame their Reward AI vision</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {peers.map((peer) => (
+          <Card key={peer.id} className="bg-muted/20 border-border/40 hover:border-primary/40 transition-colors group">
+            <CardContent className="p-4 space-y-3">
+              <p className="text-sm text-foreground/80 italic leading-relaxed line-clamp-4">
+                “{peer.visionText}”
+              </p>
+              <div className="flex items-center justify-between">
+                {peer.archetypeHint && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    {peer.archetypeHint}
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => onAdopt(peer.visionText)}
+                >
+                  Use as starting point
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -413,6 +467,14 @@ export default function RewardVisionPage() {
               )}
             </div>
           )}
+
+          {/* Peer vision starters */}
+          <PeerVisionSection onAdopt={(visionText) => {
+            setText(visionText);
+            setIsDirty(true);
+            scheduleSave(visionText);
+            toast.success("Peer vision adopted — edit freely.");
+          }} />
 
           {/* What makes a good vision — guidance card */}
           <Card className="bg-muted/30 border-border/40">

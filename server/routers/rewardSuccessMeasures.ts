@@ -692,6 +692,12 @@ ${context}
 Portfolio initiatives: ${initiativeTitles}
 
 Write 2-3 strategy-level outcome statements. Each should describe a measurable state the organisation will be in after successful delivery of the programme.
+
+Examples of strong Reward AI strategy outcomes:
+- "Within 18 months, 100% of pay decisions will be supported by AI-generated equity analysis, reducing unexplained pay gaps by 60%."
+- "The annual merit cycle will be completed in 4 weeks (down from 14), with AI handling data gathering, modelling, and compliance checks."
+- "Manager confidence in making fair pay decisions will increase from 45% to 85%, measured through quarterly pulse surveys."
+
 Output as JSON array: ["outcome 1", "outcome 2", "outcome 3"]`;
 
     let outcomes: Array<{ id: string; text: string }> = [];

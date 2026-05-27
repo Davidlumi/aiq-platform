@@ -386,6 +386,46 @@ export const INITIATIVE_CONFIG = {
     concernReductionRate: 0.45,           // 45% reduction in workforce concerns
   },
 
+  // ─── Reward-specific (additional 8) ────────────────────────────────────────
+  cr_reward_sentiment_analytics: {
+    atRiskPopulationRate: 0.08,           // 8% at risk due to reward dissatisfaction
+    replacementCostMultiplier: 0.15,      // 15% of salary = replacement cost avoided
+  },
+  cr_retention_risk_compensation: {
+    criticalRoleRate: 0.05,               // 5% in critical roles
+    flightRiskRate: 0.20,                 // 20% of critical roles at comp-driven risk
+    replacementCostMultiplier: 1.5,       // 1.5× salary replacement cost
+  },
+  cr_reward_governance_ai: {
+    penaltyAvoidanceLarge: 500_000,       // £500K for orgs >5K employees
+    penaltyAvoidanceSmall: 200_000,       // £200K for orgs <5K employees
+    auditCostPerEmployee: 15,             // £15/employee in manual audit cost saved
+  },
+  cr_global_reward_harmonisation: {
+    inequityReductionRate: 0.005,         // 0.5% of total comp bill saved
+    cycleTimeSaving: 150_000,             // £150K consulting/admin saved per cycle
+  },
+  cr_reward_communication_personalisation: {
+    utilisationUpliftRate: 0.002,         // 0.2% of comp bill in activated benefits
+    retentionImprovementRate: 0.02,       // 2% fewer leavers
+    replacementCostRate: 0.15,            // 15% of salary replacement cost
+  },
+  cr_workforce_cost_modelling: {
+    decisionImprovementRate: 0.003,       // 0.3% improvement in cost decisions
+    cycleTimeSaving: 80_000,              // £80K admin/consulting saved per cycle
+  },
+  cr_reward_market_intelligence: {
+    marketSensitiveRoleRate: 0.10,        // 10% in market-sensitive roles
+    flightRiskRate: 0.15,                 // 15% at risk in those roles
+    overpayReductionRate: 0.001,          // 0.1% reduction in overpay
+  },
+  cr_reward_manager_enablement: {
+    managerRate: 0.10,                    // 10% are people managers
+    equityImprovementRate: 0.002,         // 0.2% of comp bill in reduced equity exceptions
+    timeSavedHoursPerYear: 8,             // 8 hours/year per manager
+    hourlyRate: 50,                       // £50/hour
+  },
+
   // ─── Legacy aliases (kept for backward compat with old tests) ────────────
   attritionPrediction: {
     attritionCostAsMultipleOfSalary: 0.75,

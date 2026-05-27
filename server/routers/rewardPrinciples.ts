@@ -682,15 +682,23 @@ Output as JSON: { "wontDoId": "..." | null, "text": "..." }`;
     }
 
     const [current] = await db
-      .select({ principlesJson: rewardPrinciples.principlesJson })
+      .select({ principlesJson: rewardPrinciples.principlesJson, wontDosJson: rewardPrinciples.wontDosJson })
       .from(rewardPrinciples)
       .where(eq(rewardPrinciples.tenantId, tenantId));
 
     const principles = (current?.principlesJson as unknown[]) ?? [];
-    if (!principles.length) {
+    if (principles.length < 3) {
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message: "At least one principle is required before confirming.",
+        message: `At least 3 principles are required (currently ${principles.length}).`,
+      });
+    }
+
+    const wontDos = (current?.wontDosJson as unknown[]) ?? [];
+    if (wontDos.length < 2) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `At least 2 won't-do items are required (currently ${wontDos.length}).`,
       });
     }
 
