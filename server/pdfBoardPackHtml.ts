@@ -89,7 +89,7 @@ async function generateCommentary(prompt: string): Promise<string> {
         {
           role: "system",
           content:
-            "You are a senior HR transformation consultant writing commentary for a board-level strategy presentation. Write in a professional, concise, and confident tone. Avoid jargon. Be specific. Maximum 3 sentences.",
+            "You are a senior HR transformation consultant writing commentary for a board-level strategy presentation. Write in third person, present tense. Be specific, data-driven, and commercially astute. Maximum 3 sentences. No bullet points. No markdown. No em-dashes. Plain prose only. Do NOT use evaluative adjectives (avoid: excellent, exceptional, outstanding, impressive). Be direct and insightful.",
         },
         { role: "user", content: prompt },
       ],
@@ -306,7 +306,7 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
     generateCommentary(`Write a 3-sentence executive summary for a board presentation. Organisation: ${orgName}. Sector: ${sector ?? "not specified"}. Headcount: ${headcount ?? "not specified"}. Business AI ambition: ${BUSINESS_LABELS[businessAmbitionLevel]}. People AI ambition: ${PEOPLE_LABELS[peopleAmbitionLevel]}. ${selectedInits.length} initiatives selected. ${assessedCount} staff assessed. Current capability average: ${functionAvg ?? "not assessed"}. Target: ${ambitionTargetScore ?? "not set"}. ${costEnvelope ? `Investment range: ${fmtGBP(costEnvelope.totalMin * 1000)} to ${fmtGBP(costEnvelope.totalMax * 1000)}.` : ""} ${valueEnvelope ? `3-year net value: ${fmtGBP(valueEnvelope.net_value_gbp.low)} to ${fmtGBP(valueEnvelope.net_value_gbp.high)}.` : ""}`),
     generateCommentary(`Write a 2-sentence commentary on the strategic ambition for a board paper. Business AI ambition: ${businessAmbitionLevel}/5 (${BUSINESS_LABELS[businessAmbitionLevel]}). People AI ambition: ${peopleAmbitionLevel}/5 (${PEOPLE_LABELS[peopleAmbitionLevel]}). Target capability score: ${ambitionTargetScore ?? "not set"} by ${targetDateStr}. Explain what this means in practice for the HR function.`),
     generateCommentary(`Write a 2-sentence commentary on the AI People Strategy vision statement. Vision: "${visionStatement ?? "Not yet defined"}". ${guidingPrinciples.length} guiding principles. ${wontDoItems.length} strategic exclusions. Comment on strategic coherence and clarity.`),
-    generateCommentary(`Write a 2-sentence commentary on the HR function's AI capability baseline. ${assessedCount} staff assessed. Overall average: ${functionAvg ?? "not assessed"}/100. Target: ${ambitionTargetScore ?? "not set"}. Gap: ${gap !== null ? gap : "unknown"}. ${gap !== null && gap > 15 ? "The gap is significant and requires urgent action." : gap !== null && gap <= 0 ? "The function is on or ahead of target." : "The gap is manageable with the right interventions."} Sector: ${sector ?? "not specified"}.`),
+    generateCommentary(`Write a 2-sentence commentary on the HR function's AI capability baseline. ${assessedCount} staff assessed. Overall average: ${functionAvg !== null ? (functionAvg / 10).toFixed(1) : "not assessed"}/10. Target: ${ambitionTargetScore !== null ? (ambitionTargetScore / 10).toFixed(1) : "not set"}/10. Gap: ${gap !== null ? gap : "unknown"}. ${gap !== null && gap > 15 ? "The gap is significant and requires urgent action." : gap !== null && gap <= 0 ? "The function is on or ahead of target." : "The gap is manageable with the right interventions."} Sector: ${sector ?? "not specified"}.`),
     generateCommentary(`Write a 2-sentence commentary on the initiative portfolio. ${selectedInits.length} initiatives selected across ${ambitionTier} ambition tier. Key initiatives: ${selectedInits.slice(0, 5).map((i: Initiative) => i.display_name).join(", ")}${selectedInits.length > 5 ? ` and ${selectedInits.length - 5} more` : ""}. Comment on strategic coherence and phasing.`),
     generateCommentary(`Write a 2-sentence commentary on the investment case. Total estimated investment: ${costEnvelope ? `${fmtGBP(costEnvelope.totalMin * 1000)} to ${fmtGBP(costEnvelope.totalMax * 1000)}` : "not calculated"}. Organisation size: ${orgSizeSafe}. Ambition tier: ${ambitionTier}. Comment on whether this investment level is appropriate.`),
     generateCommentary(`Write a 2-sentence commentary on the risk profile. ${riskMatches.length} regulatory risks identified. ${riskMatches.filter(r => r.severity === "high" || r.severity === "very_high").length} high-severity risks. Key risks: ${riskMatches.slice(0, 3).map(r => r.displayName).join(", ") || "none identified"}. Comment on the risk posture and what the board should note.`),
@@ -317,7 +317,7 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
 
   // ── Build HTML ────────────────────────────────────────────────────────────
   const ambitionTargetLabel = ambitionTargetScore
-    ? `${BUSINESS_LABELS[businessAmbitionLevel]} Business AI Ambition · ${PEOPLE_LABELS[peopleAmbitionLevel]} People AI Ambition · Target ${ambitionTargetScore}/100 by ${targetDateStr}`
+    ? `${BUSINESS_LABELS[businessAmbitionLevel]} Business AI Ambition · ${PEOPLE_LABELS[peopleAmbitionLevel]} People AI Ambition · Target ${ambitionTargetScore !== null ? (ambitionTargetScore / 10).toFixed(1) : "—"}/10 by ${targetDateStr}`
     : null;
 
   const sectorDisplay = sector
@@ -411,6 +411,40 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
       </div>
     </div>`;
 
+  // ── EXECUTIVE SUMMARY PAGE ──────────────────────────────────────────────────
+  const execSummaryHtml = `
+    <div class="page">
+      ${slideHeaderHtml("ES", "Executive Summary", "At-a-glance strategic overview for board review", "#C8A96E")}
+      <div style="margin-bottom:16px;">
+        <div style="font-size:9pt;color:#334155;line-height:1.6;">${commentaryCover || "This board pack presents the organisation's HR AI People Strategy."}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+        <thead>
+          <tr style="background:#0A1628;">
+            <th style="padding:8px 12px;font-size:7pt;color:#C8A96E;text-align:left;font-weight:700;text-transform:uppercase;">Metric</th>
+            <th style="padding:8px 12px;font-size:7pt;color:#C8A96E;text-align:left;font-weight:700;text-transform:uppercase;">Current State</th>
+            <th style="padding:8px 12px;font-size:7pt;color:#C8A96E;text-align:left;font-weight:700;text-transform:uppercase;">Target</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;font-size:8pt;color:#334155;font-weight:600;">AI Capability Score</td><td style="padding:8px 12px;font-size:8pt;color:${functionAvg !== null ? scoreColour(functionAvg) : '#64748b'};font-weight:700;">${functionAvg !== null ? (functionAvg / 10).toFixed(1) + '/10' : 'Not assessed'}</td><td style="padding:8px 12px;font-size:8pt;color:#C8A96E;font-weight:700;">${ambitionTargetScore !== null ? (ambitionTargetScore / 10).toFixed(1) + '/10' : '—'}</td></tr>
+          <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;font-size:8pt;color:#334155;font-weight:600;">Staff Assessed</td><td style="padding:8px 12px;font-size:8pt;color:#334155;">${assessedCount > 0 ? assessedCount + ' people' : 'None yet'}</td><td style="padding:8px 12px;font-size:8pt;color:#94a3b8;">All HR function</td></tr>
+          <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;font-size:8pt;color:#334155;font-weight:600;">Initiatives Selected</td><td style="padding:8px 12px;font-size:8pt;color:#334155;">${selectedInits.length} initiatives</td><td style="padding:8px 12px;font-size:8pt;color:#94a3b8;">${ambitionTier.charAt(0).toUpperCase() + ambitionTier.slice(1)} tier</td></tr>
+          <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;font-size:8pt;color:#334155;font-weight:600;">Total Investment</td><td style="padding:8px 12px;font-size:8pt;color:#334155;">${costEnvelope ? fmtGBP(costEnvelope.totalMin * 1000) + ' – ' + fmtGBP(costEnvelope.totalMax * 1000) : 'Not calculated'}</td><td style="padding:8px 12px;font-size:8pt;color:#94a3b8;">Over 3 years</td></tr>
+          <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 12px;font-size:8pt;color:#334155;font-weight:600;">3-Year Net Value</td><td style="padding:8px 12px;font-size:8pt;color:${valueEnvelope && valueEnvelope.net_value_gbp.low >= 0 ? '#22c55e' : '#ef4444'};font-weight:700;">${valueEnvelope ? fmtGBP(valueEnvelope.net_value_gbp.low) + ' – ' + fmtGBP(valueEnvelope.net_value_gbp.high) : 'Not calculated'}</td><td style="padding:8px 12px;font-size:8pt;color:#94a3b8;">Conservative range</td></tr>
+          <tr><td style="padding:8px 12px;font-size:8pt;color:#334155;font-weight:600;">Risk Profile</td><td style="padding:8px 12px;font-size:8pt;color:${riskMatches.filter((r: RiskRuleMatch) => r.severity === 'high' || r.severity === 'very_high').length > 0 ? '#ef4444' : '#22c55e'};">${riskMatches.length} risks (${riskMatches.filter((r: RiskRuleMatch) => r.severity === 'high' || r.severity === 'very_high').length} high)</td><td style="padding:8px 12px;font-size:8pt;color:#94a3b8;">Mitigated</td></tr>
+        </tbody>
+      </table>
+      ${sectionLabelHtml("Board Decision Required")}
+      <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:12px 16px;margin-top:8px;">
+        <div style="font-size:8.5pt;color:#92400e;line-height:1.5;">This paper seeks board approval for the proposed HR AI People Strategy, including the initiative portfolio, investment envelope, and governance framework outlined in the following pages.</div>
+      </div>
+      <div class="footer">
+        <span class="footer-text">AiQ HR Capability Intelligence · ${orgName} · ${reportDate} · Library v${libVer} · CONFIDENTIAL</span>
+        <span class="footer-page">2</span>
+      </div>
+    </div>`;
+
   // ── SLIDE 1 — STRATEGIC CONTEXT ───────────────────────────────────────────
   const slide1Html = `
     <div class="page">
@@ -418,7 +452,7 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
       <div class="kpi-row">
         ${kpiCardHtml("Business AI Ambition", `${businessAmbitionLevel}/5`, BUSINESS_LABELS[businessAmbitionLevel], "#2D6A5E")}
         ${kpiCardHtml("People AI Ambition", `${peopleAmbitionLevel}/5`, PEOPLE_LABELS[peopleAmbitionLevel], "#C8A96E")}
-        ${kpiCardHtml("Capability Target", ambitionTargetScore !== null ? `${ambitionTargetScore}/100` : "—", `By ${targetDateStr}`, "#0A1628")}
+        ${kpiCardHtml("Capability Target", ambitionTargetScore !== null ? `${(ambitionTargetScore / 10).toFixed(1)}/10` : "—", `By ${targetDateStr}`, "#0A1628")}
         ${kpiCardHtml("Sector", sectorDisplay, headcount ? `${headcount.toLocaleString()} employees` : "", "#64748b")}
       </div>
       ${strategyNarrative ? `
@@ -481,8 +515,8 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
       ${slideHeaderHtml("03", "Capability Baseline", "Current AI readiness vs roadmap targets by domain", "#2D6A5E")}
       <div class="kpi-row">
         ${kpiCardHtml("Staff Assessed", assessedCount > 0 ? String(assessedCount) : "—", "Completed assessments", "#2D6A5E")}
-        ${kpiCardHtml("Current Average", functionAvg !== null ? `${functionAvg}/100` : "—", "Across all domains", functionAvg !== null ? scoreColour(functionAvg) : "#64748b")}
-        ${kpiCardHtml("Ambition Target", ambitionTargetScore !== null ? `${ambitionTargetScore}/100` : "—", `By ${targetDateStr}`, "#C8A96E")}
+        ${kpiCardHtml("Current Average", functionAvg !== null ? `${(functionAvg / 10).toFixed(1)}/10` : "—", "Across all domains", functionAvg !== null ? scoreColour(functionAvg) : "#64748b")}
+        ${kpiCardHtml("Ambition Target", ambitionTargetScore !== null ? `${(ambitionTargetScore / 10).toFixed(1)}/10` : "—", `By ${targetDateStr}`, "#C8A96E")}
         ${kpiCardHtml("Gap to Close", gap !== null ? (gap > 0 ? `+${gap}` : `${gap}`) : "—", gap !== null ? (gap <= 0 ? "On track" : "Action required") : "", gap !== null && gap <= 0 ? "#22c55e" : "#ef4444")}
       </div>
       ${sectionLabelHtml("Domain Capability vs Roadmap Targets")}
@@ -816,6 +850,7 @@ export async function generateBoardPackPDFHtml(userId: string, tenantId: string)
 </head>
 <body>
   ${coverHtml}
+  ${execSummaryHtml}
   ${slide1Html}
   ${slide2Html}
   ${slide3Html}

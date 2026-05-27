@@ -6,6 +6,7 @@
  *   • Heatmap shows individual team members (not functions)
  */
 import React, { useState, useMemo } from "react";
+import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { ManagerDashboardSkeleton } from "@/components/ui/loading";
@@ -112,7 +113,7 @@ function DomainBar({ label, score, count, colour }: { label: string; score: numb
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: colour }} />
       </div>
       <span className="text-sm font-semibold tabular-nums w-8 text-right" style={{ color: score != null ? colour : "var(--muted-foreground)" }}>
-        {score != null ? (score / 10).toFixed(1) : "—"}
+        {score != null ? formatScore(score) : "—"}
       </span>
     </div>
   );
@@ -197,7 +198,7 @@ function TeamMemberHeatmap({
                         className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-semibold tabular-nums"
                         style={{ background: cell.bg, color: cell.text }}
                       >
-                        {score != null ? (score / 10).toFixed(1) : "—"}
+                        {score != null ? formatScore(score) : "—"}
                       </span>
                     </td>
                   );
@@ -207,7 +208,7 @@ function TeamMemberHeatmap({
                     const cell = heatmapCellStyle(member.overallScore);
                     return (
                       <span className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
-                        {member.overallScore != null ? (member.overallScore / 10).toFixed(1) : "—"}
+                        {member.overallScore != null ? formatScore(member.overallScore) : "—"}
                       </span>
                     );
                   })()}
@@ -331,7 +332,7 @@ export default function ManagerDashboardV2() {
         type: "medium",
         priority: "Domain gap",
         title: `${weakestDomain.domainName} is the weakest domain`,
-        body: `Team average ${weakestDomain.avgScore != null ? (weakestDomain.avgScore / 10).toFixed(1) : "—"} · ${weakestDomain.totalAssessed} assessed.`,
+        body: `Team average ${weakestDomain.avgScore != null ? formatScore(weakestDomain.avgScore) : "—"} · ${weakestDomain.totalAssessed} assessed.`,
         linkLabel: "View breakdown",
         linkHref: "/people",
       });
@@ -365,7 +366,7 @@ export default function ManagerDashboardV2() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Team average"
-          value={teamAvgScore !== null ? (teamAvgScore / 10).toFixed(1) : "—"}
+          value={teamAvgScore !== null ? formatScore(teamAvgScore) : "—"}
           sub="Capability level"
         />
         <KpiCard

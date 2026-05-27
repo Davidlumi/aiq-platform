@@ -10,6 +10,7 @@
  *   E. Activity strip: hidden in first-time state, compact counts in-progress/complete
  */
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { formatScore } from "@/lib/peakon-colors";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import {
@@ -225,7 +226,7 @@ function DomainModal({
   const completedCount = items.filter(i => i.status === "completed").length;
   const totalCount = items.length;
   const scoreDisplay = domainScore !== null && domainScore > 0
-    ? (domainScore / 10).toFixed(1)
+    ? formatScore(domainScore)
     : null;
 
   // Determine modal state — use targetScore from gap analysis; fall back to 80 if unavailable
@@ -423,10 +424,11 @@ function DomainModal({
 
 // ─── Domain card ──────────────────────────────────────────────────────────────
 function DomainCard({
-  domainKey, items, nextItemId, domainScore, targetScore, onClick,
+  domainKey, items, nextItemId, domainScore, targetScore, linkedInitiative, onClick,
 }: {
   domainKey: string; items: any[]; nextItemId: string | null;
   domainScore: number | null; targetScore: number | null;
+  linkedInitiative?: { initiativeId: string; name: string } | null;
   onClick: () => void;
 }) {
   const label = DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey;
@@ -438,7 +440,7 @@ function DomainCard({
   const barPct = scoreToPct(domainScore);
   // Score display without /10 suffix (Fix 6)
   const scoreDisplay = domainScore !== null && domainScore > 0
-    ? (domainScore / 10).toFixed(1)
+    ? formatScore(domainScore)
     : null;
   // Level descriptor from score (Fix 2 + 7: quiet, stacked right)
   const levelUpper = scoreToLevel(domainScore);
@@ -516,11 +518,19 @@ function DomainCard({
       </div>
 
       {/* Card footer */}
-      <div className="flex items-center justify-between px-5 pt-2.5 pb-4">
-        <span className={`text-[11px] text-muted-foreground${statusItalic ? " italic" : ""}`}>{statusText}</span>
-        <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-0.5">
-          View <ChevronRight className="h-3 w-3" aria-hidden="true" />
-        </span>
+      <div className="px-5 pt-2.5 pb-4 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className={`text-[11px] text-muted-foreground${statusItalic ? " italic" : ""}`}>{statusText}</span>
+          <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-0.5">
+            View <ChevronRight className="h-3 w-3" aria-hidden="true" />
+          </span>
+        </div>
+        {linkedInitiative && (
+          <p className="text-[10px] text-muted-foreground/70 truncate">
+            <Target className="inline h-2.5 w-2.5 mr-0.5" aria-hidden="true" />
+            Connects to: {linkedInitiative.name}
+          </p>
+        )}
       </div>
     </button>
   );
@@ -680,6 +690,9 @@ export default function LearningPlanPage() {
   const { data: coachingConvs } =
     trpc.adaptiveLearning.getActiveCoachingConversations.useQuery(undefined, { staleTime: 1000 * 60 * 3 });
 
+  const { data: initiativesData } =
+    trpc.adaptiveLearning.getInFlightInitiatives.useQuery(undefined, { staleTime: 1000 * 60 * 3 });
+
   const isLoading = planLoading || dashLoading || ctxLoading;
 
   // ── Derived data ────────────────────────────────────────────────────────────
@@ -722,10 +735,7 @@ export default function LearningPlanPage() {
   }, [dashData]);
 
   // Focus domain name for in-progress progress sentence
-  const focusDomainName = useMemo(() => {
-    if (!nextItem?.module?.capability) return null;
-    return DOMAIN_LABELS[nextItem.module.capability as keyof typeof DOMAIN_LABELS] ?? null;
-  }, [nextItem]);
+
 
   // Sort domains worst-to-best by score (ascending)
   const sortedDomainKeys = useMemo(() => {
@@ -739,17 +749,37 @@ export default function LearningPlanPage() {
   const firstName = dashboardCtx?.firstName ?? "";
   const greeting = planState === "first-time" ? "Welcome" : getGreeting();
 
-  // Progress sentence (Fix 1: state-aware with focus domain)
+  // Progress sentence (A1: strategy-context-aware greeting)
+  const focusDomainLabel = dashboardCtx?.focusDomain
+    ? (DOMAIN_LABELS[dashboardCtx.focusDomain as keyof typeof DOMAIN_LABELS] ?? null)
+    : null;
   const progressSentence = useMemo(() => {
     if (planState === "first-time") {
+      const firstMod = dashboardCtx?.firstModuleTitle;
+      const firstCap = dashboardCtx?.firstModuleCapability
+        ? (DOMAIN_LABELS[dashboardCtx.firstModuleCapability as keyof typeof DOMAIN_LABELS] ?? null)
+        : null;
+      if (firstMod && firstCap) {
+        return `We've curated ${totalModules} module${totalModules !== 1 ? "s" : ""} from the full library based on your assessment. Your first module is ${firstMod} — it builds the foundation for ${firstCap}.`;
+      }
       return `Your learning plan is ready — ${totalModules} module${totalModules !== 1 ? "s" : ""} curated from your recent assessment.`;
     }
     if (planState === "complete") {
-      return `You've completed all ${totalModules} modules in your plan.`;
+      return `You've completed all ${totalModules} modules in your plan. Consider a reassessment to measure your growth.`;
     }
-    const focusPart = focusDomainName ? ` Current focus: ${focusDomainName}.` : "";
-    return `You're ${completedModules} of ${totalModules} modules into your plan.${focusPart}`;
-  }, [planState, totalModules, completedModules, focusDomainName]);
+    // In-progress: include strategy context
+    let sentence = `You're ${completedModules} module${completedModules !== 1 ? "s" : ""} into your strategy-aligned learning plan — ${totalModules} modules curated from the full library based on your assessment and AI Strategy.`;
+    if (focusDomainLabel) {
+      const initPart = dashboardCtx?.focusInitiative
+        ? `, which connects to your ${dashboardCtx.focusInitiative.name} initiative (${dashboardCtx.focusInitiative.phase})`
+        : "";
+      sentence += ` Your current focus is ${focusDomainLabel}${initPart}.`;
+    }
+    if (!dashboardCtx?.strategyExists && focusDomainLabel) {
+      sentence = `You're ${completedModules} of ${totalModules} modules into your plan. Current focus: ${focusDomainLabel}. Generate your AI Strategy to see how these modules connect to specific initiatives.`;
+    }
+    return sentence;
+  }, [planState, totalModules, completedModules, focusDomainLabel, dashboardCtx]);
 
   // Activity strip visibility
   const modulesLast30 = completionsData?.totalLast30Days ?? 0;
@@ -864,6 +894,45 @@ export default function LearningPlanPage() {
           onAction={handleHeroAction}
         />
 
+        {/* B2. Strategy linkage — in-flight initiatives */}
+        {initiativesData?.hasStrategy && initiativesData.initiatives.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+              Connected to your strategy
+            </p>
+            <div className="space-y-2">
+              {initiativesData.initiatives.slice(0, 4).map(init => (
+                <button
+                  key={init.id}
+                  onClick={() => setLocation(`/learning/initiative/${init.initiativeId}`)}
+                  className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-muted/30 transition-all group"
+                >
+                  <Target className="h-4 w-4 text-primary/60 flex-shrink-0" aria-hidden="true" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate group-hover:text-primary transition-colors">{init.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {init.phase} · {init.moduleCount} module{init.moduleCount !== 1 ? "s" : ""}{init.completedCount > 0 ? ` · ${init.completedCount} complete` : ""}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary/60 flex-shrink-0" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {initiativesData && !initiativesData.hasStrategy && planState !== "first-time" && (
+          <div className="px-4 py-4 rounded-xl border border-dashed border-border/60 bg-muted/10">
+            <p className="text-[12px] text-muted-foreground">
+              Your learning becomes more powerful when connected to a strategy.
+            </p>
+            <button
+              onClick={() => setLocation("/strategy")}
+              className="text-[12px] font-medium text-primary hover:underline mt-1"
+            >
+              Generate your AI Strategy →
+            </button>
+          </div>
+        )}
         {/* C. Domain cards grid */}
         <div>
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
@@ -878,6 +947,7 @@ export default function LearningPlanPage() {
                 nextItemId={nextItem?.id ?? null}
                 domainScore={domainMap[domainKey]?.score ?? null}
                 targetScore={targetScoreMap[domainKey] ?? null}
+                linkedInitiative={dashboardCtx?.domainInitiativeMap?.[domainKey] ?? null}
                 onClick={() => handleDomainCardClick(domainKey)}
               />
             ))}

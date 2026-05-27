@@ -4705,3 +4705,25 @@ test
 - [x] IBM-6: Client — staff-only back-office page: scan trigger, candidate queue table, review/assess modal, library add form
 - [x] IBM-7: RBAC — admin-only route gating (super_admin only), audit trail on all actions
 - [x] IBM-8: Tests — 16 integration tests covering RBAC, triggerScan, assessCandidate, addToLibrary, input validation, library invariants
+
+## Enhancement Sprint — All Tiers
+
+### Tier 1 — High Impact
+- [x] T1-1a: Centralise score formatting — single canonical utility, eliminate /100 leaks
+- [x] T1-1b: Narrative prompt audit — strict constraint set, no patronising language, sector-specific
+- [x] T1-2a: Assessment Results — remove contradictory Strength badges from domain cards
+- [x] T1-2b: Assessment Results — replace hexagonal radar with accessible horizontal bars
+- [x] T1-2c: Assessment Results — add progressive disclosure for sub-component breakdowns
+- [x] T1-2d: Assessment Results — add tooltips for CPD alignment and Confidence explanations
+- [x] T1-3: Enable AiQ Coach in sidebar navigation with onboarding tooltip
+- [x] T1-4: Build Knowledge Base with real searchable content (CIPD, ISO 42001, prompt guides)
+
+### Tier 2 — Medium Impact
+- [x] T2-5: Learning Plan Dashboard rebuild per references/learning-plan-dashboard-rebuild-v2.md
+- [x] T2-6: Reward mode content stubs — 18 initiatives + principle examples + archetype cards
+- [x] T2-7: Company Assessment results enhancement — trends, benchmarks, next steps
+
+### Tier 3 — Nice-to-Have
+- [x] T3-8: Board Report PDF enhancement — executive summary, visual charts
+- [x] T3-9: Manager Nudge automation — wire conversation prompts to SSE notifications
+- [x] T3-10: Accessibility audit — prefers-reduced-motion, ARIA labels, keyboard nav

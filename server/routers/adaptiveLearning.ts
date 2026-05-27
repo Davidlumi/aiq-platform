@@ -1368,6 +1368,12 @@ CONSTRAINTS: Do NOT use encouragement-machine language. Do NOT make generic reco
         targetId: nudgeId,
         metadataJson: JSON.stringify({ learnerId: input.learnerId, moduleId: input.moduleId, moduleTitle: mod[0].title }),
       });
+      // Push real-time notification to the learner via SSE
+      pushNotification(input.learnerId, {
+        type: "nudge",
+        title: "Learning Nudge",
+        body: input.message || `Your manager suggested you look at: ${mod[0].title}`,
+      });
       return { sent: true, moduleTitle: mod[0].title };
     }),
 

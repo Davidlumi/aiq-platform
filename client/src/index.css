@@ -1025,3 +1025,72 @@ tr {
 .aiq-stagger-6 { animation-delay: 300ms; }
 .aiq-stagger-7 { animation-delay: 360ms; }
 .aiq-stagger-8 { animation-delay: 420ms; }
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ACCESSIBILITY UTILITIES
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Respect user motion preferences — disable all animations and transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Enhanced focus indicators for keyboard navigation */
+:focus-visible {
+  outline: 2px solid oklch(65% 0.15 250);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.dark :focus-visible {
+  outline-color: oklch(75% 0.12 200);
+}
+
+/* Skip-to-content link (screen readers + keyboard users) */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: oklch(25% 0.02 250);
+  color: oklch(95% 0.01 250);
+  font-weight: 600;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top 150ms ease;
+}
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+  .aiq-card {
+    border: 1px solid CanvasText;
+  }
+  [data-state="active"] {
+    border: 2px solid Highlight;
+  }
+}
+
+/* Ensure minimum touch target size for mobile (44x44px WCAG 2.5.5) */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

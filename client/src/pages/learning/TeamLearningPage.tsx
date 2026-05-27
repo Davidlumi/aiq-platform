@@ -4,6 +4,7 @@
  * capability progress, last active date, at-risk learners, nudge functionality.
  */
 import { useState } from "react";
+import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,7 +136,7 @@ export default function TeamLearningPage() {
                       {member.overallScore !== null && (
                         <div className="text-right">
                           <div className="text-xs text-muted-foreground">AI Score</div>
-                          <div className="font-bold text-sm">{(member.overallScore / 10).toFixed(1)}</div>
+                          <div className="font-bold text-sm">{formatScore(member.overallScore)}</div>
                         </div>
                       )}
                       <Button

@@ -586,7 +586,7 @@ export const dashboardRouter = router({
       };
       const narrativeResp = await invokeLLM({
         messages: [
-          { role: "system", content: "You are an expert HR analytics narrator. Write concise, actionable insights for an HR leader dashboard. No jargon. Return JSON only." },
+          { role: "system", content: "You are an expert HR analytics narrator. Write concise, actionable insights for an HR leader dashboard. No jargon, no evaluative adjectives (avoid: excellent, exceptional, outstanding, impressive). Be data-driven and commercially direct. Return JSON only." },
           { role: "user", content: `Organisation has ${allUsers.length} HR staff. ${totalAssessed} have been assessed: ${safeCount} AI Ready, ${atRiskCount} Developing, ${unsafeCount} Not Yet Ready. Weakest capability: ${CAP_LABELS_MAP[weakestCap?.capability ?? ""] ?? weakestCap?.capability} (avg score ${weakestCap?.avgScore ?? "n/a"}). Write a JSON object with exactly three fields: headline (10 words max, summarise the org readiness state), insight (25 words max, the most important pattern in the data), action (25 words max, the single most important action the HR leader should take now).` },
         ],
         response_format: { type: "json_schema", json_schema: { name: "org_narrative", strict: true, schema: { type: "object", properties: { headline: { type: "string" }, insight: { type: "string" }, action: { type: "string" } }, required: ["headline", "insight", "action"], additionalProperties: false } } },

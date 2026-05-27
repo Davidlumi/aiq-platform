@@ -1,9 +1,55 @@
 /**
- * AiQ Design System v3.0 - Score & Rating Colour Utilities
+ * AiQ Design System v3.1 - Score & Rating Colour Utilities
  *
  * Theme-aware: all colours use CSS variables so they respond to light/dark mode.
  * Scores are 0-100 internally; display as 0.0-10.0 where needed.
+ *
+ * ─── CANONICAL SCORE FORMATTING ───────────────────────────────────────────────
+ * All score display MUST go through these functions. No inline /10 conversions.
+ * This is the SINGLE source of truth for score → display conversion (A1 fix).
  */
+
+// ─── Capping log (engineering review) ─────────────────────────────────────────
+let _capCount = 0;
+function logCap(raw: number, context?: string): void {
+  _capCount++;
+  if (_capCount <= 20) {
+    console.warn(`[ScoreCap] Raw score ${raw} capped to 10.0${context ? ` (${context})` : ""}`);
+  }
+}
+
+/**
+ * Format a 0-100 raw score as a /10 decimal string (e.g. "5.5", "8.7").
+ * Caps at 10.0 — no "10.8/10" bugs.
+ * This is the ONLY function that should perform /100 → /10 conversion.
+ */
+export function formatScore(score: number | null | undefined, context?: string): string {
+  if (score == null || score <= 0) return "—";
+  const capped = Math.min(score, 100);
+  if (score > 100) logCap(score, context);
+  return (capped / 10).toFixed(1);
+}
+
+/**
+ * Format a score delta (0-100 scale) as a signed /10 string (e.g. "+0.6", "-3.6").
+ */
+export function formatScoreDelta(delta: number | null | undefined): string {
+  if (delta == null) return "—";
+  const d10 = delta / 10;
+  const sign = d10 > 0 ? "+" : "";
+  return `${sign}${d10.toFixed(1)}`;
+}
+
+/**
+ * Get the numeric /10 value from a raw 0-100 score (for charts, calculations).
+ * Caps at 10.0.
+ */
+export function scoreToDecimal(score: number | null | undefined): number {
+  if (score == null || score <= 0) return 0;
+  return Math.min(score, 100) / 10;
+}
+
+// ─── COLOUR UTILITIES ─────────────────────────────────────────────────────────
 
 /** Convert a 0-100 score to a theme-aware sequential bg + text colour */
 export function scoreToColor(score: number): { bg: string; text: string } {
@@ -26,9 +72,12 @@ export function scoreToTint(score: number): { bg: string; text: string; border: 
   return { bg: "var(--score-gap-bg)", text: "var(--score-gap-text)", border: "var(--score-gap-text)" };
 }
 
-/** Format a 0-100 score as a decimal (e.g. 5.5, 8.7) */
+/**
+ * Legacy alias — kept for backward compatibility.
+ * @deprecated Use formatScore() instead.
+ */
 export function formatPeakonScore(score: number): string {
-  return (score / 10).toFixed(1);
+  return formatScore(score);
 }
 
 /** Get a readiness label for a 0-100 score */

@@ -12,6 +12,7 @@
  *   Appendix       — Methodology (collapsed)
  */
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { formatScore, formatScoreDelta } from "@/lib/peakon-colors";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -361,9 +362,9 @@ function DomainBarChart({
         const gapPts     = row.gap !== null ? row.gap : null;
         const isGap      = gapPts !== null && gapPts > 5;
         // B1: display all capability scores as /10 with one decimal place
-        const currentDisp = hasCurrent ? (row.current! / 10).toFixed(1) : null;
-        const targetDisp  = (row.target / 10).toFixed(1);
-        const gapDisp     = gapPts !== null ? (gapPts / 10).toFixed(1) : null;
+        const currentDisp = hasCurrent ? formatScore(row.current!) : null;
+        const targetDisp  = formatScore(row.target);
+        const gapDisp     = gapPts !== null ? formatScore(gapPts) : null;
         return (
           <div key={row.key} className={`group ${onDomainClick ? "cursor-pointer" : ""}`} onClick={() => onDomainClick?.(row.key)}>
             <div className="flex items-center justify-between mb-1">
@@ -1108,9 +1109,9 @@ export default function AIStrategyPage() {
   const guidingPrinciples = strategyAssessment?.guidingPrinciples as Array<{ title: string; description: string }> | null | undefined;
 
   // Hero numbers
-  const hrNow    = ambitionGap?.functionAvgRaw != null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : null;
-  const hrTarget = (overallTarget / 10).toFixed(1);
-  const hrGap    = hrNow != null ? ((overallTarget - ambitionGap!.functionAvgRaw!) / 10).toFixed(1) : null;
+  const hrNow    = ambitionGap?.functionAvgRaw != null ? formatScore(ambitionGap.functionAvgRaw) : null;
+  const hrTarget = formatScore(overallTarget);
+  const hrGap    = hrNow != null ? formatScoreDelta(overallTarget - ambitionGap!.functionAvgRaw!) : null;
 
   // Diagnostic takeaway: cap priority domains at 3 even if all 6 have gaps
   const allDomainsWithGap  = domainGapRows.filter(r => r.gap !== null && r.gap > 5);
@@ -1543,7 +1544,7 @@ export default function AIStrategyPage() {
             {ambitionGap?.configured && ambitionGap.functionAvgRaw != null && (
               <div className="flex items-center gap-3">
                 <div className="text-center">
-                  <p className="text-xl font-bold dark:text-blue-400 text-blue-600">{(ambitionGap.functionAvgRaw / 10).toFixed(1)}</p>
+                  <p className="text-xl font-bold dark:text-blue-400 text-blue-600">{formatScore(ambitionGap.functionAvgRaw)}</p>
                   <p className="text-[10px] text-muted-foreground">Now</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-muted-foreground" />
@@ -3146,7 +3147,7 @@ export default function AIStrategyPage() {
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold" style={{ color: drillDownQ.data.domainColour }}>
-                    {drillDownQ.data.score != null ? (drillDownQ.data.score / 10).toFixed(1) : "—"}
+                    {drillDownQ.data.score != null ? formatScore(drillDownQ.data.score) : "—"}
                   </p>
                   <p className="text-[10px] text-muted-foreground">/ 10</p>
                 </div>
@@ -3170,7 +3171,7 @@ export default function AIStrategyPage() {
                           "dark:bg-amber-500/20 bg-amber-100 dark:text-amber-400 text-amber-600"
                         }`}>{s.level}</span>
                         <span className="text-xs text-foreground flex-1 truncate">{s.name}</span>
-                        <span className="text-xs font-mono text-muted-foreground">{(s.score / 10).toFixed(1)}/10</span>
+                        <span className="text-xs font-mono text-muted-foreground">{formatScore(s.score)}/10</span>
                       </div>
                     ))}
                   </div>

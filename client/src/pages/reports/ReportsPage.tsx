@@ -3,6 +3,7 @@
  * Dual-audience reporting per AiQ Reporting & Analytics v2.3 spec
  */
 import { useState } from "react";
+import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ function DualAudienceNarrativeView({ data }: { data: any }) {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <StatusBadge state={data?.readinessState ?? "not_assessed"} />
-        <span className="text-sm text-muted-foreground">Score: <strong className="text-foreground">{data?.overallScore != null ? (data.overallScore / 10).toFixed(1) : "—"}</strong>/10</span>
+        <span className="text-sm text-muted-foreground">Score: <strong className="text-foreground">{data?.overallScore != null ? formatScore(data.overallScore) : "—"}</strong>/10</span>
         <span className="text-sm text-muted-foreground">Credibility: <strong className="text-foreground capitalize">{data?.credibilityBand}</strong></span>
       </div>
       <div className="flex gap-2 flex-wrap">

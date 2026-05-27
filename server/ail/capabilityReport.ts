@@ -283,7 +283,7 @@ async function generateNarrativeSections(
   orgClimate: { overallTone: string; hrCredibility: string; description: string }
 ): Promise<[string, string[], string[], string[]]> {
   const scoresSummary = capabilityScores
-    .map(s => `${s.label}: ${s.score}/100 (${s.trend})`)
+    .map(s => `${s.label}: ${(s.score / 10).toFixed(1)}/10 (${s.trend})`)
     .join(", ");
 
   const patternedFailures = failureModes
@@ -298,7 +298,7 @@ Profile data:
 - Capability scores: ${scoresSummary || "Insufficient data"}
 - Persistent failure patterns: ${patternedFailures || "None identified"}
 - Legal risk level: ${narrativeHistory.legalRiskLevel}
-- C-suite confidence in HR: ${narrativeHistory.csuiteConfidenceInHr}/100
+- C-suite confidence in HR: ${(narrativeHistory.csuiteConfidenceInHr / 10).toFixed(1)}/10
 - Organisational climate: ${orgClimate.description}
 - Active narrative threads: ${narrativeHistory.activeThreads.join(", ") || "None"}
 

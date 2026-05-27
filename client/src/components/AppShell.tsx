@@ -63,7 +63,7 @@ const MANAGER_ROLES = ["manager"];
 
 const NAV_ITEMS: NavItem[] = [
   // -- My Development (all roles) ----------------------------------------------
-  // AiQ Coach hidden — in development: { label: "AiQ Coach", path: "/coach", icon: MessageSquare, section: "mydev" }
+  { label: "AiQ Coach",       path: "/coach",          icon: MessageSquare, section: "mydev" },
   { label: "Assessment",      path: "/assessment",     icon: ClipboardList, section: "mydev" },
   { label: "Learning Plan",   path: "/learning",       icon: BookOpen,      section: "mydev" },
   { label: "Content Library", path: "/library",        icon: Library,       section: "mydev" },
@@ -447,6 +447,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden aiq-main-bg">
+      {/* Skip to content link for keyboard/screen reader users */}
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
       {/* Desktop sidebar - 240px expanded, 56px collapsed */}
       <aside
         className={cn(
@@ -574,7 +576,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 min-h-0 overflow-y-auto relative">
+        <main id="main-content" className="flex-1 min-h-0 overflow-y-auto relative" tabIndex={-1}>
           {/* Ambient glow blobs for depth */}
           <div
             className="aiq-glow-blob"

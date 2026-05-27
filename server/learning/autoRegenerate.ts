@@ -169,6 +169,13 @@ export async function autoRegenerateAfterAssessment(params: {
     }
 
     console.log(`[autoRegenerate] Generated gap analysis ${gapId} and plan ${planId} for user ${params.userId} after session ${params.sessionId}`);
+    // Push real-time notification that learning plan has been updated
+    const { pushNotification } = await import("../sse");
+    pushNotification(params.userId, {
+      type: "plan_updated",
+      title: "Learning Plan Updated",
+      body: `Your personalised learning plan has been refreshed with ${planItems.length} modules based on your latest assessment.`,
+    });
   } catch (err) {
     console.warn("[autoRegenerate] Failed (non-fatal):", err);
   }

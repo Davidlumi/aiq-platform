@@ -6,6 +6,7 @@
  * module completion bar, streak indicator, and nudge action.
  */
 import { useState } from "react";
+import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { ArrowLeft, Send, Flame, AlertTriangle, Users, TrendingUp, CheckCircle2 } from "lucide-react";
@@ -165,7 +166,7 @@ export default function TeamProgressPage() {
                       {chipStyle && level !== null ? (
                         <div className="flex items-center gap-1.5">
                           <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium" style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}>{level}</span>
-                          <span className="text-xs text-muted-foreground">{(member.overallScore! / 10).toFixed(1)}</span>
+                          <span className="text-xs text-muted-foreground">{formatScore(member.overallScore!)}</span>
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">-</span>

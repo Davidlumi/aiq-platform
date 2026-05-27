@@ -292,6 +292,41 @@ export const INITIATIVE_CONFIG = {
     timeReductionRate: 0.50,
     payEquityValueRate: 0.005,
   },
+  cr_total_reward_statements: {
+    attritionReductionRate: 0.005,
+    queryReductionPerEmployee: 15,
+  },
+  cr_benefits_optimisation: {
+    benefitsAsPercentOfSalary: 0.15,
+    optimisationRate: 0.08,
+  },
+  cr_salary_benchmarking_ai: {
+    savingPerHire: 500,
+    acceptanceUplift: 0.10,
+  },
+  cr_incentive_modelling: {
+    variablePayPercent: 0.10,
+    roiImprovementRate: 0.12,
+  },
+  cr_executive_comp_analytics: {
+    remCoTimeSaving: 80000,
+    complianceValueLarge: 150000,
+    complianceValueSmall: 75000,
+  },
+  cr_reward_communication_ai: {
+    queryReductionPerEmployee: 25,
+    engagementValuePerEmployee: 10,
+  },
+  cr_gender_pay_gap_reporting: {
+    complianceTimeSavingLarge: 60000,
+    complianceTimeSavingSmall: 30000,
+    riskReductionLarge: 100000,
+    riskReductionSmall: 50000,
+  },
+  cr_flexible_benefits_ai: {
+    takeUpImprovementRate: 0.05,
+    adminSavingPerEmployee: 20,
+  },
 
   // ─── Manager Effectiveness Category ──────────────────────────────────────
   mg_manager_copilot: {

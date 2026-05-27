@@ -463,6 +463,18 @@ export default function CompanyAssessmentResultsPage() {
                         <ChevronDown className="w-3.5 h-3.5 text-foreground/30 shrink-0" />
                       )}
                     </button>
+                    {isExpanded && (() => {
+                      const dimData = dimensionsArr.find(d => d.key === key);
+                      return dimData ? (
+                        <div className="mt-2 ml-10 pl-3 border-l-2 border-border space-y-2 pb-2">
+                          <p className="text-xs text-muted-foreground leading-relaxed">{dimData.description}</p>
+                          <div className="flex items-start gap-1.5">
+                            <BookOpen className="w-3 h-3 text-foreground/30 mt-0.5 shrink-0" />
+                            <p className="text-[10px] text-foreground/40 leading-relaxed italic">{dimData.researchBasis}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 );
               })}
@@ -520,6 +532,72 @@ export default function CompanyAssessmentResultsPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Executive Summary */}
+        {executiveSummary && (
+          <div className="bg-foreground/5 border border-border rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 dark:text-violet-400 text-violet-600" />
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Executive Summary
+              </div>
+            </div>
+            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">{executiveSummary}</p>
+          </div>
+        )}
+
+        {/* Recommended Next Steps */}
+        {results.gapAnalysisJson && (
+          <div className="bg-foreground/5 border border-border rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="w-4 h-4 dark:text-emerald-400 text-emerald-600" />
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Recommended Next Steps
+              </div>
+            </div>
+            <div className="space-y-4">
+              {(results.gapAnalysisJson as { critical: string[]; developing: string[]; strengths: string[] }).critical.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-3.5 h-3.5 dark:text-rose-400 text-rose-600" />
+                    <span className="text-xs font-semibold dark:text-rose-400 text-rose-600">Critical Gaps — Immediate Action Required</span>
+                  </div>
+                  <ul className="space-y-1.5 ml-5">
+                    {(results.gapAnalysisJson as { critical: string[] }).critical.map((item: string, i: number) => (
+                      <li key={i} className="text-xs text-foreground/70 leading-relaxed list-disc">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(results.gapAnalysisJson as { critical: string[]; developing: string[]; strengths: string[] }).developing.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-3.5 h-3.5 dark:text-amber-400 text-amber-600" />
+                    <span className="text-xs font-semibold dark:text-amber-400 text-amber-600">Developing Areas — Build Capability</span>
+                  </div>
+                  <ul className="space-y-1.5 ml-5">
+                    {(results.gapAnalysisJson as { developing: string[] }).developing.map((item: string, i: number) => (
+                      <li key={i} className="text-xs text-foreground/70 leading-relaxed list-disc">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(results.gapAnalysisJson as { critical: string[]; developing: string[]; strengths: string[] }).strengths.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 dark:text-emerald-400 text-emerald-600" />
+                    <span className="text-xs font-semibold dark:text-emerald-400 text-emerald-600">Strengths — Leverage & Scale</span>
+                  </div>
+                  <ul className="space-y-1.5 ml-5">
+                    {(results.gapAnalysisJson as { strengths: string[] }).strengths.map((item: string, i: number) => (
+                      <li key={i} className="text-xs text-foreground/70 leading-relaxed list-disc">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}

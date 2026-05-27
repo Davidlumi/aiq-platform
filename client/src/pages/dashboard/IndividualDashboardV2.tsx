@@ -16,7 +16,7 @@ import { useState } from "react";
 import { BookOpen, Sparkles, Target } from "lucide-react";
 import { DomainDot, CapabilityBar, EmptyState, RatingBadge, PeakonScoreBadge, ConfidenceIndicator } from "@/components/dashboard/DashboardUI";
 import { HeroScore } from "@/components/dashboard/PeakonPrimitives";
-import { scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
+import { formatScore, scoreToColor, formatPeakonScore, scoreToReadinessLabel } from "@/lib/peakon-colors";
 import { DOMAIN_COLOURS } from "@/lib/domains";
 
 // --- Wireframe colour scale (1→5 levels) -------------------------------------
@@ -66,7 +66,7 @@ function LevelChip({ level, size = "sm" }: { level: number; size?: "sm" | "md" |
 function LevelRing({ score, size = 160 }: { score: number; size?: number }) {
   const level = getLevelFromScore(score);
   const levelLabel = getLevelLabel(level);
-  const preciseScore = (score / 10).toFixed(1);
+  const preciseScore = formatScore(score);
   const chipStyle = getLevelChipStyle(level);
 
   const levelMin = (level - 1) * 20;
@@ -161,20 +161,20 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const score = data.overallScore ?? 0;
   const level = getLevelFromScore(score);
   const levelLabel = getLevelLabel(level);
-  const preciseScore = (score / 10).toFixed(1);
+  const preciseScore = formatScore(score);
 
   const sortedDomains = [...data.domains].filter(d => d.score !== null).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   const topDomain = sortedDomains[0];
   const weakDomain = sortedDomains[sortedDomains.length - 1];
   const deltaText = scoreDelta !== null && scoreDelta !== 0
-    ? `Up ${Math.abs(scoreDelta / 10).toFixed(1)} levels this cycle. `
+    ? `Up ${formatScore(Math.abs(scoreDelta))} levels this cycle. `
     : "";
   const narrativeText = data.overallScore !== null
-    ? `You're at Level ${preciseScore} - ${levelLabel.toLowerCase()}. ${deltaText}${topDomain ? `Strongest in ${topDomain.name} (${(topDomain.score! / 10).toFixed(1)}).` : ""} ${weakDomain && weakDomain.key !== topDomain?.key ? `Biggest opportunity is ${weakDomain.name} (${(weakDomain.score! / 10).toFixed(1)}) - your current development focus.` : ""}`
+    ? `You're at Level ${preciseScore} - ${levelLabel.toLowerCase()}. ${deltaText}${topDomain ? `Strongest in ${topDomain.name} (${formatScore(topDomain.score!)}).` : ""} ${weakDomain && weakDomain.key !== topDomain?.key ? `Biggest opportunity is ${weakDomain.name} (${formatScore(weakDomain.score!)}) - your current development focus.` : ""}`
     : "Complete your assessment to generate your capability profile.";
 
   const roleTarget = data.roleTarget;
-  const roleTargetText = roleTarget ? `Role target: Level ${(roleTarget / 10).toFixed(1)} by December.` : "";
+  const roleTargetText = roleTarget ? `Role target: Level ${formatScore(roleTarget)} by December.` : "";
 
   const plan = data.planSummary;
 
@@ -284,7 +284,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             const domainScore = d.score;
             const domainLevel = domainScore !== null ? getLevelFromScore(domainScore) : 1;
             const chipStyle = getLevelChipStyle(domainLevel);
-            const preciseLevel = domainScore !== null ? (domainScore / 10).toFixed(1) : null;
+            const preciseLevel = domainScore !== null ? formatScore(domainScore) : null;
             const isWeakest = weakDomain && d.key === weakDomain.key && d.key !== topDomain?.key;
             const isStrongest = topDomain && d.key === topDomain.key;
 

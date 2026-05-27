@@ -474,5 +474,5 @@ function generateBoardNarrative(readinessState: string, score: number): string {
     not_assessed: "Not Assessed",
     insufficient_evidence: "Insufficient Evidence",
   };
-  return `Status: ${stateMap[readinessState] ?? readinessState}. Score: ${Math.round(score)}/100.`;
+  return `Status: ${stateMap[readinessState] ?? readinessState}. Score: ${(score / 10).toFixed(1)}/10.`;
 }

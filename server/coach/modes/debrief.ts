@@ -176,7 +176,7 @@ function getContext(session: CoachSessionContext): DebriefModeContext {
 
 function buildSystemPrompt(session: CoachSessionContext, ctx: DebriefModeContext): string {
   const domainSummary = (ctx.domainScores ?? [])
-    .map((d) => `  • ${d.displayName} (${tierLabel(d.tier)}): ${d.score.toFixed(0)}/100 — ${d.band}`)
+    .map((d) => `  • ${d.displayName} (${tierLabel(d.tier)}): ${(d.score / 10).toFixed(1)}/10 — ${d.band}`)
     .join("\n");
 
   return `You are the AiQ Coach, an expert AI capability development coach for HR professionals.
@@ -192,7 +192,7 @@ Your role in this mode:
 - Transition naturally to the Learning Journey when they're ready
 
 Assessment Results Summary:
-  Overall Score: ${ctx.overallScore?.toFixed(0) ?? "N/A"}/100
+  Overall Score: ${ctx.overallScore ? (ctx.overallScore / 10).toFixed(1) : "N/A"}/10
   Readiness State: ${ctx.readinessState}
 
 Domain Scores:
@@ -230,7 +230,7 @@ function buildMemoryProposals(
         signalKey: `${d.domain}_strength`,
         memoryType: "strength",
         confidence: Math.min(95, d.score),
-        summary: `Demonstrated strength in ${d.displayName} (score: ${d.score.toFixed(0)}/100, ${d.signalCount} signals)`,
+        summary: `Demonstrated strength in ${d.displayName} (score: ${(d.score / 10).toFixed(1)}/10, ${d.signalCount} signals)`,
         evidence: {
           turnId,
           sessionId,
@@ -243,7 +243,7 @@ function buildMemoryProposals(
         signalKey: `${d.domain}_gap`,
         memoryType: "gap",
         confidence: Math.min(90, 100 - d.score),
-        summary: `Identified gap in ${d.displayName} (score: ${d.score.toFixed(0)}/100, ${d.signalCount} signals)`,
+        summary: `Identified gap in ${d.displayName} (score: ${(d.score / 10).toFixed(1)}/10, ${d.signalCount} signals)`,
         evidence: {
           turnId,
           sessionId,
@@ -269,7 +269,7 @@ async function generateIntroResponse(
   const gaps = domains.filter((d) => d.band === "needs_work" || d.band === "critical");
 
   const contextNote = `
-Assessment complete. Overall score: ${overallScore.toFixed(0)}/100.
+Assessment complete. Overall score: ${(overallScore / 10).toFixed(1)}/10.
 Strengths: ${strengths.map((d) => d.displayName).join(", ") || "none yet identified"}.
 Priority gaps: ${gaps.map((d) => d.displayName).join(", ") || "none identified"}.
 Total domains assessed: ${domains.length}.`;
@@ -290,7 +290,7 @@ Total domains assessed: ${domains.length}.`;
 
   return (
     (response.choices?.[0]?.message?.content as string) ??
-    `Your assessment is complete. Let me walk you through what I found. Overall, you scored ${overallScore.toFixed(0)} out of 100 across ${domains.length} capability domains. I'll take you through each one — starting with your foundation capabilities, then your strategic and operational areas. Ready to dive in?`
+    `Your assessment is complete. Let me walk you through what I found. Overall, you scored ${(overallScore / 10).toFixed(1)} out of 10 across ${domains.length} capability domains. I'll take you through each one — starting with your foundation capabilities, then your strategic and operational areas. Ready to dive in?`
   );
 }
 
@@ -305,7 +305,7 @@ async function generateDomainDebriefResponse(
 
   const domainContext = `
 Domain to debrief: ${domain.displayName} (${tierLabel(domain.tier)})
-Score: ${domain.score.toFixed(0)}/100
+Score: ${(domain.score / 10).toFixed(1)}/10
 Band: ${bandLabel(domain.band)}
 Signal count: ${domain.signalCount} data points
 User's last message: "${userMessage}"
@@ -358,7 +358,7 @@ async function generatePlanPreviewResponse(
   }
 
   const planContext = `
-Priority gaps to address: ${gaps.map((d) => `${d.displayName} (${d.score.toFixed(0)}/100)`).join(", ") || "none — excellent overall performance"}.
+Priority gaps to address: ${gaps.map((d) => `${d.displayName} (${(d.score / 10).toFixed(1)}/10)`).join(", ") || "none identified"}.
 Learning plan status: ${planExists ? "A personalised learning plan has already been generated for you." : "A personalised learning plan is ready to be generated."}
 User's last message: (transitioning from domain debrief)`;
 

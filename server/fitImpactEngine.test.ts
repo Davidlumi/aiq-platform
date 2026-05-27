@@ -87,17 +87,17 @@ const baseInputs: FitImpactEngineInputs = {
 // ── 1. Initiative Library ─────────────────────────────────────────────────────
 
 describe("Initiative Library", () => {
-  it("has exactly 52 initiatives", () => {
-    expect(INITIATIVE_LIBRARY).toHaveLength(52);
+  it("has exactly 60 initiatives", () => {
+    expect(INITIATIVE_LIBRARY).toHaveLength(60);
   });
 
-  it("exports INITIATIVE_IDS with 52 entries", () => {
-    expect(INITIATIVE_IDS).toHaveLength(52);
+  it("exports INITIATIVE_IDS with 60 entries", () => {
+    expect(INITIATIVE_IDS).toHaveLength(60);
   });
 
   it("all initiative IDs are unique", () => {
     const ids = INITIATIVE_LIBRARY.map((i) => i.id);
-    expect(new Set(ids).size).toBe(52);
+    expect(new Set(ids).size).toBe(60);
   });
 
   it("each initiative has required fields", () => {
@@ -229,9 +229,9 @@ describe("Engine: fit classification and sorting", () => {
     expect(ids).not.toContain("cr_compensation_recommendations");
   });
 
-  it("returns 36 results in Reward mode (34 both + 2 reward-only)", () => {
+  it("returns 44 results in Reward mode (34 both + 10 reward-only)", () => {
     const results = evaluateAllInitiatives({ ...baseInputs, mode: "reward" });
-    expect(results).toHaveLength(36);
+    expect(results).toHaveLength(44);
     const ids = results.map((r) => r.id);
     // Reward-only initiatives must appear in Reward mode
     expect(ids).toContain("cr_pay_equity");
@@ -468,11 +468,11 @@ describe("Specific initiative scoring", () => {
 // ── 5. Value formulas ─────────────────────────────────────────────────────────
 
 describe("Value Formulas", () => {
-  it("VALUE_FORMULA_REGISTRY has exactly 52 entries", () => {
-    expect(Object.keys(VALUE_FORMULA_REGISTRY)).toHaveLength(52);
+  it("VALUE_FORMULA_REGISTRY has exactly 60 entries", () => {
+    expect(Object.keys(VALUE_FORMULA_REGISTRY)).toHaveLength(60);
   });
 
-  it("all 52 registered formulas return valid ValueRange shapes", () => {
+  it("all 60 registered formulas return valid ValueRange shapes", () => {
     for (const [key, fn] of Object.entries(VALUE_FORMULA_REGISTRY)) {
       const result = fn(baseInputs);
       expect(result.low, `${key}.low is not a number`).toBeTypeOf("number");

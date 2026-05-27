@@ -98,6 +98,7 @@ import type { CapabilityKey } from "../assessment/roleArchetypes";
 import { processAssessmentThroughAIL } from "../ail/userIntelligenceProfile";
 // Auto-regeneration: trigger gap analysis + learning plan after assessment
 import { autoRegenerateAfterAssessment } from "../learning/autoRegenerate";
+import { pushNotification } from "../sse";
 // I10: Persona classification — use persona profile to influence assessment difficulty
 import { getPersonaProfile, getPersonaAdaptedParameters } from "../ail/personaClassificationEngine";
 
@@ -1930,6 +1931,26 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
           });
         } catch { /* non-fatal — norm collection must never block session completion */ }
       })();
+      // Push real-time notification to the user on assessment completion
+      pushNotification(ctx.user.id, {
+        type: "assessment_complete",
+        title: "Assessment Complete",
+        body: `Your AI capability assessment is complete. Score: ${(results.overallScore / 10).toFixed(1)}/10`,
+      });
+      // Notify manager(s) that a team member completed their assessment
+      try {
+        const { managerTeamMembers } = await import("../../drizzle/schema");
+        const managerRows = await db.select({ managerId: managerTeamMembers.managerId })
+          .from(managerTeamMembers)
+          .where(eq(managerTeamMembers.memberId, ctx.user.id));
+        for (const mgr of managerRows) {
+          pushNotification(mgr.managerId, {
+            type: "assessment_complete",
+            title: "Team Member Assessed",
+            body: `${ctx.user.firstName ?? 'A team member'} completed their AI capability assessment.`,
+          });
+        }
+      } catch { /* non-fatal — manager notification is best-effort */ }
       return {
         overallScore: results.overallScore,
         credibilityScore,

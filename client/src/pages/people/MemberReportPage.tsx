@@ -6,6 +6,7 @@
  * trajectory chart, conversation prompts link.
  */
 import { useParams, Link } from "wouter";
+import { formatScore } from "@/lib/peakon-colors";
 import { ArrowLeft, BookOpen, Calendar, MessageSquare, AlertTriangle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ function DomainBar({ label, score, colour }: { label: string; score: number | nu
         <div className="h-full rounded transition-all duration-700" style={{ width: `${barWidth}%`, background: chipStyle.bg }} />
       </div>
       <span className="inline-flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium flex-shrink-0" style={{ backgroundColor: chipStyle.bg, color: chipStyle.text }}>{level}</span>
-      <span className="text-sm font-medium tabular-nums text-foreground" style={{ width: 28, textAlign: "right" }}>{(score / 10).toFixed(1)}</span>
+      <span className="text-sm font-medium tabular-nums text-foreground" style={{ width: 28, textAlign: "right" }}>{formatScore(score)}</span>
     </div>
   );
 }

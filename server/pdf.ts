@@ -739,7 +739,7 @@ async function generateAIStrategyReport(doc: PDFKit.PDFDocument, userId: string,
     if (notReadyPct > 10) {
       findings.push({
         observation: `${notReadyPct}% of assessed HR professionals (${notReadyCount} people) are below the minimum readiness threshold.`,
-        supportingData: `${notReadyCount} of ${assessedCount} assessed staff score below 40/100.`,
+        supportingData: `${notReadyCount} of ${assessedCount} assessed staff score below 4.0/10.`,
         strategicImplication: "Prioritise these individuals for immediate foundation-level development before expanding AI tool access.",
         priority: "high",
       });

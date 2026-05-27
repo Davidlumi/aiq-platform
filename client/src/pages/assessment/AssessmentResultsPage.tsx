@@ -20,6 +20,7 @@
  * Fallback: if generateCapabilityProfile fails, scores + bars render without narrative.
  */
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { formatScore } from "@/lib/peakon-colors";
 import { useParams, useLocation, Link } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -99,115 +100,54 @@ function getHeroHeadline(score: number, priorityCount: number, growthThemes: str
   };
 }
 
-// ─── Hexagonal Radar (v2.1: compact 6-axis radar for domain-at-a-glance) ────
-function HexRadar({ domains, size = 160 }: { domains: { key: string; score: number; colour: string }[]; size?: number }) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = size * 0.38;
-  const n = domains.length;
-  if (n < 3) return null;
-
-  // Generate polygon points for a given radius
-  const polyPoints = (radius: number) =>
-    domains.map((_, i) => {
-      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-      return `${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`;
-    }).join(" ");
-
-  // Data polygon
-  const dataPoints = domains.map((d, i) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const dr = (d.score / 100) * r;
-    return `${cx + dr * Math.cos(angle)},${cy + dr * Math.sin(angle)}`;
-  }).join(" ");
-
+// ─── Domain Mini Bars (v2.2: accessible horizontal bars replacing radar chart) ────
+function DomainMiniBars({ domains }: { domains: { key: string; name?: string; score: number; colour: string }[] }) {
+  if (domains.length === 0) return null;
+  const DOMAIN_SHORT: Record<string, string> = {
+    ai_literacy_foundations: "Literacy",
+    ai_ethics_trust: "Ethics",
+    ai_tools_adoption: "Tools",
+    ai_data_decision: "Data",
+    ai_change_leadership: "Change",
+    ai_strategy_governance: "Strategy",
+  };
   return (
-    <svg width={size} height={size} className="shrink-0" aria-label="Domain radar chart">
-      {/* Grid rings at 25%, 50%, 75%, 100% */}
-      {[0.25, 0.5, 0.75, 1].map(pct => (
-        <polygon
-          key={pct}
-          points={polyPoints(r * pct)}
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth={pct === 1 ? 1 : 0.5}
-          opacity={0.5}
-        />
+    <div className="flex flex-col gap-1.5 w-[140px] shrink-0" aria-label="Domain scores">
+      {domains.map(d => (
+        <div key={d.key} className="flex items-center gap-1.5">
+          <span className="text-[9px] text-muted-foreground w-[42px] truncate text-right">{DOMAIN_SHORT[d.key] ?? d.key.slice(3, 9)}</span>
+          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${d.score}%`, background: d.colour }}
+            />
+          </div>
+          <span className="text-[9px] font-mono text-muted-foreground w-[22px] text-right">{formatScore(d.score)}</span>
+        </div>
       ))}
-      {/* Axis lines */}
-      {domains.map((_, i) => {
-        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-        return (
-          <line
-            key={i}
-            x1={cx} y1={cy}
-            x2={cx + r * Math.cos(angle)} y2={cy + r * Math.sin(angle)}
-            stroke="var(--border)" strokeWidth={0.5} opacity={0.4}
-          />
-        );
-      })}
-      {/* Data area */}
-      <polygon
-        points={dataPoints}
-        fill="rgba(96,165,250,0.15)"
-        stroke="rgba(96,165,250,0.7)"
-        strokeWidth={1.5}
-        strokeLinejoin="round"
-      />
-      {/* Data points */}
-      {domains.map((d, i) => {
-        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-        const dr = (d.score / 100) * r;
-        return (
-          <circle
-            key={d.key}
-            cx={cx + dr * Math.cos(angle)}
-            cy={cy + dr * Math.sin(angle)}
-            r={3}
-            fill={d.colour}
-            stroke="var(--background)"
-            strokeWidth={1.5}
-          />
-        );
-      })}
-      {/* Labels */}
-      {domains.map((d, i) => {
-        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-        const labelR = r + 14;
-        const x = cx + labelR * Math.cos(angle);
-        const y = cy + labelR * Math.sin(angle);
-        const anchor = Math.abs(Math.cos(angle)) < 0.1 ? "middle" : Math.cos(angle) > 0 ? "start" : "end";
-        return (
-          <text
-            key={d.key}
-            x={x} y={y + 3}
-            textAnchor={anchor}
-            fill="var(--muted-foreground)"
-            fontSize={9}
-            fontFamily="Inter, sans-serif"
-          >
-            {(d.score / 10).toFixed(1)}
-          </text>
-        );
-      })}
-    </svg>
+    </div>
   );
 }
 
-// ─── Confidence Indicator (v2.1: response pattern mini-bar) ─────────────────
+// ─── Confidence Indicator (v2.2: response pattern mini-bar with tooltip) ───────────
 function ConfidenceIndicator({ strong, acceptable, weak, total }: { strong: number; acceptable: number; weak: number; total: number }) {
   if (!total) return null;
   const strongPct = (strong / total) * 100;
   const acceptablePct = (acceptable / total) * 100;
   const weakPct = (weak / total) * 100;
   return (
-    <div className="flex items-center gap-2">
+    <div className="group relative flex items-center gap-2">
       <div className="flex-1 h-1 rounded-full overflow-hidden flex" aria-label={`Response confidence: ${strong} strong, ${acceptable} acceptable, ${weak} needs work out of ${total}`}>
         <div className="h-full bg-emerald-500/70" style={{ width: `${strongPct}%` }} />
         <div className="h-full bg-blue-500/50" style={{ width: `${acceptablePct}%` }} />
         <div className="h-full bg-amber-500/50" style={{ width: `${weakPct}%` }} />
       </div>
       <span className="text-[9px] text-foreground/30 tabular-nums shrink-0">{strong}/{total}</span>
+      {/* Tooltip */}
+      <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-50 w-52 p-2 rounded-md bg-popover text-popover-foreground border border-border shadow-md">
+        <p className="text-[10px] font-medium mb-1">Response Confidence Profile</p>
+        <p className="text-[9px] text-muted-foreground leading-relaxed">Shows the consistency of your responses across items in this domain. Green = decisive answers, Blue = moderate certainty, Amber = uncertain or contradictory responses.</p>
+      </div>
     </div>
   );
 }
@@ -220,7 +160,7 @@ function ScoreDoughnut({ score, size = 120 }: { score: number; size?: number }) 
   const circ = 2 * Math.PI * r;
   const fill = (score / 100) * circ;
   const sw = 11 * (size / 120);
-  const displayScore = (score / 10).toFixed(1);
+  const displayScore = formatScore(score);
   const level = getLevelInfo(score);
   const { colour, opacity } = getDoughnutColour(score);
   return (
@@ -254,7 +194,7 @@ function DomainBar({ score, domainColour }: { score: number; domainColour: strin
     <div
       role="progressbar"
       aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}
-      aria-valuetext={`${(score / 10).toFixed(1)} out of 10 — ${level.label}`}
+      aria-valuetext={`${formatScore(score)} out of 10 — ${level.label}`}
       className="w-full h-1.5 rounded-full overflow-hidden"
       style={{ backgroundColor: "var(--border)" }}
     >
@@ -642,7 +582,7 @@ export default function AssessmentResultsPage() {
                     onClick={() => { navigate(`/assessment/results/${s.id}`); setHistoryOpen(false); }}
                   >
                     <span>{d}</span>
-                    {sc !== undefined && <span className="text-xs text-muted-foreground tabular-nums">{(sc/10).toFixed(1)}</span>}
+                    {sc !== undefined && <span className="text-xs text-muted-foreground tabular-nums">{formatScore(sc)}</span>}
                   </button>
                 );
               })}
@@ -718,13 +658,12 @@ export default function AssessmentResultsPage() {
               <ScoreDoughnut score={overallScore} size={120} />
               {sortedDomains.length >= 6 && (
                 <div className="hidden md:block">
-                  <HexRadar
+                  <DomainMiniBars
                     domains={DOMAIN_KEYS.map(k => ({
                       key: k,
                       score: capabilityScores[k]?.score ?? 0,
                       colour: DOMAIN_COLOURS[k],
                     }))}
-                    size={140}
                   />
                 </div>
               )}
@@ -861,7 +800,7 @@ export default function AssessmentResultsPage() {
                 <article
                   key={domain.key}
                   className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3"
-                  aria-label={`${domain.name}: ${(domain.score / 10).toFixed(1)} out of 10, ${level.label}`}
+                  aria-label={`${domain.name}: ${formatScore(domain.score)} out of 10, ${level.label}`}
                 >
                   {/* Top row: icon+title | score+level vertical stack (v2) */}
                   <div className="flex items-start justify-between gap-2">
@@ -878,7 +817,7 @@ export default function AssessmentResultsPage() {
                     {/* Score + level: vertical stack, right-aligned (v2 spec) */}
                     <div className="flex flex-col items-end shrink-0 gap-0.5">
                       <span className="text-sm font-bold text-foreground tabular-nums leading-none">
-                        {(domain.score / 10).toFixed(1)}
+                        {formatScore(domain.score)}
                       </span>
                       <span className="text-[9px] font-semibold tracking-widest uppercase text-foreground/35 leading-none">
                         {level.label}
@@ -961,7 +900,7 @@ export default function AssessmentResultsPage() {
                       <DomainDot colour={domain.colour} />
                       <span className="text-sm font-medium text-foreground truncate">{domain.name}</span>
                       <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                        {(domain.score / 10).toFixed(1)} → {(target / 10).toFixed(1)}
+                        {formatScore(domain.score)} → {formatScore(target)}
                       </span>
                     </div>
                     {/* Module info */}

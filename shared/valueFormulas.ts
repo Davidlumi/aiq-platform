@@ -1088,6 +1088,141 @@ export function cr_compensation_recommendations(inputs: ValueFormulaInputs): Val
   };
 }
 
+// ── Reward-Exclusive Category (8 new) ────────────────────────────────────────
+
+export function cr_total_reward_statements(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const salary = avgSalary(inputs);
+  // Value: reduced attrition from reward visibility + reduced HR queries
+  const attritionReduction = headcount * salary * 0.005; // 0.5% attrition reduction from visibility
+  const queryReduction = headcount * 15; // £15/employee/year in reduced HR query handling
+  const rawTotal = attritionReduction + queryReduction;
+  const total = Math.min(rawTotal, 500_000);
+  return {
+    low: Math.round(total * 0.3),
+    high: Math.round(total * 0.8),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ${headcount} employees: attrition reduction from reward visibility (£${Math.round(attritionReduction).toLocaleString()}) plus HR query reduction (£${queryReduction.toLocaleString()}).`,
+  };
+}
+
+export function cr_benefits_optimisation(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const salary = avgSalary(inputs);
+  // Value: benefits cost reduction (typically 2-5% of benefits spend)
+  const benefitsSpend = headcount * salary * 0.15; // Assume 15% of salary goes to benefits
+  const optimisationSaving = benefitsSpend * 0.08; // 8% reduction through optimisation
+  const total = Math.min(optimisationSaving, 1_000_000);
+  return {
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on estimated benefits spend of £${Math.round(benefitsSpend).toLocaleString()}: 8% optimisation saving through AI-driven utilisation analysis.`,
+  };
+}
+
+export function cr_salary_benchmarking_ai(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const salary = avgSalary(inputs);
+  // Value: reduced time-to-offer + improved offer acceptance
+  const hires = inputs.sectionD?.annualHires ?? Math.round(headcount * 0.12);
+  const timeToOfferValue = hires * 500; // £500/hire saved in faster benchmarking
+  const acceptanceValue = hires * salary * 0.05 * 0.10; // 10% more acceptances × 5% of salary
+  const rawTotal = timeToOfferValue + acceptanceValue;
+  const total = Math.min(rawTotal, 750_000);
+  return {
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ~${hires} annual hires: faster benchmarking (£${timeToOfferValue.toLocaleString()}) plus improved offer acceptance (£${Math.round(acceptanceValue).toLocaleString()}).`,
+  };
+}
+
+export function cr_incentive_modelling(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const salary = avgSalary(inputs);
+  // Value: improved incentive ROI through better plan design
+  const variablePayPool = headcount * salary * 0.10; // Assume 10% variable pay
+  const roiImprovement = variablePayPool * 0.12; // 12% improvement in incentive effectiveness
+  const total = Math.min(roiImprovement, 1_500_000);
+  return {
+    low: Math.round(total * 0.3),
+    high: Math.round(total * 0.8),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on estimated variable pay pool of £${Math.round(variablePayPool).toLocaleString()}: 12% improvement in incentive effectiveness through AI modelling.`,
+  };
+}
+
+export function cr_executive_comp_analytics(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  // Value: RemCo preparation time + compliance risk reduction
+  const remCoTimeSaving = 80_000; // Fixed: senior time saved in RemCo prep
+  const complianceValue = headcount > 5000 ? 150_000 : 75_000; // Regulatory risk reduction
+  const rawTotal = remCoTimeSaving + complianceValue;
+  const total = Math.min(rawTotal, 500_000);
+  return {
+    low: Math.round(total * 0.5),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `RemCo preparation time saving (£${remCoTimeSaving.toLocaleString()}) plus regulatory compliance risk reduction (£${complianceValue.toLocaleString()}).`,
+  };
+}
+
+export function cr_reward_communication_ai(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  // Value: reduced pay queries + improved reward understanding
+  const queryReduction = headcount * 25; // £25/employee/year in reduced pay queries
+  const engagementValue = headcount * 10; // £10/employee from improved engagement
+  const rawTotal = queryReduction + engagementValue;
+  const total = Math.min(rawTotal, 400_000);
+  return {
+    low: Math.round(total * 0.4),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Based on ${headcount} employees: pay query reduction (£${queryReduction.toLocaleString()}) plus engagement improvement (£${engagementValue.toLocaleString()}).`,
+  };
+}
+
+export function cr_gender_pay_gap_reporting(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  // Value: compliance time saving + risk reduction
+  const complianceTimeSaving = headcount > 1000 ? 60_000 : 30_000;
+  const riskReduction = headcount > 5000 ? 100_000 : 50_000;
+  const rawTotal = complianceTimeSaving + riskReduction;
+  const total = Math.min(rawTotal, 300_000);
+  return {
+    low: Math.round(total * 0.5),
+    high: Math.round(total * 1.0),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `GPG reporting time saving (£${complianceTimeSaving.toLocaleString()}) plus regulatory risk reduction (£${riskReduction.toLocaleString()}).`,
+  };
+}
+
+export function cr_flexible_benefits_ai(inputs: ValueFormulaInputs): ValueRange {
+  const headcount = inputs.sectionA.totalHeadcount ?? 0;
+  const salary = avgSalary(inputs);
+  // Value: increased benefits take-up + admin cost reduction
+  const benefitsSpend = headcount * salary * 0.15;
+  const takeUpValue = benefitsSpend * 0.05; // 5% more value realised through better take-up
+  const adminReduction = headcount * 20; // £20/employee admin saving
+  const rawTotal = takeUpValue + adminReduction;
+  const total = Math.min(rawTotal, 800_000);
+  return {
+    low: Math.round(total * 0.3),
+    high: Math.round(total * 0.8),
+    currency: "GBP",
+    isIndicative: indicative(inputs.sectionD),
+    narrative: `Increased benefits value realisation (£${Math.round(takeUpValue).toLocaleString()}) plus administration cost reduction (£${adminReduction.toLocaleString()}).`,
+  };
+}
+
 // ── Manager Effectiveness Category ───────────────────────────────────────────
 
 export function mg_manager_copilot(inputs: ValueFormulaInputs): ValueRange {
@@ -1360,6 +1495,14 @@ export const VALUE_FORMULA_REGISTRY: Record<string, (inputs: ValueFormulaInputs)
   // Compensation
   cr_pay_equity,
   cr_compensation_recommendations,
+  cr_total_reward_statements,
+  cr_benefits_optimisation,
+  cr_salary_benchmarking_ai,
+  cr_incentive_modelling,
+  cr_executive_comp_analytics,
+  cr_reward_communication_ai,
+  cr_gender_pay_gap_reporting,
+  cr_flexible_benefits_ai,
   // Manager
   mg_manager_copilot,
   mg_difficult_conversations,

@@ -10,6 +10,7 @@
  *  5. Talking points — collapsed teaser by default; expandable
  */
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { formatScore, formatScoreDelta } from "@/lib/peakon-colors";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -1125,9 +1126,9 @@ export default function StrategyOverviewPage() {
 
   // Capability
   const overallTarget = useMemo(() => AMBITION_TIER_BASE[businessLevel] ?? 55, [businessLevel]);
-  const hrNow    = ambitionGap?.functionAvgRaw != null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : null;
-  const hrTarget = (overallTarget / 10).toFixed(1);
-  const hrGap    = hrNow != null ? ((overallTarget - ambitionGap!.functionAvgRaw!) / 10).toFixed(1) : null;
+  const hrNow    = ambitionGap?.functionAvgRaw != null ? formatScore(ambitionGap.functionAvgRaw) : null;
+  const hrTarget = formatScore(overallTarget);
+  const hrGap    = hrNow != null ? formatScoreDelta(overallTarget - ambitionGap!.functionAvgRaw!) : null;
 
   // Strategy hash for talking points stale detection
   const strategyHash = useMemo(() => {

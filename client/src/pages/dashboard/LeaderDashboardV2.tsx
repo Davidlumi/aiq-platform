@@ -3,6 +3,7 @@
  * Clean card-based layout, consistent border/card/foreground tokens, team × domain heatmap.
  */
 import React, { useState, useMemo } from "react";
+import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
@@ -128,7 +129,7 @@ function DomainBar({ label, score, count, colour }: { label: string; score: numb
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: colour }} />
       </div>
       <span className="text-sm font-semibold tabular-nums w-8 text-right" style={{ color: score != null ? colour : "var(--muted-foreground)" }}>
-        {score != null ? (score / 10).toFixed(1) : "—"}
+        {score != null ? formatScore(score) : "—"}
       </span>
     </div>
   );
@@ -252,7 +253,7 @@ function FunctionHeatmap({
                               className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-semibold tabular-nums"
                               style={{ background: cell.bg, color: cell.text }}
                             >
-                              {score != null ? (score / 10).toFixed(1) : "—"}
+                              {score != null ? formatScore(score) : "—"}
                             </span>
                           </td>
                         );
@@ -262,7 +263,7 @@ function FunctionHeatmap({
                           const cell = heatmapCellStyle(fn.overallAvg);
                           return (
                             <span className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-bold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
-                              {fn.overallAvg != null ? (fn.overallAvg / 10).toFixed(1) : "—"}
+                              {fn.overallAvg != null ? formatScore(fn.overallAvg) : "—"}
                             </span>
                           );
                         })()}
@@ -297,7 +298,7 @@ function FunctionHeatmap({
                               className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-medium tabular-nums"
                               style={{ background: cell.bg, color: cell.text }}
                             >
-                              {score != null ? (score / 10).toFixed(1) : "—"}
+                              {score != null ? formatScore(score) : "—"}
                             </span>
                           </td>
                         );
@@ -307,7 +308,7 @@ function FunctionHeatmap({
                           const cell = heatmapCellStyle(member.overallScore);
                           return (
                             <span className="inline-flex items-center justify-center w-10 h-6 rounded text-xs font-semibold tabular-nums" style={{ background: cell.bg, color: cell.text }}>
-                              {member.overallScore != null ? (member.overallScore / 10).toFixed(1) : "—"}
+                              {member.overallScore != null ? formatScore(member.overallScore) : "—"}
                             </span>
                           );
                         })()}
@@ -369,7 +370,7 @@ export default function LeaderDashboardV2() {
 
   const heroNarrative = useMemo(() => {
     if (!main || !hero) return null;
-    const preciseAvg = main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "-";
+    const preciseAvg = main.functionScore !== null ? formatScore(main.functionScore) : "-";
     const aiReadyPct = main.assessedCount > 0 ? Math.round(((main.ratingCounts.ai_ready ?? 0) / main.assessedCount) * 100) : 0;
     const atRiskCount = (main.ratingCounts.not_yet_ready ?? 0) + (main.ratingCounts.foundation_gap ?? 0);
     return {
@@ -387,10 +388,10 @@ export default function LeaderDashboardV2() {
     }
     const weakestDomain = (main.domainDistribution ?? []).filter((d: any) => d.avgScore !== null).sort((a: any, b: any) => (a.avgScore ?? 0) - (b.avgScore ?? 0))[0];
     if (weakestDomain) {
-      result.push({ type: "medium", priority: "Domain gap", title: `${weakestDomain.domainName} is the weakest domain`, body: `Function average ${(weakestDomain.avgScore! / 10).toFixed(1)} · ${weakestDomain.totalAssessed} assessed.`, linkLabel: "View breakdown", linkHref: "/admin/org-context" });
+      result.push({ type: "medium", priority: "Domain gap", title: `${weakestDomain.domainName} is the weakest domain`, body: `Function average ${formatScore(weakestDomain.avgScore!)} · ${weakestDomain.totalAssessed} assessed.`, linkLabel: "View breakdown", linkHref: "/admin/org-context" });
     }
     if (ambitionGap?.configured && ambitionGap.gapRaw !== null && ambitionGap.gapRaw > 0) {
-      result.push({ type: "strategic", priority: "Ambition gap", title: `Function is ${(ambitionGap.gapRaw / 10).toFixed(1)} below AI ambition target`, body: `Current ${ambitionGap.functionAvgRaw !== null ? (ambitionGap.functionAvgRaw / 10).toFixed(1) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? (ambitionGap.ambitionTargetScore / 10).toFixed(1) : "-"}.`, linkLabel: "View roadmap", linkHref: "/strategy" });
+      result.push({ type: "strategic", priority: "Ambition gap", title: `Function is ${formatScore(ambitionGap.gapRaw)} below AI ambition target`, body: `Current ${ambitionGap.functionAvgRaw !== null ? formatScore(ambitionGap.functionAvgRaw) : "-"} vs target ${ambitionGap.ambitionTargetScore !== null ? formatScore(ambitionGap.ambitionTargetScore) : "-"}.`, linkLabel: "View roadmap", linkHref: "/strategy" });
     }
     return result.slice(0, 3);
   }, [main, ambitionGap]);
@@ -469,7 +470,7 @@ export default function LeaderDashboardV2() {
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">Step 2 of 2</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                Your function capability data is live — {main.assessedCount} of {main.totalHeadcount} assessed, function average {main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—"}.
+                Your function capability data is live — {main.assessedCount} of {main.totalHeadcount} assessed, function average {main.functionScore !== null ? formatScore(main.functionScore) : "—"}.
                 {" "}Configure your AI roadmap to unlock gap analysis, trajectory projections, and board-ready strategic intelligence.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
@@ -501,13 +502,13 @@ export default function LeaderDashboardV2() {
 
       {/* ── 5 KPI tiles ── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <KpiCard label="Function average" value={main.functionScore !== null ? (main.functionScore / 10).toFixed(1) : "—"} sub="Capability level" />
+        <KpiCard label="Function average" value={main.functionScore !== null ? formatScore(main.functionScore) : "—"} sub="Capability level" />
         <KpiCard label="AI Ready" value={`${aiReadyPct}%`} sub={`${main.ratingCounts.ai_ready ?? 0} of ${main.assessedCount}`} accent="#22c55e" />
         <KpiCard label="Capability gaps" value={atRiskCount} sub="Need urgent support" accent={atRiskCount > 0 ? "#ef4444" : undefined} />
         <KpiCard label="Assessment coverage" value={`${assessedPct}%`} sub={`${main.assessedCount} of ${main.totalHeadcount}`} />
         <KpiCard
           label="Strategy gap score"
-          value={ambitionGap?.configured ? (ambitionGap.gapRaw !== null ? (ambitionGap.gapRaw > 0 ? `+${(ambitionGap.gapRaw / 10).toFixed(1)}` : (ambitionGap.gapRaw / 10).toFixed(1)) : "—") : "—"}
+          value={ambitionGap?.configured ? (ambitionGap.gapRaw !== null ? (ambitionGap.gapRaw > 0 ? `+${formatScore(ambitionGap.gapRaw)}` : formatScore(ambitionGap.gapRaw)) : "—") : "—"}
           sub={ambitionGap?.configured ? (ambitionGap.ambitionTargetLabel ?? "vs. target") : "Configure roadmap"}
           accent={ambitionGap?.gapRaw != null ? (ambitionGap.gapRaw > 10 ? "#ef4444" : ambitionGap.gapRaw > 0 ? "#f59e0b" : "#22c55e") : undefined}
         />
@@ -554,7 +555,7 @@ export default function LeaderDashboardV2() {
         const gapColour = gap > 1 ? "#ef4444" : gap > 0 ? "#f59e0b" : "#22c55e";
         const domainChartData = (main.domainDistribution ?? []).map((d: any) => ({
           name: d.domainName.replace("AI ", "").replace("Workforce ", ""),
-          current: d.avgScore !== null ? +(d.avgScore / 10).toFixed(1) : 0,
+          current: d.avgScore !== null ? +formatScore(d.avgScore) : 0,
           target: +target.toFixed(1),
           colour: BRAND_DOMAIN_COLOURS[d.domain as keyof typeof BRAND_DOMAIN_COLOURS] ?? "#6366f1",
         }));

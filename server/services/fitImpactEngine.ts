@@ -828,12 +828,12 @@ function buildFitRationale(initiative: InitiativeDefinition, fitStatus: FitStatu
   }, { label: "", pct: 0 });
 
   if (fitStatus === "STRONG_FIT") {
-    return `Strong fit — ${topFactor.label} is a key driver. Soft fit score: ${fitScore}/100.`;
+    return `Strong fit — ${topFactor.label} is a key driver. Soft fit score: ${(fitScore / 10).toFixed(1)}/10.`;
   }
   if (fitStatus === "POSSIBLE_FIT") {
-    return `Possible fit — some conditions are met but gaps exist. Soft fit score: ${fitScore}/100.`;
+    return `Possible fit — some conditions are met but gaps exist. Soft fit score: ${(fitScore / 10).toFixed(1)}/10.`;
   }
-  return `Weak fit — most fit conditions are not met at this time. Soft fit score: ${fitScore}/100.`;
+  return `Weak fit — most fit conditions are not met at this time. Soft fit score: ${(fitScore / 10).toFixed(1)}/10.`;
 }
 
 // ─── Confidence labelling ─────────────────────────────────────────────────────
