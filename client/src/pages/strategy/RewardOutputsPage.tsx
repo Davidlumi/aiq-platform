@@ -970,7 +970,20 @@ export default function RewardOutputsPage() {
   );
 }
 
-// ─── Print HTML builder ───────────────────────────────────────────────────────
+
+// ─── Print HTML builder (board-grade) ────────────────────────────────────────
+//
+// Brand tokens (from shared/brand.ts):
+//   Navy  #0A1628   Teal  #2D6A5E   Gold  #C8A96E
+//   Slate #334155   Mist  #94a3b8   White #ffffff
+//
+// Six required sections (brief §):
+//   1. Executive summary + recommendation  (cover page)
+//   2. Three-scenario financial case
+//   3. Initiative portfolio + sequencing
+//   4. Capability gap + development pathway
+//   5. Strategic narrative
+//   6. Methodology / assumptions footnote
 
 function buildPrintHtml(
   report: AssembledReport,
@@ -979,64 +992,408 @@ function buildPrintHtml(
   central: AssembledReport["model"]["rollup"]["central"],
   chartDataUrl?: string | null
 ): string {
-  const audienceLabel = { board: "Board", remco: "RemCo", leadership: "Leadership" }[audience];
+  const audienceLabel: Record<Audience, string> = { board: "Board", remco: "RemCo", leadership: "Leadership" };
   const date = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-  const sections = report.sections
-    .filter(s => !s.isPlaceholder && s.content)
-    .map(s => `<section style="margin-bottom:2rem;page-break-inside:avoid;">
-      <h2 style="font-size:14px;font-weight:700;margin-bottom:0.5rem;border-bottom:1px solid #e2e8f0;padding-bottom:0.25rem;">${s.title}</h2>
-      <p style="font-size:12px;line-height:1.7;color:#374151;white-space:pre-wrap;">${s.content}</p>
-    </section>`)
-    .join("");
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  function fmtGBP(n: number): string {
+    const abs = Math.abs(n);
+    const sign = n < 0 ? "−" : "";
+    if (abs >= 1_000_000) return `${sign}£${(abs / 1_000_000).toFixed(2)}M`;
+    if (abs >= 1_000)     return `${sign}£${Math.round(abs / 1_000).toLocaleString()}k`;
+    return `${sign}£${Math.round(abs).toLocaleString()}`;
+  }
+  function fmtROI(r: number | null): string {
+    if (r === null) return "N/A";
+    return `${r >= 0 ? "" : "−"}${Math.abs(Math.round(r * 100))}%`;
+  }
+  function fmtPayback(m: number | null): string {
+    if (m === null) return "No payback within 3 years";
+    return `${m} months`;
+  }
+  function badge(text: string, bg: string, fg: string): string {
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:${bg};color:${fg};">${text}</span>`;
+  }
+  function kpiCard(label: string, value: string, sub: string, accent: string, negative = false): string {
+    return `<div style="flex:1;min-width:0;background:#ffffff;border:1px solid #e2e8f0;border-top:3px solid ${accent};border-radius:6px;padding:14px 16px;">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;margin-bottom:6px;">${label}</div>
+      <div style="font-size:20px;font-weight:800;color:${negative ? "#dc2626" : "#0A1628"};line-height:1.1;">${value}</div>
+      <div style="font-size:9px;color:#94a3b8;margin-top:4px;">${sub}</div>
+    </div>`;
+  }
+  function sectionHeader(num: string, title: string): string {
+    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #0A1628;">
+      <div style="background:#0A1628;color:#C8A96E;font-size:10px;font-weight:800;padding:4px 10px;border-radius:4px;letter-spacing:0.1em;">${num}</div>
+      <h2 style="font-size:14px;font-weight:800;color:#0A1628;margin:0;letter-spacing:0.01em;">${title}</h2>
+    </div>`;
+  }
+  function pageFooter(page: number): string {
+    return `<div style="position:fixed;bottom:0;left:0;right:0;height:24px;background:#0A1628;display:flex;align-items:center;justify-content:space-between;padding:0 40px;">
+      <span style="font-size:8px;color:#C8A96E;font-weight:600;">CONFIDENTIAL · ${report.companyName} · ${audienceLabel[audience]} · ${date}</span>
+      <span style="font-size:8px;color:#94a3b8;">${page}</span>
+    </div>`;
+  }
 
+  const conservative = report.model.rollup.conservative;
+  const optimistic   = report.model.rollup.optimistic;
+
+  // ── COVER PAGE ───────────────────────────────────────────────────────────────
+  const coverPage = `
+<div class="page cover-page">
+  <div style="height:6px;background:#2D6A5E;"></div>
+  <div style="padding:48px 48px 0;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:56px;">
+      <div style="background:#2D6A5E;color:#ffffff;font-size:13px;font-weight:800;padding:7px 13px;border-radius:6px;letter-spacing:0.06em;">AiQ</div>
+      <div style="color:#94a3b8;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;">HR Capability Intelligence</div>
+    </div>
+    <div style="color:#C8A96E;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;margin-bottom:10px;">${audienceLabel[audience]} Strategy Pack</div>
+    <div style="font-size:36px;font-weight:800;color:#ffffff;line-height:1.05;margin-bottom:8px;">Reward AI<br>People Strategy</div>
+    <div style="height:3px;width:56px;background:#C8A96E;margin:22px 0;"></div>
+    <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">${report.companyName}</div>
+    <div style="font-size:10px;color:#94a3b8;">${report.initiatives.length} initiatives · ${date}</div>
+
+    ${summaryText ? `
+    <div style="background:#0d2137;border-left:3px solid #C8A96E;border-radius:0 6px 6px 0;padding:18px 22px;margin-top:32px;">
+      <div style="font-size:8px;color:#C8A96E;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">Executive Summary</div>
+      <div style="font-size:10px;color:#e2e8f0;line-height:1.7;">${summaryText.replace(/\n/g, "<br>")}</div>
+    </div>` : ""}
+
+    <div style="display:flex;gap:12px;margin-top:28px;">
+      ${kpiCard("3yr Investment", fmtGBP(central.tco3yr), "Total cost of ownership", "#C8A96E")}
+      ${kpiCard("Net Value (central)", fmtGBP(central.netValue3yr), "Post overlap-discount", "#2D6A5E")}
+      ${kpiCard("Net Benefit", fmtGBP(central.netBenefit3yr), "Value minus investment", central.netBenefit3yr >= 0 ? "#2D6A5E" : "#dc2626", central.netBenefit3yr < 0)}
+      ${kpiCard("ROI (central)", fmtROI(central.roi3yr), `Payback: ${fmtPayback(central.paybackMonths)}`, "#0A1628")}
+    </div>
+  </div>
+  ${pageFooter(1)}
+</div>`;
+
+  // ── SECTION 2: THREE-SCENARIO FINANCIAL CASE ─────────────────────────────────
+  const conservativeNegative = conservative.netBenefit3yr < 0;
+  const financialPage = `
+<div class="page">
+  ${sectionHeader("02", "Three-Scenario Financial Case")}
+  <p style="font-size:10px;color:#475569;margin-bottom:16px;">All figures are 3-year totals. The central scenario is the recommended planning baseline. The conservative case is presented honestly — including the downside — to give the board a complete picture.</p>
+
+  <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:20px;">
+    <thead>
+      <tr style="background:#0A1628;">
+        <th style="padding:10px 12px;text-align:left;color:#C8A96E;font-size:8px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Metric</th>
+        <th style="padding:10px 12px;text-align:right;color:#94a3b8;font-size:8px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Conservative</th>
+        <th style="padding:10px 12px;text-align:right;color:#ffffff;font-size:8px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">Central ★</th>
+        <th style="padding:10px 12px;text-align:right;color:#94a3b8;font-size:8px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Optimistic</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:#f8fafc;">
+        <td style="padding:9px 12px;color:#334155;font-weight:600;">Gross Value (3yr)</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtGBP(conservative.grossValue3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#0A1628;font-weight:700;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">${fmtGBP(central.grossValue3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtGBP(optimistic.grossValue3yr)}</td>
+      </tr>
+      <tr>
+        <td style="padding:9px 12px;color:#334155;font-weight:600;">Overlap Discount</td>
+        <td style="padding:9px 12px;text-align:right;color:#64748b;">(${fmtGBP(conservative.overlapDiscountTotal)})</td>
+        <td style="padding:9px 12px;text-align:right;color:#64748b;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">(${fmtGBP(central.overlapDiscountTotal)})</td>
+        <td style="padding:9px 12px;text-align:right;color:#64748b;">(${fmtGBP(optimistic.overlapDiscountTotal)})</td>
+      </tr>
+      <tr style="background:#f8fafc;">
+        <td style="padding:9px 12px;color:#334155;font-weight:600;">Adjusted Net Value</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtGBP(conservative.netValue3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#0A1628;font-weight:700;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">${fmtGBP(central.netValue3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtGBP(optimistic.netValue3yr)}</td>
+      </tr>
+      <tr>
+        <td style="padding:9px 12px;color:#334155;font-weight:600;">Total Investment (TCO)</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtGBP(conservative.tco3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#0A1628;font-weight:700;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">${fmtGBP(central.tco3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtGBP(optimistic.tco3yr)}</td>
+      </tr>
+      <tr style="background:${conservativeNegative ? "#fef2f2" : "#f0fdf4"};">
+        <td style="padding:10px 12px;color:#0A1628;font-weight:800;">Net Benefit</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:700;color:${conservative.netBenefit3yr < 0 ? "#dc2626" : "#16a34a"};">${fmtGBP(conservative.netBenefit3yr)}</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:800;color:#16a34a;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">${fmtGBP(central.netBenefit3yr)}</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:700;color:#16a34a;">${fmtGBP(optimistic.netBenefit3yr)}</td>
+      </tr>
+      <tr>
+        <td style="padding:9px 12px;color:#334155;font-weight:600;">ROI</td>
+        <td style="padding:9px 12px;text-align:right;color:${conservative.roi3yr !== null && conservative.roi3yr < 0 ? "#dc2626" : "#334155"};font-weight:700;">${fmtROI(conservative.roi3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#0A1628;font-weight:800;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">${fmtROI(central.roi3yr)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;font-weight:700;">${fmtROI(optimistic.roi3yr)}</td>
+      </tr>
+      <tr style="background:#f8fafc;">
+        <td style="padding:9px 12px;color:#334155;font-weight:600;">Payback Period</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtPayback(conservative.paybackMonths)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#0A1628;font-weight:700;border-left:2px solid #2D6A5E;border-right:2px solid #2D6A5E;">${fmtPayback(central.paybackMonths)}</td>
+        <td style="padding:9px 12px;text-align:right;color:#334155;">${fmtPayback(optimistic.paybackMonths)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  ${conservativeNegative ? `
+  <div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:16px;">
+    <div style="font-size:9px;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Conservative Downside — Board Note</div>
+    <div style="font-size:10px;color:#7f1d1d;line-height:1.6;">The conservative scenario produces a negative net benefit of ${fmtGBP(conservative.netBenefit3yr)} (${fmtROI(conservative.roi3yr)} ROI). This reflects low-end value realisation combined with high-end costs. The board should note this is the pessimistic bound; the central case (${fmtROI(central.roi3yr)} ROI, ${fmtPayback(central.paybackMonths)} payback) is the recommended planning baseline. Mitigation: phased delivery with stage-gate reviews reduces exposure.</div>
+  </div>` : ""}
+
+  ${chartDataUrl ? `
+  <div style="margin-top:16px;page-break-inside:avoid;">
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;margin-bottom:8px;">Portfolio Charts</div>
+    <img src="${chartDataUrl}" style="width:100%;border-radius:6px;border:1px solid #e2e8f0;" alt="Portfolio charts" />
+  </div>` : ""}
+
+  ${pageFooter(2)}
+</div>`;
+
+  // ── SECTION 3: INITIATIVE PORTFOLIO ──────────────────────────────────────────
+  const phaseOrder = ["Foundation", "Build", "Optimise"];
+  const byPhase: Record<string, typeof report.initiatives> = {};
+  for (const init of report.initiatives) {
+    const ph = init.phase || "Foundation";
+    if (!byPhase[ph]) byPhase[ph] = [];
+    byPhase[ph].push(init);
+  }
+  const phaseColours: Record<string, string> = {
+    Foundation: "#2D6A5E",
+    Build: "#C8A96E",
+    Optimise: "#0A1628",
+  };
+
+  const portfolioPage = `
+<div class="page">
+  ${sectionHeader("03", "Initiative Portfolio & Sequencing")}
+  <p style="font-size:10px;color:#475569;margin-bottom:16px;">${report.initiatives.length} initiatives selected, sequenced across delivery phases. Financial figures are central-scenario 3-year totals.</p>
+
+  <table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:16px;">
+    <thead>
+      <tr style="background:#0A1628;">
+        <th style="padding:8px 10px;text-align:left;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Initiative</th>
+        <th style="padding:8px 10px;text-align:left;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Phase</th>
+        <th style="padding:8px 10px;text-align:left;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Value Type</th>
+        <th style="padding:8px 10px;text-align:right;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">3yr Investment</th>
+        <th style="padding:8px 10px;text-align:right;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">3yr Value</th>
+        <th style="padding:8px 10px;text-align:right;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Net Benefit</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${phaseOrder.flatMap((ph, pi) => {
+        const inits = byPhase[ph] || [];
+        if (inits.length === 0) return [];
+        return [
+          `<tr><td colspan="6" style="padding:8px 10px;background:#f1f5f9;font-size:8px;font-weight:700;color:${phaseColours[ph] || "#0A1628"};text-transform:uppercase;letter-spacing:0.08em;border-left:3px solid ${phaseColours[ph] || "#0A1628"};">${ph} Phase</td></tr>`,
+          ...inits.map((init, i) => `
+          <tr style="background:${(pi * inits.length + i) % 2 === 0 ? "#ffffff" : "#f8fafc"};">
+            <td style="padding:8px 10px;color:#0A1628;font-weight:600;">${init.title}</td>
+            <td style="padding:8px 10px;">${badge(init.phase || "—", phaseColours[init.phase || "Foundation"] || "#64748b", "#ffffff")}</td>
+            <td style="padding:8px 10px;color:#475569;">${(init.primaryValueType || "").replace(/_/g, " ")}</td>
+            <td style="padding:8px 10px;text-align:right;color:#334155;">${fmtGBP(init.tco3yrCentral)}</td>
+            <td style="padding:8px 10px;text-align:right;color:#334155;">${fmtGBP(init.value3yrCentral)}</td>
+            <td style="padding:8px 10px;text-align:right;font-weight:700;color:${init.netBenefit3yrCentral >= 0 ? "#16a34a" : "#dc2626"};">${fmtGBP(init.netBenefit3yrCentral)}</td>
+          </tr>`),
+        ];
+      }).join("")}
+      <tr style="background:#0A1628;">
+        <td colspan="3" style="padding:9px 10px;color:#C8A96E;font-weight:800;font-size:9px;">Portfolio Total (central)</td>
+        <td style="padding:9px 10px;text-align:right;color:#ffffff;font-weight:700;">${fmtGBP(central.tco3yr)}</td>
+        <td style="padding:9px 10px;text-align:right;color:#ffffff;font-weight:700;">${fmtGBP(central.netValue3yr)}</td>
+        <td style="padding:9px 10px;text-align:right;color:${central.netBenefit3yr >= 0 ? "#86efac" : "#fca5a5"};font-weight:800;">${fmtGBP(central.netBenefit3yr)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  ${report.model.overlapDiscounts.length > 0 ? `
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 14px;margin-top:8px;">
+    <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Overlap Discounts Applied</div>
+    ${report.model.overlapDiscounts.map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:9px;">
+      <span style="color:#334155;font-weight:600;">${d.subDomain.replace(/_/g, " ")} (${Math.round(d.discountPct * 100)}% co-delivery discount)</span>
+      <span style="color:#64748b;">${d.initiativeTitles.slice(0, 3).join(", ")}${d.initiativeTitles.length > 3 ? ` +${d.initiativeTitles.length - 3} more` : ""} → <strong style="color:#0A1628;">(${fmtGBP(d.discountAmountCentral)})</strong></span>
+    </div>`).join("")}
+  </div>` : ""}
+
+  ${pageFooter(3)}
+</div>`;
+
+  // ── SECTION 4: CAPABILITY GAP + DEVELOPMENT PATHWAY ──────────────────────────
+  const hasDevPlans = report.developmentPlans && report.developmentPlans.length > 0;
+  const capabilityPage = `
+<div class="page">
+  ${sectionHeader("04", "Capability Gap & Development Pathway")}
+  <p style="font-size:10px;color:#475569;margin-bottom:16px;">Derived from Stage 8 assessment data. Development plans are generated for people-dimensions with a confirmed gap between current and required capability levels.</p>
+
+  ${!report.stageCompleteness.stage8 ? `
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:14px 16px;margin-bottom:16px;">
+    <div style="font-size:9px;font-weight:700;color:#92400e;margin-bottom:4px;">Stage 8 not yet confirmed</div>
+    <div style="font-size:10px;color:#78350f;">Capability assessment data is not yet available. Complete Stage 8 to populate this section.</div>
+  </div>` : hasDevPlans ? `
+  <table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:16px;">
+    <thead>
+      <tr style="background:#0A1628;">
+        <th style="padding:8px 10px;text-align:left;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Dimension</th>
+        <th style="padding:8px 10px;text-align:left;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Current Level</th>
+        <th style="padding:8px 10px;text-align:left;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Required Level</th>
+        <th style="padding:8px 10px;text-align:left;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Gap</th>
+        <th style="padding:8px 10px;text-align:right;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Est. Months</th>
+        <th style="padding:8px 10px;text-align:right;color:#C8A96E;font-size:7.5px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">People</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${report.developmentPlans.map((plan, i) => `
+      <tr style="background:${i % 2 === 0 ? "#ffffff" : "#f8fafc"};">
+        <td style="padding:8px 10px;color:#0A1628;font-weight:600;">${plan.dimensionLabel}</td>
+        <td style="padding:8px 10px;">${badge(plan.currentLevel.replace(/_/g, " "), "#e2e8f0", "#334155")}</td>
+        <td style="padding:8px 10px;">${badge(plan.requiredLevel.replace(/_/g, " "), "#dbeafe", "#1e40af")}</td>
+        <td style="padding:8px 10px;">${badge(plan.gapStatus === "significant_gap" ? "Significant" : "Minor", plan.gapStatus === "significant_gap" ? "#fee2e2" : "#fef3c7", plan.gapStatus === "significant_gap" ? "#991b1b" : "#92400e")}</td>
+        <td style="padding:8px 10px;text-align:right;color:#334155;">${plan.estimatedMonths}</td>
+        <td style="padding:8px 10px;text-align:right;color:#334155;">${plan.peopleCount}</td>
+      </tr>
+      <tr style="background:${i % 2 === 0 ? "#f8fafc" : "#ffffff"};">
+        <td colspan="6" style="padding:4px 10px 10px 10px;color:#475569;font-size:9px;font-style:italic;">${plan.pathwaySummary}</td>
+      </tr>`).join("")}
+    </tbody>
+  </table>` : `
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:14px 16px;margin-bottom:16px;">
+    <div style="font-size:10px;color:#166534;">No capability gaps identified. The team's current levels meet or exceed all required levels for this portfolio.</div>
+  </div>`}
+
+  ${pageFooter(4)}
+</div>`;
+
+  // ── SECTION 5: STRATEGIC NARRATIVE ───────────────────────────────────────────
+  const narrativeSections = report.sections.filter(s => !s.isPlaceholder && s.content);
+  const narrativePage = `
+<div class="page">
+  ${sectionHeader("05", "Strategic Narrative")}
+  <p style="font-size:10px;color:#475569;margin-bottom:16px;">The reward leader's voice — the strategic intent, principles, and boundaries that define this programme.</p>
+
+  ${report.visionText ? `
+  <div style="background:#f0fdf4;border-left:4px solid #2D6A5E;border-radius:0 6px 6px 0;padding:14px 18px;margin-bottom:16px;">
+    <div style="font-size:8px;font-weight:700;color:#2D6A5E;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Vision Statement</div>
+    <div style="font-size:11px;font-style:italic;color:#0A1628;line-height:1.7;">"${report.visionText}"</div>
+  </div>` : ""}
+
+  ${report.strategicShifts && report.strategicShifts.length > 0 ? `
+  <div style="margin-bottom:16px;">
+    <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Strategic Shifts</div>
+    ${report.strategicShifts.map(s => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+      <div style="width:6px;height:6px;border-radius:50%;background:#2D6A5E;flex-shrink:0;margin-top:4px;"></div>
+      <div style="font-size:10px;color:#334155;">${s.text}</div>
+    </div>`).join("")}
+  </div>` : ""}
+
+  ${report.principles && report.principles.length > 0 ? `
+  <div style="margin-bottom:16px;">
+    <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Guiding Principles</div>
+    ${report.principles.map(p => `
+    <div style="background:#f8fafc;border-left:3px solid #C8A96E;border-radius:0 4px 4px 0;padding:8px 12px;margin-bottom:6px;font-size:10px;color:#334155;">${p.text}</div>`).join("")}
+  </div>` : ""}
+
+  ${report.wontDos && report.wontDos.length > 0 ? `
+  <div style="margin-bottom:16px;">
+    <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Strategic Exclusions (Won't Do)</div>
+    ${report.wontDos.map(w => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:5px 0;">
+      <div style="background:#ef4444;color:#ffffff;width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;margin-top:1px;">✕</div>
+      <div style="font-size:10px;color:#475569;">${w.text}</div>
+    </div>`).join("")}
+  </div>` : ""}
+
+  ${narrativeSections.length > 0 ? narrativeSections.map(s => `
+  <div style="margin-bottom:14px;page-break-inside:avoid;">
+    <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">${s.title}</div>
+    <div style="font-size:10px;color:#334155;line-height:1.7;white-space:pre-wrap;">${s.content}</div>
+  </div>`).join("") : ""}
+
+  ${pageFooter(5)}
+</div>`;
+
+  // ── SECTION 6: METHODOLOGY & ASSUMPTIONS ─────────────────────────────────────
+  const methodologyPage = `
+<div class="page">
+  ${sectionHeader("06", "Methodology & Assumptions")}
+  <p style="font-size:10px;color:#475569;margin-bottom:16px;">This section explains how the financial figures in this report are derived. Boards trust numbers that show their working.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px 16px;">
+      <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Value Methodology</div>
+      <ul style="font-size:9.5px;color:#334155;line-height:1.8;padding-left:16px;margin:0;">
+        <li>Initiative values are calibrated from UK 2025–26 market benchmarks by sub-domain.</li>
+        <li>Each initiative carries a low / central / high value range; the central is the midpoint.</li>
+        <li>Overlap discounts (15–25%) are applied where initiatives share delivery infrastructure or target the same population.</li>
+        <li>All values are gross 3-year totals before investment deduction.</li>
+      </ul>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px 16px;">
+      <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Cost Methodology</div>
+      <ul style="font-size:9.5px;color:#334155;line-height:1.8;padding-left:16px;margin:0;">
+        <li>TCO = Year 1 implementation cost + 2 × annual ongoing cost.</li>
+        <li>Costs are scaled to organisation size (headcount and payroll) and sector.</li>
+        <li>Internal resource (programme management, procurement) is included in TCO.</li>
+        <li>Programme funding (off-band pay adjustments) is shown separately where applicable.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px 16px;margin-bottom:16px;">
+    <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Scenario Definitions</div>
+    <table style="width:100%;border-collapse:collapse;font-size:9px;">
+      <thead><tr style="background:#e2e8f0;"><th style="padding:6px 8px;text-align:left;font-weight:700;color:#334155;">Scenario</th><th style="padding:6px 8px;text-align:left;font-weight:700;color:#334155;">Cost Assumption</th><th style="padding:6px 8px;text-align:left;font-weight:700;color:#334155;">Value Assumption</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:6px 8px;color:#334155;font-weight:600;">Conservative</td><td style="padding:6px 8px;color:#475569;">High-end cost estimates</td><td style="padding:6px 8px;color:#475569;">Low-end value realisation</td></tr>
+        <tr style="background:#f1f5f9;"><td style="padding:6px 8px;color:#334155;font-weight:600;">Central ★</td><td style="padding:6px 8px;color:#475569;">Midpoint cost estimates</td><td style="padding:6px 8px;color:#475569;">Midpoint value realisation</td></tr>
+        <tr><td style="padding:6px 8px;color:#334155;font-weight:600;">Optimistic</td><td style="padding:6px 8px;color:#475569;">Low-end cost estimates</td><td style="padding:6px 8px;color:#475569;">High-end value realisation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:12px 16px;margin-bottom:16px;">
+    <div style="font-size:8px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Important Caveats</div>
+    <div style="font-size:9.5px;color:#78350f;line-height:1.7;">These figures are indicative estimates based on calibrated benchmarks and the organisation's profile (${report.companyName}${report.headcount ? `, ${report.headcount.toLocaleString()} employees` : ""}). Actual outcomes will depend on vendor selection, implementation quality, change management effectiveness, and adoption rates. All figures exclude VAT. This report does not constitute financial advice.</div>
+  </div>
+
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 16px;">
+    <div style="font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Report Metadata</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:9px;color:#475569;">
+      <div><strong style="color:#334155;">Generated:</strong> ${date}</div>
+      <div><strong style="color:#334155;">Audience:</strong> ${audienceLabel[audience]}</div>
+      <div><strong style="color:#334155;">Initiatives:</strong> ${report.initiatives.length}</div>
+      <div><strong style="color:#334155;">Overlap groups:</strong> ${report.model.overlapDiscounts.length}</div>
+      <div><strong style="color:#334155;">Overlap discount:</strong> ${fmtGBP(central.overlapDiscountTotal)}</div>
+      <div><strong style="color:#334155;">Stage 7 confirmed:</strong> ${report.stageCompleteness.stage7 ? "Yes" : "No"}</div>
+    </div>
+  </div>
+
+  ${pageFooter(6)}
+</div>`;
+
+  // ── ASSEMBLE ─────────────────────────────────────────────────────────────────
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${report.companyName} — Reward AI Strategy</title>
+<title>${report.companyName} — Reward AI Strategy · ${audienceLabel[audience]}</title>
 <style>
-  @page { size: A4; margin: 2cm 2.5cm; }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111827; margin: 0; padding: 0; font-size: 12px; line-height: 1.6; }
-  h1 { font-size: 20px; font-weight: 700; margin-bottom: 0.25rem; page-break-after: avoid; }
-  h2 { page-break-after: avoid; }
-  .meta { font-size: 11px; color: #6b7280; margin-bottom: 2rem; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; page-break-inside: avoid; }
-  .kpi { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; text-align: center; }
-  .kpi-value { font-size: 18px; font-weight: 700; }
-  .kpi-label { font-size: 10px; color: #6b7280; margin-top: 0.25rem; }
-  .exec-summary { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 2rem; page-break-inside: avoid; }
-  .exec-summary h2 { font-size: 13px; font-weight: 700; margin-bottom: 0.5rem; }
-  section { page-break-inside: avoid; margin-bottom: 1.5rem; }
-  img { max-width: 100%; height: auto; }
-  .footer { font-size: 10px; color: #9ca3af; margin-top: 3rem; border-top: 1px solid #e2e8f0; padding-top: 0.5rem; page-break-inside: avoid; }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #ffffff; color: #1e293b; font-size: 10px; line-height: 1.5; }
+  .page { width: 210mm; min-height: 297mm; padding: 32px 40px 48px; position: relative; page-break-after: always; overflow: hidden; }
+  .page:last-child { page-break-after: auto; }
+  .cover-page { background: #0A1628; color: #ffffff; padding: 0; }
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .kpi-grid { break-inside: avoid; }
-    section { break-inside: avoid; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
   }
 </style>
 </head>
 <body>
-<h1>${report.companyName} — Reward AI Strategy</h1>
-<p class="meta">Prepared for: ${audienceLabel} · ${date} · ${report.initiatives.length} initiatives · Confidential</p>
-
-<div class="kpi-grid">
-  <div class="kpi"><div class="kpi-value">£${(central.tco3yr / 1e6).toFixed(1)}M</div><div class="kpi-label">3yr Investment</div></div>
-  <div class="kpi"><div class="kpi-value">£${(central.netValue3yr / 1e6).toFixed(1)}M</div><div class="kpi-label">Adjusted Value</div></div>
-  <div class="kpi"><div class="kpi-value">£${(central.netBenefit3yr / 1e6).toFixed(1)}M</div><div class="kpi-label">Net Benefit</div></div>
-  <div class="kpi"><div class="kpi-value">${central.roi3yr !== null ? Math.round(central.roi3yr * 100) + "%" : "N/A"}</div><div class="kpi-label">ROI (central)</div></div>
-</div>
-
-${summaryText ? `<div class="exec-summary"><h2>Executive Summary</h2><p style="font-size:12px;line-height:1.7;white-space:pre-wrap;">${summaryText}</p></div>` : ""}
-
-${chartDataUrl ? `<div style="margin-bottom:2rem;page-break-inside:avoid;"><h2 style="font-size:14px;font-weight:700;margin-bottom:0.5rem;border-bottom:1px solid #e2e8f0;padding-bottom:0.25rem;">Portfolio Charts</h2><img src="${chartDataUrl}" style="width:100%;border-radius:6px;border:1px solid #e2e8f0;" alt="Portfolio charts" /></div>` : ""}
-
-${sections}
-
-<p class="footer">
-  Financial figures computed from the Stage 7 model. Overlap discount of £${(central.overlapDiscountTotal / 1e6).toFixed(1)}M applied. All values are estimates based on calibrated benchmarks.
-</p>
+${coverPage}
+${financialPage}
+${portfolioPage}
+${capabilityPage}
+${narrativePage}
+${methodologyPage}
 </body>
 </html>`;
 }
