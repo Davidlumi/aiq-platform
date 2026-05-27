@@ -16,6 +16,7 @@ import {
   auditLogs,
 } from "../../drizzle/schema";
 import { nanoid } from "nanoid";
+import { getUserRoleKeys } from "../db";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,7 @@ export const organisationRouter = router({
     }),
 
   // C2.2a: Update organisation profile (sector, AI adoption stage, risk appetite, etc.)
+  // Requires tenant_admin, hr_leader, or platform_super_admin role
   updateProfile: protectedProcedure
     .input(
       z.object({
@@ -109,12 +111,16 @@ export const organisationRouter = router({
         aiToolsJson: z.array(z.string()).optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+        .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      // PROD-1.2: Require tenant_admin, hr_leader, or platform_super_admin to update org profile
+      const myRoles = await getUserRoleKeys(ctx.user.id, tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions to update organisation profile" });
+      }
       await assertOrgBelongsToTenant(input.organisationId, tenantId);
-
       const [existing] = await db
         .select({ id: organisationProfiles.id })
         .from(organisationProfiles)
@@ -155,6 +161,7 @@ export const organisationRouter = router({
     }),
 
   // S10.3: Upsert capability threshold override for an organisation
+  // Requires tenant_admin or platform_super_admin role (threshold changes affect scoring for all users)
   upsertThreshold: protectedProcedure
     .input(
       z.object({
@@ -164,12 +171,16 @@ export const organisationRouter = router({
         minimumSafeThreshold: z.number().int().min(0).max(100),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+        .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      // PROD-1.2: Require tenant_admin or platform_super_admin to change capability thresholds
+      const myRoles = await getUserRoleKeys(ctx.user.id, tenantId);
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin"].includes(r))) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions to update capability thresholds" });
+      }
       await assertOrgBelongsToTenant(input.organisationId, tenantId);
-
       const [existing] = await db
         .select({ id: organisationCapabilityThresholds.id })
         .from(organisationCapabilityThresholds)

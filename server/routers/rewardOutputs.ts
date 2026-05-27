@@ -33,6 +33,7 @@ import {
   rewardReview,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { TRPCError } from "@trpc/server";
 import {
   assembleReport,
@@ -126,6 +127,7 @@ export const rewardOutputsRouter = router({
 
   // ── generateSummary ──────────────────────────────────────────────────────────
   generateSummary: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const tenantId = ctx.user.tenantId;
     const { db, profile, prework, vision, strategy, principles, portfolio, bc, outputs, customs, s6stage, s6measures, s8stage, s8dims } =
       await buildContext(tenantId);

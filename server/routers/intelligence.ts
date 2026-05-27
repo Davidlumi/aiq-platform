@@ -25,6 +25,7 @@ import {
 import { getDb, getUserRoleKeys } from "../db";
 import { auditLogs, ailOrgContext, assessmentScores, assessmentSessions, users, strategyInitiatives, strategyInitiativeLibrary, riskAcknowledgements } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { nanoid } from "nanoid";
 import { eq, desc, and } from "drizzle-orm";
 import {
@@ -566,6 +567,7 @@ export const intelligenceRouter = router({
       hrRoleAnswers: z.record(z.string(), z.string()),
     }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
@@ -645,7 +647,7 @@ Return JSON with this exact structure:
     .input(z.object({
       aspirationAnswers: z.record(z.string(), z.string()),
       hrRoleAnswers: z.record(z.string(), z.string()),
-      visionStatement: z.string(),
+      visionStatement: z.string().max(2000),
       guidingPrinciples: z.array(z.object({ title: z.string(), description: z.string() })),
       wontDo: z.array(z.string()).optional(),
       commitments: z.array(z.string()).optional(),
@@ -701,8 +703,8 @@ Return JSON with this exact structure:
    */
   patchStrategyField: protectedProcedure
     .input(z.discriminatedUnion("field", [
-      z.object({ field: z.literal("visionStatement"), value: z.string() }),
-      z.object({ field: z.literal("userVisionInput"), value: z.string() }),
+      z.object({ field: z.literal("visionStatement"), value: z.string().max(2000) }),
+      z.object({ field: z.literal("userVisionInput"), value: z.string().max(2000) }),
       z.object({ field: z.literal("wontDo"), value: z.array(z.string()) }),
       z.object({ field: z.literal("commitments"), value: z.array(z.string()) }),
       z.object({ field: z.literal("guidingPrinciples"), value: z.array(z.object({ title: z.string(), description: z.string() })) }),
@@ -778,7 +780,7 @@ Return JSON with this exact structure:
       reinvestmentTargetsOther: z.array(z.string()),
       // Section 3 — Time and boundaries
       timeHorizonYears: z.number().int().refine(v => [1, 3, 5].includes(v), { message: "Must be 1, 3, or 5" }),
-      governanceLocks: z.array(z.string()),
+      governanceLocks: z.array(z.string().max(200)),
     }))
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
@@ -824,15 +826,16 @@ Return JSON with this exact structure:
       reinvestmentTargets: z.array(z.string()),
       reinvestmentTargetsOther: z.array(z.string()),
       timeHorizonYears: z.number().int().refine(v => [1, 3, 5].includes(v), { message: "Must be 1, 3, or 5" }),
-      governanceLocks: z.array(z.string()),
+      governanceLocks: z.array(z.string().max(200)),
       // Context
-      orgDescriptor: z.string().nullable().optional(),
+      orgDescriptor: z.string().max(1000).nullable().optional(),
       capabilityScore: z.number().nullable().optional(),
       capabilityLabel: z.string().nullable().optional(),
        capabilityCount: z.number().nullable().optional(),
       mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
       if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
@@ -1005,7 +1008,7 @@ Return JSON with this exact structure:
         tests_principle: z.number().int().nullable(),
         ai_drafted: z.boolean().default(false),
       })) }),
-      z.object({ section: z.literal("approachLine"), value: z.string() }),
+      z.object({ section: z.literal("approachLine"), value: z.string().max(2000) }),
       z.object({ section: z.literal("markReviewed"), value: z.object({ reviewerName: z.string() }) }),
     ]))
     .mutation(async ({ ctx, input }) => {
@@ -2089,6 +2092,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       sectionId: z.enum(["exec_summary", "where_we_are", "where_going", "what_well_do", "success_measures", "what_requires", "what_wont_do"]),
     }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
@@ -2289,7 +2293,8 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       }).optional(),
       cpoRecommendedScenario: z.enum(["conservative", "central", "optimistic"]).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const fmt = (n: number | undefined) => n ? `£${(n / 1000).toFixed(1)}M` : "N/A";
       const isReward = input.mode === "reward";
       const isCpo = input.mode === "cpo" || (!input.mode && !isReward);
@@ -2448,9 +2453,10 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
         strategyArchetype: z.string().optional(),
         visionStatement: z.string().optional(),
       }).optional(),
-      additionalContext: z.string().optional(),
+      additionalContext: z.string().max(2000).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const { text, action, stage, orgContext, additionalContext } = input;
 
       const stageDescriptions: Record<string, string> = {
@@ -2548,7 +2554,8 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       ambitionTier: z.enum(["cautious", "progressive", "transformative"]).optional(),
       selectedInitiatives: z.array(z.string()).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const DIMENSION_LABELS: Record<string, string> = {
         skills: "HR team AI skills and literacy",
         capacity: "HR team capacity and headcount",
@@ -2599,7 +2606,8 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       selectedInitiatives: z.array(z.string()).optional(),
       mode: z.enum(["cpo", "reward"]).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const isReward = input.mode === "reward";
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const SCALE_LABELS: Record<number, string> = { 1: "significant gap", 2: "below requirement", 3: "adequate", 4: "strong", 5: "exceptional" };
@@ -2652,7 +2660,8 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       capabilityJson: z.string().optional(),
       mode: z.enum(["cpo", "reward"]).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const isReward = input.mode === "reward";
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const ctxParts = [

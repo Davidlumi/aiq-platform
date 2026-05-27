@@ -30,6 +30,7 @@ import { TRPCError } from "@trpc/server";
 import { evaluateAllInitiatives, evaluateAllInitiativesWithSemanticAlignment, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { computeAlignmentCacheKey } from "../services/semanticPrincipleAlignment";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -912,7 +913,8 @@ export const gateRouter = router({
       archetype: z.enum(["augmentation", "transformation", "differentiation", "efficiency", "defensive"]),
       visionStatement: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const archetypeDescriptions: Record<string, string> = {
         augmentation: "AI enhances human judgement — HR professionals use AI to make better decisions but remain accountable for every significant outcome",
         transformation: "AI fundamentally reshapes HR processes, roles, and operating models — HR leads the organisation's AI adoption",

@@ -89,6 +89,7 @@ import {
 import { detectContradictions, generateContradictionProbeSpec, type AnswerRecord } from "../assessment/contradictionEngine";
 import { analyseGamingPatterns } from "../assessment/antiGamingEngine";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { runQualityGate, buildReviewQueueRow, recordLlmGenerationSuccess, recordLlmGenerationFailure } from "../assessment/llmQualityGate";
 import { llmItemReviewQueue, assessmentReviewFlags, assessmentAnswerTelemetry, policyEvaluations, policyRules } from "../../drizzle/schema";
 import { randomUUID } from "crypto";
@@ -2943,6 +2944,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
       roleLabel: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const db = await getDb();
       if (!db) return { profile: null };
       // Verify session belongs to user

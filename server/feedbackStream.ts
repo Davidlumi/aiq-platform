@@ -24,6 +24,7 @@ import { ENV } from "./_core/env";
 import { getDb } from "./db";
 import { moduleFeedback } from "../drizzle/schema";
 import { nanoid } from "nanoid";
+import { assertLLMStreamRateLimit } from "./_core/llmRateLimit";
 
 // ─── Build system prompt (mirrors generateModuleFeedback tRPC procedure) ──────
 function buildSystemPrompt(
@@ -85,6 +86,14 @@ export function registerFeedbackStreamRoute(app: Express): void {
     const user = await verifySessionToken(sessionId);
     if (!user) {
       res.status(401).json({ error: "Invalid session" });
+      return;
+    }
+
+    // PROD-2.1: Per-user LLM stream rate limit
+    try {
+      assertLLMStreamRateLimit(user.userId);
+    } catch {
+      res.status(429).json({ error: "LLM stream rate limit reached. Please wait before generating more content." });
       return;
     }
 

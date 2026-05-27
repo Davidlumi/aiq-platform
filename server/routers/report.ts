@@ -173,6 +173,13 @@ export const reportRouter = router({
         .limit(1);
 
       if (!job[0]) throw new TRPCError({ code: "NOT_FOUND" });
+      // PROD-1.1: Ownership check — only the requesting user or an admin/hr_leader can read the job
+      const isOwner = job[0].requestedBy === ctx.user.id;
+      if (!isOwner) {
+        const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+        const canRead = myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r));
+        if (!canRead) throw new TRPCError({ code: "FORBIDDEN", message: "You do not have permission to view this report" });
+      }
       return job[0];
     }),
 });

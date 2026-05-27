@@ -31,6 +31,7 @@ import {
   rewardCustomInitiative,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { TRPCError } from "@trpc/server";
 import {
   computeBusinessCase,
@@ -155,6 +156,7 @@ export const rewardBusinessCaseRouter = router({
 
   // ── generateNarrative ───────────────────────────────────────────────────────
   generateNarrative: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const tenantId = ctx.user.tenantId;
         const { db, profile, portfolio, vision, strategy, principles, customInitiativesInPortfolio } = await buildContext(tenantId);
     if (!portfolio?.isCompleted) {

@@ -33,6 +33,7 @@ import { eq, and, inArray, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import {
   getEffectiveBenchmark,
   getStrategyGuidance,
@@ -924,6 +925,7 @@ export const companyAssessmentRouter = router({
   completeAssessment: protectedProcedure
     .input(z.object({ assessmentId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       const [assessment] = await db.select().from(companyAssessments)

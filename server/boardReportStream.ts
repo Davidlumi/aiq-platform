@@ -18,6 +18,7 @@
  *   data: {"type":"error","message":"..."}           — error signal
  */
 import type { Express, Request, Response } from "express";
+import { assertLLMStreamRateLimit } from "./_core/llmRateLimit";
 import { parse as parseCookies } from "cookie";
 import { verifySessionToken } from "./auth";
 import { COOKIE_NAME } from "../shared/const";
@@ -131,6 +132,14 @@ export function registerBoardReportStreamRoute(app: Express): void {
     const user = await verifySessionToken(sessionId);
     if (!user) {
       res.status(401).json({ error: "Invalid session" });
+      return;
+    }
+
+    // PROD-2.1: Per-user LLM stream rate limit
+    try {
+      assertLLMStreamRateLimit(user.userId);
+    } catch {
+      res.status(429).json({ error: "LLM stream rate limit reached. Please wait before generating more content." });
       return;
     }
 

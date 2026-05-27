@@ -839,6 +839,16 @@ export const backofficeRouter = router({
       await db.delete(userRoles).where(eq(userRoles.userId, input.userId));
       // 7. Finally delete the user
       await db.delete(users).where(eq(users.id, input.userId));
+      // PROD-4.1: Audit log for GDPR erasure record
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "admin.user.deleted",
+        targetType: "user",
+        targetId: input.userId,
+        metadataJson: JSON.stringify({ deletedBy: ctx.user.id }),
+      });
       return { success: true };
     }),
 
@@ -916,6 +926,16 @@ export const backofficeRouter = router({
       await db.delete(tenantSettings).where(eq(tenantSettings.tenantId, input.tenantId));
       // Finally delete the tenant
       await db.delete(tenants).where(eq(tenants.id, input.tenantId));
+      // PROD-4.1: Audit log for GDPR erasure record
+      await db.insert(auditLogs).values({
+        id: nanoid(),
+        tenantId: ctx.user.tenantId,
+        actorUserId: ctx.user.id,
+        action: "admin.company.deleted",
+        targetType: "tenant",
+        targetId: input.tenantId,
+        metadataJson: JSON.stringify({ deletedBy: ctx.user.id }),
+      });
       return { success: true };
     }),
 

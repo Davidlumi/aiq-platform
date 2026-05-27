@@ -36,6 +36,7 @@ import {
   resolveInitiativeIds,
 } from "../contentLibrary";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 
 // ─── Block A: Library Telemetry ────────────────────────────────────────────
 
@@ -843,6 +844,7 @@ export const operationalMaturityRouter = router({
       forceRegenerate: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 

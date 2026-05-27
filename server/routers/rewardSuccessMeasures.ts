@@ -29,6 +29,7 @@ import {
   rewardSuccessMeasuresStage,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { TRPCError } from "@trpc/server";
 import {
   getRewardInitiative,
@@ -202,6 +203,7 @@ export const rewardSuccessMeasuresRouter = router({
       initiativeIds: z.array(z.string()).min(1).max(12),
     }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const tenantId = ctx.user.tenantId;
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
@@ -661,6 +663,7 @@ Output the result now (one sentence or short phrase):`;
 
   // ── generateStrategyOutcomes ─────────────────────────────────────────────────
   generateStrategyOutcomes: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const tenantId = ctx.user.tenantId;
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });

@@ -51,6 +51,7 @@ import {
   moduleFeedback,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 
 // ─── Helper: resolve seniority tier from session metadata ────────────────────
 function resolveSeniorityTier(sessionMetaJson: unknown): string {
@@ -1993,7 +1994,7 @@ CONSTRAINTS: Do NOT use encouragement-machine language. Do NOT make generic reco
     .input(z.object({
       moduleId: z.string(),
       message: z.string().min(1).max(2000),
-      history: z.array(z.object({ role: z.string(), content: z.string() })).max(20),
+      history: z.array(z.object({ role: z.string(), content: z.string().max(5000) })).max(20),
       // Context passed from the module page
       moduleTitle: z.string(),
       moduleFormat: z.string(),
@@ -2003,6 +2004,7 @@ CONSTRAINTS: Do NOT use encouragement-machine language. Do NOT make generic reco
       strategyLinkage: z.object({ initiativeName: z.string(), phase: z.string() }).optional().nullable(),
     }))
     .mutation(async ({ input, ctx }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       // Get user org context for sector/headcount
@@ -2049,8 +2051,8 @@ CONSTRAINTS: Do NOT use encouragement-machine language. Do NOT make generic reco
       moduleDomain: z.string(),
       formatType: z.enum(["reflection", "practical_exercise"]),
       promptIndex: z.number().int().min(0).default(0),
-      promptText: z.string(),
-      userResponse: z.string().min(10),
+      promptText: z.string().max(2000),
+      userResponse: z.string().min(10).max(5000),
       strategyLinkage: z.object({
         initiativeName: z.string(),
         phase: z.string(),
@@ -2058,6 +2060,7 @@ CONSTRAINTS: Do NOT use encouragement-machine language. Do NOT make generic reco
       journeyPosition: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 

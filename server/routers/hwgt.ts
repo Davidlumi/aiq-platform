@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { hwgtInitiatives, ailOrgContext } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { nanoid } from "nanoid";
 import { eq, and, asc } from "drizzle-orm";
 
@@ -379,6 +380,7 @@ export const hwgtRouter = router({
   regenerateInitiative: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
       const rows = await db.select().from(hwgtInitiatives)
         .where(and(eq(hwgtInitiatives.id, input.id), eq(hwgtInitiatives.tenantId, ctx.user.tenantId)))
@@ -453,6 +455,7 @@ Return JSON: { "whySuggesting": "...", "whatInvolvesJson": ["...", "..."], "wort
 
   // ── Regenerate full plan (preserves edited/user_added, re-generates untouched suggested) ──
   regeneratePlan: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
     // Get org context

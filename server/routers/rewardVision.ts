@@ -24,6 +24,7 @@ import {
   rewardPrinciples,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { TRPCError } from "@trpc/server";
 import { VOCAB_BLACKLIST, sanitizeOutput as enforceVocab } from "../../shared/vocabBlacklist";
 
@@ -169,6 +170,7 @@ export const rewardVisionRouter = router({
 
   /** AI-generate initial vision draft from Stage 1 inputs */
   generate: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const tenantId = ctx.user.tenantId;
     const context = await buildStage1Context(tenantId);
 

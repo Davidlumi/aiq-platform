@@ -4603,3 +4603,56 @@ test
 ### Final
 - [x] Golden-masters verified: Northbridge 14/14 ✓, Meridian 60/60 ✓ — all figures unchanged
 - [x] Delivered full v3a report — aiq-v3a-issue-correction-report.md
+
+## Production-Readiness & Data-Protection Hardening Brief
+
+### Section 1 — Auth & Access-Control
+- [ ] PROD-1.1: Audit JWT session handling (expiry, signing, cookie flags)
+- [ ] PROD-1.2: Audit role checks on all privileged mutations (role never trusted from input)
+- [ ] PROD-1.3: Fix or flag any endpoint missing auth/role check
+
+### Section 2 — Rate Limiting & Cost Protection
+- [ ] PROD-2.1: Confirm per-user/per-tenant LLM rate limiting exists
+- [ ] PROD-2.2: Add rate limits where missing; add cost ceiling
+
+### Section 3 — Input Validation & Injection
+- [ ] PROD-3.1: Audit prompt-injection exposure in LLM system prompts
+- [ ] PROD-3.2: Audit SQL/ORM injection surface
+- [ ] PROD-3.3: Audit XSS in rendered LLM narratives and board-report HTML/PDF
+
+### Section 4 — PII/GDPR
+- [ ] PROD-4.1: Inventory PII and pay data stored (tables, columns)
+- [ ] PROD-4.2: Confirm no PII in server logs
+- [ ] PROD-4.3: Implement tenant data-deletion path
+- [ ] PROD-4.4: Flag anything that wouldn't survive UK/EU data-protection review
+
+### Section 5 — Secrets & Config
+- [ ] PROD-5.1: Confirm no hardcoded secrets/API keys in source
+- [ ] PROD-5.2: Confirm no secrets in client bundle (VITE_ exposure check)
+
+### Section 6 — Audit Logging
+- [ ] PROD-6.1: Confirm security-relevant events are logged (auth, role changes, locks/exports)
+- [ ] PROD-6.2: Add missing audit log entries
+
+### Section 7 — Error Monitoring & Dependency Scan
+- [ ] PROD-7.1: Run npm audit and paste output
+- [ ] PROD-7.2: Patch high/critical CVEs that are safe to bump
+
+### Final
+- [ ] Write full production-readiness findings report
+- [ ] Save checkpoint and deliver
+
+### Production Readiness Pass — Completed 2026-05-27
+- [x] PROD-2.1: assertLLMRateLimit added to all 27 LLM mutation procedures across 15 routers
+- [x] PROD-2.2: Rate limit coverage verified; ctx added to all mutation signatures
+- [x] PROD-3.1: Prompt injection audit — user text flows into user prompts only; governanceLocks capped at 200 chars/item; visionStatement, orgDescriptor, additionalContext, userResponse, promptText all capped
+- [x] PROD-3.2: SQL injection surface — all DB access via Drizzle ORM (parameterised); no raw SQL
+- [x] PROD-4.1: PII inventory — email, firstName, lastName, passwordHash in users table; deleteUser + deleteCompany cascade all linked data; audit log entries added for both
+- [x] PROD-4.2: No PII in server logs confirmed
+- [x] PROD-4.3: Tenant data-deletion path confirmed (deleteCompany in backoffice.ts)
+- [x] PROD-5.1: No hardcoded secrets in source
+- [x] PROD-5.2: VITE_FRONTEND_FORGE_API_KEY used only for Maps; LLM key server-only
+- [x] PROD-6.1: Audit log covers assessment, config, org, policy, learning, intelligence, simulation, deleteUser, deleteCompany events
+- [x] PROD-6.2: Added audit log entries for deleteUser and deleteCompany (GDPR erasure records)
+- [x] PROD-7.1: pnpm audit — 2 low, 33 moderate, 13 high (all build-time); 0 critical after patches
+- [x] PROD-7.2: Critical CVE patched (fast-xml-parser via pnpm override >=5.3.8); vite updated to 7.3.3

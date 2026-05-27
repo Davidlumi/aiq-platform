@@ -21,6 +21,7 @@ import { getDb } from "../db";
 import { ailOrgContext } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../\_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
 
@@ -707,6 +708,7 @@ export const backgroundInputsRouter = router({
    * On success, triggers async draft generation for all 9 strategy builders.
    */
   completePrework: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const { db, row } = await getOrCreateOrgContext(ctx.user.tenantId);
     const inputs = row.backgroundInputsJson ? JSON.parse(row.backgroundInputsJson) : {};
     const capAssessment = row.capabilityAssessmentJson
@@ -985,6 +987,7 @@ export const backgroundInputsRouter = router({
    * Triggers a second draft pass for any sections still in "initial_draft" state.
    */
   completeSession: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     if ((ctx.user as any).role !== "platform_super_admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: "Only facilitators can complete a session." });
     }

@@ -30,6 +30,7 @@ import {
   rewardWontDoTemplates,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { TRPCError } from "@trpc/server";
 import { VOCAB_BLACKLIST, sanitizeOutput as enforceVocab } from "../../shared/vocabBlacklist";
 
@@ -231,6 +232,7 @@ export const rewardPrinciplesRouter = router({
     }),
 
   generate: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const tenantId = ctx.user.tenantId;
     const context = await buildContext(tenantId);
 
@@ -353,6 +355,7 @@ Output as JSON:
   }),
 
   regenerateSuggestions: protectedProcedure.mutation(async ({ ctx }) => {
+    assertLLMRateLimit(ctx.user.id); // PROD-2.1
     const tenantId = ctx.user.tenantId;
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
