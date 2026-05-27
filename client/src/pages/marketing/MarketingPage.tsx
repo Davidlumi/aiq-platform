@@ -891,22 +891,53 @@ function FinalCTA() {
   );
 }
 
+// --- Reveal on Scroll Wrapper --------------------------------------------------
+function RevealOnScroll({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
+      { threshold: 0.08, rootMargin: "0px 0px -60px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="transition-all duration-700 ease-out"
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? "translateY(0)" : "translateY(32px)",
+        transitionDelay: `${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 // --- Main Export ---------------------------------------------------------------
 export default function MarketingPage() {
   return (
     <div className="min-h-screen" style={{ background: navy }}>
       <MarketingNav />
       <Hero />
-      <PlatformVideo />
-      <PlatformPillars />
-      <StrategyBuilder />
-      <AssessmentEngine />
-      <ContinuousLoop />
-      <SixDomains />
-      <WhoItsFor />
-      <TrustSection />
-      <Testimonials />
-      <FinalCTA />
+      <RevealOnScroll><PlatformVideo /></RevealOnScroll>
+      <RevealOnScroll delay={50}><PlatformPillars /></RevealOnScroll>
+      <RevealOnScroll delay={50}><StrategyBuilder /></RevealOnScroll>
+      <RevealOnScroll delay={50}><AssessmentEngine /></RevealOnScroll>
+      <RevealOnScroll delay={50}><ContinuousLoop /></RevealOnScroll>
+      <RevealOnScroll delay={50}><SixDomains /></RevealOnScroll>
+      <RevealOnScroll delay={50}><WhoItsFor /></RevealOnScroll>
+      <RevealOnScroll delay={50}><TrustSection /></RevealOnScroll>
+      <RevealOnScroll delay={50}><Testimonials /></RevealOnScroll>
+      <RevealOnScroll><FinalCTA /></RevealOnScroll>
       <MarketingFooter />
     </div>
   );

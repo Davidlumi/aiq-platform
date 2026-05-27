@@ -4783,3 +4783,6 @@ test
 
 ## Marketing Hero Parallax
 - [x] Add subtle parallax scroll effects to marketing hero background elements
+
+## Reveal-on-Scroll Animations
+- [x] Add smooth fade-in/slide-up animations to all marketing page sections using IntersectionObserver
