@@ -4765,3 +4765,9 @@ test
 - [x] Each case study: company profile, challenge, solution, before/after metrics, quote
 - [x] Wire route in App.tsx and add to marketing navigation
 - [x] Match visual style of other marketing pages
+
+## ROI Calculator
+- [x] Create /roi-calculator page with interactive inputs (team size, avg salary, current training spend, attrition rate)
+- [x] Calculate projected savings: reduced attrition, targeted training efficiency, productivity uplift, HR time savings
+- [x] Visual output: annual savings, ROI multiple, payback period, value breakdown bars
+- [x] Wire route in App.tsx and add to marketing nav
