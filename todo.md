@@ -4786,3 +4786,6 @@ test
 
 ## Reveal-on-Scroll Animations
 - [x] Add smooth fade-in/slide-up animations to all marketing page sections using IntersectionObserver
+
+## Bug: Marketing site redirects to login
+- [x] Fix: unauthenticated visitors are being redirected to login instead of seeing marketing pages (GateProvider was firing protectedProcedure query for all visitors, triggering global UNAUTHORIZED redirect)

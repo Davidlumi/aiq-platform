@@ -14,6 +14,7 @@
  */
 import React, { createContext, useContext } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type StageGateEntry = {
   completedAt: number | null;
@@ -122,11 +123,13 @@ const DEFAULT_CONTEXT: GateContextValue = {
 const GateContext = createContext<GateContextValue>(DEFAULT_CONTEXT);
 
 export function GateProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const utils = trpc.useUtils();
 
   const { data, isLoading, refetch } = trpc.gate.getState.useQuery(undefined, {
     staleTime: 30_000,
     refetchOnWindowFocus: false,
+    enabled: isAuthenticated && !authLoading,
   });
 
   const markEditedMutation = trpc.gate.markEdited.useMutation({
