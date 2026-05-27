@@ -134,13 +134,49 @@ export function MarketingFooter() {
 
 // --- Hero Section -------------------------------------------------------------
 function Hero() {
+  const heroRef = useRef<HTMLElement>(null);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (heroRef.current) {
+        const rect = heroRef.current.getBoundingClientRect();
+        // Only update when hero is in viewport
+        if (rect.bottom > 0) {
+          setScrollY(window.scrollY);
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <section style={{ background: `linear-gradient(180deg, ${navy} 0%, #0a1628 100%)` }} className="pt-20 pb-28 px-6 relative overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full opacity-10 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #22C55E 0%, transparent 70%)" }} />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full opacity-8 pointer-events-none"
-        style={{ background: "radial-gradient(circle, #6366F1 0%, transparent 70%)" }} />
+    <section ref={heroRef} style={{ background: `linear-gradient(180deg, ${navy} 0%, #0a1628 100%)` }} className="pt-20 pb-28 px-6 relative overflow-hidden">
+      {/* Parallax background glow effects */}
+      <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full opacity-10 pointer-events-none transition-transform duration-100"
+        style={{ background: "radial-gradient(circle, #22C55E 0%, transparent 70%)", transform: `translate(${scrollY * 0.02}px, ${scrollY * -0.04}px)` }} />
+      <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full opacity-[0.08] pointer-events-none transition-transform duration-100"
+        style={{ background: "radial-gradient(circle, #6366F1 0%, transparent 70%)", transform: `translate(${scrollY * -0.03}px, ${scrollY * -0.02}px)` }} />
+
+      {/* Additional parallax floating elements */}
+      <div className="absolute top-32 right-[10%] w-2 h-2 rounded-full pointer-events-none"
+        style={{ background: greenHex, opacity: 0.3, transform: `translateY(${scrollY * -0.08}px)` }} />
+      <div className="absolute top-48 left-[8%] w-1.5 h-1.5 rounded-full pointer-events-none"
+        style={{ background: "#6366F1", opacity: 0.4, transform: `translateY(${scrollY * -0.12}px)` }} />
+      <div className="absolute top-64 right-[20%] w-3 h-3 rounded-full pointer-events-none"
+        style={{ background: "#C8A96E", opacity: 0.15, transform: `translateY(${scrollY * -0.06}px) rotate(${scrollY * 0.1}deg)` }} />
+      <div className="absolute top-16 left-[15%] w-1 h-1 rounded-full pointer-events-none"
+        style={{ background: "#06B6D4", opacity: 0.5, transform: `translateY(${scrollY * -0.15}px)` }} />
+      <div className="absolute bottom-32 left-[30%] w-2.5 h-2.5 rounded-full pointer-events-none"
+        style={{ background: greenHex, opacity: 0.2, transform: `translateY(${scrollY * -0.1}px)` }} />
+      <div className="absolute bottom-20 right-[35%] w-1.5 h-1.5 rounded-full pointer-events-none"
+        style={{ background: "#F59E0B", opacity: 0.25, transform: `translateY(${scrollY * -0.07}px)` }} />
+
+      {/* Parallax grid lines */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ opacity: 0.03 }}>
+        <div className="absolute inset-0" style={{ transform: `translateY(${scrollY * -0.02}px)`, backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
+      </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Centred pill badge */}

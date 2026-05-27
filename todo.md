@@ -4780,3 +4780,6 @@ test
 
 ## Animated ROI Counters
 - [x] Add animated number counters to ROI results that count up from zero on scroll into view
+
+## Marketing Hero Parallax
+- [x] Add subtle parallax scroll effects to marketing hero background elements
