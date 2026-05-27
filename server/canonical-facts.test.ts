@@ -145,23 +145,26 @@ describe("Canonical Facts — Test B: Reward Stage Keys", () => {
 describe("Canonical Facts — Test C: CPO Formula Coverage (static)", () => {
   /**
    * Confirmed from facts-dump.ts stdout (Section C):
-   *   CPO-mode initiatives total: 50
-   *   Initiatives WITH a registered formula (static): 50
+   *   CPO-mode initiatives total: ≥50 (grows as discovery adds new ones)
+   *   Initiatives WITH a registered formula (static): 100% coverage required
    *   Initiatives WITHOUT a formula (static): 0
    *
    * We lock the STATIC fact (formula key exists in registry).
    * Runtime resolution is profile-dependent and is NOT locked here.
+   *
+   * NOTE: The count is now dynamic — it reads from INITIATIVE_LIBRARY at test time.
+   * This allows the Initiative Discovery backoffice to add new initiatives without
+   * breaking this test. The invariant is: every CPO initiative MUST have a formula.
    */
-  const CONFIRMED_CPO_INITIATIVE_COUNT = 50;
-  const CONFIRMED_WITH_FORMULA_COUNT = 50;
+  const MINIMUM_CPO_INITIATIVE_COUNT = 50; // baseline — must never shrink below this
 
   const cpoInitiatives = INITIATIVE_LIBRARY.filter((i) => {
     const scope = i.functionScope ?? "cpo";
     return scope === "cpo" || scope === "both";
   });
 
-  it("CPO-mode initiative count equals confirmed value", () => {
-    expect(cpoInitiatives.length).toBe(CONFIRMED_CPO_INITIATIVE_COUNT);
+  it("CPO-mode initiative count is at least the confirmed baseline (≥50)", () => {
+    expect(cpoInitiatives.length).toBeGreaterThanOrEqual(MINIMUM_CPO_INITIATIVE_COUNT);
   });
 
   it("every CPO-mode initiative has a registered formula key (static coverage = 100%)", () => {
@@ -174,10 +177,10 @@ describe("Canonical Facts — Test C: CPO Formula Coverage (static)", () => {
     expect(missing).toEqual([]);
   });
 
-  it("count of CPO initiatives with a registered formula equals confirmed static count", () => {
+  it("all CPO initiatives have a registered formula (count matches total)", () => {
     const withFormula = cpoInitiatives.filter(
       (i) => i.valueFormulaKey in VALUE_FORMULA_REGISTRY
     ).length;
-    expect(withFormula).toBe(CONFIRMED_WITH_FORMULA_COUNT);
+    expect(withFormula).toBe(cpoInitiatives.length);
   });
 });

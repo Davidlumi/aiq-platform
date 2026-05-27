@@ -2954,3 +2954,51 @@ export const rewardCapabilityDevelopmentPlans = mysqlTable("reward_capability_de
 }));
 export type RewardCapabilityDevelopmentPlan = typeof rewardCapabilityDevelopmentPlans.$inferSelect;
 export type RewardCapabilityDevelopmentPlanInsert = typeof rewardCapabilityDevelopmentPlans.$inferInsert;
+
+// ─── Initiative Discovery Tables ─────────────────────────────────────────────
+
+/**
+ * Discovery scans — one row per triggered scan.
+ * Tracks status, timing, and results count.
+ */
+export const discoveryScans = mysqlTable("discovery_scans", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  triggeredBy: varchar("triggered_by", { length: 36 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("running"),
+  startedAt: bigint("started_at", { mode: "number" }).notNull(),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  queriesRun: int("queries_run").notNull().default(0),
+  candidatesFound: int("candidates_found").notNull().default(0),
+  errorMessage: text("error_message"),
+});
+export type DiscoveryScan = typeof discoveryScans.$inferSelect;
+export type DiscoveryScanInsert = typeof discoveryScans.$inferInsert;
+
+/**
+ * Discovery candidates — initiatives found by the discovery engine.
+ * Pending human review (accept/reject/edit) before library addition.
+ */
+export const discoveryCandidates = mysqlTable("discovery_candidates", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  scanId: varchar("scan_id", { length: 36 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  problemValue: text("problem_value").notNull(),
+  suggestedScope: varchar("suggested_scope", { length: 20 }).notNull().default("cpo"),
+  suggestedCategory: varchar("suggested_category", { length: 60 }),
+  sourceUrls: json("source_urls").$type<string[]>().notNull(),
+  dedupStatus: varchar("dedup_status", { length: 20 }).notNull().default("unique"),
+  nearestExistingId: varchar("nearest_existing_id", { length: 100 }),
+  nearestExistingLabel: varchar("nearest_existing_label", { length: 200 }),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  assessedBy: varchar("assessed_by", { length: 36 }),
+  assessedAt: bigint("assessed_at", { mode: "number" }),
+  assessmentNote: text("assessment_note"),
+  addedInitiativeId: varchar("added_initiative_id", { length: 100 }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+}, (t) => ({
+  scanIdx: index("idx_dc_scan").on(t.scanId),
+  statusIdx: index("idx_dc_status").on(t.status),
+}));
+export type DiscoveryCandidate = typeof discoveryCandidates.$inferSelect;
+export type DiscoveryCandidateInsert = typeof discoveryCandidates.$inferInsert;

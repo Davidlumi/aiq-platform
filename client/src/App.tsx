@@ -82,6 +82,7 @@ import AcceptInvitationPage from "./pages/AcceptInvitationPage";
 import ContentLibraryAdminPage from "./pages/admin/ContentLibraryPage";
 import ContentReviewPage from "./pages/admin/ContentReviewPage";
 import BackOfficePage from "./pages/backoffice/BackOfficePage";
+import InitiativeDiscoveryPage from "./pages/backoffice/InitiativeDiscoveryPage";
 import CompanyProfilePage from "./pages/admin/CompanyProfilePage";
 import RewardPreworkPage from "./pages/strategy/RewardPreworkPage";
 import RewardVisionPage from "./pages/strategy/RewardVisionPage";
@@ -399,6 +400,9 @@ function Router() {
       </Route>
       <Route path="/strategy/reward-outputs">
         <ProtectedRouteWithStrategyNav component={RewardOutputsPage} />
+      </Route>
+      <Route path="/backoffice/initiative-discovery">
+        <ProtectedRoute component={InitiativeDiscoveryPage} />
       </Route>
       <Route path="/backoffice">
         <ProtectedRoute component={BackOfficePage} />

@@ -4689,9 +4689,19 @@ test
 - [x] #20 Confidence surfacing: show where domain is well-evidenced vs thin on assessment results
 
 ### Learning Module Best-Practice Review & Improvements
-- [ ] Audit current module architecture (schema, content blocks, lesson rendering, progression)
-- [ ] Research external best practices for enterprise learning (microlearning, engagement, interactivity)
-- [ ] Implement content/structure improvements (scenario blocks, reflection prompts, real-world examples)
-- [ ] Implement engagement improvements (progress celebrations, knowledge checks, spaced repetition cues)
-- [ ] Implement presentation improvements (lesson layout, media blocks, reading time indicators)
-- [ ] Run tests and verify no regressions
+- [x] Audit current module architecture (schema, content blocks, lesson rendering, progression)
+- [x] Research external best practices for enterprise learning (microlearning, engagement, interactivity)
+- [x] Implement content/structure improvements (scenario blocks, reflection prompts, real-world examples)
+- [x] Implement engagement improvements (progress celebrations, knowledge checks, spaced repetition cues)
+- [x] Implement presentation improvements (lesson layout, media blocks, reading time indicators)
+- [x] Run tests and verify no regressions
+
+### Initiative Discovery & Library Management (Back Office) — Phase 1
+- [x] IBM-1: Schema — discovery_scans table (id, triggeredBy, status, startedAt, completedAt, queriesRun, candidatesFound)
+- [x] IBM-2: Schema — discovery_candidates table (id, scanId, name, description, problemValue, suggestedScope, suggestedSubDomain, sourceUrls JSON, dedupStatus, nearestExistingId, status enum pending/accepted/rejected/edited, assessedBy, assessedAt, addedInitiativeId, createdAt)
+- [x] IBM-3: Server — discovery engine: real web search via built-in API, candidate extraction with source URLs, dedup against existing ~80 initiatives
+- [x] IBM-4: Server — review queue procedures: listCandidates, assessCandidate (accept/reject/edit), addToLibrary with provenance
+- [x] IBM-5: Server — canonical-facts lock update: dynamic count (≥50 baseline), 100% formula coverage invariant maintained
+- [x] IBM-6: Client — staff-only back-office page: scan trigger, candidate queue table, review/assess modal, library add form
+- [x] IBM-7: RBAC — admin-only route gating (super_admin only), audit trail on all actions
+- [x] IBM-8: Tests — 16 integration tests covering RBAC, triggerScan, assessCandidate, addToLibrary, input validation, library invariants

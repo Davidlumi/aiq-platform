@@ -428,6 +428,18 @@ function DashboardTab() {
               </div>
             </button>
           ))}
+          <a
+            href="/backoffice/initiative-discovery"
+            className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/4 transition-all text-left group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+              <Globe className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Initiative Discovery</p>
+              <p className="text-xs text-muted-foreground">Discover &amp; review new HR AI initiatives</p>
+            </div>
+          </a>
         </CardContent>
       </Card>
     </div>
