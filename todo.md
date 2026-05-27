@@ -4727,3 +4727,16 @@ test
 - [x] T3-8: Board Report PDF enhancement — executive summary, visual charts
 - [x] T3-9: Manager Nudge automation — wire conversation prompts to SSE notifications
 - [x] T3-10: Accessibility audit — prefers-reduced-motion, ARIA labels, keyboard nav
+
+## Marketing Site Complete Overhaul
+- [x] Rewrite Hero section to reflect full platform (AI Strategy Builder, Reward mode, 10-stage process, Coach, Assessment, Learning)
+- [x] Replace old explainer video with new platform walkthrough video
+- [x] Add "Platform Features" section showcasing all major capabilities
+- [x] Update "What it is" section to include AI Strategy, Reward, and dual-mode positioning
+- [x] Add "How the 10-Stage Strategy Builder works" visual section
+- [x] Update "Six Domains" to reflect current capability framework
+- [x] Add social proof / metrics section (68 initiatives, 1900+ tests, etc.)
+- [x] Update CTAs and navigation to reflect current product state
+- [x] Update footer with current product links
+- [x] Generate new platform demo video showing current UI
+- [x] Ensure responsive design and visual polish
