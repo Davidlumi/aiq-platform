@@ -392,9 +392,12 @@ export default function BusinessCasePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [narrative, narrativeLoaded]);
 
+  const [cpoComputedModel, setCpoComputedModel] = useState<any>(null);
+
   const generateNarrativeMut = trpc.intelligence.generateBusinessCaseNarrative.useMutation({
     onSuccess: (data) => {
       setNarrative(data.text);
+      if (data.cpoModel) setCpoComputedModel(data.cpoModel);
       toast.success("Business case narrative generated");
     },
     onError: (e) => toast.error(`Generation failed: ${e.message}`),
@@ -414,6 +417,21 @@ export default function BusinessCasePage() {
       .map((i: any) => i.display_name ?? i.name ?? i.initiative_id)
       .slice(0, 12);
 
+    // Build CPO engine inputs from operationalBaseline for the never-invents-numbers guardrail
+    const ob = (assessmentQ.data?.operationalBaseline as any) ?? {};
+    const cpoEngineInputs = !isRewardMode && ob ? {
+      totalHeadcount: ob.sectionA?.totalHeadcount ?? assessmentQ.data?.headcount ?? 0,
+      sector: assessmentQ.data?.sector ?? "professional_services",
+      hiresPerYear: ob.sectionD?.annualHires ?? undefined,
+      attritionRatePct: ob.sectionD?.attritionRate ?? undefined,
+      lAndDSpendPerFteGbp: (ob.sectionD?.annualLDSpend && ob.sectionA?.totalHeadcount && ob.sectionA.totalHeadcount > 0)
+        ? Math.round(ob.sectionD.annualLDSpend / ob.sectionA.totalHeadcount)
+        : undefined,
+      costPerHireGbp: ob.sectionD?.costPerExternalHire ?? undefined,
+      timeToFillDays: ob.sectionD?.avgTimeToFill ?? undefined,
+      annualRevenueGbp: ob.sectionD?.annualRevenue ?? undefined,
+    } : undefined;
+
     generateNarrativeMut.mutate({
       orgName: (assessmentQ.data?.structuredInputs as any)?.org_name,
       sector: assessmentQ.data?.sector ?? undefined,
@@ -422,7 +440,7 @@ export default function BusinessCasePage() {
       strategy: assessmentQ.data?.strategyStatement ?? undefined,
       archetype: assessmentQ.data?.strategyArchetype ?? undefined,
       principles,
-      selectedInitiatives: selectedInitiativeNames,
+      selectedInitiatives: selectedIds,
       totalCostLow: costEnv ? costEnv.totalMin * 1000 : undefined,
       totalCostHigh: costEnv ? costEnv.totalMax * 1000 : undefined,
       totalValueLow: ve?.net_value_gbp?.low ?? undefined,
@@ -430,6 +448,8 @@ export default function BusinessCasePage() {
       topRisks,
       keyDependencies: keyDeps,
       mode: isRewardMode ? "reward" : "cpo",
+      cpoEngineInputs: cpoEngineInputs as any,
+      cpoRecommendedScenario: "central",
     });
   };
 
@@ -787,6 +807,100 @@ export default function BusinessCasePage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* CPO Computed Business Case Model — shown only in CPO mode after generation */}
+        {!isRewardMode && cpoComputedModel && (
+          <div className="mt-3 rounded-xl border dark:border-blue-500/25 border-blue-300 bg-blue-500/5 overflow-hidden">
+            <div className="px-5 py-4 flex items-center gap-3">
+              <BarChart2 className="w-4 h-4 dark:text-blue-400 text-blue-600" />
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex-1">Computed Business Case Model</p>
+              <span className="text-[10px] font-bold dark:text-blue-400 text-blue-600 dark:bg-blue-500/15 bg-blue-100/80 px-2 py-0.5 rounded-full uppercase tracking-wide">Board-ready · 3-year</span>
+            </div>
+            <div className="px-5 pb-5 space-y-4">
+              {/* Three-scenario headline metrics */}
+              <div className="grid grid-cols-3 gap-3">
+                {(["conservative", "central", "optimistic"] as const).map(s => {
+                  const r = cpoComputedModel.rollup?.[s];
+                  if (!r) return null;
+                  const isSelected = s === "central";
+                  return (
+                    <div key={s} className={`rounded-xl border p-3 ${isSelected ? "dark:border-blue-500/40 border-blue-400 dark:bg-blue-500/10 bg-blue-50" : "border-border bg-foreground/3"}` }>
+                      <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: s === "conservative" ? "#F87171" : s === "central" ? "#60A5FA" : "#4ADE80" }}>{s}</p>
+                      <p className="text-lg font-bold text-foreground">{fmtGbk(r.netBenefit3yr)}</p>
+                      <p className="text-[10px] text-muted-foreground">Net benefit</p>
+                      <div className="mt-2 space-y-0.5">
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">TCO</span>
+                          <span className="font-medium text-foreground">{fmtGbk(r.tco3yr)}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">ROI</span>
+                          <span className="font-medium text-foreground">{r.roi3yr != null ? `${r.roi3yr}x` : "—"}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">Payback</span>
+                          <span className="font-medium text-foreground">{r.paybackMonths != null ? `${r.paybackMonths}mo` : "—"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Per-initiative lines */}
+              {cpoComputedModel.lines?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Per-Initiative (central scenario)</p>
+                  <div className="space-y-1.5">
+                    {cpoComputedModel.lines.map((l: any) => (
+                      <div key={l.initiativeId} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-foreground/3 px-3 py-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{l.label}</p>
+                          <p className="text-[10px] text-muted-foreground capitalize">{l.category?.replace(/_/g, " ")}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-xs font-semibold dark:text-emerald-400 text-emerald-600">{l.hasQuantifiedValue ? fmtGbk(l.value3yrCentral) : "qualitative"}</p>
+                          <p className="text-[10px] text-muted-foreground">TCO {fmtGbk(l.tco3yrCentral)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Overlap discounts */}
+              {cpoComputedModel.overlapDiscounts?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Value-Overlap Protection</p>
+                  <div className="space-y-1.5">
+                    {cpoComputedModel.overlapDiscounts.map((d: any) => (
+                      <div key={d.category} className="flex items-start gap-3 rounded-lg border dark:border-amber-500/20 border-amber-300 bg-amber-500/5 px-3 py-2">
+                        <Info className="w-3.5 h-3.5 dark:text-amber-400 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground capitalize">{d.category?.replace(/_/g, " ")} overlap — {Math.round(d.discountPct * 100)}% discount</p>
+                          <p className="text-[10px] text-muted-foreground">{d.initiativeLabels?.join(" · ")}</p>
+                        </div>
+                        <p className="text-xs font-semibold dark:text-amber-400 text-amber-600 flex-shrink-0">−{fmtGbk(d.discountAmountCentral)}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end mt-2">
+                    <p className="text-[10px] text-muted-foreground">Total overlap discount (central): <span className="font-semibold dark:text-amber-400 text-amber-600">−{fmtGbk(cpoComputedModel.rollup?.central?.overlapDiscountTotal)}</span></p>
+                  </div>
+                </div>
+              )}
+
+              {/* Qualitative-only notice */}
+              {cpoComputedModel.qualitativeOnlyIds?.length > 0 && (
+                <div className="rounded-lg border dark:border-violet-500/20 border-violet-300 bg-violet-500/5 px-3 py-2">
+                  <p className="text-[10px] text-muted-foreground">
+                    <span className="font-semibold dark:text-violet-400 text-violet-600">{cpoComputedModel.qualitativeOnlyIds.length} initiative{cpoComputedModel.qualitativeOnlyIds.length !== 1 ? "s" : ""}</span> in your portfolio are qualitative-only — value formulas not yet available. Excluded from financial model.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

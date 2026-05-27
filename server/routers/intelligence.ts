@@ -41,6 +41,7 @@ import {
 import { getLibraryMeta, getContentLibrary, getAllInitiatives, resolveInitiativeIds } from "../contentLibrary";
 import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
 import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
+import { computeCpoBusinessCase, buildCpoNarrativePromptData, type CpoScenario, type CpoCompanyProfile } from "../services/cpoBusinessCaseEngine";
 import { VOCAB_BLACKLIST, FORBIDDEN_WORDS_PROMPT, sanitizeOutput } from "../../shared/vocabBlacklist";
 
 import {
@@ -2275,19 +2276,133 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       topRisks: z.array(z.string()).optional(),
       keyDependencies: z.array(z.string()).optional(),
       mode: z.enum(["cpo", "reward"]).optional(),
+      // CPO-mode: structured engine inputs for never-invents-numbers guardrail
+      cpoEngineInputs: z.object({
+        totalHeadcount: z.number(),
+        sector: z.string(),
+        hiresPerYear: z.number().optional(),
+        attritionRatePct: z.number().optional(),
+        lAndDSpendPerFteGbp: z.number().optional(),
+        costPerHireGbp: z.number().optional(),
+        timeToFillDays: z.number().optional(),
+        annualRevenueGbp: z.number().optional(),
+      }).optional(),
+      cpoRecommendedScenario: z.enum(["conservative", "central", "optimistic"]).optional(),
     }))
     .mutation(async ({ input }) => {
       const fmt = (n: number | undefined) => n ? `£${(n / 1000).toFixed(1)}M` : "N/A";
       const isReward = input.mode === "reward";
+      const isCpo = input.mode === "cpo" || (!input.mode && !isReward);
+
+      // ── CPO path: compute structured model and pass to LLM (never-invents-numbers) ──
+      if (isCpo && input.cpoEngineInputs && input.selectedInitiatives?.length) {
+        const profile: CpoCompanyProfile = {
+          totalHeadcount: input.cpoEngineInputs.totalHeadcount,
+          sector: input.cpoEngineInputs.sector,
+          hiresPerYear: input.cpoEngineInputs.hiresPerYear,
+          attritionRatePct: input.cpoEngineInputs.attritionRatePct,
+          lAndDSpendPerFteGbp: input.cpoEngineInputs.lAndDSpendPerFteGbp,
+          costPerHireGbp: input.cpoEngineInputs.costPerHireGbp,
+          timeToFillDays: input.cpoEngineInputs.timeToFillDays,
+          annualRevenueGbp: input.cpoEngineInputs.annualRevenueGbp,
+        };
+        const model = computeCpoBusinessCase(input.selectedInitiatives, profile);
+        const scenario = (input.cpoRecommendedScenario ?? "central") as CpoScenario;
+        const promptData = buildCpoNarrativePromptData(
+          model,
+          input.orgName ?? "the organisation",
+          input.vision ?? null,
+          input.strategy ?? null,
+          input.principles ?? [],
+          scenario,
+          input.cpoEngineInputs.annualRevenueGbp ?? null
+        );
+
+        const systemPrompt = `You are a senior CPO writing a CEO-ready business case for an HR AI strategy programme.
+
+CRITICAL RULES:
+1. Use ONLY the financial figures provided in the data payload. Do not estimate, invent, or modify any numbers.
+2. Write in the voice of an internal CPO presenting to a CEO and board — confident, evidence-based, no consultant-speak.
+3. Avoid: leverage, synergy, paradigm, holistic, ecosystem, robust, scalable, best-in-class, world-class, cutting-edge, game-changer, transformational, impactful, seamless, empower, unlock potential, drive value, move the needle.
+4. Each section should be 2–4 paragraphs. No bullet lists.
+5. Return a JSON object with exactly these keys: execSummary, investmentRationale, valueNarrative, riskAssumptions.
+
+Tone guidance:
+- Executive Summary: crisp, confident, 3yr headline numbers up front
+- Investment Rationale: why this programme, why now, link to strategy and principles
+- Value Narrative: what the numbers mean in practice — talent acquisition, retention, L&D efficiency, workforce planning
+- Risk and Assumptions: honest about what could move the numbers, name the overlap discount, call out programme funding separately`;
+
+        const userPrompt = `Generate the four business case narrative sections for this HR AI programme.
+
+Data:
+${JSON.stringify(promptData, null, 2)}
+
+Return a JSON object with keys: execSummary, investmentRationale, valueNarrative, riskAssumptions.
+Each value is a string containing 2–4 paragraphs of plain text (no markdown, no bullet points).`;
+
+        let narratives: Record<string, string>;
+        try {
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user",   content: userPrompt },
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "cpo_business_case_narratives",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    execSummary:         { type: "string" },
+                    investmentRationale: { type: "string" },
+                    valueNarrative:      { type: "string" },
+                    riskAssumptions:     { type: "string" },
+                  },
+                  required: ["execSummary", "investmentRationale", "valueNarrative", "riskAssumptions"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+          const raw = typeof response.choices?.[0]?.message?.content === "string"
+            ? response.choices[0].message.content
+            : JSON.stringify(response.choices?.[0]?.message?.content ?? {});
+          narratives = JSON.parse(raw);
+        } catch {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "AI narrative generation failed. You can write the business case sections manually.",
+          });
+        }
+
+        const clean = (s: string) => sanitizeOutput(s ?? "");
+        return {
+          text: clean(narratives.execSummary),
+          sections: {
+            execSummary:         clean(narratives.execSummary),
+            investmentRationale: clean(narratives.investmentRationale),
+            valueNarrative:      clean(narratives.valueNarrative),
+            riskAssumptions:     clean(narratives.riskAssumptions),
+          },
+          // Return the computed model so Stage 7 UI can display real numbers
+          cpoModel: model,
+        };
+      }
+
+      // ── Legacy path (Reward mode or CPO without engine inputs) ─────────────────
+      const isRewardMode = input.mode === "reward";
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const systemPrompt = [
-        isReward
+        isRewardMode
           ? "You are drafting the business case section of a Reward AI strategy document, written for the CFO and CHRO. Frame the value in terms of pay equity, reward efficiency, and retention impact."
           : "You are drafting the business case section of an HR AI strategy document, written for the CEO and board.",
         "The case should be 400–600 words. It should reference specific numbers, specific risks, and specific business outcomes.",
         "It should NOT be defensive or hedging. Write in plain, direct English.",
         `FORBIDDEN WORDS — never use these: ${VOCAB_BLACKLIST.join(", ")}.`,
-        isReward
+        isRewardMode
           ? "Open with why Reward AI matters now, then the approach, then the investment, then the value (pay equity, retention, reward cycle efficiency), then the risks honestly stated. Close with the ask of the CFO and CHRO."
           : "Open with why this matters now, then the approach, then the investment, then the value, then the risks honestly stated. Close with the ask of the board.",
         "CURRENCY FORMAT: Always express monetary values in the form £XM (e.g. £2.4M, £12M, £0.8M). Never write out full millions as digits (e.g. never £2,400,000 or £2.4 million). Never use billions unless the figure genuinely exceeds £1,000M.",
@@ -2315,7 +2430,7 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         ],
       });
       const text = (response as any)?.choices?.[0]?.message?.content ?? "";
-      return { text: sanitizeOutput(typeof text === "string" ? text.trim() : "") };
+      return { text: sanitizeOutput(typeof text === "string" ? text.trim() : ""), sections: null, cpoModel: null };
     }),
 
   /**
