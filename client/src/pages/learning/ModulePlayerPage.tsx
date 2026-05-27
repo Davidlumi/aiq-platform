@@ -264,28 +264,38 @@ function IntroductionPanel({ intro }: { intro: any }) {
   if (!intro) return null;
   return (
     <div className="space-y-4">
+      {/* Reading time indicator */}
+      {intro.estimatedMinutes && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          <span>{intro.estimatedMinutes} min read</span>
+          <span className="text-muted-foreground/40">·</span>
+          <span>Active learning</span>
+        </div>
+      )}
       {intro.hook && (
-        // Change 5 + 7a: Hook as editorial lead paragraph — larger, left accent, no green border
-        <div className="pl-4 border-l-2 border-muted-foreground/20 py-1">
-          <p className="text-base leading-relaxed text-foreground/80 font-normal">{intro.hook}</p>
+        <div className="pl-4 border-l-2 border-primary/30 py-1">
+          <p className="text-base leading-relaxed text-foreground/90 font-medium">{intro.hook}</p>
         </div>
       )}
       {intro.whyItMatters && (
-        // Change 5 + 7a: Why this matters — no bordered box, just label + paragraph
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground">Why this matters</p>
-          <p className="text-sm text-foreground/70 leading-relaxed">{intro.whyItMatters}</p>
+        <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/10">
+          <div className="flex items-start gap-2.5">
+            <Lightbulb className="h-4 w-4 text-primary/70 mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-primary/80">Why this matters to you</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{intro.whyItMatters}</p>
+            </div>
+          </div>
         </div>
       )}
       {intro.learningObjectives && intro.learningObjectives.length > 0 && (
-        // Change 7a: No border — label + bullets carry grouping
-        // Change 7b: CheckCircle muted grey (not green)
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground">Learning objectives</p>
+          <p className="text-xs font-semibold text-muted-foreground">What you'll be able to do</p>
           <ul className="space-y-1.5">
             {intro.learningObjectives.map((obj: string, i: number) => (
               <li key={i} className="flex items-start gap-2.5 text-sm">
-                <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
+                <Target className="h-3.5 w-3.5 text-primary/50 mt-0.5 flex-shrink-0" />
                 <span className="text-foreground/80">{obj}</span>
               </li>
             ))}
@@ -297,12 +307,24 @@ function IntroductionPanel({ intro }: { intro: any }) {
 }
 
 function ConceptSection({ section, index, total }: { section: any; index: number; total: number }) {
+  const [stopAndThinkRevealed, setStopAndThinkRevealed] = useState(false);
+  // Generate a contextual "stop and think" prompt from the section heading
+  const stopAndThinkPrompt = section.keyPoints && section.keyPoints.length > 0
+    ? `Before moving on: how would you apply "${section.heading.toLowerCase()}" in your current role?`
+    : null;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground/60">
-          Section {index + 1} of {total}
-        </span>
+      {/* Section header with progress indicator */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">
+            {index + 1}
+          </span>
+          <span className="text-xs font-medium text-muted-foreground">
+            of {total}
+          </span>
+        </div>
       </div>
       <h3 className="text-lg font-bold text-foreground">{section.heading}</h3>
       {section.body && (
@@ -312,33 +334,64 @@ function ConceptSection({ section, index, total }: { section: any; index: number
           ))}
         </div>
       )}
+      {/* Key points — styled as a distinct callout */}
       {section.keyPoints && section.keyPoints.length > 0 && (
-        // Change 7a: No border — subtle bg tint only
-        // Change 7b: Bullet dot muted grey (not green)
-        <div className="p-4 rounded-xl bg-muted/40 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground mb-1">Key points</p>
+        <div className="p-4 rounded-xl bg-muted/40 border-l-3 border-primary/30 space-y-2">
+          <div className="flex items-center gap-2 mb-1">
+            <Star className="h-3.5 w-3.5 text-primary/60" />
+            <p className="text-xs font-semibold text-primary/70">Key points</p>
+          </div>
           <ul className="space-y-2">
             {section.keyPoints.map((kp: string, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 mt-2 flex-shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 flex-shrink-0" />
                 <span className="text-foreground/80">{kp}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
+      {/* Real-world example — visually distinct callout with icon */}
       {section.example && (
-        // Change 7b: Left accent neutral grey (not green)
-        <div className="pl-4 border-l-2 border-muted-foreground/25 py-1 space-y-1">
-          <p className="text-xs font-semibold text-muted-foreground">Real-world example</p>
+        <div className="p-4 rounded-xl bg-[#C8B07A]/5 border border-[#C8B07A]/20 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-3.5 w-3.5 text-[#8E7848]" />
+            <p className="text-xs font-semibold text-[#8E7848]">In practice</p>
+          </div>
           <p className="text-sm text-foreground/80 leading-relaxed">{section.example}</p>
         </div>
       )}
+      {/* Research note — academic callout style */}
       {section.researchNote && (
-        // Change 7a: No border — just muted italic text
-        <div className="flex items-start gap-2">
-          <Quote className="h-3 w-3 text-muted-foreground/40 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground/70 italic leading-relaxed">{section.researchNote}</p>
+        <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+          <div className="flex items-start gap-2">
+            <Quote className="h-3.5 w-3.5 text-muted-foreground/60 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">Research insight</p>
+              <p className="text-xs text-muted-foreground/80 italic leading-relaxed">{section.researchNote}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Stop & Think — inline retrieval practice micro-prompt */}
+      {stopAndThinkPrompt && index < total - 1 && (
+        <div className="p-3.5 rounded-xl border border-dashed border-primary/20 bg-primary/3">
+          <div className="flex items-start gap-2.5">
+            <Brain className="h-4 w-4 text-primary/60 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-primary/70 mb-1">Stop & Think</p>
+              {!stopAndThinkRevealed ? (
+                <button
+                  className="text-xs text-primary/60 hover:text-primary transition-colors underline underline-offset-2"
+                  onClick={() => setStopAndThinkRevealed(true)}
+                >
+                  Tap to reveal a reflection prompt
+                </button>
+              ) : (
+                <p className="text-sm text-foreground/70 leading-relaxed italic">{stopAndThinkPrompt}</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -580,6 +633,18 @@ function TutorialRenderer({ body, onComplete, onProgressChange }: { body: any; o
 
           {/* Further reading on last section */}
           {isLastSection && <FurtherReadingPanel items={furtherReading} />}
+
+          {/* Section completion encouragement */}
+          {sectionIdx > 0 && (
+            <div className="flex items-center gap-2 py-1">
+              <Sparkles className="h-3 w-3 text-primary/50" />
+              <p className="text-xs text-muted-foreground">
+                {sectionIdx === normalisedSections.length - 1
+                  ? "Final section — you're almost there"
+                  : `Section ${sectionIdx} complete — ${normalisedSections.length - sectionIdx} remaining`}
+              </p>
+            </div>
+          )}
 
           {/* Navigation */}
           <div className="flex gap-3">
@@ -1043,15 +1108,26 @@ function PracticalRenderer({ body, onComplete, onProgressChange, moduleId, modul
             </div>
           )}
           {exercise && (
-            <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground">Exercise</p>
-              <p className="text-sm font-semibold">{exercise.title}</p>
-              {exercise.context && <p className="text-sm text-foreground/80">{exercise.context}</p>}
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-muted-foreground">{steps.length} steps</span>
+            <div className="p-4 rounded-xl bg-[#7A9E8E]/5 border border-[#7A9E8E]/20 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <FlaskConical className="h-4 w-4 text-[#4A6E5E] flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">{exercise.title}</p>
+                  {exercise.context && <p className="text-xs text-foreground/80 mt-1 leading-relaxed">{exercise.context}</p>}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 ml-6">
+                <div className="flex items-center gap-1.5">
+                  <ListChecks className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{steps.length} steps</span>
+                </div>
                 {exercise.successCriteria && (
-                  <span className="text-xs text-muted-foreground">· {exercise.successCriteria.length} success criteria</span>
+                  <div className="flex items-center gap-1.5">
+                    <Target className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">{exercise.successCriteria.length} success criteria</span>
+                  </div>
                 )}
+                <span className="text-xs text-muted-foreground/60">· Apply what you've learned</span>
               </div>
             </div>
           )}
@@ -1474,10 +1550,71 @@ function ScenarioRenderer({ body, onComplete, onProgressChange }: { body: any; o
               )}
             </div>
           )}
+          {/* Stakeholder Reactions — show how different parties respond */}
+          {scenario?.stakeholders && choice && (
+            <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+              <div className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-xs font-semibold text-muted-foreground">Stakeholder reactions</p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-xs">👤</span>
+                  <p className="text-xs text-foreground/70 leading-relaxed">
+                    <span className="font-medium">HR Director:</span> {choice.isOptimal
+                      ? "Supports this approach — aligns with the people strategy and demonstrates evidence-based thinking."
+                      : "Has concerns — this approach may create precedent issues or miss underlying systemic factors."}
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-xs">👤</span>
+                  <p className="text-xs text-foreground/70 leading-relaxed">
+                    <span className="font-medium">Line Manager:</span> {choice.isOptimal
+                      ? "Appreciates the balanced approach — feels heard while understanding the broader context."
+                      : "May feel unsupported — could escalate or disengage from the process."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Ripple Effects — what happens 3/6/12 months later */}
+          {choice && (
+            <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-3">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-xs font-semibold text-muted-foreground">Ripple effects over time</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2 rounded-lg bg-card border border-border">
+                  <p className="text-[10px] font-bold text-muted-foreground mb-0.5">3 months</p>
+                  <p className="text-[11px] text-foreground/70 leading-tight">
+                    {choice.isOptimal ? "Initial positive signals — trust building" : "Friction emerging — may need course correction"}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-card border border-border">
+                  <p className="text-[10px] font-bold text-muted-foreground mb-0.5">6 months</p>
+                  <p className="text-[11px] text-foreground/70 leading-tight">
+                    {choice.isOptimal ? "Sustainable patterns forming — replicable approach" : "Workarounds developing — original issue persists"}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-card border border-border">
+                  <p className="text-[10px] font-bold text-muted-foreground mb-0.5">12 months</p>
+                  <p className="text-[11px] text-foreground/70 leading-tight">
+                    {choice.isOptimal ? "Capability embedded — becomes organisational norm" : "Systemic review needed — escalation likely"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {(scenario?.bestPractice ?? body?.bestPractice) && (
-            <div className="p-4 rounded-xl bg-muted border border-border">
-              <p className="text-xs font-semibold text-muted-foreground mb-1">Best Practice</p>
-              <p className="text-sm">{scenario?.bestPractice ?? body?.bestPractice}</p>
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <div className="flex items-start gap-2.5">
+                <Target className="h-4 w-4 text-primary/60 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-primary/70 mb-1">Expert best practice</p>
+                  <p className="text-sm text-foreground/80">{scenario?.bestPractice ?? body?.bestPractice}</p>
+                </div>
+              </div>
             </div>
           )}
           <KeyTakeawaysPanel takeaways={keyTakeaways} />
@@ -1535,8 +1672,17 @@ function ReflectionRenderer({ body, onComplete, onProgressChange, moduleId, modu
             </div>
           )}
           {prompts.length > 0 && (
-            <div className="p-3 rounded-xl bg-muted/20 border border-border">
-              <p className="text-xs text-muted-foreground">{prompts.length} reflection prompts · Take your time with each one</p>
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <div className="flex items-start gap-2.5">
+                <Brain className="h-4 w-4 text-primary/60 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-medium text-foreground">{prompts.length} reflection prompts ahead</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                    This is your space to think deeply. There are no right answers — only honest ones.
+                    Give yourself permission to be candid about what you know and what you're still figuring out.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
           <Button className="w-full gap-1.5" onClick={() => setPhase("reflect")}>
@@ -1673,16 +1819,24 @@ function CoachingRenderer({ body, onComplete, onProgressChange, moduleId, module
             </div>
           )}
           {framework && (
-            // Change 7a + 7b: No green border; framework pills use neutral bg
-            <div className="p-4 rounded-xl bg-muted/30">
-              <p className="text-xs font-semibold text-muted-foreground mb-2">Coaching framework: {framework.model}</p>
-              <div className="flex gap-2 flex-wrap">
-                {frameworkPhases.map((fp: any, i: number) => (
-                  <span key={i} className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">
-                    {fp.phase}
-                  </span>
-                ))}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary/60" />
+                <p className="text-xs font-semibold text-foreground">Coaching framework: {framework.model}</p>
               </div>
+              <div className="flex gap-2 flex-wrap">
+                {frameworkPhases.map((fp: any, i: number) => {
+                  const phaseColors = ['bg-[#3B82F6]/15 text-[#3B82F6]', 'bg-[#7A9E8E]/15 text-[#4A6E5E]', 'bg-[#C8B07A]/15 text-[#8E7848]', 'bg-[#9333EA]/15 text-[#9333EA]'];
+                  return (
+                    <span key={i} className={cn("text-xs px-2.5 py-1 rounded-full font-medium", phaseColors[i % phaseColors.length])}>
+                      {fp.phase}
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                You'll work through each phase in sequence. Each phase has guided questions to help you develop insight and commitment to action.
+              </p>
             </div>
           )}
           <Button className="w-full gap-1.5" onClick={() => setPhase(frameworkPhases.length > 0 ? "framework" : "questions")}>
@@ -2020,22 +2174,34 @@ function CompletionScreen({
 
   return (
     <div className="py-6 space-y-5 max-w-lg mx-auto">
-      {/* Hero completion banner */}
+      {/* Hero completion banner with celebration */}
       <div className="text-center space-y-3">
         <div className={cn(
-          "w-20 h-20 rounded-full border-2 flex items-center justify-center mx-auto",
+          "w-20 h-20 rounded-full border-2 flex items-center justify-center mx-auto relative",
           isGateBlocked ? "bg-[#C8B07A]/15 border-[#C8B07A]/30" : "bg-[#7A9E8E]/15 border-[#7A9E8E]/30"
         )}>
           {isGateBlocked
             ? <AlertCircle className="h-10 w-10 text-[#C8B07A]" />
             : <CheckCircle2 className="h-10 w-10 text-[#7A9E8E]" />
           }
+          {/* Celebration sparkle ring */}
+          {!isGateBlocked && (
+            <div className="absolute inset-0 rounded-full animate-ping opacity-20 bg-[#7A9E8E]" style={{ animationDuration: '2s', animationIterationCount: '2' }} />
+          )}
         </div>
         <div>
           <h2 className="text-2xl font-bold mb-1">
-            {isGateBlocked ? "Mastery Gate - Retake Required" : "Module Complete!"}
+            {isGateBlocked ? "Mastery Gate — Retake Required" :
+             score >= 90 ? "Outstanding Work!" :
+             score >= 75 ? "Module Complete!" :
+             "Good Effort — Module Complete"}
           </h2>
           <p className="text-sm text-muted-foreground">{title}</p>
+          {!isGateBlocked && score >= 80 && (
+            <p className="text-xs text-[#7A9E8E] mt-1 font-medium">
+              You're building real capability in {cap.label.toLowerCase()}
+            </p>
+          )}
         </div>
       </div>
 
@@ -2079,18 +2245,30 @@ function CompletionScreen({
         </div>
       </div>
 
-      {/* Capability context */}
-      <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}20` }}>
-          <CapIcon className="h-4 w-4" style={{ color: cap.color }} />
+      {/* Capability context + spaced repetition */}
+      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cap.color}20` }}>
+            <CapIcon className="h-4 w-4" style={{ color: cap.color }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground">Capability domain</p>
+            <p className="text-sm font-medium truncate">{cap.label}</p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground">Capability domain</p>
-          <p className="text-sm font-medium truncate">{cap.label}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">Spaced repetition</p>
-          <p className="text-xs font-medium text-[#7A9E8E]">Scheduled ✓</p>
+        {/* Spaced repetition explanation */}
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-card border border-border">
+          <RefreshCw className="h-3.5 w-3.5 text-primary/60 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-medium text-foreground">Spaced repetition scheduled</p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+              {score >= 80
+                ? "Strong performance — we'll revisit this material in 7 days to reinforce long-term retention."
+                : score >= 60
+                ? "Good progress — a shorter review cycle (3 days) will help consolidate what you've learned."
+                : "We'll revisit this soon (tomorrow) with a different approach to strengthen understanding."}
+            </p>
+          </div>
         </div>
       </div>
 

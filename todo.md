@@ -4687,3 +4687,11 @@ test
 - [x] #18 Consistent component library: standardise buttons, inputs, cards, badges, tables
 - [x] #19 Accessibility (WCAG) pass: colour-contrast, keyboard nav, focus states, screen-reader labels
 - [x] #20 Confidence surfacing: show where domain is well-evidenced vs thin on assessment results
+
+### Learning Module Best-Practice Review & Improvements
+- [ ] Audit current module architecture (schema, content blocks, lesson rendering, progression)
+- [ ] Research external best practices for enterprise learning (microlearning, engagement, interactivity)
+- [ ] Implement content/structure improvements (scenario blocks, reflection prompts, real-world examples)
+- [ ] Implement engagement improvements (progress celebrations, knowledge checks, spaced repetition cues)
+- [ ] Implement presentation improvements (lesson layout, media blocks, reading time indicators)
+- [ ] Run tests and verify no regressions
