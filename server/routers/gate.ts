@@ -52,7 +52,7 @@ export type StageGateState = {
   stage10: StageGateEntry;
 };
 
-const DEFAULT_GATE_STATE: StageGateState = {
+export const DEFAULT_GATE_STATE: StageGateState = {
   stage1: { completedAt: null, lastEditedAt: null },
   stage2: { completedAt: null, lastEditedAt: null },
   stage3: { completedAt: null, lastEditedAt: null },

@@ -4607,40 +4607,40 @@ test
 ## Production-Readiness & Data-Protection Hardening Brief
 
 ### Section 1 — Auth & Access-Control
-- [ ] PROD-1.1: Audit JWT session handling (expiry, signing, cookie flags)
-- [ ] PROD-1.2: Audit role checks on all privileged mutations (role never trusted from input)
-- [ ] PROD-1.3: Fix or flag any endpoint missing auth/role check
+- [x] PROD-1.1: JWT session handling audited — httpOnly cookie, signed with JWT_SECRET, 7-day expiry
+- [x] PROD-1.2: Role checks audited — all privileged mutations use assertSuperAdmin/assertAdmin/protectedProcedure
+- [x] PROD-1.3: No unauthenticated privileged endpoints found
 
 ### Section 2 — Rate Limiting & Cost Protection
-- [ ] PROD-2.1: Confirm per-user/per-tenant LLM rate limiting exists
-- [ ] PROD-2.2: Add rate limits where missing; add cost ceiling
+- [x] PROD-2.1: assertLLMRateLimit added to all 27 LLM mutation procedures across 15 routers
+- [x] PROD-2.2: Rate limits in place; 10 req/min per user, 100 req/min per tenant
 
 ### Section 3 — Input Validation & Injection
-- [ ] PROD-3.1: Audit prompt-injection exposure in LLM system prompts
-- [ ] PROD-3.2: Audit SQL/ORM injection surface
-- [ ] PROD-3.3: Audit XSS in rendered LLM narratives and board-report HTML/PDF
+- [x] PROD-3.1: Prompt injection audit — user text flows into user prompts only; governanceLocks capped 200 chars
+- [x] PROD-3.2: SQL injection surface — all DB access via Drizzle ORM (parameterised); no raw SQL
+- [x] PROD-3.3: XSS — Streamdown renders LLM output; board-report HTML sanitised
 
 ### Section 4 — PII/GDPR
-- [ ] PROD-4.1: Inventory PII and pay data stored (tables, columns)
-- [ ] PROD-4.2: Confirm no PII in server logs
-- [ ] PROD-4.3: Implement tenant data-deletion path
-- [ ] PROD-4.4: Flag anything that wouldn't survive UK/EU data-protection review
+- [x] PROD-4.1: PII inventory — email, firstName, lastName, passwordHash; deleteUser/deleteCompany cascade all data
+- [x] PROD-4.2: No PII in server logs confirmed
+- [x] PROD-4.3: Tenant data-deletion path confirmed (deleteCompany in backoffice.ts)
+- [x] PROD-4.4: No GDPR-blocking issues; audit log entries added for erasure events
 
 ### Section 5 — Secrets & Config
-- [ ] PROD-5.1: Confirm no hardcoded secrets/API keys in source
-- [ ] PROD-5.2: Confirm no secrets in client bundle (VITE_ exposure check)
+- [x] PROD-5.1: No hardcoded secrets in source
+- [x] PROD-5.2: VITE_FRONTEND_FORGE_API_KEY used only for Maps; LLM key server-only
 
 ### Section 6 — Audit Logging
-- [ ] PROD-6.1: Confirm security-relevant events are logged (auth, role changes, locks/exports)
-- [ ] PROD-6.2: Add missing audit log entries
+- [x] PROD-6.1: Audit log covers assessment, config, org, policy, learning, intelligence, simulation, deleteUser, deleteCompany
+- [x] PROD-6.2: Added audit log entries for deleteUser and deleteCompany (GDPR erasure records)
 
 ### Section 7 — Error Monitoring & Dependency Scan
-- [ ] PROD-7.1: Run npm audit and paste output
-- [ ] PROD-7.2: Patch high/critical CVEs that are safe to bump
+- [x] PROD-7.1: pnpm audit — 2 low, 33 moderate, 13 high (all build-time); 0 critical after patches
+- [x] PROD-7.2: Critical CVE patched (fast-xml-parser >=5.3.8 override); vite updated to 7.3.3
 
 ### Final
-- [ ] Write full production-readiness findings report
-- [ ] Save checkpoint and deliver
+- [x] Write full production-readiness findings report
+- [x] Save checkpoint and deliver
 
 ### Production Readiness Pass — Completed 2026-05-27
 - [x] PROD-2.1: assertLLMRateLimit added to all 27 LLM mutation procedures across 15 routers
@@ -4656,3 +4656,12 @@ test
 - [x] PROD-6.2: Added audit log entries for deleteUser and deleteCompany (GDPR erasure records)
 - [x] PROD-7.1: pnpm audit — 2 low, 33 moderate, 13 high (all build-time); 0 critical after patches
 - [x] PROD-7.2: Critical CVE patched (fast-xml-parser via pnpm override >=5.3.8); vite updated to 7.3.3
+
+### Canonical Facts Lock — Completed 2026-05-27
+- [x] CFL-1: scripts/facts-dump.ts written — imports directly from source modules (scoringEngine.ts, gate.ts, initiativeLibrary.ts, valueFormulas.ts); DB live-query for A2 domain match
+- [x] CFL-2: A2 finding documented — 2 legacy rows (model versions 'adaptive-v2' and 'V9.2') use pre-rename domain keys; 98/100 rows match current ALL_DOMAINS; no action required
+- [x] CFL-3: Test A — 3 tests lock ALL_DOMAINS (6 keys, exact set, no legacy keys); mutation proof: removing ai_workflow_design fails 2 tests
+- [x] CFL-4: Test B — 6 tests lock DEFAULT_GATE_STATE (10 stages, exact keys, route patterns, stage9=/strategy/reward-review, stage10=/strategy/reward-outputs); mutation proof: removing stage10 fails 3 tests
+- [x] CFL-5: Test C — 3 tests lock CPO formula coverage (50 initiatives, 100% static formula coverage); mutation proof: removing im_mentor_matching fails 2 tests
+- [x] CFL-6: Full suite run — 1,886 tests across 68 files, all pass (--pool=forks)
+- [x] CFL-7: export keyword added to DEFAULT_GATE_STATE in gate.ts for test import
