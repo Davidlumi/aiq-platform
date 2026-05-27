@@ -208,6 +208,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
             <div>
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Bottom-up calculation</h3>
               <div className="rounded-lg border border-border bg-white/2 overflow-hidden">
+                <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
@@ -234,6 +235,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
@@ -264,6 +266,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
             <div>
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Sensitivity (±20% on key assumptions)</h3>
               <div className="rounded-lg border border-border bg-white/2 overflow-hidden">
+                <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border">
@@ -282,6 +285,7 @@ function InitiativeModal({ item, open, onClose }: { item: InitiativeItem; open: 
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}

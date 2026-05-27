@@ -253,7 +253,9 @@ export default function BusinessCasePage() {
   );
 
   // ── Risk evaluation ───────────────────────────────────────────────────────
-  const evaluateRiskMut = trpc.intelligence.evaluateRiskRules.useMutation();
+  const evaluateRiskMut = trpc.intelligence.evaluateRiskRules.useMutation({
+    onError: (e) => toast.error(e.message),
+  });
   type LiveRisk = {
     ruleId: string; displayName: string; riskStatement: string;
     severity: string; recommendedAction: string; regulatoryBasis: string[];
@@ -380,7 +382,9 @@ export default function BusinessCasePage() {
   }, [assessmentQ.data, narrativeLoaded]);
 
   // Auto-save narrative with debounce
-  const saveNarrativeMut = trpc.intelligence.saveBusinessCaseNarrative.useMutation();
+  const saveNarrativeMut = trpc.intelligence.saveBusinessCaseNarrative.useMutation({
+    onError: (e) => toast.error(e.message),
+  });
   const saveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!narrativeLoaded || !narrative) return;

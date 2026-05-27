@@ -287,9 +287,15 @@ export default function BoardReportPage() {
   }, [reportQ.data]);
 
   // Mutations
-  const saveSectionMutation = trpc.intelligence.saveBoardReportSection.useMutation();
-  const toggleLockMutation = trpc.intelligence.toggleBoardReportSectionLock.useMutation();
-  const savePreferencesMutation = trpc.intelligence.saveBoardReportPreferences.useMutation();
+  const saveSectionMutation = trpc.intelligence.saveBoardReportSection.useMutation({
+    onError: (e) => toast.error(e.message),
+  });
+  const toggleLockMutation = trpc.intelligence.toggleBoardReportSectionLock.useMutation({
+    onError: (e) => toast.error(e.message),
+  });
+  const savePreferencesMutation = trpc.intelligence.saveBoardReportPreferences.useMutation({
+    onError: (e) => toast.error(e.message),
+  });
   const completeStage10Mutation = trpc.gate.completeStage10.useMutation({
     onSuccess: (data) => {
       gate.refetch();
@@ -582,7 +588,7 @@ export default function BoardReportPage() {
         backRoute: "/strategy/review",
       } : undefined}
     >
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6 px-2 sm:px-0">
 
         {/* Mobile read-only banner */}
         {isMobile && (

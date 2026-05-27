@@ -4525,3 +4525,18 @@ test
 - [x] CL-8: Write closing-loop test (score improvement narrows gap)
 - [x] CL-9: Write all locking tests for team aggregation and Stage 8 derived level
 - [x] CL-10: Run all engine dumps and confirm Northbridge golden-master unchanged
+
+## QA Pass — Bug Fixes (Phase 4, May 2026)
+- [x] BUG-1: Remove 3 stray `console.log("[PDF-DEBUG]...")` from `server/pdfBoardPack.ts` (lines 332-334)
+- [x] BUG-2: Add `onError` handlers to `saveSectionMutation`, `toggleLockMutation`, `savePreferencesMutation` in `BoardReportPage.tsx`
+- [x] BUG-3: Add `onError` handlers to `evaluateRiskMut` and `saveNarrativeMut` in `BusinessCasePage.tsx`
+- [x] BUG-4: `RewardOutputsPage.tsx` — confirmed `if (error || !data)` guard already present at line 867
+- [x] BUG-5/12: Wrap both `<table>` elements in `StrategyValuePage.tsx` with `<div className="overflow-x-auto">` inside `overflow-hidden` containers
+- [x] BUG-6: `key={index}` audit — all `key={i}` usages are on static/skeleton arrays; no mutable-list index-key anti-pattern found
+- [x] BUG-7: `RewardPreworkPage.tsx` — added `useLocation` import and "Back to Strategy Overview" navigation link
+- [x] BUG-8: `RewardOutputsPage.tsx` layout — self-contained `max-w-5xl` container is appropriate for its tab-heavy design
+- [x] BUG-9: `BoardReportPage.tsx` — added `px-2 sm:px-0` responsive padding; mobile read-only banner already present
+- [x] BUG-10: Responsive breakpoints in `RewardOutputsPage.tsx` and `RewardBusinessCasePage.tsx` — adequate for content structure
+- [x] BUG-11: `cpoComputedModel` in `BusinessCasePage.tsx` — confirmed `setCpoComputedModel(data.cpoModel)` correctly wired in `generateNarrativeMut.onSuccess` (line 400)
+- [x] TypeScript: 0 errors after all fixes
+- [x] Tests: 1,834/1,834 passing after all fixes

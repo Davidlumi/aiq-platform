@@ -24,6 +24,7 @@
  * - Help text on every field
  */
 import { useState, useCallback } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -374,6 +375,7 @@ function CompanyProfileBanner() {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function RewardPreworkPage() {
+  const [, navigate] = useLocation();
   const [screen, setScreen] = useState<"A" | "B" | "C" | "D" | "E">("A");
 
   const { data: prework, refetch } = trpc.rewardPrework.get.useQuery();
@@ -507,6 +509,15 @@ export default function RewardPreworkPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
+      {/* Back navigation */}
+      <button
+        onClick={() => navigate("/strategy")}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ChevronLeft className="h-3.5 w-3.5" />
+        Back to Strategy Overview
+      </button>
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>

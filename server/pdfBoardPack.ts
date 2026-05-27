@@ -329,10 +329,6 @@ export async function generateBoardPackPDF(doc: PDFKitDoc, userId: string, tenan
   const orgSize:               string        = (orgCtx as any)?.orgSize             ?? "medium";
   const libVersion:            string | null = (orgCtx as any)?.libraryVersion      ?? null;
 
-  console.log("[PDF-DEBUG] strategyNarrative=", strategyNarrative?.slice(0, 60));
-  console.log("[PDF-DEBUG] visionStatement=", visionStatement?.slice(0, 60));
-  console.log("[PDF-DEBUG] businessAmbitionLevel=", businessAmbitionLevel, "peopleAmbitionLevel=", peopleAmbitionLevel);
-
   let guidingPrinciples: Array<{ title: string; description: string }> = [];
   try { const r = (orgCtx as any)?.guidingPrinciplesJson; if (r) guidingPrinciples = typeof r === "string" ? JSON.parse(r) : r; } catch {}
 
