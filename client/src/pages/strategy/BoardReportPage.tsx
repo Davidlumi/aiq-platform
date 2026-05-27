@@ -264,6 +264,20 @@ export default function BoardReportPage() {
   const [connectionDropped, setConnectionDropped] = useState(false);
   const [retrySection, setRetrySection] = useState<SectionId | null>(null);
 
+  // Track pending (debounced) edits to warn on navigation
+  const [hasPendingEdit, setHasPendingEdit] = useState(false);
+
+  // Warn browser-level navigation (tab close / refresh) when an edit is pending
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!hasPendingEdit) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasPendingEdit]);
+
   // Detect mobile viewport for read-only banner
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -324,8 +338,10 @@ export default function BoardReportPage() {
     }));
     const existing = saveTimerRef.current.get(sectionId);
     if (existing) clearTimeout(existing);
+    setHasPendingEdit(true);
     const timer = setTimeout(() => {
       saveSectionMutation.mutate({ sectionId, content });
+      setHasPendingEdit(false);
     }, 1500);
     saveTimerRef.current.set(sectionId, timer);
   }, [saveSectionMutation]);
@@ -662,16 +678,36 @@ export default function BoardReportPage() {
 
         {/* Top toolbar */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className={`text-sm font-medium ${wordCountOk ? "text-emerald-600 dark:text-emerald-400" : totalWords > 4000 ? "text-red-500" : "text-muted-foreground"}`}>
-              {totalWords.toLocaleString()} / 1,200–4,000 words
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <div className="flex items-center gap-3">
+              <div className={`text-sm font-medium ${wordCountOk ? "text-emerald-600 dark:text-emerald-400" : totalWords > 4000 ? "text-red-500" : "text-muted-foreground"}`}>
+                {totalWords.toLocaleString()} / 1,200–4,000 words
+              </div>
+              {!wordCountOk && totalWords > 0 && (
+                <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {totalWords < 1200 ? `${1200 - totalWords} more words needed` : `${totalWords - 4000} words over limit`}
+                </div>
+              )}
             </div>
-            {!wordCountOk && totalWords > 0 && (
-              <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                <AlertCircle className="w-3.5 h-3.5" />
-                {totalWords < 1200 ? `${1200 - totalWords} more words needed` : `${totalWords - 4000} words over limit`}
+            {/* Pending save indicator */}
+            {hasPendingEdit && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground/60">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Saving…
               </div>
             )}
+            {/* Word count progress bar */}
+            <div className="w-48 h-1.5 rounded-full bg-muted overflow-hidden" role="progressbar" aria-valuenow={totalWords} aria-valuemin={0} aria-valuemax={4000} aria-label="Word count progress">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  totalWords > 4000 ? "bg-red-500" :
+                  wordCountOk ? "bg-emerald-500" :
+                  "bg-muted-foreground/40"
+                }`}
+                style={{ width: `${Math.min(100, (totalWords / 4000) * 100)}%` }}
+              />
+            </div>
           </div>
           <Button
             variant="outline"

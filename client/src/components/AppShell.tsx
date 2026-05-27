@@ -427,6 +427,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={toggleTheme}>
+              {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+              <span>{theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
               className="text-destructive focus:text-destructive focus:bg-destructive/5"
@@ -549,6 +554,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile and settings</span>
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                  <span>{theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

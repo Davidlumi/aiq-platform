@@ -583,7 +583,7 @@ export default function RewardPreworkPage() {
               ) : (
                 <s.icon className="h-3.5 w-3.5" />
               )}
-              {s.label}
+              <span className={screen === s.id ? "" : "hidden sm:inline"}>{s.label}</span>
             </button>
             {i < SCREENS.length - 1 && (
               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

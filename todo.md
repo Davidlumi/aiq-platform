@@ -4540,3 +4540,22 @@ test
 - [x] BUG-11: `cpoComputedModel` in `BusinessCasePage.tsx` — confirmed `setCpoComputedModel(data.cpoModel)` correctly wired in `generateNarrativeMut.onSuccess` (line 400)
 - [x] TypeScript: 0 errors after all fixes
 - [x] Tests: 1,834/1,834 passing after all fixes
+
+## QA Recommendations Implementation (A–K)
+
+### Priority 1 — High Impact, Low Effort
+- [x] A: Stage progress indicator — scrollIntoView on active stage pill in StrategyTopNav
+- [x] B: Empty-state onboarding card — confirmed already implemented; no delay on first visit
+- [x] C: Toast positioning — set position="top-center" in Toaster in App.tsx for mobile
+- [x] D: Word count progress bar — added thin progress bar beneath word count in Board Report editor
+
+### Priority 2 — Medium Impact, Medium Effort
+- [x] E: Unsaved-edit guard — hasPendingEdit state + beforeunload listener + Saving… indicator in Board Report
+- [x] F: Keyboard accessibility — DeepDiveCard in RewardOutputsPage converted from CardHeader onClick to button with aria-expanded
+- [x] G: Portfolio page loading skeleton — confirmed already implemented with skeleton grid; no change needed
+- [x] H: Reward Pre-work mobile progress — inactive pill labels hidden on mobile (hidden sm:inline), active pill always shows label
+
+### Priority 3 — Lower Impact, Higher Effort
+- [x] I: Dark/light mode toggle — added theme toggle to both sidebar account dropdown and mobile header dropdown in AppShell
+- [x] J: Chart accessibility — added role="img" + aria-label to all 3 Recharts ResponsiveContainers in RewardOutputsPage
+- [x] K: Print stylesheet — buildPrintHtml now uses @page A4 margins, page-break-inside:avoid on sections/kpi-grid, print-color-adjust:exact, .footer class

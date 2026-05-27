@@ -283,6 +283,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
             <p className="text-xs text-muted-foreground">All values post-overlap-discount. Conservative may be net-negative — this is the honest outcome.</p>
           </CardHeader>
           <CardContent className="pt-0">
+            <div role="img" aria-label="Grouped bar chart: Investment vs adjusted value by scenario">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={charts.costVsValue} barCategoryGap="30%">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
@@ -296,6 +297,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
                 <Bar dataKey="netValue3yr" name="Adjusted Value" fill="#10b981" radius={[3,3,0,0]} />
               </BarChart>
             </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -306,6 +308,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
             <p className="text-xs text-muted-foreground">Proportional distribution of adjusted value across the five value types.</p>
           </CardHeader>
           <CardContent className="pt-0">
+            <div role="img" aria-label="Horizontal bar chart: Adjusted value by type for the selected scenario">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={charts.valueByCategory} layout="vertical" barCategoryGap="25%">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
@@ -325,6 +328,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -338,6 +342,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
           <p className="text-xs text-muted-foreground">Illustrative monthly accrual. Actual timing depends on initiative sequencing and adoption pace.</p>
         </CardHeader>
         <CardContent className="pt-0">
+          <div role="img" aria-label="Line chart: Cumulative cost vs cumulative value over 36 months">
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={paybackTimeline}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
@@ -352,6 +357,7 @@ function DashboardTab({ report, chartContainerRef }: { report: AssembledReport; 
               <Line type="monotone" dataKey="cumulativeValue" name="Cumulative Value" stroke={isNegative && isConservative ? "#f59e0b" : "#10b981"} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
@@ -652,7 +658,14 @@ function DeepDiveCard({ initiative }: { initiative: AssembledReport["initiatives
 
   return (
     <Card className="bg-card border-border/50">
-      <CardHeader className="pb-2 cursor-pointer" onClick={() => setOpen(o => !o)}>
+      <CardHeader className="pb-2">
+        <button
+          type="button"
+          className="w-full text-left cursor-pointer"
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+          aria-label={`${initiative.title} — ${open ? "collapse" : "expand"} details`}
+        >
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -683,6 +696,7 @@ function DeepDiveCard({ initiative }: { initiative: AssembledReport["initiatives
             {open ? <ChevronUp className="w-4 h-4 text-muted-foreground mt-1 ml-auto" /> : <ChevronDown className="w-4 h-4 text-muted-foreground mt-1 ml-auto" />}
           </div>
         </div>
+        </button>
       </CardHeader>
 
       {open && (
@@ -982,16 +996,25 @@ function buildPrintHtml(
 <meta charset="utf-8">
 <title>${report.companyName} — Reward AI Strategy</title>
 <style>
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111827; margin: 0; padding: 2.5cm; font-size: 12px; line-height: 1.6; }
-  h1 { font-size: 20px; font-weight: 700; margin-bottom: 0.25rem; }
+  @page { size: A4; margin: 2cm 2.5cm; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111827; margin: 0; padding: 0; font-size: 12px; line-height: 1.6; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 0.25rem; page-break-after: avoid; }
+  h2 { page-break-after: avoid; }
   .meta { font-size: 11px; color: #6b7280; margin-bottom: 2rem; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; page-break-inside: avoid; }
   .kpi { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; text-align: center; }
   .kpi-value { font-size: 18px; font-weight: 700; }
   .kpi-label { font-size: 10px; color: #6b7280; margin-top: 0.25rem; }
-  .exec-summary { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 2rem; }
+  .exec-summary { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 2rem; page-break-inside: avoid; }
   .exec-summary h2 { font-size: 13px; font-weight: 700; margin-bottom: 0.5rem; }
-  @media print { body { padding: 1.5cm; } }
+  section { page-break-inside: avoid; margin-bottom: 1.5rem; }
+  img { max-width: 100%; height: auto; }
+  .footer { font-size: 10px; color: #9ca3af; margin-top: 3rem; border-top: 1px solid #e2e8f0; padding-top: 0.5rem; page-break-inside: avoid; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .kpi-grid { break-inside: avoid; }
+    section { break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -1011,7 +1034,7 @@ ${chartDataUrl ? `<div style="margin-bottom:2rem;page-break-inside:avoid;"><h2 s
 
 ${sections}
 
-<p style="font-size:10px;color:#9ca3af;margin-top:3rem;border-top:1px solid #e2e8f0;padding-top:0.5rem;">
+<p class="footer">
   Financial figures computed from the Stage 7 model. Overlap discount of £${(central.overlapDiscountTotal / 1e6).toFixed(1)}M applied. All values are estimates based on calibrated benchmarks.
 </p>
 </body>

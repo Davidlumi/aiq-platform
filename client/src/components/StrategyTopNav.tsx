@@ -11,6 +11,7 @@
  * Mobile: horizontally scrollable pill strip.
  */
 import { useLocation } from "wouter";
+import { useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Lock, ChevronRight, AlertTriangle } from "lucide-react";
@@ -332,6 +333,15 @@ export default function StrategyTopNav() {
   });
 
   const isOverview = location === "/strategy" || location === "/strategy/";
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const activeStepRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll the active pill into view whenever the route changes
+  useEffect(() => {
+    if (activeStepRef.current && scrollContainerRef.current) {
+      activeStepRef.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [location]);
 
   const effectiveGate: GateState = (gateState as GateState) ?? {
     isStage1Accessible: true,
@@ -403,20 +413,23 @@ export default function StrategyTopNav() {
 
           {/* Scrollable stage steps */}
           <div
+            ref={scrollContainerRef}
             className="flex items-center overflow-x-auto flex-1"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             <div className="flex items-center">
               {activeStages.map((stage, idx) => {
                 const state = getStepState(stage, effectiveGate, location);
+                const isCurrent = state === "current";
                 return (
-                  <StageStep
-                    key={stage.number}
-                    stage={stage}
-                    state={state}
-                    isLast={idx === activeStages.length - 1}
-                    onClick={() => navigate(stage.route)}
-                  />
+                  <div key={stage.number} ref={isCurrent ? activeStepRef : undefined}>
+                    <StageStep
+                      stage={stage}
+                      state={state}
+                      isLast={idx === activeStages.length - 1}
+                      onClick={() => navigate(stage.route)}
+                    />
+                  </div>
                 );
               })}
             </div>

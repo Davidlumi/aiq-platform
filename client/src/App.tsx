@@ -481,7 +481,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark" switchable={true}>
         <TooltipProvider>
-          <Toaster />
+          <Toaster position="top-center" />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
