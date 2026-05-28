@@ -2588,12 +2588,11 @@ export const rewardSuccessMeasures = mysqlTable("reward_success_measures", {
    */
   baselineType: varchar("baseline_type", { length: 30 }).notNull().default("to_be_established"),
   /** Only populated when baselineType = "known" or "external_reference" */
-  baselineValue: varchar("baseline_value", { length: 200 }),
+    baselineValue: varchar("baseline_value", { length: 500 }),
   /** Source note for external_reference baselines */
-  baselineSourceNote: varchar("baseline_source_note", { length: 400 }),
-
-  target: varchar("target", { length: 200 }),
-  timeframe: varchar("timeframe", { length: 200 }),
+  baselineSourceNote: varchar("baseline_source_note", { length: 500 }),
+  target: varchar("target", { length: 500 }),
+  timeframe: varchar("timeframe", { length: 500 }),
   howMeasured: text("how_measured"),
 
   /**

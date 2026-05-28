@@ -184,3 +184,56 @@ describe("Canonical Facts — Test C: CPO Formula Coverage (static)", () => {
     expect(withFormula).toBe(cpoInitiatives.length);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Canonical Facts — Test D: DB capability_key consistency (static guard)", () => {
+  /**
+   * Locks the fact that the canonical scoring-engine domain set does NOT
+   * contain any legacy pre-rename keys.
+   *
+   * Legacy keys remapped on 2026-05-28 (DB migration scripts/p1-remap-legacy-keys.ts):
+   *   appropriateness    → ai_ethics_trust
+   *   data_interpretation → ai_output_evaluation
+   *   execution          → ai_workflow_design
+   *   governance         → ai_ethics_trust
+   *   judgement          → ai_output_evaluation
+   *   workflow           → ai_workflow_design
+   *
+   * Evidence-pack-only keys (never in live scoring engine):
+   *   ai_foundations, data_ethics, hr_ai_application,
+   *   org_transformation, reward_intelligence, workforce_analytics
+   */
+  const LEGACY_KEYS = [
+    "appropriateness",
+    "data_interpretation",
+    "execution",
+    "governance",
+    "judgement",
+    "workflow",
+    "ai_foundations",
+    "data_ethics",
+    "hr_ai_application",
+    "org_transformation",
+    "reward_intelligence",
+    "workforce_analytics",
+  ];
+
+  it("ALL_DOMAINS does not contain any legacy or evidence-pack-only keys", () => {
+    for (const legacy of LEGACY_KEYS) {
+      expect(ALL_DOMAINS).not.toContain(legacy);
+    }
+  });
+
+  it("ALL_DOMAINS still contains exactly 6 canonical keys after remapping", () => {
+    const canonical = [
+      "ai_interaction",
+      "ai_output_evaluation",
+      "ai_workflow_design",
+      "workforce_ai_readiness",
+      "ai_ethics_trust",
+      "ai_change_leadership",
+    ];
+    expect([...ALL_DOMAINS].sort()).toEqual([...canonical].sort());
+  });
+});

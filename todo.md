@@ -4819,3 +4819,17 @@ test
 - [x] F6: Implement CPO admin-gating — server-side + frontend guards (hide-not-delete)
 - [x] O1: Use role archetype seniority to set baseline difficulty (lead→3, senior→2, mid/junior→1; persona adaptation takes max)
 - [x] O2: Fixed flaky email test — AbortController with 3s timeout, graceful skip on network errors
+
+## DFS Pilot Integrity Sprint — 28 May 2026
+
+- [ ] P1: Enumerate all domain/capability taxonomies (scoringEngine, content_scenarios, roleArchetypes, display labels)
+- [ ] P1: Determine relationship (one taxonomy / two layers / unreconciled)
+- [ ] P1: Reconcile to one source of truth; update canonical-facts lock; mutation test before/after
+- [ ] P2: Identify why prior board report used wrong DFS profile (FS sector, £95m/2200)
+- [ ] P2: Re-render board report on real DFS retail profile (11,000 / £320m / £2.1bn / UK retail)
+- [ ] P2: Cross-check figures match D1 business case
+- [ ] P3: Document final cpoProcedure (acknowledge code change between packs)
+- [ ] P3: Execute reward-user-denied + founder-allowed tests
+- [ ] P4: Fix canLock blocking checks (C2/R2/R3/R4)
+- [ ] P4: Run full journey to locked strategy + Stage 10 board report
+- [ ] E: Full test suite green; compile final PDF deliverable
