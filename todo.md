@@ -4835,13 +4835,13 @@ test
 - [x] E: Full test suite green; compile final PDF deliverable
 
 ## DFS Evidence Pack Remediation Brief (28 May 2026)
-- [ ] Fix 1 (P0): Correct DFS figures (headcount ~4,503; revenue ~£1.0bn statutory / ~£1.39bn brand; payroll = DFS-provided); add source+as_of fields to profile; rewrite cross-check test to assert against recorded source values, not echoed inputs
-- [ ] Fix 2 (P0): Produce consent-gap checklist for DFS pilot agreement review (modelling, strategy generation, board report, storage/sharing)
-- [ ] Fix 3 (P1): Document 26 relabelled scenario decisions (keep/reword/reassign per canonical domain definition)
-- [ ] Fix 4 (P1): Rename dual "Capability Assessment" labels — individual = "AI Skills Check · 6 domains"; Stage 8 = "Reward Readiness · 4 dimensions"
-- [ ] Fix 5 (P1): Define board report acceptance rubric; add rubric assertions to generate procedure
-- [ ] Fix 6 (P2): De-brittle Test D — switch to invariant assertions; audit LLM-output columns for TEXT type or length guards
-- [ ] Fix 7 (P1): Verify full reward UI journey reaches Stage 10 lock; record soft flags H1/R2/R3 as open items with owners
+- [x] Fix 1 (P0): Correct DFS figures (headcount ~4,503; revenue ~£1.0bn statutory / ~£1.39bn brand; payroll = DFS-provided); add source+as_of fields to profile; rewrite cross-check test to assert against recorded source values, not echoed inputs
+- [x] Fix 2 (P0): Produce consent-gap checklist for DFS pilot agreement review (modelling, strategy generation, board report, storage/sharing)
+- [x] Fix 3 (P1): Document 26 relabelled scenario decisions (keep/reword/reassign per canonical domain definition)
+- [x] Fix 4 (P1): Rename dual "Capability Assessment" labels — individual = "AI Skills Check · 6 domains"; Stage 8 = "Reward Readiness · 4 dimensions"
+- [x] Fix 5 (P1): Define board report acceptance rubric; add rubric assertions to generate procedure
+- [x] Fix 6 (P2): De-brittle Test D — switch to invariant assertions; audit LLM-output columns for TEXT type or length guards
+- [x] Fix 7 (P1): Verify full reward UI journey reaches Stage 10 lock; record soft flags H1/R2/R3 as open items with owners
 
 ## DFS Evidence Pack Remediation (28 May 2026)
 

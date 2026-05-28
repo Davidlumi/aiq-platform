@@ -1,9 +1,20 @@
-# Scenario Label Review Record — 26 Relabelled Scenarios
+# Scenario Label Review Record — 26 Remapped Scenarios
 
-**Version:** 1.0  
-**Date:** 28 May 2026  
+**Version:** 2.0  
+**Date:** 28 May 2026 (updated after Addendum R2)  
 **Remediation item:** Fix 3 (P1) — AiQ Evidence Pack Remediation Brief, 28 May 2026  
+**Prerequisite:** Fix 14 (P1) — completed; see `references/remap-migration-audit-trail.md`  
 **Reviewer:** Content Owner (to be completed — see sign-off section)
+
+---
+
+## Addendum R2 Update
+
+> **Fix 14 is now a prerequisite for Fix 3.** The migration audit trail has been completed (see `references/remap-migration-audit-trail.md`) and the 26 remapped row IDs are now verified. Fix 3 review may proceed.
+
+> **Status:** 1 of 26 decisions recorded. 25 decisions pending content owner review.
+
+> **Sequencing note:** The addendum confirmed that the prior scenario-label review record was scaffolding only — the row IDs were not verified from the DB. This version (v2.0) replaces the placeholder rows with the verified IDs and titles from the live DB query run on 28 May 2026.
 
 ---
 
@@ -13,21 +24,25 @@ On 28 May 2026, 26 content scenarios were programmatically remapped from 6 legac
 
 The brief (Fix 3, P1) requires that each of the 26 scenarios is reviewed against the canonical domain definition and that a keep / reword / reassign decision is recorded. This document captures those decisions.
 
-**Done-when:** Each of the 26 has a documented keep/reword/reassign decision; distribution stays balanced after any reassignments.
+**Done-when:** Each of the 26 has a documented keep/reword/reassign decision by a content owner; distribution stays within the balance band after any reassignments (see Fix 16 for the band definition).
 
 ---
 
-## Remapping Summary
+## Remapping Summary (Verified from Live DB)
 
-| Legacy key | Canonical key | Count | Rationale |
+The remap moved all 26 rows into exactly three domains. The pre-remap legacy key for each row is inferred from the migration script logic — it cannot be recovered from the DB as the migration overwrote the values.
+
+| Legacy key | Canonical key | Count | Rows |
 |---|---|---|---|
-| `appropriateness` | `ai_ethics_trust` | 5 | All items concern ethical use, bias, consent, when-not-to-use — core ethics domain |
-| `data_interpretation` | `ai_output_evaluation` | 6 | All items concern interpreting/evaluating AI outputs, reliability, quality |
-| `execution` | `ai_workflow_design` | 4 | All items concern executing AI workflows, chatbot triage, onboarding |
-| `governance` | `ai_ethics_trust` | 5 | All items concern governance, accountability, bias checks |
-| `judgement` | `ai_output_evaluation` | 5 | All items concern exercising judgement on AI outputs, limits, weighting |
-| `workflow` | `ai_workflow_design` | 1 | Item about stakeholder communication in AI implementation |
+| `appropriateness` | `ai_ethics_trust` | ~5 | Inferred from migration script |
+| `governance` | `ai_ethics_trust` | ~5 | Inferred from migration script |
+| `data_interpretation` | `ai_output_evaluation` | ~6 | Inferred from migration script |
+| `judgement` | `ai_output_evaluation` | ~5 | Inferred from migration script |
+| `execution` | `ai_workflow_design` | ~4 | Inferred from migration script |
+| `workflow` | `ai_workflow_design` | ~1 | Inferred from migration script |
 | **Total** | | **26** | |
+
+The exact legacy key for each row is not recoverable. The review should focus on whether the *current* assignment is correct, not on what the legacy key was.
 
 ---
 
@@ -44,112 +59,66 @@ The brief (Fix 3, P1) requires that each of the 26 scenarios is reviewed against
 
 ---
 
-## Review Decisions — Group 1: `appropriateness` → `ai_ethics_trust` (5 scenarios)
+## Review Decisions — Group 1: Remapped to `ai_ethics_trust` (10 rows)
 
-These scenarios were originally labelled `appropriateness` and remapped to `ai_ethics_trust`.
-
-| # | Scenario title | Canonical domain | Decision | Rationale | Reviewer |
+| # | Row ID | Scenario title | Decision | Rationale | Reviewer |
 |---|---|---|---|---|---|
-| 1 | *(content owner to populate from DB query — see query below)* | `ai_ethics_trust` | Pending | | |
-| 2 | | `ai_ethics_trust` | Pending | | |
-| 3 | | `ai_ethics_trust` | Pending | | |
-| 4 | | `ai_ethics_trust` | Pending | | |
-| 5 | | `ai_ethics_trust` | Pending | | |
-
-**Query to retrieve these scenarios:**
-```sql
-SELECT id, title, scenario FROM content_scenarios
-WHERE capability_key = 'ai_ethics_trust'
-ORDER BY id LIMIT 5;
--- Note: the 5 appropriateness scenarios are the earliest-inserted rows in this group.
--- Cross-reference with the remap script output to confirm which 5 these are.
-```
+| 1 | `b3f0ebc9` | AI Data — Employee Trust and Transparency | Pending | | |
+| 2 | `dd9e8d03` | AI Governance — Personal Accountability Reflection | Pending | | |
+| 3 | `446a5daa` | AI Interview Feedback — Discrimination Risk | Pending | | |
+| 4 | `eef7366e` | AI Legal Summary — Employment Tribunal Risk | Pending | | |
+| 5 | `0fd516d7` | AI Policy Summary — Parental Leave Accuracy | Pending | | |
+| 6 | `16a91065` | AI Tool Adoption — Risk Prioritisation | Pending | | |
+| 7 | `c662af60` | AI Workflow — When Not to Use AI | Pending | | |
+| 8 | `7e3af81e` | AI Workflow Automation — Employee Data Consent | Pending | | |
+| 9 | `41a71f96` | AI-Drafted Job Description — Review for Bias | Pending | | |
+| 10 | `90e34932` | Candidate Screening AI Output — Bias Check | Pending | | |
 
 ---
 
-## Review Decisions — Group 2: `data_interpretation` → `ai_output_evaluation` (6 scenarios)
+## Review Decisions — Group 2: Remapped to `ai_output_evaluation` (11 rows)
 
-| # | Scenario title | Canonical domain | Decision | Rationale | Reviewer |
+| # | Row ID | Scenario title | Decision | Rationale | Reviewer |
 |---|---|---|---|---|---|
-| 1 | *(content owner to populate)* | `ai_output_evaluation` | Pending | | |
-| 2 | | `ai_output_evaluation` | Pending | | |
-| 3 | | `ai_output_evaluation` | Pending | | |
-| 4 | | `ai_output_evaluation` | Pending | | |
-| 5 | | `ai_output_evaluation` | Pending | | |
-| 6 | | `ai_output_evaluation` | Pending | | |
+| 11 | `2b96d4e0` | AI Absence Pattern Analysis — Reasonable Adjustments | Pending | | |
+| 12 | `8c5ef89f` | AI Bias — Recognising Limits of Your Own Knowledge | Pending | | |
+| 13 | `359fd546` | AI Electronic Health Record — Data Completeness | Pending | | |
+| 14 | `670e6e2a` | AI Immigration Decision — Country Conditions Data | Pending | | |
+| 15 | `17add616` | AI Output Quality — Reliability Hierarchy | Pending | | |
+| 16 | `e47a57e7` | AI Policy Analysis — Bias in Consultation Responses | Pending | | |
+| 17 | `d7eeba41` | AI Regulatory Reporting — Data Quality | Pending | | |
+| 18 | `054424ff` | AI Sentiment Analysis — Engagement Survey Interpretation | Pending | | |
+| 19 | `ce6aef37` | AI Workforce Planning — Headcount Reduction Recommendation | Pending | | |
+| 20 | `741e44d1` | AI-Drafted Performance Review — Accuracy Responsibility | Pending | | |
+| 21 | `b828f638` | Redundancy Process — AI Evidence Weighting | Pending | | |
 
 ---
 
-## Review Decisions — Group 3: `execution` → `ai_workflow_design` (4 scenarios)
+## Review Decisions — Group 3: Remapped to `ai_workflow_design` (5 rows)
 
-| # | Scenario title | Canonical domain | Decision | Rationale | Reviewer |
+| # | Row ID | Scenario title | Decision | Rationale | Reviewer |
 |---|---|---|---|---|---|
-| 1 | *(content owner to populate)* | `ai_workflow_design` | Pending | | |
-| 2 | | `ai_workflow_design` | Pending | | |
-| 3 | | `ai_workflow_design` | Pending | | |
-| 4 | | `ai_workflow_design` | Pending | | |
-
----
-
-## Review Decisions — Group 4: `governance` → `ai_ethics_trust` (5 scenarios)
-
-| # | Scenario title | Canonical domain | Decision | Rationale | Reviewer |
-|---|---|---|---|---|---|
-| 1 | *(content owner to populate)* | `ai_ethics_trust` | Pending | | |
-| 2 | | `ai_ethics_trust` | Pending | | |
-| 3 | | `ai_ethics_trust` | Pending | | |
-| 4 | | `ai_ethics_trust` | Pending | | |
-| 5 | | `ai_ethics_trust` | Pending | | |
-
----
-
-## Review Decisions — Group 5: `judgement` → `ai_output_evaluation` (5 scenarios)
-
-| # | Scenario title | Canonical domain | Decision | Rationale | Reviewer |
-|---|---|---|---|---|---|
-| 1 | *(content owner to populate)* | `ai_output_evaluation` | Pending | | |
-| 2 | | `ai_output_evaluation` | Pending | | |
-| 3 | | `ai_output_evaluation` | Pending | | |
-| 4 | | `ai_output_evaluation` | Pending | | |
-| 5 | | `ai_output_evaluation` | Pending | | |
-
----
-
-## Review Decisions — Group 6: `workflow` → `ai_workflow_design` (1 scenario)
-
-| # | Scenario title | Canonical domain | Decision | Rationale | Reviewer |
-|---|---|---|---|---|---|
-| 1 | AI Implementation — Stakeholder Communication Priority | `ai_workflow_design` | **Keep** | Scenario concerns communicating AI implementation priorities to stakeholders — clearly workflow design, not ethics or output evaluation. Fit is strong. | Content Owner (pending sign-off) |
-
----
-
-## Decision Codes
-
-| Code | Meaning |
-|---|---|
-| **Keep** | Scenario content fits the canonical domain definition well. No change required. |
-| **Reword** | Scenario content fits the domain but the framing or language needs updating to align with the canonical definition. |
-| **Reassign** | Scenario content does not fit the canonical domain. Reassign to a better-fit domain and update `capability_key` in the database. |
+| 22 | `e0fa86c9` | AI Capability — Honest Self-Assessment | Pending | | |
+| 23 | `c4cd5a8a` | AI Chatbot — Employee Grievance Triage | Pending | | |
+| 24 | `eef73edc` | AI Chatbot Escalation — Urgency Triage | Pending | | |
+| 25 | `7e9a7390` | AI Implementation — Stakeholder Communication Priority | **Keep** | Title and content concern stakeholder communication in AI implementation — correctly classified as workflow design. | Round 1 review |
+| 26 | `9ecb96b0` | AI Onboarding Email — Data Accuracy Check | Pending | | |
 
 ---
 
 ## Post-Review Distribution Check
 
-After all decisions are recorded, verify that the canonical key distribution remains balanced (no domain drops below the minimum threshold for adaptive assessment coverage).
+Complete this table after all 26 decisions are recorded. Any reassignments must keep each domain within the balance band (Fix 16: no domain below 10% or above 30% of the bank).
 
-**Current distribution (post-remap, pre-review):**
-
-| Canonical key | Count | Min required | Status |
-|---|---|---|---|
-| `ai_change_leadership` | 8 | 5 | OK |
-| `ai_ethics_trust` | 38 | 5 | OK |
-| `ai_interaction` | 13 | 5 | OK |
-| `ai_output_evaluation` | 26 | 5 | OK |
-| `ai_workflow_design` | 17 | 5 | OK |
-| `workforce_ai_readiness` | 8 | 5 | OK |
-| **Total** | **110** | | |
-
-If any reassignments reduce a domain below 5 scenarios, flag for content creation before closing this record.
+| Domain | Current count | Reassignments in | Reassignments out | Post-review count | % of bank | Within band? |
+|---|---|---|---|---|---|---|
+| ai_ethics_trust | 38 | | | | | |
+| ai_output_evaluation | 26 | | | | | |
+| ai_workflow_design | 17 | | | | | |
+| ai_interaction | 13 | | | | | |
+| ai_change_leadership | 8 | | | | | |
+| workforce_ai_readiness | 8 | | | | | |
+| **Total** | **110** | | | | | |
 
 ---
 
@@ -157,42 +126,12 @@ If any reassignments reduce a domain below 5 scenarios, flag for content creatio
 
 | Field | Value |
 |---|---|
-| Review completed by | *(content owner name)* |
+| Review completed by | *(name)* |
 | Review date | *(date)* |
-| Total decisions recorded | 0 / 26 |
-| Reassignments required | *(count)* |
-| Distribution check passed | Pending |
-| Approved to close Fix 3 | No — pending content owner review |
-
----
-
-## How to Complete This Record
-
-1. Run the following query against the AiQ database to retrieve the 26 scenario titles:
-
-```sql
--- Get all scenarios in the remapped domains, ordered by insertion to identify the legacy batches
-SELECT id, title, capability_key, difficulty, LEFT(scenario, 120) as scenario_preview
-FROM content_scenarios
-WHERE capability_key IN ('ai_ethics_trust', 'ai_output_evaluation', 'ai_workflow_design')
-ORDER BY capability_key, id;
-```
-
-2. Cross-reference with the remap script output (`scripts/p1-remap-legacy-keys.ts`) to identify which rows were remapped (the 5+6+4+5+5+1 batches).
-
-3. For each scenario, read the full scenario text and compare it to the canonical domain definition above.
-
-4. Record a Keep / Reword / Reassign decision with a one-line rationale.
-
-5. For any Reassign decisions, update the database:
-```sql
-UPDATE content_scenarios SET capability_key = 'new_canonical_key', domain = 'new_canonical_key'
-WHERE id = 'scenario-uuid';
-```
-
-6. Re-run the distribution check and confirm no domain falls below 5 scenarios.
-
-7. Complete the sign-off section and link this document in the evidence pack.
+| Total decisions recorded | 1 / 26 |
+| All decisions documented | No — 25 pending |
+| Distribution within balance band | Not yet verified |
+| Approved to close Fix 3 | **No** — pending completion |
 
 ---
 
@@ -200,4 +139,5 @@ WHERE id = 'scenario-uuid';
 
 | Version | Date | Change |
 |---|---|---|
-| 1.0 | 28 May 2026 | Initial record created — Fix 3 (P1) from DFS Evidence Pack Remediation Brief. Decisions pending content owner review. |
+| 1.0 | 28 May 2026 | Initial scaffolding — Fix 3 (P1) from master brief |
+| 2.0 | 28 May 2026 | Rewritten after Addendum R2: verified row IDs added from live DB; Fix 14 prerequisite noted; 25 decisions remain pending |

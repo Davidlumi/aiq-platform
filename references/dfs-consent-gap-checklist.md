@@ -1,9 +1,20 @@
 # DFS Pilot Agreement — Consent Scope Checklist
 
-**Version:** 1.0  
-**Date:** 28 May 2026  
+**Version:** 2.0  
+**Date:** 28 May 2026 (updated after Addendum R2)  
 **Classification:** Confidential — Internal Use Only  
-**Remediation item:** Fix 2 (P0) — AiQ Evidence Pack Remediation Brief, 28 May 2026
+**Remediation item:** Fix 2 (P0) — AiQ Evidence Pack Remediation Brief, 28 May 2026  
+**Owner:** Legal / DPO (see Addendum R2 update below)
+
+---
+
+## Addendum R2 Update
+
+> **Owner clarification:** The addendum confirms that this checklist must be owned and completed by the **Legal team and/or DPO**, not by the programme team. The programme team is responsible for providing the pilot agreement and the list of outputs to be reviewed. Legal/DPO is responsible for making the consent determination and recording sign-off.
+
+> **Section D scope note:** Section D (Data Protection and Compliance) covers items that are the DPO's primary responsibility. The DPO should review Section D independently and confirm whether a Data Processing Agreement is in place before any other section is assessed.
+
+> **Combined release gate:** Fix 2 (this checklist) and Fix 15 (ground-truth distribution) are now a **combined P0 release gate**. No DFS-attributed output may be circulated until both are closed: (1) this checklist is complete with all gaps resolved, AND (2) the ground-truth distribution record is confirmed. See `references/content-scenario-distribution-ground-truth.md`.
 
 ---
 
@@ -91,13 +102,15 @@ Complete this section after reviewing the pilot agreement against the checklist 
 
 | Field | Value |
 |---|---|
-| Checklist completed by | *(name)* |
+| Checklist completed by | *(name — must be Legal or DPO)* |
 | Review date | *(date)* |
 | Pilot agreement version reviewed | *(version / date)* |
 | Total items confirmed | 0 / 20 |
 | Total gaps identified | *(count)* |
 | All gaps closed with written sign-off | No — pending review |
-| Approved to circulate outputs | **No** — P0 gate: outputs must not leave the building until all gaps are closed |
+| Section D reviewed by DPO | No — pending |
+| Fix 15 ground-truth record confirmed | No — pending |
+| Approved to circulate outputs | **No** — Combined P0 gate: both this checklist AND Fix 15 must be closed |
 
 ---
 
@@ -130,4 +143,5 @@ No DFS-attributed output should leave the building until this checklist is compl
 
 | Version | Date | Change |
 |---|---|---|
-| 1.0 | 28 May 2026 | Initial checklist — Fix 2 (P0) from DFS Evidence Pack Remediation Brief |
+| 1.0 | 28 May 2026 | Initial checklist — Fix 2 (P0) from master brief |
+| 2.0 | 28 May 2026 | Addendum R2: legal/DPO ownership added; Section D scope note; combined release gate with Fix 15 |
