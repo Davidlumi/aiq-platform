@@ -1192,13 +1192,16 @@ export function calculateValueEnvelope(
 
   // Payback period
   let paybackPeriod: { low: number; high: number } | null = null;
-  // A1 fix: totalHigh/totalLow are already annual values from resolveValueFormula
+  // F5 fix: use matched pairs for payback period.
+  // - low (optimistic) payback = low TCO ÷ (high annual value / 12)
+  // - high (pessimistic) payback = high TCO ÷ (low annual value / 12)
+  // totalHigh/totalLow are already annual values from resolveValueFormula.
   const annualValueHigh = totalHigh;
   const annualValueLow  = totalLow;
   if (annualValueHigh > 0 && annualValueLow > 0) {
     paybackPeriod = {
-      low: Math.max(0, Math.round(approxCostLow / (annualValueHigh / 12))),
-      high: Math.round(approxCostHigh / (annualValueLow / 12)),
+      low:  Math.max(0, Math.round((tco3yrLow  / annualValueHigh) * 12)),
+      high: Math.round((tco3yrHigh / annualValueLow)  * 12),
     };
   }
 

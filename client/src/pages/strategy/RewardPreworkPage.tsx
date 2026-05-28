@@ -37,7 +37,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   ChevronRight, ChevronLeft, CheckCircle2, Loader2, Info,
-  Building2, DollarSign, Globe, Target, Layers, AlertCircle,
+  Building2, DollarSign, Globe, Target, Layers, AlertCircle, AlertTriangle,
 } from "lucide-react";
 import ReassessmentBanner from "@/components/ReassessmentBanner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -380,6 +380,9 @@ export default function RewardPreworkPage() {
 
   const { data: prework, refetch } = trpc.rewardPrework.get.useQuery();
   const { data: companyProfile } = trpc.companyProfile.get.useQuery();
+  // F1a fix: use getStatus to know if company profile gate is met before attempting complete
+  const { data: preworkStatus } = trpc.rewardPrework.getStatus.useQuery();
+  const canComplete = preworkStatus?.canStart ?? false;
   const [draft, setDraft] = useState<PreworkDraft>({});
   const [draftInit, setDraftInit] = useState(false);
 
@@ -416,9 +419,19 @@ export default function RewardPreworkPage() {
   const completeMutation = trpc.rewardPrework.complete.useMutation({
     onSuccess: () => {
       refetch();
-      toast.success("Stage 1 Pre-work complete. Proceeding to Stage 2 — Peer Vision.");
+      toast.success("Stage 1 Pre-work complete. Proceeding to Stage 2 — Vision.");
+      // F1c fix: navigate to Stage 2 after successful completion
+      setTimeout(() => navigate("/strategy/reward-vision"), 800);
     },
-    onError: (e) => toast.error("Cannot complete: " + String(e.message)),
+    onError: (e) => {
+      // F1b fix: if company profile gate blocks completion, redirect to admin profile page
+      if (String(e.message).includes("Company Profile must be completed")) {
+        toast.error("Company Profile must be completed first.", { duration: 5000 });
+        setTimeout(() => navigate("/admin/company-profile"), 1200);
+      } else {
+        toast.error("Cannot complete: " + String(e.message));
+      }
+    },
   });
 
   const autosave = useCallback(
@@ -554,6 +567,23 @@ export default function RewardPreworkPage() {
 
       {/* Company Profile banner */}
       <CompanyProfileBanner />
+
+      {/* F1a fix: gate alert when company profile is not yet completed */}
+      {!canComplete && !isCompleted && (
+        <div className="flex items-start gap-3 p-3 rounded-lg border bg-amber-500/8 border-amber-500/20 text-sm">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-amber-700 dark:text-amber-400">Company Profile required before completing Stage 1</p>
+            <p className="text-xs text-muted-foreground mt-0.5">An admin must complete the Company Profile before Reward Pre-work can be finalised.</p>
+            <button
+              onClick={() => navigate("/admin/company-profile")}
+              className="text-xs text-amber-600 hover:text-amber-700 underline mt-1"
+            >
+              Go to Company Profile &rarr;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Reassessment banner */}
       {prework && (prework.reassessmentCount ?? 0) > 0 && !isCompleted && (

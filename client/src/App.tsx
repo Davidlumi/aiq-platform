@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useViewAs } from "@/contexts/ViewAsContext";
+import { useGate } from "./contexts/GateContext";
 import { Loader2 } from "lucide-react";
 
 // Auth pages
@@ -112,6 +113,42 @@ import PeopleReportsPage from "./pages/people/PeopleReportsPage";
 import MemberReportPage from "./pages/people/MemberReportPage";
 import ConversationPromptsPage from "./pages/manager/ConversationPromptsPage";
 import TeamProgressPage from "./pages/manager/TeamProgressPage";
+
+/**
+ * CpoProtectedRoute — blocks reward-mode tenants from CPO-only strategy pages.
+ * Redirects to /strategy/reward-prework (hide-not-delete: data is preserved).
+ */
+function CpoProtectedRouteWithStrategyNav({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
+  const { user, loading: authLoading } = useAuth();
+  const gate = useGate();
+
+  if (authLoading || gate.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  if (!user) return <Redirect to="/login" />;
+
+  // Reward-mode tenants are redirected to their journey entry point
+  if (gate.tenantMode === "reward") {
+    return <Redirect to="/strategy/reward-prework" />;
+  }
+
+  return (
+    <AppShell>
+      <StrategyLayout>
+        <Component />
+      </StrategyLayout>
+    </AppShell>
+  );
+}
 
 function ProtectedRoute({
   component: Component,
@@ -280,49 +317,49 @@ function Router() {
         <ProtectedRoute component={ReportsPage} />
       </Route>
       <Route path="/strategy">
-        <ProtectedRouteWithStrategyNav component={StrategyOverviewPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyOverviewPage} />
       </Route>
       <Route path="/strategy/diagnostic">
-        <ProtectedRouteWithStrategyNav component={StrategyDiagnosticPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyDiagnosticPage} />
       </Route>
       <Route path="/strategy/ambition">
-        <ProtectedRouteWithStrategyNav component={StrategyAmbitionPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyAmbitionPage} />
       </Route>
       <Route path="/strategy/plan">
-        <ProtectedRouteWithStrategyNav component={StrategyPlanPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyPlanPage} />
       </Route>
       <Route path="/strategy/roadmap">
-        <ProtectedRouteWithStrategyNav component={StrategyRoadmapPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyRoadmapPage} />
       </Route>
       <Route path="/strategy/investment-risk">
-        <ProtectedRouteWithStrategyNav component={StrategyInvestmentRiskPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyInvestmentRiskPage} />
       </Route>
       <Route path="/strategy/value">
-        <ProtectedRouteWithStrategyNav component={StrategyValuePage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyValuePage} />
       </Route>
       <Route path="/strategy/business-case">
-        <ProtectedRouteWithStrategyNav component={BusinessCasePage} />
+        <CpoProtectedRouteWithStrategyNav component={BusinessCasePage} />
       </Route>
       <Route path="/strategy/capability">
-        <ProtectedRouteWithStrategyNav component={CapabilityPage} />
+        <CpoProtectedRouteWithStrategyNav component={CapabilityPage} />
       </Route>
       <Route path="/strategy/measurement">
-        <ProtectedRouteWithStrategyNav component={StrategyMeasurementPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyMeasurementPage} />
       </Route>
       <Route path="/strategy/review">
-        <ProtectedRouteWithStrategyNav component={ReviewSessionPage} />
+        <CpoProtectedRouteWithStrategyNav component={ReviewSessionPage} />
       </Route>
       <Route path="/strategy/board-report">
-        <ProtectedRouteWithStrategyNav component={BoardReportPage} />
+        <CpoProtectedRouteWithStrategyNav component={BoardReportPage} />
       </Route>
       <Route path="/strategy/draft">
-        <ProtectedRouteWithStrategyNav component={StrategyDraftPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyDraftPage} />
       </Route>
       <Route path="/strategy/vision">
-        <ProtectedRouteWithStrategyNav component={StrategyVisionPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyVisionPage} />
       </Route>
       <Route path="/strategy/strategy">
-        <ProtectedRouteWithStrategyNav component={StrategyStrategyPage} />
+        <CpoProtectedRouteWithStrategyNav component={StrategyStrategyPage} />
       </Route>
       <Route path="/ai-strategy">
         <Redirect to="/strategy" />

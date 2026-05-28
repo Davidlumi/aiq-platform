@@ -31,3 +31,24 @@ export const protectedProcedure = t.procedure.use(requireUser);
 // AiQ uses a roles table (userRoles) for RBAC — adminProcedure is an alias for protectedProcedure
 // Actual role enforcement is done per-procedure via getUserRoleKeys()
 export const adminProcedure = protectedProcedure;
+
+/**
+ * cpoProcedure — guards CPO-only strategy routes.
+ * Reward-mode users (aiqRole === "reward_leader") are blocked with FORBIDDEN.
+ * This is a hide-not-delete guard: the data still exists, the route is simply not accessible.
+ */
+const requireCpoMode = t.middleware(async opts => {
+  const { ctx, next } = opts;
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+  }
+  if (ctx.user.aiqRole === "reward_leader") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "This feature is only available in CPO mode. Switch to the Reward strategy journey to continue.",
+    });
+  }
+  return next({ ctx: { ...ctx, user: ctx.user } });
+});
+
+export const cpoProcedure = t.procedure.use(requireCpoMode);

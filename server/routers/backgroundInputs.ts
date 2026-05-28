@@ -16,7 +16,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { protectedProcedure, router } from "../_core/trpc";
+import { cpoProcedure as protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { ailOrgContext } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";

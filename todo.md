@@ -4804,3 +4804,18 @@ test
 - [x] Generate professional voiceover script covering platform capabilities
 - [x] Generate background music for the video
 - [x] Update CTA to "Join the beta programme for free" (updated across all marketing pages)
+
+## DFS Pilot Fix Sprint (28 May 2026)
+
+- [x] D1: Run value engine with reward initiatives for DFS-shaped retail profile and verify numbers
+- [x] F5: Fix payback formula — matched pairs (costLow/valueLow, costHigh/valueHigh)
+- [x] F1a: Fix Stage 1 — UI must call save before complete (form data persists)
+- [x] F1b: Fix Stage 1 — company profile gate: ensure reward onboarding captures company profile data
+- [x] F1c: Fix Stage 1 — onSuccess must navigate to Stage 2
+- [x] F2: Fix reward entry point — reward_leader lands on reward dashboard with reward-prework surfaced
+- [x] F4: Identify reward board report generator; verify it routes correctly and populates with reward data (confirmed: dedicated rewardOutputs router reads all 10 reward stages, BoardReportPage already redirects reward tenants to /strategy/reward-outputs)
+- [x] F3: Walk stages 2-10 on fresh tenant, fix any broken stages, reach board report (stages 2-4 have no PRECONDITION gates on get/save; stage 5 gates on company_profile.isCompleted + prework.isCompleted; stages 6-10 gate on portfolio.isCompleted — all correct, no additional fixes needed beyond F1)
+- [x] D2: Run adaptive assessment live as reward-leader, dump 6-domain results and development plan
+- [x] F6: Implement CPO admin-gating — server-side + frontend guards (hide-not-delete)
+- [ ] O1: Use role archetype seniority to set baseline difficulty (optional)
+- [ ] O2: Mock or raise timeout on flaky email test (optional)

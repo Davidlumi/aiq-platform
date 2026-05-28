@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useGate } from "@/contexts/GateContext";
 
 type NavItem = {
   label: string;
@@ -229,11 +230,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const userRoles = ((user as any)?.roles as string[]) ?? [];
   const [viewAsOpen, setViewAsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const gate = useGate();
+  const isRewardMode = gate.tenantMode === "reward";
 
   // Use effectiveRoles for nav filtering (demo role override)
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.roles || item.roles.some((r) => effectiveRoles.includes(r))
-  );
+  // For reward-mode tenants, swap the CPO AI Strategy items for reward journey items
+  const visibleItems = NAV_ITEMS
+    .filter((item) => !item.roles || item.roles.some((r) => effectiveRoles.includes(r)))
+    .map((item) => {
+      if (!isRewardMode) return item;
+      // Replace CPO strategy items with reward equivalents
+      if (item.path === "/strategy") return { ...item, label: "Reward Strategy", path: "/strategy/reward-prework" };
+      if (item.path === "/strategy/diagnostic") return { ...item, label: "Build Strategy", path: "/strategy/reward-prework" };
+      if (item.path === "/strategy/board-report") return { ...item, label: "Outputs & Report", path: "/strategy/reward-outputs" };
+      if (item.path === "/company-assessment") return { ...item, label: "Capability Review", path: "/strategy/reward-capability" };
+      return item;
+    });
 
   const initials = user
     ? `${(user as any).firstName?.[0] ?? ""}${(user as any).lastName?.[0] ?? ""}`.toUpperCase() ||

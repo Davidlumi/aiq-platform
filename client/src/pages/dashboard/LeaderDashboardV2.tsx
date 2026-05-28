@@ -5,7 +5,8 @@
 import React, { useState, useMemo } from "react";
 import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useGate } from "@/contexts/GateContext";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -336,6 +337,43 @@ function FunctionHeatmap({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LeaderDashboardV2() {
+  const [, navigate] = useLocation();
+  const gate = useGate();
+
+  // F2 fix: reward-mode tenants should land on the reward journey, not the CPO dashboard
+  if (gate.tenantMode === "reward") {
+    // Route to the furthest accessible reward stage
+    const rewardStageRoutes = [
+      "/strategy/reward-outputs",
+      "/strategy/reward-review",
+      "/strategy/reward-capability",
+      "/strategy/reward-business-case",
+      "/strategy/reward-success-measures",
+      "/strategy/reward-initiatives",
+      "/strategy/reward-principles",
+      "/strategy/reward-strategy",
+      "/strategy/reward-vision",
+      "/strategy/reward-prework",
+    ];
+    const stageAccessible = [
+      gate.isStage10Accessible,
+      gate.isStage9Accessible,
+      gate.isStage8Accessible,
+      gate.isStage7Accessible,
+      gate.isStage6Accessible,
+      gate.isStage5Accessible,
+      gate.isStage4Accessible,
+      gate.isStage3Accessible,
+      gate.isStage2Accessible,
+      true, // stage 1 always accessible
+    ];
+    const targetIdx = stageAccessible.findIndex((a) => a);
+    const target = rewardStageRoutes[targetIdx] ?? "/strategy/reward-prework";
+    // Use effect-free immediate redirect
+    React.useEffect(() => { navigate(target); }, [target]);
+    return null;
+  }
+
   const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
   const queryInput = useMemo(() => (roleFamily ? { roleFamily } : undefined), [roleFamily]);
 
