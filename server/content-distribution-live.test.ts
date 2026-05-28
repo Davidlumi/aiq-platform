@@ -104,12 +104,22 @@ describe("Content Scenario Distribution — Live DB Guard (Fix 15)", () => {
     expect(total, `Total scenarios ${total} is below minimum of 100`).toBeGreaterThanOrEqual(100);
   }, 15000);
 
-  it("each canonical domain has ≥ 1 scenario in the live DB", async () => {
+  it("each canonical domain has ≥5 scenarios in the live DB (Fix 18: floor raised from ≥1 to ≥5)", async () => {
+    // Fix 18 (P1) — Addendum R3: floor raised from ≥1 to ≥5 to match the pre-existing
+    // implicit minimum and to prevent a degenerate bank (e.g. 109 in one domain,
+    // 1 in each other) from passing this guard.
+    // Once Fix 16's balance band (≥10% of total) is met, this floor will be
+    // superseded by server/content-balance-band.test.ts.
+    // See references/domain-balance-commissioning-plan.md for the commissioning plan.
     const dist = await queryDistribution();
     if (dist.size === 0) return; // skip if no DB
     for (const key of CANONICAL_DOMAIN_KEYS) {
       const cnt = dist.get(key) ?? 0;
-      expect(cnt, `Domain '${key}' has 0 scenarios — adaptive assessment cannot function`).toBeGreaterThanOrEqual(1);
+      expect(
+        cnt,
+        `Domain '${key}' has ${cnt} scenarios — below the minimum floor of 5. ` +
+        `Commission content (see references/domain-balance-commissioning-plan.md).`
+      ).toBeGreaterThanOrEqual(5);
     }
   }, 15000);
 
