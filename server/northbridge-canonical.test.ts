@@ -55,10 +55,15 @@ const MAYA_IDS = [
   "ai_sales_compensation_plan_design",         // #17 Sales Compensation Plan Design
 ] as const;
 
+// Fix 10 — Profile sourcing note:
+// NORTHBRIDGE is a FICTIONAL test fixture used to lock the business-case engine's
+// arithmetic. These figures are NOT sourced from a real company and require no
+// external citation. They were chosen to exercise the engine across a realistic
+// financial-services headcount/payroll range. Do not cite in any client-facing output.
 const NORTHBRIDGE_PROFILE = {
   sector: "financial_services" as const,
-  totalEmployeeHeadcount: 8_000,
-  totalPayrollGbp: 95_000_000,
+  totalEmployeeHeadcount: 8_000,   // fictional fixture — not a real company
+  totalPayrollGbp: 95_000_000,     // fictional fixture — not a real company
 };
 
 // ── Locked figures ────────────────────────────────────────────────────────────

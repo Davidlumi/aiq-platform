@@ -24,7 +24,7 @@ export const CAPABILITY_DIMENSIONS = [
   "data_foundations",
   "change_management",
   "systems_integration",
-  "governance",
+  "reward_governance",
   "team_skills",
 ] as const;
 export type CapabilityDimension = typeof CAPABILITY_DIMENSIONS[number];
@@ -71,7 +71,7 @@ export const DIMENSION_META: Record<CapabilityDimension, { label: string; descri
     label: "Systems Integration",
     description: "Ability to connect AI tools with HRIS, payroll, and other core systems.",
   },
-  governance: {
+  reward_governance: {
     label: "Governance & Compliance",
     description: "Frameworks for AI oversight, auditability, and regulatory compliance.",
   },
@@ -146,7 +146,7 @@ export function computeRequiredLevels(
     data_foundations: { levels: [], drivingIds: [] },
     change_management: { levels: [], drivingIds: [] },
     systems_integration: { levels: [], drivingIds: [] },
-    governance: { levels: [], drivingIds: [] },
+    reward_governance: { levels: [], drivingIds: [] },
     team_skills: { levels: [], drivingIds: [] },
   };
 
@@ -162,8 +162,8 @@ export function computeRequiredLevels(
     dimensionData.systems_integration.levels.push(cp.integrationNeed);
     if (cp.integrationNeed === "high") dimensionData.systems_integration.drivingIds.push(initiative.id);
 
-    dimensionData.governance.levels.push(cp.governanceSensitivity);
-    if (cp.governanceSensitivity === "high") dimensionData.governance.drivingIds.push(initiative.id);
+    dimensionData.reward_governance.levels.push(cp.governanceSensitivity);
+    if (cp.governanceSensitivity === "high") dimensionData.reward_governance.drivingIds.push(initiative.id);
   }
 
   // team_skills: derived from portfolio breadth
@@ -190,7 +190,7 @@ export function computeRequiredLevels(
       }
 
       // FCA governance escalation: +1 for governance dimension
-      if (dim === "governance" && fcaSysc19) {
+      if (dim === "reward_governance" && fcaSysc19) {
         const currentNum = LEVEL_ORDER[requiredLevel];
         const escalatedNum = Math.min(3, currentNum + 1);
         if (escalatedNum > currentNum) {
@@ -259,7 +259,7 @@ export function seedCurrentLevelsFromMaturity(
     team_skills: { level: rewardMaturityLevel, isProvisional: true },
     change_management: { level: aiMaturityLevel, isProvisional: true },
     systems_integration: { level: aiMaturityLevel, isProvisional: true },
-    governance: { level: aiMaturityLevel, isProvisional: true },
+    reward_governance: { level: aiMaturityLevel, isProvisional: true },
   };
 }
 
@@ -320,7 +320,7 @@ export function deriveSequencingFlags(
     if (cp.dataIntensity === "high") highDemandDimensions.push("data_foundations");
     if (cp.changeImpact === "high") highDemandDimensions.push("change_management");
     if (cp.integrationNeed === "high") highDemandDimensions.push("systems_integration");
-    if (cp.governanceSensitivity === "high") highDemandDimensions.push("governance");
+    if (cp.governanceSensitivity === "high") highDemandDimensions.push("reward_governance");
 
     let worstGap: GapStatus | null = null;
     const blockingDimensions: string[] = [];
@@ -380,7 +380,7 @@ export function computeEnablementCost(
     data_foundations:    { minor: [50_000, 150_000],  significant: [150_000, 500_000],  critical: [300_000, 800_000]  },
     change_management:   { minor: [30_000, 100_000],  significant: [100_000, 350_000],  critical: [200_000, 600_000]  },
     systems_integration: { minor: [40_000, 120_000],  significant: [120_000, 400_000],  critical: [250_000, 700_000]  },
-    governance:          { minor: [20_000, 60_000],   significant: [60_000, 200_000],   critical: [120_000, 400_000]  },
+    reward_governance:   { minor: [20_000, 60_000],   significant: [60_000, 200_000],   critical: [120_000, 400_000]  },
     team_skills:         { minor: [25_000, 75_000],   significant: [75_000, 250_000],   critical: [150_000, 450_000]  },
   };
 

@@ -72,7 +72,7 @@ export function generateRewardDevelopmentPlans(
 ): GeneratedDevelopmentPlan[] {
   const plans: GeneratedDevelopmentPlan[] = [];
 
-  const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "governance"];
+  const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "reward_governance"];
 
   for (const dim of PEOPLE_DIMENSIONS) {
     const dimInput = dimensions.find(d => d.dimension === dim);
@@ -188,10 +188,10 @@ export function computePeopleCountPerDimension(
   const counts: Record<PeopleDimension, number> = {
     team_skills: 0,
     change_management: 0,
-    governance: 0,
+    reward_governance: 0,
   };
 
-  const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "governance"];
+  const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "reward_governance"];
 
   for (const dim of PEOPLE_DIMENSIONS) {
     const mapping = CAPABILITY_LINK_CONFIG.dimensionMappings[dim];

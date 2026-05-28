@@ -236,7 +236,7 @@ export function runCompletenessChecks(data: StageStateData): CheckResult[] {
   }
 
   // C3 — Capability assessed for all five dimensions
-  const DIMENSIONS = ["data_foundations", "change_management", "systems_integration", "governance", "team_skills"];
+  const DIMENSIONS = ["data_foundations", "change_management", "systems_integration", "reward_governance", "team_skills"];
   const assessedDims = new Set(
     data.capabilityDimensions.filter(d => d.currentLevel !== null).map(d => d.dimension)
   );

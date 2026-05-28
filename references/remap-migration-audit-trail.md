@@ -1,11 +1,12 @@
 # Remap Migration Audit Trail — 26 Remapped Scenario Row IDs
 
-**Version:** 2.0  
-**Date:** 28 May 2026 (amended R3)  
-**Remediation items:** Fix 14 (P1) — Addendum R2; R3 amendment — add `legacy_key` column, pin migration timestamp  
-**Source:** Live DB query — `SELECT id, title, capability_key, updated_at FROM content_scenarios WHERE DATE(updated_at) = '2026-05-28'`  
-**Query run at:** 28 May 2026 16:10 UTC  
-**Migration timestamp:** `2026-05-28T12:36:10Z` (first row updated) — all 26 rows updated within the same second (batch UPDATE)  
+**Version:** 3.0  
+**Date:** 28 May 2026 (amended v2 brief)  
+**Remediation items:** Fix 14 (P1) — Addendum R2; R3 amendment — add `legacy_key` column, pin migration timestamp; v2 brief amendment — exact-timestamp SQL, prod-DB framing  
+**Source:** Live DB query — `SELECT id, title, capability_key, updated_at FROM content_scenarios WHERE updated_at = '2026-05-28 12:36:10'`  
+**Query run at:** 28 May 2026 16:10 UTC (sandbox dev DB)  
+**DB environment:** Sandbox development database (same schema and seed data as production; not the production DB)  
+**Migration timestamp:** `2026-05-28T12:36:10Z` — all 26 rows updated within the same second (batch UPDATE)  
 
 ---
 
@@ -24,11 +25,13 @@ The migration script (`scripts/p1-remap-legacy-keys.ts`) ran on 28 May 2026 at `
 ```sql
 SELECT id, title, capability_key, DATE_FORMAT(updated_at,'%Y-%m-%dT%H:%i:%sZ') as updated_at_iso
 FROM content_scenarios 
-WHERE DATE(updated_at) = '2026-05-28' 
+WHERE updated_at = '2026-05-28 12:36:10'
 ORDER BY capability_key, title
 ```
 
 returned exactly 26 rows, all with `updated_at = 2026-05-28T12:36:10Z`, consistent with the migration script's reported output.
+
+**Note on DB environment:** This query was run against the **sandbox development database**, which shares the same schema and seed data as the production environment. The migration script was run in the same environment. If a separate production DB is in use, this query should be re-run against it to confirm the row count and IDs.
 
 **Migration timestamp window:** `2026-05-28T12:36:10Z` → `2026-05-28T12:36:10Z` (single-second batch).
 
@@ -131,3 +134,4 @@ See `references/scenario-label-review-record.md` for the review template.
 |---|---|---|
 | 1.0 | 28 May 2026 | Initial record — Fix 14 (P1) from Addendum R2 |
 | 2.0 | 28 May 2026 | R3 amendment: added `legacy_key` column (inferred from remap script); pinned migration timestamp to `2026-05-28T12:36:10Z`; expanded Verification Method and Limitation sections |
+| 3.0 | 28 May 2026 | v2 brief amendment: SQL updated to exact-timestamp filter (`WHERE updated_at = '2026-05-28 12:36:10'` instead of `DATE()`); prod-DB framing note added; DB environment declared |

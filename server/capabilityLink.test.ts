@@ -194,7 +194,7 @@ describe("aggregateTeamCapability", () => {
 
   it("4/4 assessed: governance derived level is 'high' (ai_ethics_trust mean ~69.5 ≥ 65)", () => {
     const agg = aggregateTeamCapability(TEAM_4, SCORES_4_HIGH, CAPABILITY_LINK_CONFIG);
-    expect(agg.derivedLevels.governance).toBe("high");
+    expect(agg.derivedLevels.reward_governance).toBe("high");
   });
 
   it("2/4 assessed: coverage = 0.5, exactly at threshold (not low coverage)", () => {
@@ -210,7 +210,7 @@ describe("aggregateTeamCapability", () => {
     expect(agg.isLowCoverage).toBe(true);
     expect(agg.derivedLevels.team_skills).toBeNull();
     expect(agg.derivedLevels.change_management).toBeNull();
-    expect(agg.derivedLevels.governance).toBeNull();
+    expect(agg.derivedLevels.reward_governance).toBeNull();
   });
 
   it("1/4 assessed: provenance strings mention low coverage", () => {
@@ -283,7 +283,7 @@ describe("generateRewardDevelopmentPlans", () => {
       gapStatus: "no_gap",
     },
     {
-      dimension: "governance",
+      dimension: "reward_governance",
       requiredLevel: "high",
       currentLevel: "low",
       gapStatus: "significant_gap",
@@ -297,7 +297,7 @@ describe("generateRewardDevelopmentPlans", () => {
     expect(plans.length).toBe(2);
     const dims = plans.map(p => p.dimension);
     expect(dims).toContain("team_skills");
-    expect(dims).toContain("governance");
+    expect(dims).toContain("reward_governance");
     expect(dims).not.toContain("change_management");
   });
 
@@ -328,9 +328,9 @@ describe("generateRewardDevelopmentPlans", () => {
     expect(plan.pathwaySummary).toContain("Team");
   });
 
-  it("governance plan: targetDomains includes ai_ethics_trust", () => {
+  it("reward_governance plan: targetDomains includes ai_ethics_trust", () => {
     const plans = generateRewardDevelopmentPlans(DIM_INPUTS_WITH_GAPS, EMPTY_AGG);
-    const plan = plans.find(p => p.dimension === "governance")!;
+    const plan = plans.find(p => p.dimension === "reward_governance")!;
     expect(plan.targetDomains).toContain("ai_ethics_trust");
   });
 
@@ -338,7 +338,7 @@ describe("generateRewardDevelopmentPlans", () => {
     const noneGapped: DevelopmentPlanInput[] = [
       { dimension: "team_skills",      requiredLevel: "medium", currentLevel: "high",   gapStatus: "no_gap" },
       { dimension: "change_management", requiredLevel: "medium", currentLevel: "medium", gapStatus: "no_gap" },
-      { dimension: "governance",        requiredLevel: "low",    currentLevel: "medium", gapStatus: "no_gap" },
+      { dimension: "reward_governance",        requiredLevel: "low",    currentLevel: "medium", gapStatus: "no_gap" },
     ];
     const plans = generateRewardDevelopmentPlans(noneGapped, EMPTY_AGG);
     expect(plans.length).toBe(0);
@@ -361,7 +361,7 @@ describe("computePeopleCountPerDimension", () => {
     // u3 mean ≈ 70 (high) → not counted. u4 mean ≈ 66 (high) → not counted.
     const counts = computePeopleCountPerDimension(
       SCORES_4_HIGH.map(u => ({ userId: u.userId, scores: u.scores as any })),
-      { team_skills: "high", change_management: "high", governance: "high" }
+      { team_skills: "high", change_management: "high", reward_governance: "high" }
     );
     // All users are at "high" for team_skills → 0 below required
     expect(counts.team_skills).toBe(0);
@@ -380,7 +380,7 @@ describe("computePeopleCountPerDimension", () => {
     const counts = computePeopleCountPerDimension([], { team_skills: "high" });
     expect(counts.team_skills).toBe(0);
     expect(counts.change_management).toBe(0);
-    expect(counts.governance).toBe(0);
+    expect(counts.reward_governance).toBe(0);
   });
 });
 
@@ -450,14 +450,14 @@ describe("Closing-loop invariant: improving scores narrows the gap", () => {
       .toBeGreaterThan(LEVEL_ORDER_LOCAL[aggBefore.derivedLevels.team_skills!]);
   });
 
-  it("improving governance domain score above threshold changes governance level", () => {
-    // Start: governance (ai_ethics_trust) mean = 50 → medium
+  it("improving reward_governance domain score above threshold changes governance level", () => {
+    // Start: reward_governance (ai_ethics_trust) mean = 50 → medium
     const before = aggregateTeamCapability(
       [{ userId: "u1" }],
       [{ userId: "u1", scores: { ai_ethics_trust: 50 } }],
       CAPABILITY_LINK_CONFIG
     );
-    expect(before.derivedLevels.governance).toBe("medium");
+    expect(before.derivedLevels.reward_governance).toBe("medium");
 
     // Improve to 70 → high
     const after = aggregateTeamCapability(
@@ -465,7 +465,7 @@ describe("Closing-loop invariant: improving scores narrows the gap", () => {
       [{ userId: "u1", scores: { ai_ethics_trust: 70 } }],
       CAPABILITY_LINK_CONFIG
     );
-    expect(after.derivedLevels.governance).toBe("high");
+    expect(after.derivedLevels.reward_governance).toBe("high");
   });
 });
 
@@ -556,7 +556,7 @@ describe("assembleReport developmentPlans field", () => {
           challengeNote: null,
         },
         {
-          dimension: "governance",
+          dimension: "reward_governance",
           requiredLevel: "high",
           currentLevel: "low",
           gapStatus: "significant_gap",
@@ -571,7 +571,7 @@ describe("assembleReport developmentPlans field", () => {
     expect(report.developmentPlans.length).toBe(2);
     const dims = report.developmentPlans.map(p => p.dimension);
     expect(dims).toContain("team_skills");
-    expect(dims).toContain("governance");
+    expect(dims).toContain("reward_governance");
   });
 
   it("development plan has correct shape", () => {

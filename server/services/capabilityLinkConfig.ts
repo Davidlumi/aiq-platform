@@ -33,7 +33,7 @@ export type AssessmentDomain =
   | "ai_change_leadership";
 
 /** The three Stage 8 people-dimensions informed by individual assessments */
-export type PeopleDimension = "team_skills" | "change_management" | "governance";
+export type PeopleDimension = "team_skills" | "change_management" | "reward_governance";
 
 export interface DomainWeight {
   domain: AssessmentDomain;
@@ -87,7 +87,7 @@ export interface CapabilityLinkConfig {
  * Default mapping (from spec):
  *   team_skills      → mean of ai_interaction (w=1), ai_output_evaluation (w=1), ai_workflow_design (w=1)
  *   change_management → ai_change_leadership (w=2) + workforce_ai_readiness (w=1)
- *   governance       → ai_ethics_trust (w=1)
+ *   reward_governance → ai_ethics_trust (w=1)
  *
  * Default thresholds (0–100 scale):
  *   score < 40  → low
@@ -99,6 +99,20 @@ export interface CapabilityLinkConfig {
  */
 export const CAPABILITY_LINK_CONFIG: CapabilityLinkConfig = {
   dimensionMappings: {
+    data_foundations: {
+      label: "Data Foundations",
+      domains: [
+        { domain: "ai_output_evaluation", weight: 2 },
+        { domain: "ai_workflow_design",   weight: 1 },
+      ],
+    },
+    systems_integration: {
+      label: "Systems Integration",
+      domains: [
+        { domain: "ai_workflow_design",   weight: 2 },
+        { domain: "ai_interaction",       weight: 1 },
+      ],
+    },
     team_skills: {
       label: "Team & Skills",
       domains: [
@@ -114,7 +128,7 @@ export const CAPABILITY_LINK_CONFIG: CapabilityLinkConfig = {
         { domain: "workforce_ai_readiness", weight: 1 },
       ],
     },
-    governance: {
+    reward_governance: {
       label: "Governance & Compliance",
       domains: [
         { domain: "ai_ethics_trust", weight: 1 },
@@ -275,15 +289,15 @@ export function aggregateTeamCapability(
   const derivedLevels: Record<PeopleDimension, CapabilityLevel | null> = {
     team_skills: null,
     change_management: null,
-    governance: null,
+    reward_governance: null,
   };
   const provenance: Record<PeopleDimension, string> = {
     team_skills: "",
     change_management: "",
-    governance: "",
+    reward_governance: "",
   };
 
-  const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "governance"];
+  const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "reward_governance"];
 
   for (const dim of PEOPLE_DIMENSIONS) {
     const mapping = config.dimensionMappings[dim];

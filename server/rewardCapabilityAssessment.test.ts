@@ -133,8 +133,8 @@ describe("computeRequiredLevels", () => {
     const withoutFca = computeRequiredLevels([highGovId], { fcaSysc19: false });
     const withFca = computeRequiredLevels([highGovId], { fcaSysc19: true });
 
-    const govWithout = withoutFca.find((r) => r.dimension === "governance");
-    const govWith = withFca.find((r) => r.dimension === "governance");
+    const govWithout = withoutFca.find((r) => r.dimension === "reward_governance");
+    const govWith = withFca.find((r) => r.dimension === "reward_governance");
 
     // Without FCA: governance = high (1 initiative, no escalation rule fires)
     expect(govWithout?.requiredLevel).toBe("high");
@@ -155,8 +155,8 @@ describe("computeRequiredLevels", () => {
     const withoutFca = computeRequiredLevels(highGovIds, { fcaSysc19: false });
     const withFca = computeRequiredLevels(highGovIds, { fcaSysc19: true });
 
-    const govWithout = withoutFca.find((r) => r.dimension === "governance");
-    const govWith = withFca.find((r) => r.dimension === "governance");
+    const govWithout = withoutFca.find((r) => r.dimension === "reward_governance");
+    const govWith = withFca.find((r) => r.dimension === "reward_governance");
 
     // Both should be very_high (FCA doesn't push beyond very_high)
     expect(govWithout?.requiredLevel).toBe("very_high");
@@ -296,7 +296,7 @@ describe("deriveSequencingFlags", () => {
     const lowGovId = REWARD_INITIATIVE_LIBRARY.find((i) => i.capabilityProfile?.governanceSensitivity === "low")?.id;
     if (!lowGovId) return;
     const result = deriveSequencingFlags([lowGovId], [
-      { dimension: "governance", gapStatus: "significant_gap" },
+      { dimension: "reward_governance", gapStatus: "significant_gap" },
     ]);
     // governance is not "high" for this initiative, so it should not be blocked
     expect(result[0]?.status).not.toBe("blocked");

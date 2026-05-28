@@ -2645,11 +2645,11 @@ export type RewardSuccessMeasuresStageInsert = typeof rewardSuccessMeasuresStage
 // ─── Reward Stage 8 — Capability Assessment ─────────────────────────────────
 /**
  * One row per tenant per capability dimension.
- * Dimensions: data_foundations, change_management, systems_integration, governance, team_skills
+ * Dimensions: data_foundations, change_management, systems_integration, reward_governance, team_skills
  */
 export const rewardCapabilityDimensions = mysqlTable("reward_capability_dimensions", {
   tenantId: varchar("tenant_id", { length: 36 }).notNull(),
-  dimension: varchar("dimension", { length: 64 }).notNull(), // 'data_foundations' | 'change_management' | 'systems_integration' | 'governance' | 'team_skills'
+  dimension: varchar("dimension", { length: 64 }).notNull(), // 'data_foundations' | 'change_management' | 'systems_integration' | 'reward_governance' | 'team_skills'
   userId: varchar("user_id", { length: 36 }).notNull(),
 
   /** Required level derived from portfolio: 'low' | 'medium' | 'high' */

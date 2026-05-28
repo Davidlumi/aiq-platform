@@ -63,7 +63,7 @@ function makeCleanData(overrides: Partial<StageStateData> = {}): StageStateData 
       { dimension: "data_foundations", currentLevel: "medium", requiredLevel: "high", gapStatus: "minor_gap", actionNote: "Invest in data governance tooling." },
       { dimension: "change_management", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
       { dimension: "systems_integration", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
-      { dimension: "governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
+      { dimension: "reward_governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
       { dimension: "team_skills", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
     ],
     ...overrides,
@@ -212,7 +212,7 @@ describe("C3 — Capability dimensions", () => {
         { dimension: "data_foundations", currentLevel: null, requiredLevel: "high", gapStatus: null, actionNote: null },
         { dimension: "change_management", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
         { dimension: "systems_integration", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
-        { dimension: "governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
+        { dimension: "reward_governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
         { dimension: "team_skills", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
       ],
     });
@@ -406,7 +406,7 @@ describe("R2 — Capability reds without actions", () => {
         { dimension: "data_foundations", currentLevel: "low", requiredLevel: "very_high", gapStatus: "significant_gap", actionNote: "Invest in data governance tooling and hire a data engineer." },
         { dimension: "change_management", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
         { dimension: "systems_integration", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
-        { dimension: "governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
+        { dimension: "reward_governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
         { dimension: "team_skills", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
       ],
     });
@@ -421,7 +421,7 @@ describe("R2 — Capability reds without actions", () => {
         { dimension: "data_foundations", currentLevel: "low", requiredLevel: "very_high", gapStatus: "significant_gap", actionNote: null },
         { dimension: "change_management", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
         { dimension: "systems_integration", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
-        { dimension: "governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
+        { dimension: "reward_governance", currentLevel: "high", requiredLevel: "high", gapStatus: "no_gap", actionNote: null },
         { dimension: "team_skills", currentLevel: "medium", requiredLevel: "medium", gapStatus: "no_gap", actionNote: null },
       ],
     });

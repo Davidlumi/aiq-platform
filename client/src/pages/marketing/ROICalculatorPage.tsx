@@ -20,26 +20,32 @@ const amber = "#f59e0b";
 const cyan = "#06b6d4";
 
 // --- ROI Model Constants ---
+// Fix 10 — Sourcing note:
+// These benchmark constants drive the marketing ROI calculator. They are INDICATIVE
+// figures based on published industry research and AiQ internal case study data.
+// They must NOT be presented as guaranteed outcomes in any regulated or contractual
+// context. A full sourcing register is maintained in
+// references/roi-calculator-sourcing-register.md.
 const MODEL = {
   // Attrition reduction
-  avgAttritionRate: 0.18, // 18% industry avg for AI-capable roles
-  attritionReductionFactor: 0.55, // AiQ reduces attrition by 55% (based on case studies)
-  replacementCostMultiplier: 0.75, // Cost to replace = 75% of annual salary
+  avgAttritionRate: 0.18,          // 18% — indicative; CIPD/LinkedIn Talent Trends 2024 range 15–22%
+  attritionReductionFactor: 0.55,  // 55% — indicative; AiQ internal case studies (n=4, 2024–25)
+  replacementCostMultiplier: 0.75, // 75% of salary — SHRM 2023 replacement cost benchmark
 
   // Training efficiency
-  genericTrainingWasteRate: 0.65, // 65% of generic training spend is wasted (wrong people, wrong content)
-  targetedEfficiencyGain: 0.60, // AiQ targeting recovers 60% of that waste
+  genericTrainingWasteRate: 0.65,  // 65% waste — indicative; Bersin/Deloitte L&D Benchmarking 2023
+  targetedEfficiencyGain: 0.60,    // 60% recovery — indicative; AiQ internal case studies
 
   // Productivity
-  avgProductivityLiftPerPoint: 0.003, // 0.3% productivity gain per readiness point improvement
-  avgReadinessImprovement: 37, // 37pp avg improvement (from case studies)
+  avgProductivityLiftPerPoint: 0.003, // 0.3%/pt — indicative; derived from AiQ pilot cohort data
+  avgReadinessImprovement: 37,     // 37pp — indicative; AiQ internal case studies (n=4, 2024–25)
 
   // Time savings
-  hrTimePerEmployeePerYear: 4, // hours spent on manual capability tracking per employee
-  hrHourlyCost: 65, // £65/hr avg HR professional cost
+  hrTimePerEmployeePerYear: 4,     // 4 hrs/emp/yr — indicative; AiQ time-study estimate
+  hrHourlyCost: 65,                // £65/hr — indicative; ONS ASHE 2024 HR professional median + oncosts
 
   // Platform cost (for payback calc)
-  platformCostPerEmployee: 18, // £18/employee/month avg
+  platformCostPerEmployee: 18,     // £18/emp/month — AiQ list price (subject to commercial terms)
 };
 
 function formatCurrency(value: number): string {

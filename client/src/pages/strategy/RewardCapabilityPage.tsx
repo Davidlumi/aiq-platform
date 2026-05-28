@@ -46,7 +46,7 @@ import { getRewardInitiative } from "@/../../shared/rewardInitiativeLibrary";
 type CapabilityLevel = "low" | "medium" | "high" | "very_high";
 type GapStatus = "no_gap" | "minor_gap" | "significant_gap";
 type SequencingStatus = "ready" | "needs_enablement" | "blocked";
-type CapabilityDimension = "data_foundations" | "change_management" | "systems_integration" | "governance" | "team_skills";
+type CapabilityDimension = "data_foundations" | "change_management" | "systems_integration" | "reward_governance" | "team_skills";
 type AffordanceField = "gapStatement" | "actionNote";
 type AffordanceAction = "expand" | "refine" | "challenge" | "suggest";
 

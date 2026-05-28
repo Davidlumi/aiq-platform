@@ -37,6 +37,11 @@ import {
 
 // ── Fixture ───────────────────────────────────────────────────────────────────
 
+// Fix 10 — Profile sourcing note:
+// MERIDIAN is a FICTIONAL test fixture used to lock the CPO business-case engine's
+// arithmetic. These figures are NOT sourced from a real company and require no
+// external citation. They were chosen to exercise the engine across a realistic
+// healthcare headcount/revenue range. Do not cite in any client-facing output.
 const MERIDIAN_PROFILE: CpoCompanyProfile = {
   totalHeadcount: 12_000,
   sector: "healthcare",
