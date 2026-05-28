@@ -741,15 +741,24 @@ export const assessmentRouter = router({
         } catch {}
       }
       // I10: Persona-adapted difficulty — load persona profile and use it to influence starting difficulty
+      // O1: Also use role archetype seniority as a baseline: lead→3, senior→2, mid/junior→1
       let personaStartingDifficulty: 1 | 2 | 3 = 1;
       let personaTimePressure = false;
+      // O1: Seed baseline from role archetype seniority before persona adaptation
+      try {
+        const archetypeForDifficulty = resolveRoleArchetype(input.roleHint ?? null);
+        if (archetypeForDifficulty.seniority === "lead") personaStartingDifficulty = 3;
+        else if (archetypeForDifficulty.seniority === "senior") personaStartingDifficulty = 2;
+        // mid and junior stay at 1
+      } catch {}
       if (personaAdaptationActive) {
         try {
           const personaProfile = await getPersonaProfile(ctx.user.id);
           if (personaProfile && personaProfile.primaryPersona !== "unclassified") {
             const adapted = getPersonaAdaptedParameters(personaProfile.primaryPersona);
-            // Map persona time pressure to starting difficulty
-            personaStartingDifficulty = adapted.timePressure === "high" ? 2 : 1;
+            // Map persona time pressure to starting difficulty — take the max of archetype baseline and persona
+            const personaDifficulty: 1 | 2 | 3 = adapted.timePressure === "high" ? 2 : 1;
+            personaStartingDifficulty = Math.max(personaStartingDifficulty, personaDifficulty) as 1 | 2 | 3;
             personaTimePressure = adapted.timePressure !== "low";
           }
         } catch {}

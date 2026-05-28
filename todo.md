@@ -4817,5 +4817,5 @@ test
 - [x] F3: Walk stages 2-10 on fresh tenant, fix any broken stages, reach board report (stages 2-4 have no PRECONDITION gates on get/save; stage 5 gates on company_profile.isCompleted + prework.isCompleted; stages 6-10 gate on portfolio.isCompleted — all correct, no additional fixes needed beyond F1)
 - [x] D2: Run adaptive assessment live as reward-leader, dump 6-domain results and development plan
 - [x] F6: Implement CPO admin-gating — server-side + frontend guards (hide-not-delete)
-- [ ] O1: Use role archetype seniority to set baseline difficulty (optional)
-- [ ] O2: Mock or raise timeout on flaky email test (optional)
+- [x] O1: Use role archetype seniority to set baseline difficulty (lead→3, senior→2, mid/junior→1; persona adaptation takes max)
+- [x] O2: Fixed flaky email test — AbortController with 3s timeout, graceful skip on network errors
