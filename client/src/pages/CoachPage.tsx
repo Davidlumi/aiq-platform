@@ -88,7 +88,7 @@ interface ChatMessage {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MODE_LABELS: Record<CoachMode, string> = {
-  diagnostic: "Capability Assessment",
+  diagnostic: "AI Skills Check",
   debrief: "Results Debrief",
   learning: "Learning Coach",
   practice: "Practice & Apply",

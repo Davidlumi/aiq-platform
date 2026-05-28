@@ -167,9 +167,9 @@ function StartScreen({
     <div className="max-w-3xl mx-auto space-y-6 p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">AI Capability Assessment</h1>
+          <h1 className="text-2xl font-bold text-foreground">AI Skills Check · 6 domains</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            AIQ V9.2 · 50 interactions · 6 capability domains · ~35 minutes
+            AIQ V9.2 · 50 interactions · ~35 minutes
           </p>
         </div>
         <Button onClick={onStart} disabled={isStarting} className="gap-2 shrink-0">

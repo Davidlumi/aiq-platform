@@ -522,7 +522,7 @@ export default function CapabilityPage() {
       confirmedAt={gate.gateState?.stage8.completedAt}
       stageProgress={!isDeepDive && !isLocked ? {
         stageNumber: 8,
-        title: "Capability Assessment",
+        title: "Capability to Deliver · 4 dimensions",
         description: "Score your capability across four dimensions, identify gaps, and generate your delivery narrative. Confirm when all dimensions are scored and the narrative is complete.",
         isCleared: !!gate.stage8Cleared,
         isEdited: !!gate.stage8EditedAfterClearing,

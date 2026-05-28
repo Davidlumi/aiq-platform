@@ -11,6 +11,7 @@ import { parse as parseCookies } from "cookie";
 import { verifySessionToken } from "./auth";
 import { COOKIE_NAME } from "../shared/const";
 import { getDb } from "./db";
+import { validateBoardReportRubric } from "./boardReportRubric";
 import { ailOrgContext, tenants } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import {
@@ -76,6 +77,16 @@ export function registerBoardReportDocxRoute(app: Express): void {
     let sectionsMap: Record<string, { content?: string }> = {};
     try { sectionsMap = ctx.boardReportSectionsJson ? JSON.parse(ctx.boardReportSectionsJson) : {}; } catch { /* ignore */ }
 
+    // Fix 5 (P1): Validate rubric before serving the DOCX export
+    const rubricResult = validateBoardReportRubric(sectionsMap);
+    if (!rubricResult.passed) {
+      res.status(422).json({
+        error: "Board report does not meet the acceptance rubric",
+        summary: rubricResult.summary,
+        failures: rubricResult.failures,
+      });
+      return;
+    }
     const includeNotes = ctx.boardReportIncludeNotes ?? false;
     const reviewNotes = ctx.reviewSessionNotes ?? "";
 

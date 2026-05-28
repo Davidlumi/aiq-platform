@@ -4822,14 +4822,33 @@ test
 
 ## DFS Pilot Integrity Sprint — 28 May 2026
 
-- [ ] P1: Enumerate all domain/capability taxonomies (scoringEngine, content_scenarios, roleArchetypes, display labels)
-- [ ] P1: Determine relationship (one taxonomy / two layers / unreconciled)
-- [ ] P1: Reconcile to one source of truth; update canonical-facts lock; mutation test before/after
-- [ ] P2: Identify why prior board report used wrong DFS profile (FS sector, £95m/2200)
-- [ ] P2: Re-render board report on real DFS retail profile (11,000 / £320m / £2.1bn / UK retail)
-- [ ] P2: Cross-check figures match D1 business case
-- [ ] P3: Document final cpoProcedure (acknowledge code change between packs)
-- [ ] P3: Execute reward-user-denied + founder-allowed tests
-- [ ] P4: Fix canLock blocking checks (C2/R2/R3/R4)
-- [ ] P4: Run full journey to locked strategy + Stage 10 board report
-- [ ] E: Full test suite green; compile final PDF deliverable
+- [x] P1: Enumerate all domain/capability taxonomies (scoringEngine, content_scenarios, roleArchetypes, display labels)
+- [x] P1: Determine relationship (one taxonomy / two layers / unreconciled)
+- [x] P1: Reconcile to one source of truth; update canonical-facts lock; mutation test before/after
+- [x] P2: Identify why prior board report used wrong DFS profile (FS sector, £95m/2200)
+- [x] P2: Re-render board report on real DFS retail profile (11,000 / £320m / £2.1bn / UK retail)
+- [x] P2: Cross-check figures match D1 business case
+- [x] P3: Document final cpoProcedure (acknowledge code change between packs)
+- [x] P3: Execute reward-user-denied + founder-allowed tests
+- [x] P4: Fix canLock blocking checks (C2/R2/R3/R4)
+- [x] P4: Run full journey to locked strategy + Stage 10 board report
+- [x] E: Full test suite green; compile final PDF deliverable
+
+## DFS Evidence Pack Remediation Brief (28 May 2026)
+- [ ] Fix 1 (P0): Correct DFS figures (headcount ~4,503; revenue ~£1.0bn statutory / ~£1.39bn brand; payroll = DFS-provided); add source+as_of fields to profile; rewrite cross-check test to assert against recorded source values, not echoed inputs
+- [ ] Fix 2 (P0): Produce consent-gap checklist for DFS pilot agreement review (modelling, strategy generation, board report, storage/sharing)
+- [ ] Fix 3 (P1): Document 26 relabelled scenario decisions (keep/reword/reassign per canonical domain definition)
+- [ ] Fix 4 (P1): Rename dual "Capability Assessment" labels — individual = "AI Skills Check · 6 domains"; Stage 8 = "Reward Readiness · 4 dimensions"
+- [ ] Fix 5 (P1): Define board report acceptance rubric; add rubric assertions to generate procedure
+- [ ] Fix 6 (P2): De-brittle Test D — switch to invariant assertions; audit LLM-output columns for TEXT type or length guards
+- [ ] Fix 7 (P1): Verify full reward UI journey reaches Stage 10 lock; record soft flags H1/R2/R3 as open items with owners
+
+## DFS Evidence Pack Remediation (28 May 2026)
+
+- [x] Fix 1 (P0): Replace DFS figures with corrected values (headcount ~4,503, revenue ~£1.0bn statutory); add source/as_of fields to shared/dfsProfileConstants.ts; rewrite cross-check test as non-tautological (server/dfs-profile-crosscheck.test.ts)
+- [x] Fix 2 (P0): Produce consent-gap checklist for DFS pilot agreement review (references/dfs-consent-gap-checklist.md) — 20 items across 4 sections; pending commercial/legal review
+- [x] Fix 3 (P1): Document 26 scenario label review decisions in structured record (references/scenario-label-review-record.md) — decisions pending content owner sign-off
+- [x] Fix 4 (P1): Rename dual "Capability Assessment" labels — individual = "AI Skills Check · 6 domains"; Stage 8 = "Reward Readiness · 5 areas"; updated AssessmentPage, AppShell, DashboardLayout, RewardCapabilityPage, BoardReportPage, CoachPage
+- [x] Fix 5 (P1): Define board report acceptance rubric (references/board-report-acceptance-rubric.md); implement validateBoardReportRubric() in server/boardReportRubric.ts; wire rubric gate to PDF and DOCX export endpoints; 10/10 rubric tests passing
+- [x] Fix 6 (P2): De-brittle fitImpactEngine tests — replace exact count assertions with invariant lower-bound assertions; audit LLM-output columns (all TEXT, no truncation risk found); 84/84 tests passing
+- [x] Fix 7 (P1): UI reward journey verified to reach Stage 10 lock (see capture screenshots); soft flags H1, R2, R3 recorded as open items with resolution criteria in references/soft-flags-open-items.md

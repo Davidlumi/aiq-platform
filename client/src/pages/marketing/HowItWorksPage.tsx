@@ -128,7 +128,7 @@ export default function HowItWorksPage() {
                   {[
                     "Company Diagnostic", "Vision & Ambition", "Strategic Posture",
                     "Principles & Boundaries", "Initiative Selection", "Success Measures",
-                    "Business Case", "Capability Assessment", "Stakeholder Review", "Board Report"
+                    "Business Case", "Capability Review", "Stakeholder Review", "Board Report"
                   ].map((stage, i) => (
                     <div key={i} className="flex items-center gap-2 py-1.5">
                       <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"

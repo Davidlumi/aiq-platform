@@ -65,7 +65,7 @@ const MANAGER_ROLES = ["manager"];
 const NAV_ITEMS: NavItem[] = [
   // -- My Development (all roles) ----------------------------------------------
   { label: "AiQ Coach",       path: "/coach",          icon: MessageSquare, section: "mydev" },
-  { label: "Assessment",      path: "/assessment",     icon: ClipboardList, section: "mydev" },
+  { label: "AI Skills Check",  path: "/assessment",     icon: ClipboardList, section: "mydev" },
   { label: "Learning Plan",   path: "/learning",       icon: BookOpen,      section: "mydev" },
   { label: "Content Library", path: "/library",        icon: Library,       section: "mydev" },
   { label: "Knowledge Base",  path: "/knowledge-base", icon: BookMarked,    section: "mydev" },

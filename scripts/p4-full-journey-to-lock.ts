@@ -3,6 +3,7 @@
  * Calls every tRPC procedure in order, including all confirm gates and the final lock.
  * Uses a fresh DFS retail tenant on every run.
  */
+import { DFS_HEADCOUNT, DFS_REVENUE_STATUTORY_GBP, DFS_PAYROLL_GBP_PLACEHOLDER, DFS_HEADCOUNT_SOURCE, DFS_HEADCOUNT_AS_OF, DFS_REVENUE_STATUTORY_SOURCE, DFS_REVENUE_STATUTORY_AS_OF, DFS_PAYROLL_SOURCE, DFS_SANITY } from "../shared/dfsProfileConstants";
 import { getDb } from "../server/db";
 import { tenants, users } from "../drizzle/schema";
 import { appRouter } from "../server/routers";
@@ -63,9 +64,9 @@ async function main() {
     companyName: "DFS Furniture plc",
     sector: "Retail",
     ownershipStructure: "Public (LSE)",
-    ukEmployeeHeadcount: 11000,
-    annualPayrollCostGbp: 320000000,
-    annualRevenueGbp: 2100000000,
+    ukEmployeeHeadcount: DFS_HEADCOUNT,  // ~4,503 (DFS corporate site, 2026-05-28)
+    annualPayrollCostGbp: DFS_PAYROLL_GBP_PLACEHOLDER,  // 0 — replace with DFS-provided figure
+    annualRevenueGbp: DFS_REVENUE_STATUTORY_GBP,  // ~£1.0bn statutory (LSE, 2026-05-28)
     hrTeamSize: 45,
     rewardTeamSize: 6,
     currentHrTechStack: "Workday HCM, SAP SuccessFactors, Mercer Benchmark",
@@ -251,8 +252,13 @@ async function main() {
 
   // D1 cross-check
   console.log("\n─── D1 Business Case Cross-Check ────────────────────────────────");
-  console.log(`  Headcount matches DFS (11,000):  ${r?.headcount === 11000 ? "✅" : `❌ got ${r?.headcount}`}`);
-  console.log(`  Revenue matches DFS (£2.1bn):    ${r?.annualRevenueGbp === 2100000000 ? "✅" : `❌ got £${r?.annualRevenueGbp?.toLocaleString()}`}`);
+  // Non-tautological cross-check: validate against recorded source values (Remediation Brief Fix 1 P0)
+  const hcOk = r?.headcount !== undefined && r.headcount >= DFS_SANITY.headcount.min && r.headcount <= DFS_SANITY.headcount.max;
+  const revOk = r?.annualRevenueGbp !== undefined && r.annualRevenueGbp >= DFS_SANITY.revenueStatutoryGbp.min && r.annualRevenueGbp <= DFS_SANITY.revenueStatutoryGbp.max;
+  console.log(`  Headcount within sanity bounds (${DFS_SANITY.headcount.min.toLocaleString()}–${DFS_SANITY.headcount.max.toLocaleString()}): ${hcOk ? "✅" : `❌ got ${r?.headcount}`}`);
+  console.log(`    Source: ${DFS_HEADCOUNT_SOURCE} (as_of: ${DFS_HEADCOUNT_AS_OF})`);
+  console.log(`  Revenue within sanity bounds (£${(DFS_SANITY.revenueStatutoryGbp.min/1e9).toFixed(2)}bn–£${(DFS_SANITY.revenueStatutoryGbp.max/1e9).toFixed(2)}bn): ${revOk ? "✅" : `❌ got £${r?.annualRevenueGbp?.toLocaleString()}`}`);
+  console.log(`    Source: ${DFS_REVENUE_STATUTORY_SOURCE} (as_of: ${DFS_REVENUE_STATUTORY_AS_OF})`);
   console.log(`  Payroll matches DFS (~£320m):    ${r?.annualPayrollGbp && r.annualPayrollGbp >= 300000000 && r.annualPayrollGbp <= 340000000 ? "✅" : `❌ got £${r?.annualPayrollGbp?.toLocaleString()}`}`);
 
   // CPO isolation

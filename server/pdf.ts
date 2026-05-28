@@ -15,6 +15,7 @@
 import type { Express, Request, Response } from "express";
 import PDFDocument from "pdfkit";
 import { generateBoardPackPDF } from "./pdfBoardPack";
+import { validateBoardReportRubric } from "./boardReportRubric";
 import { generateStrategicFramingPDF } from "./pdfStrategicFraming";
 import { parse as parseCookies } from "cookie";
 import { COOKIE_NAME } from "../shared/const";
@@ -1801,9 +1802,31 @@ export function registerPdfRoutes(app: Express) {
         case "business_case":
           await generateBusinessCasePDF(doc, user.id, user.tenantId);
           break;
-        case "board_report":
+        case "board_report": {
+          // Fix 5 (P1): Validate rubric before serving the export
+          const db2 = await getDb();
+          if (db2) {
+            const ctxRows = await db2.select({ boardReportSectionsJson: ailOrgContext.boardReportSectionsJson })
+              .from(ailOrgContext).where(eq(ailOrgContext.tenantId, user.tenantId)).limit(1);
+            const rawSections = ctxRows[0]?.boardReportSectionsJson;
+            let sectionsForRubric: Record<string, { content?: string }> = {};
+            try { if (rawSections) sectionsForRubric = JSON.parse(rawSections as string); } catch {}
+            const rubricResult = validateBoardReportRubric(sectionsForRubric);
+            if (!rubricResult.passed) {
+              doc.end();
+              if (!res.headersSent) {
+                res.status(422).json({
+                  error: "Board report does not meet the acceptance rubric",
+                  summary: rubricResult.summary,
+                  failures: rubricResult.failures,
+                });
+              }
+              return;
+            }
+          }
           await generateBoardReportPDF(doc, user.id, user.tenantId);
           break;
+        }
       }
 
       doc.end();

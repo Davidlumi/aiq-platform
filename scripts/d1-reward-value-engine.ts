@@ -106,7 +106,7 @@ console.log("-".repeat(rHeader.length));
 const narrative = buildNarrativePromptData(
   model,
   companyName,
-  "Build a data-led, AI-augmented reward function that delivers fair, competitive, and transparent pay across DFS's 11,000-person workforce.",
+  "Build a data-led, AI-augmented reward function that delivers fair, competitive, and transparent pay across DFS's ${DFS_HEADCOUNT.toLocaleString()}-person workforce.",
   [
     { title: "From manual pay benchmarking to AI-driven market intelligence" },
     { title: "From annual merit cycles to continuous pay equity monitoring" },

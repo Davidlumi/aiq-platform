@@ -70,7 +70,7 @@ const MY_DEVELOPMENT: NavSection = {
   section: "My Development",
   items: [
     // AiQ Coach hidden — in development: { icon: MessageSquare, label: "AiQ Coach", path: "/coach" }
-    { icon: ClipboardList,  label: "Assessment",     path: "/assessment" },
+    { icon: ClipboardList,  label: "AI Skills Check",path: "/assessment" },
     { icon: BookOpen,       label: "Learning Plan",  path: "/learning" },
     { icon: Map,            label: "Domain Pathways", path: "/development/ai_interaction" },
     { icon: Library,        label: "Content Library",path: "/library" },

@@ -557,7 +557,7 @@ export default function RewardCapabilityPage() {
       <SectionPageLayout
         sectionNumber="08"
         sectionLabel="Capability"
-        title="Capability Assessment"
+        title="Reward Readiness · 5 areas"
         accentColor="#7c3aed"
         icon={<GraduationCap className="h-5 w-5 text-white" />}
       >
@@ -574,7 +574,7 @@ export default function RewardCapabilityPage() {
     <SectionPageLayout
       sectionNumber="08"
       sectionLabel="Capability"
-      title="Capability Assessment"
+      title="Reward Readiness · 5 areas"
       accentColor="#7c3aed"
       icon={<GraduationCap className="h-5 w-5 text-white" />}
       isLocked={isLocked}
@@ -582,7 +582,7 @@ export default function RewardCapabilityPage() {
       upstreamStageLabel="Stage 5 (portfolio)"
       stageProgress={{
         stageNumber: 8,
-        title: "Capability Assessment",
+        title: "Reward Readiness · 5 areas",
         description: "Assess organisational readiness across five dimensions and identify enablement actions.",
         isCleared: isConfirmed && !isStale,
         isEdited: hasAnyAssessed,

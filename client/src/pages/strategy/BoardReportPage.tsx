@@ -510,7 +510,7 @@ export default function BoardReportPage() {
       { num: 5, label: "The Plan", cleared: !!gate.stage5Cleared, route: "/strategy/plan" },
       { num: 6, label: "Success Measures", cleared: !!gate.stage6Cleared, route: "/strategy/roadmap" },
       { num: 7, label: "Business Case", cleared: !!gate.stage7Cleared, route: "/strategy/business-case" },
-      { num: 8, label: "Capability Assessment", cleared: !!gate.stage8Cleared, route: "/strategy/capability" },
+      { num: 8, label: "Reward Readiness · 5 areas", cleared: !!gate.stage8Cleared, route: "/strategy/capability" },
       { num: 9, label: "Review Session", cleared: !!gate.stage9Cleared, route: "/strategy/review" },
     ];
     const firstIncomplete = stagesNeeded.find(s => !s.cleared);

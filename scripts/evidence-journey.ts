@@ -15,6 +15,7 @@
  *  - rewardBusinessCase: uses isConfirmed (tinyint), bigint timestamps
  *  - rewardReview: uses strategyLocked (tinyint), bigint updatedAt
  */
+import { DFS_HEADCOUNT, DFS_REVENUE_STATUTORY_GBP, DFS_PAYROLL_GBP_PLACEHOLDER } from "../shared/dfsProfileConstants";
 import { getDb } from "../server/db";
 import {
   tenants, users, companyProfile,
@@ -74,9 +75,9 @@ async function main() {
     tenantId,
     companyName: "DFS Furniture plc",
     sector: "retail",
-    headcount: 11000,
-    annualRevenueGbp: 2100000000,
-    annualPayrollCostGbp: 320000000,
+    headcount: DFS_HEADCOUNT,  // ~4,503 (DFS corporate site, 2026-05-28)
+    annualRevenueGbp: DFS_REVENUE_STATUTORY_GBP,  // ~£1.0bn statutory (LSE, 2026-05-28)
+    annualPayrollCostGbp: DFS_PAYROLL_GBP_PLACEHOLDER,  // 0 — replace with DFS-provided figure
     isCompleted: 1,
     completedAt: now,
     updatedAt: now,

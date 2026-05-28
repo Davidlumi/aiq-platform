@@ -5,17 +5,26 @@
  * "DFS Financial Services plc" profile (£95m payroll, 2,200 employees,
  * Financial Services sector). The real DFS is a UK furniture retailer.
  *
- * Real DFS profile (from public filings and the D1 business case):
+ * REMEDIATION (28 May 2026, Fix 1 P0):
+ *   The original P2 script used wrong figures (~2× off reality on all three
+ *   key metrics). Figures now sourced from shared/dfsProfileConstants.ts
+ *   which carries source + as_of metadata per the Governing Principle.
+ *
+ * Corrected DFS profile (source: shared/dfsProfileConstants.ts):
  *   Company:     DFS Furniture plc
- *   Sector:      Retail (Furniture)
- *   Headcount:   ~11,000 employees
- *   Revenue:     ~£2.1bn (FY2024)
- *   Payroll:     ~£320m (est. 15% of revenue)
+ *   Sector:      Retail (sofas & upholstered furniture; brands DFS, Sofology)
+ *   Headcount:   ~4,503 (DFS corporate site, 'About us', 2026-05-28)
+ *   Revenue:     ~£1.0bn statutory / ~£1.39bn brand (LSE / Wikipedia, 2026-05-28)
+ *   Payroll:     DFS-provided (not public) — placeholder = 0 until client supplies
  *   Geography:   UK (primary) + Netherlands, Spain, Portugal
  *   Ownership:   Listed (LSE: DFS)
  *   HRIS:        SAP SuccessFactors
  *   FCA SYSC19:  Not in scope (non-financial services)
- *   Workforce:   ~70% frontline/blended (store/delivery), ~30% knowledge
+ *
+ * Original wrong figures (for reference):
+ *   Headcount: 11,000 (~2.4× too high)
+ *   Revenue:   £2.1bn (~2.1× too high)
+ *   Payroll:   £320m (~£71k/head — implausible for UK furniture retail)
  */
 import { randomUUID } from "crypto";
 import { getDb } from "../server/db";
@@ -25,6 +34,17 @@ import {
 } from "../drizzle/schema";
 import { appRouter } from "../server/routers";
 import type { TrpcContext } from "../server/_core/context";
+import {
+  DFS_HEADCOUNT,
+  DFS_HEADCOUNT_SOURCE,
+  DFS_HEADCOUNT_AS_OF,
+  DFS_REVENUE_STATUTORY_GBP,
+  DFS_REVENUE_STATUTORY_SOURCE,
+  DFS_REVENUE_STATUTORY_AS_OF,
+  DFS_PAYROLL_GBP_PLACEHOLDER,
+  DFS_PAYROLL_SOURCE,
+  DFS_SANITY,
+} from "../shared/dfsProfileConstants";
 
 function makeCtx(userId: string, tenantId: string): TrpcContext {
   return {
@@ -56,8 +76,12 @@ function makeCtx(userId: string, tenantId: string): TrpcContext {
 
 async function main() {
   console.log("\n═══════════════════════════════════════════════════════════════");
-  console.log("  P2 — DFS Board Report (Real Retail Profile)");
+  console.log("  P2 — DFS Board Report (Corrected Retail Profile)");
   console.log("═══════════════════════════════════════════════════════════════\n");
+  console.log(`  Headcount:  ${DFS_HEADCOUNT.toLocaleString()} (source: ${DFS_HEADCOUNT_SOURCE}, as_of: ${DFS_HEADCOUNT_AS_OF})`);
+  console.log(`  Revenue:    £${(DFS_REVENUE_STATUTORY_GBP / 1e9).toFixed(2)}bn statutory (source: ${DFS_REVENUE_STATUTORY_SOURCE}, as_of: ${DFS_REVENUE_STATUTORY_AS_OF})`);
+  console.log(`  Payroll:    ${DFS_PAYROLL_GBP_PLACEHOLDER === 0 ? "⚠️  placeholder (0) — replace with DFS-provided figure" : `£${DFS_PAYROLL_GBP_PLACEHOLDER.toLocaleString()}`}`);
+  console.log(`  Payroll source: ${DFS_PAYROLL_SOURCE}`);
 
   const db = await getDb();
   if (!db) throw new Error("DB not available");
@@ -89,13 +113,13 @@ async function main() {
   const ctx = makeCtx(userId, tenantId);
   const caller = appRouter.createCaller(ctx);
 
-  // ── Stage 0: Company Profile (REAL DFS retail profile) ───────────────────
+  // ── Stage 0: Company Profile (corrected DFS retail profile) ──────────────
   await caller.companyProfile.save({
     companyName: "DFS Furniture plc",
     sector: "Retail",
-    headcount: 11000,
-    annualRevenueGbp: 2_100_000_000,      // £2.1bn FY2024
-    annualPayrollCostGbp: 320_000_000,    // ~£320m (est. 15% of revenue)
+    headcount: DFS_HEADCOUNT,                          // ~4,503 (DFS corporate site, 2026-05-28)
+    annualRevenueGbp: DFS_REVENUE_STATUTORY_GBP,        // ~£1.0bn statutory (LSE, 2026-05-28)
+    annualPayrollCostGbp: DFS_PAYROLL_GBP_PLACEHOLDER,  // 0 — must be replaced with DFS-provided figure
     geographicFootprint: "UK + Europe",
     ownershipStructure: "Listed",
     hris: "SAP SuccessFactors",
@@ -106,11 +130,11 @@ async function main() {
     criticalAiDigitalTalentPopulation: "small",
     businessAiAmbition: 3,
     fcaSysc19InScope: "no",
-    ukEmployeeHeadcount: 10000,
+    ukEmployeeHeadcount: Math.round(DFS_HEADCOUNT * 0.95), // ~4,278 UK (est. 95% of total)
     listingExchange: "LSE",
   });
   await caller.companyProfile.complete();
-  console.log("  Stage 0: Company Profile ✅ (DFS Furniture plc, £2.1bn revenue, 11,000 employees)");
+  console.log(`\n  Stage 0: Company Profile ✅ (DFS Furniture plc, £${(DFS_REVENUE_STATUTORY_GBP / 1e9).toFixed(2)}bn revenue, ${DFS_HEADCOUNT.toLocaleString()} employees)`);
 
   // ── Stage 1: Reward Pre-work ──────────────────────────────────────────────
   await caller.rewardPrework.save({
@@ -141,7 +165,7 @@ async function main() {
   await caller.rewardVision.save({
     visionText: "By 2027, DFS Furniture will use AI to make reward decisions faster, fairer, and more transparent — enabling our Reward team to spend less time on administration and more time on strategic pay design that supports our frontline workforce and drives business performance.",
     visionAiOriginal: "By 2027, DFS Furniture will use AI to make reward decisions faster, fairer, and more transparent.",
-    visionRationale: "DFS has 11,000 employees across retail, delivery, and manufacturing. AI can help us manage pay equity at scale, automate merit cycles, and provide real-time market benchmarking for our diverse workforce.",
+    visionRationale: `DFS has approximately ${DFS_HEADCOUNT.toLocaleString()} employees across retail, delivery, and manufacturing. AI can help us manage pay equity at scale, automate merit cycles, and provide real-time market benchmarking for our diverse workforce.`,
   });
   await caller.rewardVision.confirm();
   console.log("  Stage 2: Vision ✅");
@@ -156,7 +180,7 @@ async function main() {
       },
       {
         id: randomUUID(),
-        text: "Use AI-powered analytics to identify and close pay equity gaps across our 11,000-strong frontline workforce.",
+        text: `Use AI-powered analytics to identify and close pay equity gaps across our ${DFS_HEADCOUNT.toLocaleString()}-strong frontline workforce.`,
         aiGeneratedOriginal: "Use AI-powered analytics to identify and close pay equity gaps across our frontline workforce.",
       },
       {
@@ -220,7 +244,6 @@ async function main() {
   console.log("  Stage 4: Principles ✅");
 
   // ── Stage 5: Reward Initiatives ───────────────────────────────────────────
-  // Use real library IDs from shared/rewardInitiativeLibrary.ts
   const INITIATIVE_IDS = [
     "ai_driven_merit_cycle_orchestration",
     "ai_pay_equity_continuous_monitoring",
@@ -251,7 +274,6 @@ async function main() {
 
   // ── Stage 9: Review ───────────────────────────────────────────────────────
   await caller.rewardReview.runReview();
-  // rewardReview has no confirm procedure — lock is the final step
   console.log("  Stage 9: Review ✅");
 
   // ── Stage 10: Outputs — Generate and retrieve board report ────────────────
@@ -272,7 +294,6 @@ async function main() {
   console.log(`  Strategy:         ${((report.report?.strategicShifts?.[0]?.text ?? "N/A") ?? "N/A").substring(0, 120)}...`);
   console.log(`  Principles:       ${report.report?.principles?.length ?? 0} principles`);
   console.log(`  Initiatives:      ${report.report?.initiatives?.length ?? 0} in portfolio`);
-  console.log(`  Success Measures: ${0 /* measures in sections */ ?? 0} measures`);
   console.log(`  Business Case:    ${((report.report?.sections?.find((s: any) => s.key === "business_case")?.content ?? "N/A") ?? "N/A").substring(0, 120)}...`);
   console.log(`  Capability Dims:  ${report.report?.developmentPlans?.length ?? 0} dimensions`);
   console.log(`  Exec Summary:     ${(report.execSummaryText ?? "N/A").substring(0, 200)}...`);
@@ -288,17 +309,31 @@ async function main() {
     console.log(`\n  ⚠️  CPO keys found in report: ${cpoPollution.join(", ")}`);
   }
 
-  // Cross-check with D1 business case figures
-  console.log("\n─── D1 Business Case Cross-Check ────────────────────────────────");
+  // ── Non-tautological cross-check ─────────────────────────────────────────
+  // Validates against recorded source values (not echoed inputs).
+  // Governing Principle: Remediation Brief Fix 1 P0, 28 May 2026.
+  // These are sanity-check bounds (±25% of public floor), not acceptance criteria.
+  console.log("\n─── Source-Cited Cross-Check (non-tautological) ─────────────────");
   const headcount = report.report?.headcount;
   const revenue = report.report?.annualRevenueGbp;
   const payroll = report.report?.annualPayrollGbp;
-  console.log(`  Headcount matches DFS (11,000):  ${headcount === 11000 ? "✅" : `❌ got ${headcount}`}`);
-  console.log(`  Revenue matches DFS (£2.1bn):    ${revenue === 2_100_000_000 ? "✅" : `❌ got £${revenue?.toLocaleString()}`}`);
-  console.log(`  Payroll matches DFS (~£320m):    ${payroll === 320_000_000 ? "✅" : `❌ got £${payroll?.toLocaleString()}`}`);
+
+  const headcountOk = headcount !== undefined
+    && headcount >= DFS_SANITY.headcount.min
+    && headcount <= DFS_SANITY.headcount.max;
+  const revenueOk = revenue !== undefined
+    && revenue >= DFS_SANITY.revenueStatutoryGbp.min
+    && revenue <= DFS_SANITY.revenueStatutoryGbp.max;
+
+  console.log(`  Headcount within sanity bounds (${DFS_SANITY.headcount.min.toLocaleString()}–${DFS_SANITY.headcount.max.toLocaleString()}): ${headcountOk ? "✅" : `❌ got ${headcount}`}`);
+  console.log(`    Source: ${DFS_HEADCOUNT_SOURCE} (as_of: ${DFS_HEADCOUNT_AS_OF})`);
+  console.log(`  Revenue within sanity bounds (£${(DFS_SANITY.revenueStatutoryGbp.min / 1e9).toFixed(2)}bn–£${(DFS_SANITY.revenueStatutoryGbp.max / 1e9).toFixed(2)}bn): ${revenueOk ? "✅" : `❌ got £${revenue?.toLocaleString()}`}`);
+  console.log(`    Source: ${DFS_REVENUE_STATUTORY_SOURCE} (as_of: ${DFS_REVENUE_STATUTORY_AS_OF})`);
+  console.log(`  Payroll: ${payroll === 0 || payroll === null || payroll === undefined ? "⚠️  placeholder (0) — replace with DFS-provided figure" : `£${payroll.toLocaleString()}`}`);
+  console.log(`    Source: ${DFS_PAYROLL_SOURCE}`);
 
   console.log("\n═══════════════════════════════════════════════════════════════");
-  console.log("  P2 COMPLETE — Real DFS retail profile board report rendered");
+  console.log("  P2 COMPLETE — Corrected DFS retail profile board report rendered");
   console.log("═══════════════════════════════════════════════════════════════\n");
 
   process.exit(0);
