@@ -558,7 +558,7 @@ export default function ROICalculatorPage() {
                           avgSalary,
                           trainingSpend,
                           attritionRate,
-                          projectedSavings: results.totalAnnual,
+                          projectedSavings: results.totalAnnualSaving,
                         },
                       });
                       setEmailSubmitted(true);

@@ -515,7 +515,7 @@ export default function ProductTourPage() {
           </div>
           <Link href="/beta">
             <Button size="sm" className="font-semibold text-xs" style={{ background: greenHex, color: "white" }}>
-              Apply for beta <ArrowRight className="ml-1 h-3 w-3" />
+              Join the beta programme for free <ArrowRight className="ml-1 h-3 w-3" />
             </Button>
           </Link>
         </div>
@@ -567,7 +567,7 @@ export default function ProductTourPage() {
               ) : (
                 <Link href="/beta">
                   <Button size="sm" className="font-semibold" style={{ background: greenHex, color: "white" }}>
-                    Apply for beta <ArrowRight className="h-3 w-3 ml-1" />
+                    Join the beta programme for free <ArrowRight className="h-3 w-3 ml-1" />
                   </Button>
                 </Link>
               )}

@@ -72,7 +72,7 @@ export function MarketingNav() {
             <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10 hidden sm:inline-flex">Sign in</Button>
           </Link>
           <Link href="/beta">
-            <Button size="sm" className="font-semibold hidden sm:inline-flex" style={{ background: greenHex, color: "white" }}>Apply for beta</Button>
+            <Button size="sm" className="font-semibold hidden sm:inline-flex" style={{ background: greenHex, color: "white" }}>Join beta — free</Button>
           </Link>
           {/* Mobile hamburger */}
           <button
@@ -102,7 +102,7 @@ export function MarketingNav() {
               <span className="block py-2.5 px-3 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 text-sm cursor-pointer" onClick={() => setMobileOpen(false)}>Sign in</span>
             </Link>
             <Link href="/beta">
-              <span className="block py-2.5 px-3 rounded-lg font-semibold text-sm cursor-pointer" style={{ color: greenHex }} onClick={() => setMobileOpen(false)}>Apply for beta →</span>
+              <span className="block py-2.5 px-3 rounded-lg font-semibold text-sm cursor-pointer" style={{ color: greenHex }} onClick={() => setMobileOpen(false)}>Join beta — free →</span>
             </Link>
           </div>
         </div>
@@ -124,7 +124,7 @@ export function MarketingFooter() {
           </div>
           <Link href="/beta">
             <Button className="font-semibold shrink-0 px-6" style={{ background: greenHex, color: "white" }}>
-              Apply for beta <ArrowRight className="ml-2 h-4 w-4" />
+              Join the beta programme for free <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>
@@ -244,7 +244,7 @@ function Hero() {
           <div className="flex flex-wrap gap-4 justify-center mb-12">
             <Link href="/beta">
               <Button size="lg" className="font-semibold px-8 text-base" style={{ background: greenHex, color: "white" }}>
-                Apply for the beta <ArrowRight className="ml-2 h-4 w-4" />
+                Join the beta programme for free <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/tour">
@@ -293,12 +293,12 @@ function PlatformVideo() {
             poster="/manus-storage/aiq-platform-hero-v5_ca2a091c.png"
             style={{ background: "#0F172A" }}
           >
-            <source src="/manus-storage/aiq-demo-video-v5_d988d778.mp4" type="video/mp4" />
+            <source src="/manus-storage/aiq-marketing-video-v6_f431cd9c.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>
         <p className="text-center text-slate-400 text-sm mt-4">
-          Platform walkthrough — AI Strategy Builder, Adaptive Assessment, AI Coach, and Board Reporting.
+          68-second platform overview — Strategy Builder, Adaptive Assessment, AI Coach, and Board Reporting. Voiceover narration included.
         </p>
       </div>
     </section>
@@ -677,7 +677,7 @@ function ContinuousLoop() {
             <div className="flex flex-wrap gap-3">
               <Link href="/beta">
                 <Button className="font-semibold" style={{ background: greenHex, color: "white" }}>
-                  Apply for beta <ArrowRight className="ml-2 h-4 w-4" />
+                  Join the beta programme for free <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/how-it-works">
@@ -918,7 +918,7 @@ function FinalCTA() {
         <div className="flex flex-wrap gap-4 justify-center">
           <Link href="/beta">
             <Button size="lg" className="font-semibold px-10" style={{ background: greenHex, color: "white" }}>
-              Apply for beta access <ArrowRight className="ml-2 h-4 w-4" />
+              Join the beta programme for free <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
           <Link href="/demo">

@@ -4798,3 +4798,9 @@ test
 - [x] Replace PricingPage custom footer with shared MarketingFooter for consistency
 - [x] Wire ROI calculator email form to backend (store lead + notify owner)
 - [x] Add hover border highlight to home page capability cards
+
+## Marketing Video Overhaul
+- [x] Create 60+ second marketing video with voiceover narration
+- [x] Generate professional voiceover script covering platform capabilities
+- [x] Generate background music for the video
+- [x] Update CTA to "Join the beta programme for free" (updated across all marketing pages)

@@ -51,7 +51,7 @@ export default function ProductPage() {
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/beta">
               <Button size="lg" className="font-semibold px-8" style={{ background: greenHex, color: "white" }}>
-                Apply for beta <ArrowRight className="ml-2 h-4 w-4" />
+                Join the beta programme for free <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/demo">
@@ -554,7 +554,7 @@ export default function ProductPage() {
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/beta">
               <Button size="lg" className="font-semibold px-10" style={{ background: greenHex, color: "white" }}>
-                Apply for beta access <ArrowRight className="ml-2 h-4 w-4" />
+                Join the beta programme for free <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/methodology">

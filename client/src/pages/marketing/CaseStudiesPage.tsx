@@ -393,7 +393,7 @@ export default function CaseStudiesPage() {
             <Link href="/beta-apply">
               <Button size="lg" className="gap-2 text-sm font-semibold px-6"
                 style={{ background: greenHex, color: navy }}>
-                Apply for beta access <ArrowRight className="w-4 h-4" />
+                Join the beta programme for free <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
             <Link href="/tour">

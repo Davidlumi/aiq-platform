@@ -324,7 +324,7 @@ export default function ComparePage() {
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link href="/beta">
                 <Button size="lg" className="gap-2 font-semibold px-6" style={{ background: greenHex, color: navy }}>
-                  Apply for beta <ArrowRight className="w-4 h-4" />
+                  Join the beta programme for free <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
               <Link href="/roi-calculator">

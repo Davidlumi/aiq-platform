@@ -119,7 +119,7 @@ function DemoNav() {
           <span className="text-xs text-white/50">Viewing as: CPO / HR Leader</span>
           <Link href="/beta">
             <Button size="sm" className="bg-[#00FF88] text-[#0A0F1E] hover:bg-[#00FF88]/90 font-semibold text-xs h-8">
-              Apply for beta <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              Join the beta programme for free <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </Link>
         </div>
@@ -560,7 +560,7 @@ export default function DemoPreviewPage() {
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <Link href="/beta">
               <Button className="bg-[#00FF88] text-[#0A0F1E] hover:bg-[#00FF88]/90 font-semibold">
-                Apply for beta access <ArrowRight className="w-4 h-4 ml-1.5" />
+                Join the beta programme for free <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </Link>
             <Link href="/pricing">

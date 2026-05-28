@@ -52,7 +52,7 @@ const PLANS = [
       { label: "Custom branding", included: false },
       { label: "SLA / enterprise support", included: false },
     ],
-    cta: "Apply for beta access",
+    cta: "Join the beta programme for free",
     ctaHref: "/beta",
     ctaStyle: { background: greenHex, color: "white" },
   },
@@ -371,7 +371,7 @@ export default function PricingPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/beta">
               <Button className="font-semibold px-6" style={{ background: greenHex, color: "white" }}>
-                Apply for beta access
+                Join the beta programme for free
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </Link>
