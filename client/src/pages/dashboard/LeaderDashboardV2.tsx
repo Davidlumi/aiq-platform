@@ -3,9 +3,10 @@
  * Clean card-based layout, consistent border/card/foreground tokens, team × domain heatmap.
  */
 import React, { useState, useMemo } from "react";
+import { Redirect } from "wouter";
 import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useGate } from "@/contexts/GateContext";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
@@ -337,12 +338,21 @@ function FunctionHeatmap({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LeaderDashboardV2() {
-  const [, navigate] = useLocation();
   const gate = useGate();
 
+  // All hooks must be declared unconditionally before any early return
+  const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
+  const queryInput = useMemo(() => (roleFamily ? { roleFamily } : undefined), [roleFamily]);
+
+  const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery(queryInput);
+  const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery(queryInput);
+  const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
+  const { data: heatmapData } = trpc.dashboardV2.leader.functionHeatmap.useQuery();
+  const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
+
   // F2 fix: reward-mode tenants should land on the reward journey, not the CPO dashboard
+  // Use <Redirect> (render-time) instead of useEffect to avoid hooks-after-conditional-return
   if (gate.tenantMode === "reward") {
-    // Route to the furthest accessible reward stage
     const rewardStageRoutes = [
       "/strategy/reward-outputs",
       "/strategy/reward-review",
@@ -369,19 +379,8 @@ export default function LeaderDashboardV2() {
     ];
     const targetIdx = stageAccessible.findIndex((a) => a);
     const target = rewardStageRoutes[targetIdx] ?? "/strategy/reward-prework";
-    // Use effect-free immediate redirect
-    React.useEffect(() => { navigate(target); }, [target]);
-    return null;
+    return <Redirect to={target} />;
   }
-
-  const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
-  const queryInput = useMemo(() => (roleFamily ? { roleFamily } : undefined), [roleFamily]);
-
-  const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery(queryInput);
-  const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery(queryInput);
-  const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
-  const { data: heatmapData } = trpc.dashboardV2.leader.functionHeatmap.useQuery();
-  const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;
 

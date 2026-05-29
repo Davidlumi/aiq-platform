@@ -521,10 +521,10 @@ function RoleDashboard() {
   if (viewAs === "individual") return <IndividualDashboardV2 />;
   if (viewAs === "manager") return <ManagerDashboardV2 />;
   if (viewAs === "cpo") return <LeaderDashboardV2 />;
-  // Reward Leader: team scores + people overview via LeaderDashboard
+  // Reward Leader: send directly to reward journey (avoids CPO dashboard render)
   const aiqRole = (user as any).aiqRole as string | undefined;
   if (aiqRole === "reward_leader") {
-    return <LeaderDashboardV2 />;
+    return <Redirect to="/strategy/reward-prework" />;
   }
   // Fallback: use real role
   const roles = (user as any).roles as string[] ?? [];
