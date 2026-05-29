@@ -44,6 +44,9 @@ import {
   DFS_REVENUE_BRAND_AS_OF,
   DFS_PAYROLL_GBP_PLACEHOLDER,
   DFS_PAYROLL_SOURCE,
+  DFS_PAYROLL_COVERAGE,
+  DFS_PAYROLL_AS_OF,
+  DFS_PAYROLL_NOTE,
   DFS_SECTOR,
   DFS_SANITY,
   DFS_ORIGINAL_WRONG_FIGURES,
@@ -81,6 +84,27 @@ describe("DFS Profile — Provenance metadata", () => {
 
   it("payroll source is marked as DFS-provided (not public)", () => {
     expect(DFS_PAYROLL_SOURCE).toContain("DFS-provided");
+  });
+
+  it("payroll coverage field is present (must be labelled before pilot use)", () => {
+    // DFS_PAYROLL_COVERAGE must be one of the four allowed values.
+    // 'pending' is the placeholder; replace with 'base_payroll', 'total_reward',
+    // or 'fully_loaded' once the DFS-provided figure is received.
+    const allowedValues = ["base_payroll", "total_reward", "fully_loaded", "pending"];
+    expect(allowedValues).toContain(DFS_PAYROLL_COVERAGE);
+  });
+
+  it("payroll as_of field is present", () => {
+    // Will be PENDING until DFS provides the figure.
+    expect(DFS_PAYROLL_AS_OF).toBeTruthy();
+    expect(DFS_PAYROLL_AS_OF.length).toBeGreaterThan(5);
+  });
+
+  it("payroll note contains the sanity-check calculation", () => {
+    // The note must document the £71k/head implausibility.
+    expect(DFS_PAYROLL_NOTE).toContain("£71k");
+    // Case-insensitive check: note uses 'Implausible' (capital I)
+    expect(DFS_PAYROLL_NOTE.toLowerCase()).toContain("implausible");
   });
 });
 

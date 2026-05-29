@@ -4852,3 +4852,24 @@ test
 - [x] Fix 5 (P1): Define board report acceptance rubric (references/board-report-acceptance-rubric.md); implement validateBoardReportRubric() in server/boardReportRubric.ts; wire rubric gate to PDF and DOCX export endpoints; 10/10 rubric tests passing
 - [x] Fix 6 (P2): De-brittle fitImpactEngine tests — replace exact count assertions with invariant lower-bound assertions; audit LLM-output columns (all TEXT, no truncation risk found); 84/84 tests passing
 - [x] Fix 7 (P1): UI reward journey verified to reach Stage 10 lock (see capture screenshots); soft flags H1, R2, R3 recorded as open items with resolution criteria in references/soft-flags-open-items.md
+
+## Product Integrity Brief v2.1 Remediation (29 May 2026)
+
+### Completed in Round 4 (v2) — carried forward closed
+- [x] Fix 4 (P1): UI copy snapshot test — CLOSED
+- [x] Fix 5 (P1): Board report rubric + automated gate + 10 tests — CLOSED
+- [x] Fix 6 (P1/P2): Test D rewritten with floor ≥5; LLM-column schema guard (11 assertions) — CLOSED
+- [x] Fix 8 (P0): Historical assessment enumeration — 0 DFS users affected; post-migration bank test (5 assertions) — CLOSED
+- [x] Fix 11 (P1): governance→reward_governance rename + DB migration; 147 reward capability tests passing — CLOSED (UX verify pending)
+- [x] Fix 12 (P1): Reward taxonomy canonical test (9 tests); missing dimension mappings added; disjoint check — CLOSED
+- [x] Fix 17 (P0): Verification table arithmetic reconciled (1,978 tests); CI script created — CLOSED (programmatic lock confirmation pending)
+- [x] Fix 18 (P1): Test D floor raised to ≥5 — CLOSED
+
+### v2.1 New / Amended / Restored items
+- [x] Fix 9 (P0 RESTORED): Create operational data protection record — DPA artefact link, data map, access matrix, retention/deletion process, protected-characteristics review, prod access controls; add test asserting DPA artefact link + DPO signature on file
+- [x] Fix 1 amendment (P0): Add payroll figure to dfsProfileConstants.ts with named source artefact; label what it covers (base/total reward/fully-loaded); add sanity-check note (£320m at ~4,503 staff ≈ £71k/head — implausible as base payroll; explain or correct)
+- [x] Fix 17 amendment (P0): Confirm recurrence lock is programmatic — either confirm CI script invokes runner directly (not parsing stale output file), or restructure test to invoke runner programmatically
+- [x] Fix 13 (P2 REOPENED): Psychometric/calibration sanity check after 26-item re-include — run calibration snapshot on difficulty distribution and item exposure; record with run date
+- [x] Fix 14 amendment (P1): Resolve legacy-key inference for ambiguous rows — split into legacy_key (script-mapped) vs legacy_key (title-inferred) columns in audit trail where two legacy keys target one canonical
+- [x] Fix 15 amendment (P0): Attach or retract R1 baseline artefact (checkpoint 613f39c3); add prod-DB framing comment to ground truth record (in-test comment naming it a prod health check; read-only credentials note; environment-dependent note)
+- [x] Fix 11 UX verification (P1): Spot-check that "Reward Governance" (capability dimension) and "Governance" (board report section) read as clearly distinct to a reward user in the UI

@@ -75,13 +75,39 @@ export const DFS_REVENUE_BRAND_NOTE =
 
 /**
  * PAYROLL — must be replaced with DFS-provided figure before any pilot use.
+ *
+ * v2.1 Fix 1 amendment requirements:
+ *   1. Named source artefact: the intake document that supplies the payroll figure
+ *      must be named here (e.g. "DFS HR Data Pack, provided 2026-05-XX").
+ *   2. Coverage label: state explicitly what the figure covers:
+ *      - Base payroll only (salary + NI + pension, excluding bonuses/benefits)
+ *      - Total reward (base + bonus + benefits)
+ *      - Fully-loaded (total reward + employer NI + pension + on-costs)
+ *   3. Sanity check: £320m at ~4,503 staff ≈ £71k/head. This is implausible
+ *      as base payroll for a UK furniture retailer (typical range £30k–£55k/head
+ *      implies £135m–£248m). The figure may be total reward or fully-loaded;
+ *      if so, label it as such. If it is base payroll, it must be corrected.
+ *
  * Zero is intentional: any script that uses this without substitution will
  * produce obviously wrong output, making the gap visible.
  */
 export const DFS_PAYROLL_GBP_PLACEHOLDER = 0;
-export const DFS_PAYROLL_SOURCE = "DFS-provided (not public)";
+/**
+ * DFS_PAYROLL_SOURCE: Replace with the named intake artefact once received.
+ * Example: "DFS HR Data Pack, provided by [name] on [date]"
+ */
+export const DFS_PAYROLL_SOURCE = "⚠ PENDING — DFS-provided intake artefact not yet received";
+/**
+ * DFS_PAYROLL_COVERAGE: Replace with one of:
+ *   "base_payroll" | "total_reward" | "fully_loaded"
+ * This label is required before the figure can be used in any report.
+ */
+export const DFS_PAYROLL_COVERAGE: "base_payroll" | "total_reward" | "fully_loaded" | "pending" = "pending";
+export const DFS_PAYROLL_AS_OF = "⚠ PENDING — date of DFS-provided figure";
 export const DFS_PAYROLL_NOTE =
-  "£320m at ~4,500 staff implies ~£71k/head — implausible. Must come from client.";
+  "£320m at ~4,503 staff ≈ £71k/head. Implausible as UK retail base payroll (typical £30k–£55k/head = £135m–£248m). " +
+  "If the figure is total reward or fully-loaded, label it as such. If it is base payroll, correct it. " +
+  "Do not use in any pilot output until source artefact is named and coverage is labelled.";
 
 export const DFS_SECTOR = "retail";
 export const DFS_SECTOR_NOTE =

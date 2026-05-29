@@ -2,10 +2,20 @@
 /**
  * scripts/verify-test-count.mjs
  *
- * Fix 17 (P0) — AiQ Product Integrity Brief v2, 28 May 2026.
+ * Fix 17 (P0) — AiQ Product Integrity Brief v2.1, 28–29 May 2026.
  *
  * PROGRAMMATIC RECURRENCE LOCK (CI script)
  * ─────────────────────────────────────────
+ * v2.1 Fix 17 amendment confirmation (2026-05-29):
+ *   This script is FULLY PROGRAMMATIC. It does NOT parse a stale output file.
+ *   Specifically:
+ *   1. It deletes /tmp/vitest-count-lock.json before running (line ~43).
+ *   2. It invokes `pnpm vitest run --reporter=json --outputFile=<path>` as
+ *      a child_process.execSync call — a live runner invocation.
+ *   3. It reads the freshly-written JSON and asserts numPassedTests.
+ *   A stale or relocated output file cannot cause a false pass because the
+ *   file is always deleted and re-written from a live run.
+ *
  * Invokes vitest --reporter=json, reads the output, and asserts that the
  * number of passing tests equals PUBLISHED_TOTAL.
  *

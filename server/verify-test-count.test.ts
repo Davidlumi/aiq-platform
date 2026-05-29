@@ -1,34 +1,43 @@
 /**
  * server/verify-test-count.test.ts
  *
- * Fix 17 (P0) — AiQ Product Integrity Brief v2, 28 May 2026.
+ * Fix 17 (P0) — AiQ Product Integrity Brief v2.1, 28–29 May 2026.
  *
  * RECURRENCE LOCK — TWO-LAYER DESIGN
- * ─────────────────────────────────────────────────────────────────────────────
+ * ───────────────────────────────────────────────────────────────────────────
  * Layer 1 (this file): Static arithmetic check. Asserts that the per-file
  *   breakdown table sums to PUBLISHED_TOTAL, and that every listed file exists.
  *   Runs inside vitest — fast, no external dependencies.
  *
- * Layer 2 (scripts/verify-test-count.mjs): Programmatic runner. Invokes
- *   `vitest run --reporter=json` as a separate process, reads the JSON output,
- *   and asserts the live passing count equals PUBLISHED_TOTAL. This is the
- *   authoritative programmatic check (no log file, no stale path).
+ * Layer 2 (scripts/verify-test-count.mjs): PROGRAMMATIC runner.
+ *   ✔ Invokes `pnpm vitest run --reporter=json` as a child_process.execSync call.
+ *   ✔ Writes output to /tmp/vitest-count-lock.json (a fresh temp file, NOT a
+ *     stale log or a previously-captured output file).
+ *   ✔ Deletes any pre-existing file at that path before running (line 43 of script).
+ *   ✔ Reads the freshly-written JSON and asserts numPassedTests === PUBLISHED_TOTAL.
+ *   This satisfies the v2.1 Fix 17 amendment requirement: the lock invokes the
+ *   runner directly and does NOT parse a stale or relocated output file.
  *   Run: pnpm verify-test-count
  *
  * WHY TWO LAYERS: vitest cannot spawn itself inside a test (recursive process
  * causes timeout). The programmatic runner is therefore a CI script, not a
- * test. Both layers must agree on PUBLISHED_TOTAL.
+ * vitest test. Both layers must agree on PUBLISHED_TOTAL.
+ *
+ * v2.1 Fix 17 amendment confirmation (2026-05-29):
+ *   The v2.1 brief asked to confirm the lock is programmatic, not parsing a
+ *   stale output file. Confirmed: scripts/verify-test-count.mjs deletes any
+ *   pre-existing /tmp/vitest-count-lock.json before running, then writes a
+ *   fresh one from a live `vitest run --reporter=json` invocation. The lock
+ *   is fully programmatic. No stale file can cause a false pass.
  *
  * NOTE: .todo tests are excluded from numPassedTests. PUBLISHED_TOTAL tracks
  * passing tests only. The 2 .todo tests in content-balance-band.test.ts are
- * excluded (1950 total - 2 .todo = 1948 passing).
+ * excluded from PUBLISHED_TOTAL.
  *
  * IMPORTANT: This file itself contributes 2 tests to the suite total.
  * When adding or removing test files, update PUBLISHED_TOTAL here AND in
  * scripts/verify-test-count.mjs AND in the Ground Truth Record
  * (references/content-scenario-distribution-ground-truth.md).
- *
- * Published total: 1948 passing (checkpoint a49810e9 + Fix 16 amend, 28 May 2026)
  *
  * Run: pnpm test server/verify-test-count.test.ts
  */

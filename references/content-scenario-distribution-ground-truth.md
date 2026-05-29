@@ -1,9 +1,9 @@
 # Content Scenario Distribution — Ground Truth Record
 
-**Version:** 3.1  
+**Version:** 4.0  
 **Captured:** 28 May 2026 16:10 UTC (distribution query) / 28 May 2026 18:40 UTC (test-suite run with recurrence lock)  
 **Source:** Live DB query — `SELECT capability_key, COUNT(*) FROM content_scenarios GROUP BY capability_key`  
-**Remediation items:** Fix 15 (P0) — Addendum R2; Fix 17 (P0) — Addendum R3  
+**Remediation items:** Fix 15 (P0) — Addendum R2; Fix 17 (P0) — Addendum R3; v2.1 amendment — R1 baseline artefact, prod-DB framing  
 **Status:** This is the single authoritative ground truth. All test assertions and evidence-pack claims must be reconciled against this record.
 
 ---
@@ -187,6 +187,60 @@ See `server/verify-test-count.test.ts` for implementation.
 
 ---
 
+## R1 Baseline Artefact (v2.1 Fix 15 amendment)
+
+**Outstanding item:** The R1 baseline of 1,940 passing tests (checkpoint `613f39c3`) was carried forward in v3.0 of this document without an attached artefact. The v2.1 brief requires this to be either evidenced or retracted.
+
+**Decision: RETRACTED as a standalone baseline claim.**
+
+Rationale:
+- The checkpoint `613f39c3` pre-dates the R2/R3 test additions (Fix 15, Fix 16, Fix 17 added +10 tests).
+- The v3.0 document explains the 10-test increase from 1,940 to 1,950 (and then 1,978 after further additions).
+- The 1,940 figure was from a real run (confirmed in v3.0: "The prior total of 1,940 was correct — it was from a real run at checkpoint `613f39c3`").
+- However, the captured output file for that run (`/home/ubuntu/terminal_full_output/2026-05-28_18-35-38_843359_704.txt`) was the R2 run at 18:35 UTC, not the R1 run at `613f39c3`.
+- The R1 run output is not available as a named artefact in this repository.
+
+**Re-baseline:** The authoritative baseline is the R2 run captured at checkpoint `e9961349` (28 May 2026 18:35 UTC), which produced 1,950 total tests (1,948 passing, 2 `.todo`). This is the earliest captured artefact. The 1,940 figure is retracted as an unevidenced claim.
+
+**Current baseline:** 1,978 passing tests (checkpoint `a49810e9` + Fix 16 amendment, 28 May 2026 18:35 UTC), as documented in the verification table above.
+
+---
+
+## Prod-DB Framing (v2.1 Fix 15 amendment)
+
+The v2.1 brief identified three concrete prod-DB framing items not previously broken out:
+
+### Item 1: In-test comment naming the test a prod health check (not a regression lock)
+
+**Status: ADDRESSED.** The test file `server/content-distribution-live.test.ts` now includes the following comment (line 46):
+
+> "This test runs against the production DB (same `DATABASE_URL` as the application). It is a health-check-style guard, not an isolated unit test. Readers should interpret a passing result as 'the production DB matches the expected structure at the time the test was run,' not as a regression lock against a fixed snapshot."
+
+This framing is present in the ground truth record (Section "Test D Correction") and in the test file itself.
+
+### Item 2: Read-only credentials enforced at runtime
+
+**Status: PENDING — action required.**
+
+The test connects to the DB using `DATABASE_URL`, which in the current deployment uses the application's read-write credentials. For a health-check-style guard that only reads data, read-only credentials are preferable to prevent accidental writes.
+
+**Action:** The DBA or infrastructure owner should create a read-only DB user for test/CI use and update `DATABASE_URL` in the CI environment to use those credentials. Until this is done, the test runs with read-write credentials.
+
+**Owner:** DBA / infrastructure owner (not engineering alone).
+
+### Item 3: Environment-dependent note (won't pass in a fresh dev env without DB)
+
+**Status: ADDRESSED.** The test already handles this:
+
+```ts
+const url = process.env.DATABASE_URL;
+if (!url) return; // skip if no DB in CI
+```
+
+The test skips gracefully when `DATABASE_URL` is not set. This is documented in the test file and in this record. A fresh dev environment without a DB will see the test skipped, not failed.
+
+---
+
 ## Version History
 
 | Version | Date | Change |
@@ -194,3 +248,5 @@ See `server/verify-test-count.test.ts` for implementation.
 | 1.0 | 28 May 2026 | Initial ground-truth record — Fix 15 (P0) from Addendum R2 |
 | 2.0 | 28 May 2026 | Addendum R2 amendments: legal/DPO note, combined release gate |
 | 3.0 | 28 May 2026 | Fix 17 (P0) from Addendum R3: full reconciled verification table; 14-test discrepancy explained; non-test outputs reviewed; DB source declared; framing corrected from "superseded" to "fabricated/retracted"; recurrence lock added |
+| 3.1 | 28 May 2026 | Fix 17 amendment: PUBLISHED_TOTAL updated from 1,950 to 1,978 after Fix 16 amendment (2 `.todo` converted to passing); breakdown updated |
+| 4.0 | 29 May 2026 | v2.1 Fix 15 amendment: R1 baseline (1,940 at `613f39c3`) retracted as unevidenced; re-baselined from R2 captured run at `e9961349`; prod-DB framing broken out into three items (health-check comment, read-only credentials, env-dependent skip) |
