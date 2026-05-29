@@ -114,12 +114,12 @@ export default function LoginPage() {
 
   function fillDemo(cred: (typeof DEMO_CREDENTIALS)[0]) {
     setValue("email", cred.email);
-    setValue("password", "manutd99");
+    setValue("password", "Reward2024!");
     setValue("tenantSlug", cred.org);
     setServerError(null);
     // Auto-submit after filling
     setTimeout(() => {
-      loginMutation.mutate({ email: cred.email, password: "manutd99", tenantSlug: cred.org });
+      loginMutation.mutate({ email: cred.email, password: "Reward2024!", tenantSlug: cred.org });
     }, 50);
   }
 
