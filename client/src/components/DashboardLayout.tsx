@@ -48,8 +48,10 @@ import {
   DollarSign,
   FileText,
   Lightbulb,
-  CheckSquare,
+  GraduationCap,
+  ClipboardCheck,
   Award,
+  Download,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -84,9 +86,9 @@ const REWARD_STRATEGY: NavSection = {
     { icon: Award,        label: "Initiatives",        path: "/strategy/reward-initiatives" },
     { icon: BarChart3,    label: "Success Measures",   path: "/strategy/reward-success-measures" },
     { icon: FileText,     label: "Business Case",      path: "/strategy/reward-business-case" },
-    { icon: CheckSquare,  label: "Capability",         path: "/strategy/reward-capability" },
-    { icon: CheckSquare,  label: "Review",             path: "/strategy/reward-review" },
-    { icon: FileText,     label: "Outputs",            path: "/strategy/reward-outputs" },
+    { icon: GraduationCap,   label: "Capability",  path: "/strategy/reward-capability" },
+    { icon: ClipboardCheck,  label: "Review",      path: "/strategy/reward-review" },
+    { icon: Download,        label: "Outputs",     path: "/strategy/reward-outputs" },
   ],
 };
 
