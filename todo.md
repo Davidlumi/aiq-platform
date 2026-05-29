@@ -4879,3 +4879,12 @@ test
 - [x] Fix 9/15 DBA: Add read-only DB user note and CI credential guidance to ground truth record
 - [x] Fix 1: Resolve payroll figure — add DFS-provided confirmation note and public-use gate to dfsProfileConstants.ts
 - [x] Fix 3: Complete the 26-decision scenario label review record (all 26 rows: Keep/Reword/Reassign)
+
+### Dunder company + Reward-only UI (29 May 2026)
+- [x] Wipe all existing tenant/user/session data from DB (keep content tables)
+- [x] Seed Dunder Mifflin tenant (mode=reward, plan=enterprise, status=active)
+- [x] Seed single Reward Leader user for Dunder (aiqRole=reward_leader, onboardingCompleted=false)
+- [x] Hide CPO/assessment nav sections from DashboardLayout for reward_leader role
+- [x] Hide CPO-only routes from App.tsx for reward_leader (redirect to /dashboard)
+- [x] Ensure RootRedirect sends reward_leader to /strategy/reward-prework after onboarding
+- [x] Remove Acme/demo references from login page and any visible UI copy

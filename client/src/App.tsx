@@ -521,6 +521,11 @@ function RoleDashboard() {
   if (viewAs === "individual") return <IndividualDashboardV2 />;
   if (viewAs === "manager") return <ManagerDashboardV2 />;
   if (viewAs === "cpo") return <LeaderDashboardV2 />;
+  // Reward Leader: team scores + people overview via LeaderDashboard
+  const aiqRole = (user as any).aiqRole as string | undefined;
+  if (aiqRole === "reward_leader") {
+    return <LeaderDashboardV2 />;
+  }
   // Fallback: use real role
   const roles = (user as any).roles as string[] ?? [];
   if (roles.includes("platform_super_admin") || roles.includes("tenant_admin")) {

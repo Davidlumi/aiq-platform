@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 // @refresh reset
+// NOTE: CPO engine code is preserved but hidden from reward_leader role
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -44,6 +45,11 @@ import {
   Map,
   Sun,
   Moon,
+  DollarSign,
+  FileText,
+  Lightbulb,
+  CheckSquare,
+  Award,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -64,6 +70,25 @@ function isCpo(roles: string[]) {
 function isManager(roles: string[]) {
   return !isCpo(roles) && roles.some(r => MANAGER_ROLES.includes(r));
 }
+function isRewardLeader(aiqRole?: string) {
+  return aiqRole === "reward_leader";
+}
+
+// --- Reward Leader nav (shown instead of CPO nav) ----------------------------
+const REWARD_STRATEGY: NavSection = {
+  section: "Reward Strategy",
+  items: [
+    { icon: DollarSign,   label: "Overview",          path: "/strategy/reward-prework" },
+    { icon: Lightbulb,    label: "Vision & Principles",path: "/strategy/reward-vision" },
+    { icon: Target,       label: "Strategy",           path: "/strategy/reward-strategy" },
+    { icon: Award,        label: "Initiatives",        path: "/strategy/reward-initiatives" },
+    { icon: BarChart3,    label: "Success Measures",   path: "/strategy/reward-success-measures" },
+    { icon: FileText,     label: "Business Case",      path: "/strategy/reward-business-case" },
+    { icon: CheckSquare,  label: "Capability",         path: "/strategy/reward-capability" },
+    { icon: CheckSquare,  label: "Review",             path: "/strategy/reward-review" },
+    { icon: FileText,     label: "Outputs",            path: "/strategy/reward-outputs" },
+  ],
+};
 
 // --- Nav definitions ---------------------------------------------------------
 const MY_DEVELOPMENT: NavSection = {
@@ -116,7 +141,12 @@ const ADMIN: NavSection = {
   ],
 };
 
-function getNavSections(roles: string[]): NavSection[] {
+function getNavSections(roles: string[], aiqRole?: string): NavSection[] {
+  // Reward Leader: individual development + team overview + Reward Strategy engine (no CPO admin)
+  if (isRewardLeader(aiqRole)) {
+    return [MY_DEVELOPMENT, MY_TEAM_CPO, REWARD_STRATEGY];
+  }
+  // CPO / HR Leader: full platform
   if (isCpo(roles)) {
     return [MY_DEVELOPMENT, MY_TEAM_CPO, AI_STRATEGY, ADMIN];
   }
@@ -193,7 +223,8 @@ function DashboardLayoutContent({
   const { theme, toggleTheme } = useTheme();
 
   const roles: string[] = (user as any)?.roles ?? [];
-  const navSections = getNavSections(roles);
+  const aiqRole: string | undefined = (user as any)?.aiqRole;
+  const navSections = getNavSections(roles, aiqRole);
   const allItems = navSections.flatMap(s => s.items);
   const activeMenuItem = allItems.find(item =>
     item.path === location || (item.path !== "/" && location.startsWith(item.path))

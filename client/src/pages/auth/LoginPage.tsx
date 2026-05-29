@@ -55,12 +55,7 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
 }
 
 const DEMO_CREDENTIALS = [
-  { role: "HR Leader (CPO)",    email: "sarah.thornton@acme.co.uk",   org: "acme" },
-  { role: "Reward Leader",      email: "rachel.pemberton@acme.co.uk", org: "acme" },
-  { role: "Manager",            email: "priya.sharma@acme.co.uk",     org: "acme" },
-  { role: "Learner",            email: "zoe.patel@acme.co.uk",        org: "acme" },
-  { role: "Admin",              email: "admin@demo.aiq.com",          org: "lumi" },
-  { role: "Auditor",            email: "auditor@demo.aiq.com",        org: "lumi" },
+  { role: "Reward Leader", email: "reward@dunder.com", org: "dunder" },
 ];
 
 const FEATURES = [
@@ -418,7 +413,7 @@ export default function LoginPage() {
                   letterSpacing: "0.02em",
                 }}
               >
-                manutd99
+                Reward2024!
               </span>
             </p>
             <div className="space-y-1">
