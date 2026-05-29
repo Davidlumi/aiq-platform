@@ -93,6 +93,37 @@ export const DFS_REVENUE_BRAND_NOTE =
  */
 export const DFS_PAYROLL_GBP_PLACEHOLDER = 0;
 /**
+ * DFS_PAYROLL_CONFIRMED: Public-use gate.
+ *
+ * Set to `true` ONLY when ALL of the following are true:
+ *   1. DFS has provided a payroll figure in writing (named artefact below).
+ *   2. DFS_PAYROLL_SOURCE is set to the named intake document.
+ *   3. DFS_PAYROLL_COVERAGE is set to one of "base_payroll" | "total_reward" | "fully_loaded".
+ *   4. DFS_PAYROLL_AS_OF is set to the date of the DFS-provided figure.
+ *   5. The sanity check (DFS_PAYROLL_NOTE) has been reviewed and either:
+ *      a. The figure is confirmed as total_reward or fully_loaded (explaining the ~£71k/head), OR
+ *      b. A corrected base payroll figure has been provided.
+ *
+ * Any script that calls `assertPayrollConfirmed()` will throw if this is false.
+ */
+export const DFS_PAYROLL_CONFIRMED = false;
+
+/**
+ * Throws if the payroll figure has not been confirmed by DFS.
+ * Call this at the top of any script or procedure that uses the payroll figure.
+ */
+export function assertPayrollConfirmed(): void {
+  if (!DFS_PAYROLL_CONFIRMED) {
+    throw new Error(
+      "DFS payroll figure is not confirmed. " +
+      "Set DFS_PAYROLL_CONFIRMED = true in shared/dfsProfileConstants.ts ONLY after " +
+      "DFS has provided a named source artefact, coverage label, and as_of date. " +
+      "See DFS_PAYROLL_NOTE for the sanity-check requirement."
+    );
+  }
+}
+
+/**
  * DFS_PAYROLL_SOURCE: Replace with the named intake artefact once received.
  * Example: "DFS HR Data Pack, provided by [name] on [date]"
  */
@@ -107,7 +138,7 @@ export const DFS_PAYROLL_AS_OF = "⚠ PENDING — date of DFS-provided figure";
 export const DFS_PAYROLL_NOTE =
   "£320m at ~4,503 staff ≈ £71k/head. Implausible as UK retail base payroll (typical £30k–£55k/head = £135m–£248m). " +
   "If the figure is total reward or fully-loaded, label it as such. If it is base payroll, correct it. " +
-  "Do not use in any pilot output until source artefact is named and coverage is labelled.";
+  "Do not use in any pilot output until source artefact is named, coverage is labelled, and DFS_PAYROLL_CONFIRMED = true.";
 
 export const DFS_SECTOR = "retail";
 export const DFS_SECTOR_NOTE =

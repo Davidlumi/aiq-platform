@@ -43,6 +43,7 @@ import {
   DFS_REVENUE_BRAND_SOURCE,
   DFS_REVENUE_BRAND_AS_OF,
   DFS_PAYROLL_GBP_PLACEHOLDER,
+  DFS_PAYROLL_CONFIRMED,
   DFS_PAYROLL_SOURCE,
   DFS_PAYROLL_COVERAGE,
   DFS_PAYROLL_AS_OF,
@@ -117,6 +118,21 @@ describe("DFS Profile — Payroll placeholder", () => {
     // Replace DFS_PAYROLL_GBP_PLACEHOLDER with a named constant that carries
     // source + as_of before using it in any live profile or test.
     expect(DFS_PAYROLL_GBP_PLACEHOLDER).toBe(0);
+  });
+
+  it("DFS_PAYROLL_CONFIRMED is false until DFS provides a named source artefact (public-use gate)", () => {
+    // This test asserts that the payroll figure is NOT confirmed for public use.
+    // It will fail if DFS_PAYROLL_CONFIRMED is set to true without all five
+    // pre-conditions being met (see dfsProfileConstants.ts for the full list).
+    // When DFS provides the figure: set DFS_PAYROLL_CONFIRMED = true AND update
+    // DFS_PAYROLL_SOURCE, DFS_PAYROLL_COVERAGE, and DFS_PAYROLL_AS_OF.
+    // Then delete this test and replace it with a positive confirmation test.
+    expect(DFS_PAYROLL_CONFIRMED).toBe(false);
+  });
+
+  it("payroll coverage is 'pending' until DFS provides the figure", () => {
+    // When DFS provides the figure, change this to assert the actual coverage label.
+    expect(DFS_PAYROLL_COVERAGE).toBe("pending");
   });
 });
 

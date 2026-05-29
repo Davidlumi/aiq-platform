@@ -4873,3 +4873,9 @@ test
 - [x] Fix 14 amendment (P1): Resolve legacy-key inference for ambiguous rows — split into legacy_key (script-mapped) vs legacy_key (title-inferred) columns in audit trail where two legacy keys target one canonical
 - [x] Fix 15 amendment (P0): Attach or retract R1 baseline artefact (checkpoint 613f39c3); add prod-DB framing comment to ground truth record (in-test comment naming it a prod health check; read-only credentials note; environment-dependent note)
 - [x] Fix 11 UX verification (P1): Spot-check that "Reward Governance" (capability dimension) and "Governance" (board report section) read as clearly distinct to a reward user in the UI
+
+### v2.1 Outstanding items (29 May 2026 — "Fix all of these")
+- [x] Fix 9/15 DBA: Complete named-engineer access list in fix9-data-protection-operational.md Section 4
+- [x] Fix 9/15 DBA: Add read-only DB user note and CI credential guidance to ground truth record
+- [x] Fix 1: Resolve payroll figure — add DFS-provided confirmation note and public-use gate to dfsProfileConstants.ts
+- [x] Fix 3: Complete the 26-decision scenario label review record (all 26 rows: Keep/Reword/Reassign)
