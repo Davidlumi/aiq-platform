@@ -234,9 +234,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isRewardMode = gate.tenantMode === "reward";
 
   // Use effectiveRoles for nav filtering (demo role override)
-  // For reward-mode tenants, swap the CPO AI Strategy items for reward journey items
+  // For reward-mode tenants, swap the CPO AI Strategy items for reward journey items.
+  // IMPORTANT: In reward mode we must include CPO-role-gated items BEFORE the role filter
+  // runs so they can be remapped to reward paths. reward_leader has roles:[] so without
+  // this exception the My Team and AI Strategy items are stripped before remapping.
+  const REWARD_REMAP_PATHS = new Set(["/strategy", "/strategy/diagnostic", "/strategy/board-report", "/company-assessment", "/dashboard", "/people"]);
   const rawVisibleItems = NAV_ITEMS
-    .filter((item) => !item.roles || item.roles.some((r) => effectiveRoles.includes(r)))
+    .filter((item) => {
+      // In reward mode, always include items that will be remapped (regardless of role)
+      if (isRewardMode && REWARD_REMAP_PATHS.has(item.path)) return true;
+      return !item.roles || item.roles.some((r) => effectiveRoles.includes(r));
+    })
     .map((item) => {
       if (!isRewardMode) return item;
       // Replace CPO strategy items with reward equivalents

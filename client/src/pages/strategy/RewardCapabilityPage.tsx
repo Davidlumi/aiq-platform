@@ -85,7 +85,7 @@ const DIMENSION_ICONS: Record<CapabilityDimension, React.ReactNode> = {
   data_foundations: <Database className="w-5 h-5" />,
   change_management: <Users className="w-5 h-5" />,
   systems_integration: <Plug className="w-5 h-5" />,
-  governance: <Scale className="w-5 h-5" />,
+  reward_governance: <Scale className="w-5 h-5" />,
   team_skills: <GraduationCap className="w-5 h-5" />,
 };
 

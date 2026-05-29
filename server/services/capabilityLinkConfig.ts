@@ -32,8 +32,8 @@ export type AssessmentDomain =
   | "ai_ethics_trust"
   | "ai_change_leadership";
 
-/** The three Stage 8 people-dimensions informed by individual assessments */
-export type PeopleDimension = "team_skills" | "change_management" | "reward_governance";
+/** The five Stage 8 people-dimensions informed by individual assessments */
+export type PeopleDimension = "team_skills" | "change_management" | "reward_governance" | "data_foundations" | "systems_integration";
 
 export interface DomainWeight {
   domain: AssessmentDomain;

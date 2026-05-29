@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -99,6 +100,7 @@ const JOB_FUNCTIONS = [
 
 export default function OnboardingWizard() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
   const [aiUsageLevel, setAiUsageLevel] = useState<string | null>(null);
@@ -106,7 +108,13 @@ export default function OnboardingWizard() {
 
   const completeOnboarding = trpc.auth.completeOnboarding.useMutation({
     onSuccess: () => {
-      navigate("/dashboard");
+      // Reward leaders go directly to the reward journey; everyone else to dashboard
+      const aiqRole = (user as any)?.aiqRole as string | undefined;
+      if (aiqRole === "reward_leader") {
+        navigate("/strategy/reward-prework");
+      } else {
+        navigate("/dashboard");
+      }
     },
     onError: (err) => {
       toast.error("Could not save your profile. Please try again.");

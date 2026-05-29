@@ -4888,3 +4888,12 @@ test
 - [x] Hide CPO-only routes from App.tsx for reward_leader (redirect to /dashboard)
 - [x] Ensure RootRedirect sends reward_leader to /strategy/reward-prework after onboarding
 - [x] Remove Acme/demo references from login page and any visible UI copy
+
+### QA Review — Bug Fixes (2026-05-29)
+
+- [x] TS Error: RewardCapabilityPage DIMENSION_ICONS uses `governance` key but type expects `reward_governance`
+- [x] TS Error: capabilityLinkConfig.ts dimensionMappings has `data_foundations` + `systems_integration` keys not in PeopleDimension type
+- [x] Onboarding: reward_leader should skip generic CPO onboarding and go directly to reward journey
+- [x] Onboarding: after completion wizard navigates to /dashboard — should go to /strategy/reward-prework for reward_leader
+- [x] AppShell: reward_leader has roles:[] so CPO-role-gated nav items (Overview, People) are filtered before remapping — My Team section missing from AppShell nav for reward mode
+- [x] Login: org code placeholder still shows "e.g. acme" — should say "e.g. dunder"

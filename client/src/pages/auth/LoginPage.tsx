@@ -291,7 +291,7 @@ export default function LoginPage() {
               <Input
                 id="tenantSlug"
                 {...register("tenantSlug")}
-                placeholder="e.g. acme"
+                placeholder="e.g. dunder"
                 className="h-11"
                 autoComplete="organization"
               />
