@@ -143,10 +143,18 @@ const ADMIN: NavSection = {
   ],
 };
 
+const REWARD_ADMIN: NavSection = {
+  section: "Admin",
+  items: [
+    { icon: Building2, label: "Company Profile", path: "/company-profile" },
+    { icon: Users, label: "People & Org", path: "/admin/people-org" },
+  ],
+};
+
 function getNavSections(roles: string[], aiqRole?: string): NavSection[] {
   // Reward Leader: individual development + team overview + Reward Strategy engine (no CPO admin)
   if (isRewardLeader(aiqRole)) {
-    return [MY_DEVELOPMENT, MY_TEAM_CPO, REWARD_STRATEGY];
+    return [MY_DEVELOPMENT, MY_TEAM_CPO, REWARD_STRATEGY, REWARD_ADMIN];
   }
   // CPO / HR Leader: full platform
   if (isCpo(roles)) {
