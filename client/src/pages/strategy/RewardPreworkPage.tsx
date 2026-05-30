@@ -427,7 +427,7 @@ export default function RewardPreworkPage() {
       // F1b fix: if company profile gate blocks completion, redirect to admin profile page
       if (String(e.message).includes("Company Profile must be completed")) {
         toast.error("Company Profile must be completed first.", { duration: 5000 });
-        setTimeout(() => navigate("/admin/company-profile"), 1200);
+        setTimeout(() => navigate("/company-profile"), 1200);
       } else {
         toast.error("Cannot complete: " + String(e.message));
       }
@@ -576,7 +576,7 @@ export default function RewardPreworkPage() {
             <p className="font-medium text-amber-700 dark:text-amber-400">Company Profile required before completing Stage 1</p>
             <p className="text-xs text-muted-foreground mt-0.5">An admin must complete the Company Profile before Reward Pre-work can be finalised.</p>
             <button
-              onClick={() => navigate("/admin/company-profile")}
+              onClick={() => navigate("/company-profile")}
               className="text-xs text-amber-600 hover:text-amber-700 underline mt-1"
             >
               Go to Company Profile &rarr;
