@@ -350,40 +350,9 @@ export default function LeaderDashboardV2() {
   const { data: heatmapData } = trpc.dashboardV2.leader.functionHeatmap.useQuery();
   const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
 
-  // F2 fix: reward-mode tenants should land on the reward journey, not the CPO dashboard
-  // Use <Redirect> (render-time) instead of useEffect to avoid hooks-after-conditional-return
-  if (gate.tenantMode === "reward") {
-    const rewardStageRoutes = [
-      "/strategy/reward-outputs",
-      "/strategy/reward-review",
-      "/strategy/reward-capability",
-      "/strategy/reward-business-case",
-      "/strategy/reward-success-measures",
-      "/strategy/reward-initiatives",
-      "/strategy/reward-principles",
-      "/strategy/reward-strategy",
-      "/strategy/reward-vision",
-      "/strategy/reward-prework",
-    ];
-    const stageAccessible = [
-      gate.isStage10Accessible,
-      gate.isStage9Accessible,
-      gate.isStage8Accessible,
-      gate.isStage7Accessible,
-      gate.isStage6Accessible,
-      gate.isStage5Accessible,
-      gate.isStage4Accessible,
-      gate.isStage3Accessible,
-      gate.isStage2Accessible,
-      true, // stage 1 always accessible
-    ];
-    const targetIdx = stageAccessible.findIndex((a) => a);
-    const target = rewardStageRoutes[targetIdx] ?? "/strategy/reward-prework";
-    return <Redirect to={target} />;
-  }
-
   const isLoading = heroLoading || mainLoading;
 
+  // All useMemo hooks must be declared unconditionally BEFORE any early return (Rules of Hooks)
   const levelDistribution = useMemo(() => {
     if (!main) return [];
     // Prefer server-computed 5-level distribution (accurate Strong/Capable split)
@@ -433,6 +402,38 @@ export default function LeaderDashboardV2() {
     }
     return result.slice(0, 3);
   }, [main, ambitionGap]);
+
+  // F2 fix: reward-mode tenants redirect to the reward journey.
+  // Placed AFTER all hooks so React's hook count is always consistent.
+  if (gate.tenantMode === "reward") {
+    const rewardStageRoutes = [
+      "/strategy/reward-outputs",
+      "/strategy/reward-review",
+      "/strategy/reward-capability",
+      "/strategy/reward-business-case",
+      "/strategy/reward-success-measures",
+      "/strategy/reward-initiatives",
+      "/strategy/reward-principles",
+      "/strategy/reward-strategy",
+      "/strategy/reward-vision",
+      "/strategy/reward-prework",
+    ];
+    const stageAccessible = [
+      gate.isStage10Accessible,
+      gate.isStage9Accessible,
+      gate.isStage8Accessible,
+      gate.isStage7Accessible,
+      gate.isStage6Accessible,
+      gate.isStage5Accessible,
+      gate.isStage4Accessible,
+      gate.isStage3Accessible,
+      gate.isStage2Accessible,
+      true, // stage 1 always accessible
+    ];
+    const targetIdx = stageAccessible.findIndex((a) => a);
+    const target = rewardStageRoutes[targetIdx] ?? "/strategy/reward-prework";
+    return <Redirect to={target} />;
+  }
 
   if (isLoading) return <LeaderDashboardSkeleton />;
   if (!main) return (
