@@ -290,11 +290,15 @@ export function aggregateTeamCapability(
     team_skills: null,
     change_management: null,
     reward_governance: null,
+    data_foundations: null,
+    systems_integration: null,
   };
   const provenance: Record<PeopleDimension, string> = {
     team_skills: "",
     change_management: "",
     reward_governance: "",
+    data_foundations: "",
+    systems_integration: "",
   };
 
   const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "reward_governance"];

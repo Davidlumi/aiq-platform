@@ -4915,3 +4915,7 @@ test
 - [x] Badge component: fix secondary/outline/muted/navy/destructive variants to use semantic CSS variables
 - [x] Tabs component: fix border/text colours to use semantic variables
 - [x] CompanyProfilePage: reward_leader was read-only (canEdit=false) — fixed to canEdit=true so Reward Leader can fill in and complete the Company Profile
+
+## Company Profile Unlock Fix
+- [x] CompanyProfilePage: removed isRewardLeader read-only/disabled enforcement — all authenticated users (reward_leader and admin) can now edit and complete the Company Profile
+- [x] Fixed pre-existing TS2739 errors in capabilityLinkConfig.ts and rewardDevelopmentPlans.ts (missing data_foundations/systems_integration keys in PeopleDimension Records)

@@ -10,7 +10,7 @@
  * - Conditional fields: fca only for FS, listing_exchange only for listed, uk/eu headcount only for multi-geo
  * - business_ai_ambition slider 1–4 (not 1–5)
  * - maxLength=120 on company name
- * - Read-only view for Reward leaders (aiqRole=reward_leader) with flag icons
+ * - reward_leader can edit and complete the Company Profile (it is their primary setup task)
  * - Help text on every field
  * - Cross-field validation: uk + eu headcount ≤ total headcount
  */
@@ -30,7 +30,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import CompanyProfileFlagsPanel from "@/components/CompanyProfileFlagsPanel";
 import { Building2, ChevronRight, ChevronLeft, CheckCircle2, Flag,
-  History, AlertCircle, Info, Loader2, Shield, Users, Cpu, Lock,
+  History, AlertCircle, Info, Loader2, Shield, Users,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -183,19 +183,16 @@ function WorkforceMixSlider({
   frontline,
   blended,
   onChange,
-  readOnly = false,
 }: {
   knowledge: number;
   frontline: number;
   blended: number;
   onChange: (k: number, f: number, b: number) => void;
-  readOnly?: boolean;
 }) {
   const total = knowledge + frontline + blended;
   const isValid = total === 100;
 
   const handleKnowledge = (val: number[]) => {
-    if (readOnly) return;
     const k = val[0];
     const remaining = 100 - k;
     const ratio = frontline + blended > 0 ? frontline / (frontline + blended) : 0.5;
@@ -205,7 +202,6 @@ function WorkforceMixSlider({
   };
 
   const handleFrontline = (val: number[]) => {
-    if (readOnly) return;
     const f = val[0];
     const remaining = 100 - knowledge - f;
     if (remaining < 0) return;
@@ -240,7 +236,6 @@ function WorkforceMixSlider({
               step={1}
               value={[value]}
               onValueChange={handler}
-              disabled={readOnly}
               className="w-full"
             />
           </div>
@@ -270,17 +265,11 @@ function FieldWithFlag({
   fieldName,
   children,
   hint,
-  showFlag = false,
-  onFlag,
-  readOnly = false,
 }: {
   label: string;
   fieldName: string;
   children: React.ReactNode;
   hint?: string;
-  showFlag?: boolean;
-  onFlag?: (fieldName: string) => void;
-  readOnly?: boolean;
 }) {
   return (
     <div className="space-y-1.5">
@@ -295,18 +284,6 @@ function FieldWithFlag({
               <TooltipContent className="max-w-xs text-xs">{hint}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        )}
-        {readOnly && (
-          <Lock className="h-3 w-3 text-muted-foreground/50 ml-1" />
-        )}
-        {showFlag && onFlag && (
-          <button
-            onClick={() => onFlag(fieldName)}
-            className="ml-auto text-muted-foreground hover:text-amber-500 transition-colors"
-            title="Flag this field for correction"
-          >
-            <Flag className="h-3.5 w-3.5" />
-          </button>
         )}
       </div>
       {children}
@@ -354,17 +331,20 @@ function AuditTrailTab() {
         <div key={entry.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 text-sm">
           <div className="mt-0.5 h-2 w-2 rounded-full bg-primary shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="font-medium">{FIELD_LABELS[entry.fieldName] ?? entry.fieldName}</span>
-              <span className="text-muted-foreground text-xs">
-                {new Date(entry.changedAt).toLocaleString()}
+              <span className="text-xs text-muted-foreground">
+                {new Date(entry.changedAt * 1000).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" })}
               </span>
             </div>
-            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="line-through opacity-60">{entry.oldValue ?? "—"}</span>
+            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+              <span className="line-through">{String(entry.oldValue ?? "—")}</span>
               <ChevronRight className="h-3 w-3 shrink-0" />
-              <span className="text-foreground font-medium">{entry.newValue ?? "—"}</span>
+              <span className="text-foreground font-medium">{String(entry.newValue ?? "—")}</span>
             </div>
+            {(entry as any).changedByName && (
+              <p className="text-xs text-muted-foreground mt-0.5">by {(entry as any).changedByName}</p>
+            )}
           </div>
         </div>
       ))}
@@ -376,18 +356,11 @@ function AuditTrailTab() {
 
 export default function CompanyProfilePage() {
   const { user } = useAuth();
-  const [screen, setScreen] = useState<1 | 2 | 3>(1);
-  const [activeTab, setActiveTab] = useState<"setup" | "audit" | "flags">("setup");
-  const [materialChangedBanner, setMaterialChangedBanner] = useState(false);
-  const [flagField, setFlagField] = useState<string | null>(null);
-  const [flagNote, setFlagNote] = useState("");
-  const [flagSuggestion, setFlagSuggestion] = useState("");
-  const [headcountError, setHeadcountError] = useState<string | null>(null);
+  const utils = trpc.useUtils();
   const savingRef = useRef(false);
 
-  // Reward leaders can edit and complete the Company Profile (it is their primary setup task)
-  const isRewardLeader = (user as { aiqRole?: string } | null)?.aiqRole === "reward_leader";
-  const canEdit = true; // reward_leader and admin both have full edit access
+  // All authenticated users (reward_leader and admin) have full edit access
+  const canEdit = true;
 
   // Fetch existing profile
   const { data: profile, refetch } = trpc.companyProfile.get.useQuery();
@@ -420,83 +393,96 @@ export default function CompanyProfilePage() {
     setDraftInit(true);
   }
 
-  const saveMutation = trpc.companyProfile.save.useMutation({
-    onSuccess: (data) => {
-      refetch();
-      if (data.materialChangeDetected) {
-        setMaterialChangedBanner(true);
-      }
-    },
-    onError: (e) => toast.error("Save failed: " + String(e.message)),
-  });
+  const [screen, setScreen] = useState<1 | 2 | 3>(1);
+  const [activeTab, setActiveTab] = useState<"setup" | "audit" | "flags">("setup");
+  const [headcountError, setHeadcountError] = useState<string | null>(null);
+  const [materialChangedBanner, setMaterialChangedBanner] = useState(false);
+  const [flagField, setFlagField] = useState<string | null>(null);
+  const [flagSuggestion, setFlagSuggestion] = useState("");
+  const [flagNote, setFlagNote] = useState("");
 
-  const completeMutation = trpc.companyProfile.complete.useMutation({
-    onSuccess: () => {
-      refetch();
-      toast.success("Company Profile completed. Reward leaders can now start their pre-work.");
-    },
-    onError: (e) => toast.error("Cannot complete: " + String(e.message)),
-  });
+  const isCompleted = profile?.isCompleted ?? false;
 
-  const flagMutation = trpc.companyProfile.flagField.useMutation({
-    onSuccess: () => {
-      setFlagField(null);
-      setFlagNote("");
-      setFlagSuggestion("");
-      toast.success("Flag submitted. The admin has been notified.");
-    },
-    onError: (e) => toast.error("Flag failed: " + String(e.message)),
-  });
-
-  const autosave = useCallback(
-    (patch: Partial<ProfileDraft>) => {
-      if (!canEdit) return;
-      if (savingRef.current) return;
-      savingRef.current = true;
-      saveMutation.mutate(patch, { onSettled: () => { savingRef.current = false; } });
-    },
-    [saveMutation, canEdit]
-  );
-
-  const updateField = (key: keyof ProfileDraft, value: ProfileDraft[keyof ProfileDraft]) => {
-    if (!canEdit) return;
-    setDraft((d) => ({ ...d, [key]: value }));
-  };
-
-  const handleBlur = (key: keyof ProfileDraft) => {
-    if (!canEdit) return;
-    autosave({ [key]: draft[key] });
-  };
-
-  // Cross-field headcount validation
-  const validateHeadcounts = (patch: Partial<ProfileDraft> = {}) => {
-    const total = patch.headcount ?? draft.headcount ?? 0;
-    const uk = patch.ukEmployeeHeadcount ?? draft.ukEmployeeHeadcount ?? 0;
-    const eu = patch.euEmployeeHeadcount ?? draft.euEmployeeHeadcount ?? 0;
-    if (total > 0 && (uk + eu) > total) {
-      setHeadcountError(`UK (${uk.toLocaleString()}) + EU (${eu.toLocaleString()}) headcount (${(uk + eu).toLocaleString()}) exceeds total headcount (${total.toLocaleString()}).`);
-      return false;
-    }
-    setHeadcountError(null);
-    return true;
-  };
-
-  const handleHeadcountBlur = (key: "ukEmployeeHeadcount" | "euEmployeeHeadcount" | "headcount") => {
-    if (!canEdit) return;
-    const valid = validateHeadcounts({ [key]: draft[key] });
-    if (valid) autosave({ [key]: draft[key] });
-  };
-
-  const isCompleted = profile?.isCompleted === 1;
-
-  // Conditional field visibility (schema v2 rules)
+  // Conditional field visibility
   const showFca = isFinancialServices(draft.sector);
   const showListingExchange = isListed(draft.ownershipStructure);
   const showUkHeadcount = isMultiGeo(draft.geographicFootprint);
   const showEuHeadcount = hasEuPresence(draft.geographicFootprint);
-
-  // Screen 3 is shown if any conditional regulatory field is relevant
   const needsRegulatory = showFca || showListingExchange || showUkHeadcount || showEuHeadcount;
+
+  // Save mutation
+  const saveMutation = trpc.companyProfile.save.useMutation({
+    onSuccess: () => {
+      refetch();
+      utils.companyProfile.get.invalidate();
+    },
+    onError: (e) => toast.error(`Save failed: ${e.message}`),
+  });
+
+  // Complete mutation
+  const completeMutation = trpc.companyProfile.complete.useMutation({
+    onSuccess: () => {
+      toast.success("Company Profile marked as complete");
+      refetch();
+      utils.companyProfile.get.invalidate();
+    },
+    onError: (e) => toast.error(`Could not complete: ${e.message}`),
+  });
+
+  // Flag mutation
+  const flagMutation = trpc.companyProfile.flagField.useMutation({
+    onSuccess: () => {
+      toast.success("Flag submitted");
+      setFlagField(null);
+      setFlagSuggestion("");
+      setFlagNote("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Autosave helper
+  const autosave = useCallback(
+    (patch: Partial<ProfileDraft>) => {
+      if (savingRef.current) return;
+      savingRef.current = true;
+      saveMutation.mutate(patch as any, {
+        onSettled: () => { savingRef.current = false; },
+      });
+    },
+    [saveMutation]
+  );
+
+  const updateField = useCallback((field: keyof ProfileDraft, value: any) => {
+    setDraft((d) => ({ ...d, [field]: value }));
+  }, []);
+
+  const handleBlur = useCallback(
+    (field: keyof ProfileDraft) => {
+      autosave({ [field]: draft[field] });
+    },
+    [autosave, draft]
+  );
+
+  // Headcount cross-validation
+  const validateHeadcounts = useCallback(() => {
+    const total = draft.headcount ?? 0;
+    const uk = draft.ukEmployeeHeadcount ?? 0;
+    const eu = draft.euEmployeeHeadcount ?? 0;
+    if (uk + eu > total) {
+      setHeadcountError(`UK (${uk}) + EU (${eu}) headcount cannot exceed total headcount (${total}).`);
+      return false;
+    }
+    setHeadcountError(null);
+    return true;
+  }, [draft]);
+
+  const handleHeadcountBlur = useCallback(
+    (field: keyof ProfileDraft) => {
+      autosave({ [field]: draft[field] });
+      validateHeadcounts();
+    },
+    [autosave, draft, validateHeadcounts]
+  );
 
   const SCREENS = [
     { id: 1 as const, label: "Company Basics", icon: Building2 },
@@ -505,20 +491,6 @@ export default function CompanyProfilePage() {
   ];
 
   const maxScreen = needsRegulatory ? 3 : 2;
-
-  // Read-only banner for Reward leaders
-  const ReadOnlyBanner = () => (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-500/8 border border-blue-500/20 text-sm">
-      <Lock className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
-      <div>
-        <p className="font-medium text-blue-600">Read-only view</p>
-        <p className="text-xs text-blue-600/80 mt-0.5">
-          Only admins can edit the Company Profile. Use the flag icon (
-          <Flag className="h-3 w-3 inline" />) next to any field to request a correction.
-        </p>
-      </div>
-    </div>
-  );
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
@@ -539,7 +511,7 @@ export default function CompanyProfilePage() {
             Shared organisational facts used across all function strategy builders.
           </p>
         </div>
-        {canEdit && !isCompleted && (
+        {!isCompleted && (
           <Button
             onClick={() => completeMutation.mutate()}
             disabled={completeMutation.isPending}
@@ -555,9 +527,6 @@ export default function CompanyProfilePage() {
           </Button>
         )}
       </div>
-
-      {/* Read-only banner for Reward leaders */}
-      {isRewardLeader && <ReadOnlyBanner />}
 
       {/* Material-change banner */}
       {materialChangedBanner && (
@@ -593,12 +562,10 @@ export default function CompanyProfilePage() {
             <History className="h-3.5 w-3.5 mr-1.5" />
             Audit Trail
           </TabsTrigger>
-          {canEdit && (
-            <TabsTrigger value="flags">
-              <Flag className="h-3.5 w-3.5 mr-1.5" />
-              Flags
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="flags">
+            <Flag className="h-3.5 w-3.5 mr-1.5" />
+            Flags
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="setup" className="mt-4 space-y-4">
@@ -640,9 +607,6 @@ export default function CompanyProfilePage() {
                     label="Company Name"
                     fieldName="companyName"
                     hint="The legal or trading name of the organisation. Used in reports and strategy documents."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Input
                       value={draft.companyName ?? ""}
@@ -650,7 +614,6 @@ export default function CompanyProfilePage() {
                       onBlur={() => handleBlur("companyName")}
                       placeholder="e.g. Northbridge Financial Services"
                       maxLength={120}
-                      disabled={isRewardLeader}
                     />
                     {(draft.companyName?.length ?? 0) > 100 && (
                       <p className="text-xs text-muted-foreground mt-1">
@@ -663,14 +626,10 @@ export default function CompanyProfilePage() {
                     label="Sector"
                     fieldName="sector"
                     hint="Primary industry sector. Drives regulatory context, initiative relevance, and peer benchmarking."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Select
                       value={draft.sector ?? ""}
                       onValueChange={(v) => { updateField("sector", v); autosave({ sector: v }); }}
-                      disabled={isRewardLeader}
                     >
                       <SelectTrigger><SelectValue placeholder="Select sector" /></SelectTrigger>
                       <SelectContent>
@@ -683,9 +642,6 @@ export default function CompanyProfilePage() {
                     label="Total Headcount"
                     fieldName="headcount"
                     hint="Total employees including part-time and contractors. Used to size investment cases and benchmark against peers."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Input
                       type="number"
@@ -694,7 +650,6 @@ export default function CompanyProfilePage() {
                       onBlur={() => handleHeadcountBlur("headcount")}
                       placeholder="e.g. 4500"
                       min={1}
-                      disabled={isRewardLeader}
                     />
                   </FieldWithFlag>
 
@@ -702,9 +657,6 @@ export default function CompanyProfilePage() {
                     label="Annual Revenue (£)"
                     fieldName="annualRevenueGbp"
                     hint="Approximate annual revenue in GBP. Used for investment benchmarking and ROI calculations."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Input
                       type="number"
@@ -713,7 +665,6 @@ export default function CompanyProfilePage() {
                       onBlur={() => handleBlur("annualRevenueGbp")}
                       placeholder="e.g. 850000000"
                       min={0}
-                      disabled={isRewardLeader}
                     />
                   </FieldWithFlag>
 
@@ -721,9 +672,6 @@ export default function CompanyProfilePage() {
                     label="Annual Payroll Cost (£)"
                     fieldName="annualPayrollCostGbp"
                     hint="Total payroll cost including employer NI and pension contributions. Used to size pay equity and efficiency initiatives."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Input
                       type="number"
@@ -732,7 +680,6 @@ export default function CompanyProfilePage() {
                       onBlur={() => handleBlur("annualPayrollCostGbp")}
                       placeholder="e.g. 210000000"
                       min={0}
-                      disabled={isRewardLeader}
                     />
                   </FieldWithFlag>
 
@@ -740,14 +687,10 @@ export default function CompanyProfilePage() {
                     label="Geographic Footprint"
                     fieldName="geographicFootprint"
                     hint="Where the organisation employs people. Determines which regulatory fields appear (EU Pay Transparency Directive, gender pay gap reporting)."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Select
                       value={draft.geographicFootprint ?? ""}
                       onValueChange={(v) => { updateField("geographicFootprint", v); autosave({ geographicFootprint: v }); }}
-                      disabled={isRewardLeader}
                     >
                       <SelectTrigger><SelectValue placeholder="Select footprint" /></SelectTrigger>
                       <SelectContent>
@@ -760,14 +703,10 @@ export default function CompanyProfilePage() {
                     label="Ownership Structure"
                     fieldName="ownershipStructure"
                     hint="Legal ownership type. Listed companies have additional remuneration committee and pay ratio reporting obligations."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Select
                       value={draft.ownershipStructure ?? ""}
                       onValueChange={(v) => { updateField("ownershipStructure", v); autosave({ ownershipStructure: v }); }}
-                      disabled={isRewardLeader}
                     >
                       <SelectTrigger><SelectValue placeholder="Select structure" /></SelectTrigger>
                       <SelectContent>
@@ -801,14 +740,10 @@ export default function CompanyProfilePage() {
                   label="HRIS Platform"
                   fieldName="hris"
                   hint="Primary HR information system. Determines which integration and automation initiatives are feasible."
-                  showFlag={isRewardLeader}
-                  onFlag={setFlagField}
-                  readOnly={isRewardLeader}
                 >
                   <Select
                     value={draft.hris ?? ""}
                     onValueChange={(v) => { updateField("hris", v); autosave({ hris: v }); }}
-                    disabled={isRewardLeader}
                   >
                     <SelectTrigger><SelectValue placeholder="Select HRIS" /></SelectTrigger>
                     <SelectContent>
@@ -821,9 +756,7 @@ export default function CompanyProfilePage() {
                   knowledge={draft.workforceKnowledgePct ?? 60}
                   frontline={draft.workforceFrontlinePct ?? 20}
                   blended={draft.workforceBlendedPct ?? 20}
-                  readOnly={isRewardLeader}
                   onChange={(k, f, b) => {
-                    if (!canEdit) return;
                     setDraft((d) => ({
                       ...d,
                       workforceKnowledgePct: k,
@@ -839,14 +772,10 @@ export default function CompanyProfilePage() {
                     label="Material Sales Workforce"
                     fieldName="materialSalesWorkforce"
                     hint="Whether the company has a material sales workforce with variable / commission-based pay. Relevant for Sales Comp Redesign initiatives."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Select
                       value={draft.materialSalesWorkforce ?? ""}
                       onValueChange={(v) => { updateField("materialSalesWorkforce", v); autosave({ materialSalesWorkforce: v }); }}
-                      disabled={isRewardLeader}
                     >
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -859,14 +788,10 @@ export default function CompanyProfilePage() {
                     label="Critical AI / Digital Talent Population"
                     fieldName="criticalAiDigitalTalentPopulation"
                     hint="Approximate size of the AI, data science, and digital engineering talent pool. Drives AI Talent Pay Strategy initiative relevance."
-                    showFlag={isRewardLeader}
-                    onFlag={setFlagField}
-                    readOnly={isRewardLeader}
                   >
                     <Select
                       value={draft.criticalAiDigitalTalentPopulation ?? ""}
                       onValueChange={(v) => { updateField("criticalAiDigitalTalentPopulation", v); autosave({ criticalAiDigitalTalentPopulation: v }); }}
-                      disabled={isRewardLeader}
                     >
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
@@ -901,9 +826,7 @@ export default function CompanyProfilePage() {
                     max={4}
                     step={1}
                     value={[draft.businessAiAmbition ?? 2]}
-                    disabled={isRewardLeader}
                     onValueChange={(v) => {
-                      if (!canEdit) return;
                       updateField("businessAiAmbition", v[0]);
                       autosave({ businessAiAmbition: v[0] });
                     }}
@@ -925,10 +848,10 @@ export default function CompanyProfilePage() {
                     <Button onClick={() => setScreen(3)} size="sm">
                       Next: Regulatory <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
-                  ) : canEdit ? (
+                  ) : (
                     <Button
                       onClick={() => completeMutation.mutate()}
-                      disabled={completeMutation.isPending || isCompleted}
+                      disabled={completeMutation.isPending || !!isCompleted}
                       size="sm"
                     >
                       {completeMutation.isPending ? (
@@ -938,7 +861,7 @@ export default function CompanyProfilePage() {
                       )}
                       {isCompleted ? "Completed" : "Complete Profile"}
                     </Button>
-                  ) : null}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -972,14 +895,10 @@ export default function CompanyProfilePage() {
                       label="FCA SYSC 19 in scope?"
                       fieldName="fcaSysc19InScope"
                       hint="Whether the company is subject to FCA SYSC 19 remuneration rules. Applies to banks, investment firms, and certain insurers regulated by the FCA."
-                      showFlag={isRewardLeader}
-                      onFlag={setFlagField}
-                      readOnly={isRewardLeader}
                     >
                       <Select
                         value={draft.fcaSysc19InScope ?? ""}
                         onValueChange={(v) => { updateField("fcaSysc19InScope", v); autosave({ fcaSysc19InScope: v }); }}
-                        disabled={isRewardLeader}
                       >
                         <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                         <SelectContent>
@@ -995,14 +914,10 @@ export default function CompanyProfilePage() {
                       label="Listing Exchange"
                       fieldName="listingExchange"
                       hint="Primary stock exchange. Determines which remuneration committee reporting and pay ratio disclosure requirements apply."
-                      showFlag={isRewardLeader}
-                      onFlag={setFlagField}
-                      readOnly={isRewardLeader}
                     >
                       <Select
                         value={draft.listingExchange ?? ""}
                         onValueChange={(v) => { updateField("listingExchange", v); autosave({ listingExchange: v }); }}
-                        disabled={isRewardLeader}
                       >
                         <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                         <SelectContent>
@@ -1018,9 +933,6 @@ export default function CompanyProfilePage() {
                       label="UK Employee Headcount"
                       fieldName="ukEmployeeHeadcount"
                       hint="Number of employees based in the UK. Used to determine gender pay gap reporting threshold (250+ UK employees) and UK-specific compliance obligations."
-                      showFlag={isRewardLeader}
-                      onFlag={setFlagField}
-                      readOnly={isRewardLeader}
                     >
                       <Input
                         type="number"
@@ -1029,7 +941,6 @@ export default function CompanyProfilePage() {
                         onBlur={() => handleHeadcountBlur("ukEmployeeHeadcount")}
                         placeholder="e.g. 3200"
                         min={0}
-                        disabled={isRewardLeader}
                       />
                     </FieldWithFlag>
                   )}
@@ -1040,9 +951,6 @@ export default function CompanyProfilePage() {
                       label="EU Employee Headcount"
                       fieldName="euEmployeeHeadcount"
                       hint="Number of employees based in EU member states. Used to determine EU Pay Transparency Directive obligations (100+ EU employees from 2026)."
-                      showFlag={isRewardLeader}
-                      onFlag={setFlagField}
-                      readOnly={isRewardLeader}
                     >
                       <Input
                         type="number"
@@ -1051,7 +959,6 @@ export default function CompanyProfilePage() {
                         onBlur={() => handleHeadcountBlur("euEmployeeHeadcount")}
                         placeholder="e.g. 800"
                         min={0}
-                        disabled={isRewardLeader}
                       />
                     </FieldWithFlag>
                   )}
@@ -1068,23 +975,21 @@ export default function CompanyProfilePage() {
                   <Button variant="outline" onClick={() => setScreen(2)} size="sm">
                     <ChevronLeft className="h-4 w-4 mr-1" /> Back
                   </Button>
-                  {canEdit && (
-                    <Button
-                      onClick={() => {
-                        if (!validateHeadcounts()) return;
-                        completeMutation.mutate();
-                      }}
-                      disabled={completeMutation.isPending || isCompleted || !!headcountError}
-                      size="sm"
-                    >
-                      {completeMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                      )}
-                      {isCompleted ? "Completed" : "Complete Profile"}
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => {
+                      if (!validateHeadcounts()) return;
+                      completeMutation.mutate();
+                    }}
+                    disabled={completeMutation.isPending || !!isCompleted || !!headcountError}
+                    size="sm"
+                  >
+                    {completeMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                    )}
+                    {isCompleted ? "Completed" : "Complete Profile"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1106,11 +1011,9 @@ export default function CompanyProfilePage() {
           </Card>
         </TabsContent>
 
-        {canEdit && (
-          <TabsContent value="flags" className="mt-4">
-            <CompanyProfileFlagsPanel />
-          </TabsContent>
-        )}
+        <TabsContent value="flags" className="mt-4">
+          <CompanyProfileFlagsPanel />
+        </TabsContent>
       </Tabs>
 
       {/* Flag-for-correction dialog */}

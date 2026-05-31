@@ -189,6 +189,8 @@ export function computePeopleCountPerDimension(
     team_skills: 0,
     change_management: 0,
     reward_governance: 0,
+    data_foundations: 0,
+    systems_integration: 0,
   };
 
   const PEOPLE_DIMENSIONS: PeopleDimension[] = ["team_skills", "change_management", "reward_governance"];
