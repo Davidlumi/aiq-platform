@@ -4919,3 +4919,10 @@ test
 ## Company Profile Unlock Fix
 - [x] CompanyProfilePage: removed isRewardLeader read-only/disabled enforcement — all authenticated users (reward_leader and admin) can now edit and complete the Company Profile
 - [x] Fixed pre-existing TS2739 errors in capabilityLinkConfig.ts and rewardDevelopmentPlans.ts (missing data_foundations/systems_integration keys in PeopleDimension Records)
+
+## Fix 16 Content Balance (ai_change_leadership + workforce_ai_readiness)
+- [x] Authored and seeded 6 ai_change_leadership scenarios (ACL-009 to ACL-014): resistance management, redundancy communication, coalition building, post-failure recovery, AI literacy programme design, impact measurement
+- [x] Authored and seeded 6 workforce_ai_readiness scenarios (WAR-009 to WAR-014): heterogeneous workforce assessment, upskilling budget prioritisation, frontline AI anxiety, automation-vulnerable role identification, role transition pathway design, vendor tool evaluation
+- [x] Both domains now at 14 scenarios (11.5%) — within the 10%–30% target band
+- [x] content-balance-band.test.ts: 3 tests passing (2 todo skipped — these are pre-existing skips unrelated to Fix 16)
+- [x] Full test suite: 1999 passing | 2 todo | 0 failing (81 files)
