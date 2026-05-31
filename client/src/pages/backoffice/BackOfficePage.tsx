@@ -142,7 +142,7 @@ function BetaApplicationsTab() {
   };
 
   const statCards = [
-    { label: "Total",      value: (stats as any)?.total ?? 0,      color: "text-slate-700" },
+    { label: "Total",      value: (stats as any)?.total ?? 0,      color: "text-foreground" },
     { label: "Pending",    value: (stats as any)?.pending ?? 0,    color: "text-[#99882A]" },
     { label: "Approved",   value: (stats as any)?.approved ?? 0,   color: "text-primary" },
     { label: "Waitlisted", value: (stats as any)?.waitlisted ?? 0, color: "text-blue-600" },

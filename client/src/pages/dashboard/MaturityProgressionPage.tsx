@@ -30,10 +30,10 @@ const DOMAIN_LABELS: Record<string, string> = {
 
 const MATURITY_BANDS = [
   { min: 0, max: 1.5, label: "Foundational", color: "text-muted-foreground" },
-  { min: 1.5, max: 2.5, label: "Developing", color: "text-blue-600" },
-  { min: 2.5, max: 3.5, label: "Established", color: "text-violet-600" },
-  { min: 3.5, max: 4.5, label: "Advanced", color: "text-emerald-600" },
-  { min: 4.5, max: 5, label: "Leading", color: "text-amber-600" },
+  { min: 1.5, max: 2.5, label: "Developing", color: "dark:text-blue-400 text-blue-600" },
+  { min: 2.5, max: 3.5, label: "Established", color: "dark:text-violet-400 text-violet-600" },
+  { min: 3.5, max: 4.5, label: "Advanced", color: "dark:text-emerald-400 text-emerald-600" },
+  { min: 4.5, max: 5, label: "Leading", color: "dark:text-amber-400 text-amber-600" },
 ];
 
 function getMaturityBand(score: number) {
@@ -45,7 +45,7 @@ function ScoreBar({ score, max = 5 }: { score: number; max?: number }) {
   const band = getMaturityBand(score);
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
         <div
           className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500 transition-all"
           style={{ width: `${pct}%` }}
@@ -60,12 +60,12 @@ function SnapshotCard({ snapshot, isLatest }: { snapshot: any; isLatest: boolean
   const band = getMaturityBand(snapshot.overallScore);
   const date = new Date(snapshot.assessedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   return (
-    <div className={`p-4 rounded-lg border ${isLatest ? "border-violet-200 bg-violet-50/50" : "bg-card"}`}>
+    <div className={`p-4 rounded-lg border ${isLatest ? "dark:border-violet-700/50 border-violet-200 dark:bg-violet-900/20 bg-violet-50/50" : "bg-card"}`}>
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">{date}</span>
-            {isLatest && <Badge variant="outline" className="text-xs bg-violet-100 text-violet-700 border-violet-200">Latest</Badge>}
+            {isLatest && <Badge variant="outline" className="text-xs dark:bg-violet-900/40 bg-violet-100 dark:text-violet-300 text-violet-700 dark:border-violet-700/50 border-violet-200">Latest</Badge>}
           </div>
           <span className="text-xs text-muted-foreground capitalize">{snapshot.assessmentType.replace("_", " ")}</span>
         </div>

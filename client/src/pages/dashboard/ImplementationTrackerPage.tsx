@@ -371,7 +371,7 @@ export default function ImplementationTrackerPage() {
                 return (
                   <div key={m.id} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${m.status === "completed" ? "bg-emerald-500" : m.status === "overdue" ? "bg-red-500" : m.status === "in_progress" ? "bg-blue-500" : "bg-slate-300"}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${m.status === "completed" ? "bg-emerald-500" : m.status === "overdue" ? "bg-red-500" : m.status === "in_progress" ? "bg-blue-500" : "bg-muted-foreground"}`} />
                       {!isLast && <div className="w-px flex-1 bg-border mt-1" />}
                     </div>
                     <div className={`pb-4 flex-1 ${isLast ? "" : ""}`}>

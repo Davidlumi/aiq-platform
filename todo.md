@@ -56,6 +56,17 @@
 - [x] Dev server running cleanly, all page imports resolving
 - [x] Final checkpoint and delivery
 
+## Dark Mode Colour Audit (Session)
+- [x] Input component: uses semantic bg-input/text-foreground instead of hardcoded --neutral-0
+- [x] Slider component: improved track contrast and thumb colour for dark mode
+- [x] Badge component: fixed secondary, outline, muted, navy, destructive variants
+- [x] Tabs component: uses semantic CSS variables
+- [x] NotFound.tsx: replaced bg-gradient-to-br from-slate-50 to-slate-100, text-slate-900, text-slate-700 with semantic tokens
+- [x] ImplementationTrackerPage.tsx: replaced bg-slate-300 status dot with bg-muted-foreground
+- [x] MaturityProgressionPage.tsx: replaced bg-slate-100 ScoreBar track with bg-muted, fixed SnapshotCard light-mode bg/border, fixed MATURITY_BANDS text colours with dark: variants
+- [x] BackOfficePage.tsx: replaced text-slate-700 Total stat label with text-foreground
+- [x] Full scan of all non-marketing pages and components: no remaining hardcoded slate/gray/white/black colour classes without dark: variants found
+
 ## Future Enhancements
 - [x] Email delivery for forgot-password — sendPasswordResetEmail() added to server/email.ts using Resend, wired into requestPasswordReset procedure in auth.ts; silently skips if RESEND_API_KEY not configured
 - [x] PDF export rendering — fully implemented with PDFKit: assessment report, learning plan PDF, module PDF, AI strategy report; endpoints at /api/pdf/:type
