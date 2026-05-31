@@ -59,27 +59,27 @@ function Input({
         "px-3 py-2.5",
         "text-sm leading-none",
         // Surface & border
-        "bg-[var(--neutral-0)]",
-        "border border-[var(--color-neutral-300)]",
-        "rounded-[var(--radius-token-sm)]",
+        "bg-input",
+        "border border-input",
+        "rounded-md",
         // Text
-        "text-[var(--color-neutral-900)]",
-        "placeholder:text-[var(--color-neutral-400)]",
+        "text-foreground",
+        "placeholder:text-muted-foreground",
         // Selection
-        "selection:bg-[var(--navy-200)] selection:text-[var(--navy-900)]",
+        "selection:bg-primary/20 selection:text-foreground",
         // Transition
         "transition-[border-color,box-shadow] duration-[120ms]",
-        // Focus - 2px navy-800 ring, 2px offset
+        // Focus
         "outline-none",
-        "focus-visible:border-[var(--navy-800)]",
-        "focus-visible:ring-2 focus-visible:ring-[var(--navy-800)] focus-visible:ring-offset-2",
+        "focus-visible:border-ring",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // Error state
-        "aria-invalid:border-[var(--color-red-700)]",
-        "aria-invalid:ring-2 aria-invalid:ring-[var(--color-red-700)]/20",
+        "aria-invalid:border-destructive",
+        "aria-invalid:ring-2 aria-invalid:ring-destructive/20",
         // Disabled
-        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[var(--color-neutral-50)]",
+        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         // File input
-        "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-[var(--color-neutral-900)]",
+        "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
         className
       )}
       onCompositionStart={handleCompositionStart}

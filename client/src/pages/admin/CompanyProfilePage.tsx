@@ -385,9 +385,9 @@ export default function CompanyProfilePage() {
   const [headcountError, setHeadcountError] = useState<string | null>(null);
   const savingRef = useRef(false);
 
-  // Reward leaders see read-only view with flag icons; admins get full edit
+  // Reward leaders can edit and complete the Company Profile (it is their primary setup task)
   const isRewardLeader = (user as { aiqRole?: string } | null)?.aiqRole === "reward_leader";
-  const canEdit = !isRewardLeader;
+  const canEdit = true; // reward_leader and admin both have full edit access
 
   // Fetch existing profile
   const { data: profile, refetch } = trpc.companyProfile.get.useQuery();

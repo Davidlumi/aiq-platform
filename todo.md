@@ -4897,3 +4897,10 @@ test
 - [x] Onboarding: after completion wizard navigates to /dashboard — should go to /strategy/reward-prework for reward_leader
 - [x] AppShell: reward_leader has roles:[] so CPO-role-gated nav items (Overview, People) are filtered before remapping — My Team section missing from AppShell nav for reward mode
 - [x] Login: org code placeholder still shows "e.g. acme" — should say "e.g. dunder"
+
+### QA Colour/Contrast + Gate Fixes (2026-05-31)
+- [x] Input component: replace hardcoded --neutral-0/--color-neutral-900 tokens with semantic bg-input/text-foreground for dark mode compatibility
+- [x] Slider component: improve track contrast (bg-muted/60 + border-border, h-2) and fix thumb (border-2 border-primary bg-background)
+- [x] Badge component: fix secondary/outline/muted/navy/destructive variants to use semantic CSS variables
+- [x] Tabs component: fix border/text colours to use semantic variables
+- [x] CompanyProfilePage: reward_leader was read-only (canEdit=false) — fixed to canEdit=true so Reward Leader can fill in and complete the Company Profile
