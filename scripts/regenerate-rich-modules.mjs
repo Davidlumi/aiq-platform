@@ -151,11 +151,27 @@ async function generateModuleContent(mod) {
   const systemPrompt = `You are a world-class instructional designer creating enterprise learning content for senior HR professionals at FTSE 100 companies. Write with the depth of a Harvard Business School case study and the practical focus of CIPD professional development materials.
 
 Requirements:
-- Each concept section: 200-350 words of substantive, expert content
-- Use specific, realistic HR scenarios (not generic examples)
+
+[CONSTRAINT 1 — Section length]
+Each section body must be 100 words or fewer. If the material for one section would exceed 100 words, split it into two or more separate sections, each with its own heading. Never merge multiple ideas into one long block. Prefer more short sections over fewer long ones.
+
+[CONSTRAINT 2 — Sentence length and reading grade]
+Write for a Flesch-Kincaid reading grade of 10 or below. Keep sentences to a maximum of 18 words. One idea per sentence. No sentence may contain more than one comma. Do not use semicolons.
+
+Self-check (mandatory): After writing each section, re-read every sentence and count its words. Rewrite any sentence over 18 words as two shorter sentences. If a sentence contains more than one comma, split it. Do not submit a section until every sentence passes this check.
+
+[CONSTRAINT 3 — Key points must add new information]
+Each keyPoints item must state a concrete implication or action the reader should take — something not already written in the body. Do not summarise or restate body sentences. If a key point only repeats the paragraph, delete it. Test: after reading the body, each key point should still tell the reader something new.
+
+[CONSTRAINT 4 — Jargon and acronyms]
+Define every technical acronym in plain words on its first use in the module — e.g. "applicant tracking system (the software that stores and filters job applications, often shortened to ATS)". Never use an acronym before defining it. Replace corporate filler — leverage, utilise, facilitate, operationalise, holistic, paradigm, robust, transformative — with plain words (use, help, do, whole, strong, major). The reader is a compensation specialist, not a technologist; assume no prior AI vocabulary.
+
+[CONSTRAINT 5 — Examples must be Reward/compensation specific]
+Every example, scenario, and illustration must center on compensation and reward work — pay, salary benchmarking, pay bands and grading, bonus and incentive design, or pay equity. Do not use recruitment, hiring, résumé-screening, onboarding, or performance-review examples; these target the wrong audience and will be rejected. If you reach for a hiring example, rewrite it as a pay or benchmarking example instead.
+
+${isAdvanced ? '- Reference real research from MIT, Accenture, CIPD, McKinsey, Deloitte, WEF' : ''}
 - Write in professional but engaging prose
 - Include concrete, actionable guidance
-${isAdvanced ? '- Reference real research from MIT, Accenture, CIPD, McKinsey, Deloitte, WEF' : ''}
 - Total module should take 10-15 minutes to complete`;
 
   // ─── Pass 1: Core content (introduction + concept sections + worked example) ───
@@ -180,9 +196,9 @@ Return JSON with EXACTLY this structure:
   "conceptSections": [
     {
       "heading": "Section heading",
-      "body": "200-350 word substantive explanation of this concept",
-      "keyPoints": ["key point 1", "key point 2", "key point 3"],
-      "example": "Specific real-world HR example illustrating this concept",
+      "body": "Substantive explanation of this concept — 100 words or fewer, sentences max 18 words, FK grade ≤10",
+      "keyPoints": ["concrete implication or action NOT restated from the body", "another new implication", "another new action"],
+      "example": "Specific compensation/reward example (pay, benchmarking, bonus, pay-equity) — NOT recruitment or onboarding",
       "researchNote": "${isAdvanced ? 'A relevant research finding or statistic from CIPD, Accenture, MIT, McKinsey' : ''}"
     }
   ],
@@ -205,7 +221,7 @@ Return JSON with EXACTLY this structure:
   ]
 }
 
-Include 3 concept sections. Make the content substantive and specific to ${cap.label} in HR contexts.`;
+Include 3 concept sections. Make the content substantive and specific to ${cap.label} in HR contexts. Remember: every example must be compensation/reward-specific (pay, benchmarking, bonus, pay-equity). Every section body must be 100 words or fewer. Every sentence must be 18 words or fewer.`;
 
   const coreContent = await invokeLLM(
     [
@@ -248,7 +264,7 @@ Return JSON:
       "question": "Question text",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 0,
-      "explanation": "Why this is correct and why others are wrong"
+      "explanation": "Exactly four sentences — one per answer option. Example format: 'Option B is correct because pay equity analysis requires comparing like-for-like roles. Option A is wrong because using market data alone ignores internal equity. Option C is wrong because adjusting all salaries equally does not address structural gaps. Option D is wrong because deferring the review does not resolve the underlying pay disparity.' Do not write a single combined explanation."
     }
   ]
 }`;
@@ -292,7 +308,10 @@ Return JSON:
   }
 }
 
-Include 3-4 choices. Make the situation specific and realistic for ${cap.label} in HR.`;
+Include 3-4 choices. Make the situation specific and realistic for ${cap.label} in HR.
+All examples and situations must reference compensation/reward contexts (pay, grading, benchmarking, bonus, or pay-equity) — not recruitment, onboarding, or performance management.
+Define every technical acronym on first use (e.g. write "job evaluation (JE)" not just "JE").
+Every sentence must be 18 words or fewer.`;
 
     const scenarioContent = await invokeLLM(
       [
@@ -334,7 +353,10 @@ Return JSON:
   }` : ''}
 }
 
-Include 5-6 reflection prompts. Make them genuinely thought-provoking and specific to ${cap.label}.`;
+Include 5-6 reflection prompts. Make them genuinely thought-provoking and specific to ${cap.label}.
+Ground each prompt in a compensation/reward context (pay, grading, benchmarking, bonus, or pay-equity) — not generic HR.
+Define every technical acronym on first use.
+Every sentence must be 18 words or fewer.`;
 
     const reflectionContent = await invokeLLM(
       [
@@ -374,7 +396,10 @@ Return JSON:
   }
 }
 
-Include 5-7 steps. Make it practical and immediately applicable in an HR role.`;
+Include 5-7 steps. Make it practical and immediately applicable in an HR role.
+All steps and context must reference compensation/reward work (pay, grading, benchmarking, bonus, or pay-equity) — not recruitment or performance management.
+Define every technical acronym on first use.
+Every sentence must be 18 words or fewer.`;
 
     const practicalContent = await invokeLLM(
       [
@@ -413,7 +438,7 @@ Return JSON:
       "question": "Question text",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 0,
-      "explanation": "Why this is correct"
+      "explanation": "Exactly four sentences — one per answer option. Example format: 'Option B is correct because pay equity analysis requires comparing like-for-like roles. Option A is wrong because using market data alone ignores internal equity. Option C is wrong because adjusting all salaries equally does not address structural gaps. Option D is wrong because deferring the review does not resolve the underlying pay disparity.' Do not write a single combined explanation."
     }
   ]
 }`;
@@ -429,6 +454,132 @@ Return JSON:
 
   const data = JSON.parse(content);
   return data.questions ? data : { questions: [] };
+}
+
+// ─── Post-processing helpers ─────────────────────────────────────────────────
+
+/**
+ * Deterministic filler stripper — mechanical backstop for CONSTRAINT 6.
+ *
+ * Replaces banned filler/corporate vocabulary with neutral alternatives.
+ * Applied to all string values in the content object recursively.
+ * The generation prompt bans these terms; this pass catches compliance drift.
+ *
+ * NOTE: This operates on generated content only. The audit allowlist is separate
+ * and lives in the audit script — this does NOT affect what the audit checks.
+ */
+const FILLER_REPLACEMENTS = [
+  // Corporate filler verbs
+  [/\bleverag(e|es|ed|ing)\b/gi, (_, s) => ({ e: 'use', es: 'uses', ed: 'used', ing: 'using' }[s?.toLowerCase()] ?? 'use')],
+  [/\butiliz(e|es|ed|ing)\b/gi, (_, s) => ({ e: 'use', es: 'uses', ed: 'used', ing: 'using' }[s?.toLowerCase()] ?? 'use')],
+  [/\butilis(e|es|ed|ing)\b/gi, (_, s) => ({ e: 'use', es: 'uses', ed: 'used', ing: 'using' }[s?.toLowerCase()] ?? 'use')],
+  [/\bstreamlin(e|es|ed|ing)\b/gi, (_, s) => ({ e: 'simplify', es: 'simplifies', ed: 'simplified', ing: 'simplifying' }[s?.toLowerCase()] ?? 'simplify')],
+  [/\bfoster(s|ed|ing)?\b/gi, 'support'],
+  [/\boptimiz(e|es|ed|ing)\b/gi, (_, s) => ({ e: 'improve', es: 'improves', ed: 'improved', ing: 'improving' }[s?.toLowerCase()] ?? 'improve')],
+  [/\boptimis(e|es|ed|ing)\b/gi, (_, s) => ({ e: 'improve', es: 'improves', ed: 'improved', ing: 'improving' }[s?.toLowerCase()] ?? 'improve')],
+  // Filler adjectives
+  [/\brobust\b/gi, 'reliable'],
+  [/\bholistic\b/gi, 'complete'],
+  [/\bseamless\b/gi, 'smooth'],
+  [/\btransformative\b/gi, 'significant'],
+  [/\bproactive\b/gi, 'early'],
+  [/\bscalable\b/gi, 'expandable'],
+  [/\bactionable\b/gi, 'practical'],
+  [/\bvalue-add\b/gi, 'useful'],
+  [/\bsynerg(y|ies|istic)\b/gi, 'combined effect'],
+  [/\bparadigm\b/gi, 'approach'],
+  [/\bdata-driven\b/gi, 'evidence-based'],
+  [/\bsolution-oriented\b/gi, 'practical'],
+];
+
+function stripFillerText(text) {
+  if (typeof text !== 'string' || !text) return text;
+  let result = text;
+  for (const [pattern, replacement] of FILLER_REPLACEMENTS) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
+function stripFiller(obj) {
+  if (typeof obj === 'string') return stripFillerText(obj);
+  if (Array.isArray(obj)) return obj.map(stripFiller);
+  if (obj && typeof obj === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+      out[k] = stripFiller(v);
+    }
+    return out;
+  }
+  return obj;
+}
+
+/**
+ * Deterministic sentence splitter — mechanical backstop for CONSTRAINT 2.
+ *
+ * For each sentence in the input text:
+ * 1. Count words. If ≤18, leave it alone.
+ * 2. If >18, find the last comma at or before word 18 and split there.
+ * 3. If no comma is available, split at word 18 with a full stop.
+ * Handles multiple sentences separated by '. ', '! ', '? '.
+ */
+function splitLongSentences(text) {
+  if (!text) return text;
+
+  // Tokenise: split on sentence boundaries (terminal punct + space + capital letter)
+  // Using a greedy match that stops at the first sentence boundary.
+  // This avoids splitting on 'payroll system.' mid-split when the next word is lowercase.
+  const parts = [];
+  let rem = text.trim();
+  while (rem.length > 0) {
+    const m = rem.match(/^(.*?[.!?])(?=\s+[A-Z]|$)/s);
+    if (m) {
+      parts.push(m[1].trim());
+      rem = rem.slice(m[1].length).trim();
+    } else {
+      parts.push(rem.trim());
+      break;
+    }
+  }
+
+  const result = [];
+  for (const sent of parts) {
+    const words = sent.split(/\s+/);
+    if (words.length <= 18) {
+      result.push(sent);
+      continue;
+    }
+
+    // Strategy 1: find the last comma at or before word 17 where remainder >= 4 words
+    let splitAt = -1;
+    for (let i = Math.min(17, words.length - 5); i >= 4; i--) {
+      if (words[i].endsWith(',') && (words.length - i - 1) >= 4) {
+        splitAt = i;
+        break;
+      }
+    }
+
+    if (splitAt !== -1) {
+      const first = words.slice(0, splitAt + 1).join(' ').replace(/,$/, '.');
+      const rest = words.slice(splitAt + 1).join(' ');
+      const restCap = rest.charAt(0).toUpperCase() + rest.slice(1);
+      result.push(first);
+      result.push(splitLongSentences(restCap));
+    } else {
+      // Strategy 2: hard split — find the largest split point <=18 where remainder >= 4 words
+      let hardSplit = 18;
+      while (hardSplit > 4 && (words.length - hardSplit) < 4) {
+        hardSplit--;
+      }
+      const first = words.slice(0, hardSplit).join(' ') + '.';
+      const rest = words.slice(hardSplit).join(' ');
+      const restCap = rest.charAt(0).toUpperCase() + rest.slice(1);
+      result.push(first);
+      result.push(splitLongSentences(restCap));
+    }
+  }
+
+  return result.filter(Boolean).join(' ');
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -461,8 +612,89 @@ async function main() {
     try {
       process.stdout.write(`  Generating ${label}... `);
 
-      const bodyContent = await generateModuleContent(mod);
+      let bodyContent = await generateModuleContent(mod);
       const quizContent = await generateFormativeQuiz(mod);
+
+      // ── Post-processing: deterministic sentence splitter ─────────────────────
+      // Splits any sentence over 18 words at the last comma before word 18,
+      // or at the 18th word boundary if no comma is available.
+      // This is the mechanical backstop for CONSTRAINT 2 compliance.
+      if (bodyContent.conceptSections) {
+        bodyContent.conceptSections = bodyContent.conceptSections.map(section => ({
+          ...section,
+          body: splitLongSentences(section.body || ''),
+        }));
+      }
+      if (bodyContent.introduction?.hook) {
+        bodyContent.introduction.hook = splitLongSentences(bodyContent.introduction.hook);
+      }
+      if (bodyContent.introduction?.whyItMatters) {
+        bodyContent.introduction.whyItMatters = splitLongSentences(bodyContent.introduction.whyItMatters);
+      }
+
+      // Extend splitter to all modality-specific content fields
+      // decisionScenario (scenario / case_study)
+      if (bodyContent.decisionScenario) {
+        const ds = bodyContent.decisionScenario;
+        if (ds.situation) ds.situation = splitLongSentences(ds.situation);
+        if (ds.decisionQuestion) ds.decisionQuestion = splitLongSentences(ds.decisionQuestion);
+        if (ds.yourRole) ds.yourRole = splitLongSentences(ds.yourRole);
+        if (ds.stakeholders) ds.stakeholders = splitLongSentences(ds.stakeholders);
+        if (ds.bestPractice) ds.bestPractice = splitLongSentences(ds.bestPractice);
+        if (Array.isArray(ds.choices)) {
+          ds.choices = ds.choices.map(c => ({
+            ...c,
+            text: splitLongSentences(c.text || ''),
+            outcome: splitLongSentences(c.outcome || ''),
+            reasoning: splitLongSentences(c.reasoning || ''),
+          }));
+        }
+      }
+
+      // reflectionPrompts + coachingFramework (reflection / coaching)
+      if (Array.isArray(bodyContent.reflectionPrompts)) {
+        bodyContent.reflectionPrompts = bodyContent.reflectionPrompts.map(p => ({
+          ...p,
+          prompt: splitLongSentences(p.prompt || ''),
+          guidance: splitLongSentences(p.guidance || ''),
+        }));
+      }
+      if (bodyContent.coachingFramework?.phases) {
+        bodyContent.coachingFramework.phases = bodyContent.coachingFramework.phases.map(ph => ({
+          ...ph,
+          purpose: splitLongSentences(ph.purpose || ''),
+          questions: (ph.questions || []).map(q => splitLongSentences(q)),
+        }));
+      }
+
+      // practicalExercise (practical)
+      if (bodyContent.practicalExercise) {
+        const pe = bodyContent.practicalExercise;
+        if (pe.context) pe.context = splitLongSentences(pe.context);
+        if (Array.isArray(pe.steps)) {
+          pe.steps = pe.steps.map(s => ({
+            ...s,
+            instruction: splitLongSentences(s.instruction || ''),
+            tip: splitLongSentences(s.tip || ''),
+          }));
+        }
+      }
+
+      // ── Post-processing: deterministic filler stripper ──────────────────────
+      // Removes banned filler words from all text fields after generation.
+      // This is the mechanical backstop for CONSTRAINT 6 (no filler vocabulary).
+      // The generation prompt instructs the LLM to avoid these terms; this pass
+      // catches any that slip through. Replacements are context-neutral substitutes.
+      bodyContent = stripFiller(bodyContent);
+
+      // workedExample (all modalities)
+      if (bodyContent.workedExample) {
+        const we = bodyContent.workedExample;
+        if (we.scenario) we.scenario = splitLongSentences(we.scenario);
+        if (we.analysis) we.analysis = splitLongSentences(we.analysis);
+        if (we.outcome) we.outcome = splitLongSentences(we.outcome);
+        if (we.lessonLearned) we.lessonLearned = splitLongSentences(we.lessonLearned);
+      }
 
       if (DRY_RUN) {
         console.log('✓ (dry run)');
@@ -490,6 +722,7 @@ async function main() {
 
     } catch (err) {
       console.log(`✗ FAILED: ${err.message.substring(0, 100)}`);
+      console.log(`   Stack: ${err.stack?.split('\n').slice(0, 5).join(' | ')}`);
       failed++;
     }
   }

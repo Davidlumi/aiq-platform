@@ -4926,3 +4926,14 @@ test
 - [x] Both domains now at 14 scenarios (11.5%) — within the 10%–30% target band
 - [x] content-balance-band.test.ts: 3 tests passing (2 todo skipped — these are pre-existing skips unrelated to Fix 16)
 - [x] Full test suite: 1999 passing | 2 todo | 0 failing (81 files)
+
+## Module Regeneration (Systemic Fault Fix — v2 Audit)
+- [ ] Edit six prompt constraints in regenerate-rich-modules.mjs (wall_of_text, reading_grade, redundancy, jargon, examples, feedback_why)
+- [ ] Dry-run to confirm prompt changes parse correctly
+- [ ] Pilot regeneration: --capability=ai_workflow_design
+- [ ] Re-audit pilot output with module_audit_REGENERATED.py; confirm reading_grade + wall_of_text drop to near-zero
+- [ ] Human accuracy read of 3-4 pilot modules
+- [ ] Full regeneration: all 145 modules
+- [ ] Full corpus re-audit; confirm all six systemic checks improve
+- [ ] Per-module fix: scenario_ratio x 17 modules (replace definitional questions with scenario stems)
+- [ ] Per-module fix: mode_clarity x 12 modules (relabel quiz modules as Lesson or split reading)
