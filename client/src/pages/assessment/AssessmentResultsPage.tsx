@@ -104,12 +104,12 @@ function getHeroHeadline(score: number, priorityCount: number, growthThemes: str
 function DomainMiniBars({ domains }: { domains: { key: string; name?: string; score: number; colour: string }[] }) {
   if (domains.length === 0) return null;
   const DOMAIN_SHORT: Record<string, string> = {
-    ai_literacy_foundations: "Literacy",
-    ai_ethics_trust: "Ethics",
-    ai_tools_adoption: "Tools",
-    ai_data_decision: "Data",
-    ai_change_leadership: "Change",
-    ai_strategy_governance: "Strategy",
+    ai_interaction:         "Interact",
+    ai_output_evaluation:   "Evaluate",
+    ai_workflow_design:     "Workflow",
+    workforce_ai_readiness: "Readiness",
+    ai_ethics_trust:        "Ethics",
+    ai_change_leadership:   "Change",
   };
   return (
     <div className="flex flex-col gap-1.5 w-[140px] shrink-0" aria-label="Domain scores">
@@ -302,8 +302,7 @@ function DomainGridSkeleton() {
           <ShimmerBlock className="h-1.5 w-full rounded-full" />
           {/* Narrative */}
           <DomainNarrativeSkeleton />
-          {/* Full breakdown link */}
-          <ShimmerBlock className="h-2.5 w-24 mt-auto" />
+
         </div>
       ))}
     </div>
@@ -843,17 +842,7 @@ export default function AssessmentResultsPage() {
                     <p className="text-xs text-muted-foreground leading-relaxed">{narrative}</p>
                   ) : null}
 
-                  {/* Full breakdown link */}
-                  <button
-                    className="self-start flex items-center gap-1 text-xs text-foreground/35 hover:text-foreground/70 transition-colors mt-auto"
-                    onClick={() => {
-                      // event: assessment.domain.card.full-breakdown-clicked { domain }
-                      toast.info(`Full breakdown for ${domain.name} — coming in the next release.`);
-                    }}
-                    type="button"
-                  >
-                    Full breakdown <ChevronRight className="w-3 h-3" />
-                  </button>
+
                 </article>
               );
             })}

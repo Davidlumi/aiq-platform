@@ -149,8 +149,8 @@ describe("WS4.4 — session progress computation", () => {
 
 // ─── MINIMUM_EVIDENCE constants ───────────────────────────────────────────────
 describe("MINIMUM_EVIDENCE constants", () => {
-  it("targetItems is 49", () => {
-    expect(MINIMUM_EVIDENCE.targetItems).toBe(49);
+  it("targetItems is 50", () => {
+    expect(MINIMUM_EVIDENCE.targetItems).toBe(50);
   });
 
   it("totalItems is 20", () => {

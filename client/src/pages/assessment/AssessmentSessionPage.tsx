@@ -1632,17 +1632,13 @@ export default function AssessmentSessionPage() {
                         borderColor: `${capabilityColor}25`,
                       }}
                     >
-                      {(nextItem as any).capability
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                      {(nextItem as any).capability}
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-xs text-xs">
                     <p className="font-semibold mb-0.5">Capability area</p>
                     <p className="text-muted-foreground">
-                      {(nextItem as any).capability
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                      {(nextItem as any).capability}
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -1848,7 +1844,6 @@ export default function AssessmentSessionPage() {
                     }`}
                   >
                     <span className="text-sm font-bold">{label}</span>
-                    <span className="text-xs opacity-70 leading-tight">{desc}</span>
                     {/* C1: score multiplier hidden — methodology link shown below */}
                   </button>
                 );

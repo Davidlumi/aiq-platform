@@ -67,7 +67,7 @@ const DEFAULT_CONFIG: ActiveScoringConfig = {
   evidenceSignalsPerCapability: 3,
   evidenceDistinctInteractionTypes: 5,
   evidenceHighRiskProportion: 0.25,
-  evidenceTargetItems: 49,
+  evidenceTargetItems: 50,
 };
 
 let _cache: ActiveScoringConfig | null = null;
@@ -133,7 +133,7 @@ export async function getActiveScoringConfig(): Promise<ActiveScoringConfig> {
         evidenceHighRiskProportion: row.evidenceHighRiskProportion !== null && row.evidenceHighRiskProportion !== undefined
           ? parseFloat(row.evidenceHighRiskProportion as unknown as string) : 0.25,
         evidenceTargetItems: row.evidenceTargetItems !== null && row.evidenceTargetItems !== undefined
-          ? Number(row.evidenceTargetItems) : 49,
+          ? Number(row.evidenceTargetItems) : 50,
       };
     }
   } catch {

@@ -216,20 +216,20 @@ beforeEach(() => { llmCallCount = 0; });
 
 describe("Assessment Engine — Phase Determination", () => {
   it("returns baseline for first 30% of items", () => {
-    const target = MINIMUM_EVIDENCE.targetItems; // 49
+    const target = MINIMUM_EVIDENCE.targetItems; // 50
     expect(determineSessionPhase(0, target)).toBe("baseline");
-    expect(determineSessionPhase(14, target)).toBe("baseline"); // 14/49 = 0.2857 < 0.30
+    expect(determineSessionPhase(14, target)).toBe("baseline"); // 14/50 = 0.28 < 0.30
   });
 
   it("returns adaptive for middle 45%", () => {
     const target = MINIMUM_EVIDENCE.targetItems;
-    expect(determineSessionPhase(15, target)).toBe("adaptive"); // 15/49 = 0.3061 >= 0.30
-    expect(determineSessionPhase(36, target)).toBe("adaptive"); // 36/49 = 0.7347 < 0.75
+    expect(determineSessionPhase(15, target)).toBe("adaptive"); // 15/50 = 0.30 >= 0.30
+    expect(determineSessionPhase(37, target)).toBe("adaptive"); // 37/50 = 0.74 < 0.75
   });
 
   it("returns validation for final 25%", () => {
     const target = MINIMUM_EVIDENCE.targetItems;
-    expect(determineSessionPhase(37, target)).toBe("validation"); // 37/49 = 0.7551 >= 0.75
+    expect(determineSessionPhase(38, target)).toBe("validation"); // 38/50 = 0.76 >= 0.75
     expect(determineSessionPhase(target - 1, target)).toBe("validation");
   });
 });

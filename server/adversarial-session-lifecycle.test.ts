@@ -286,8 +286,8 @@ describe("1.1e — Abandoned session lifecycle", () => {
 // ─── 1.1f: MINIMUM_EVIDENCE constants (regression guard) ─────────────────────
 
 describe("1.1f — MINIMUM_EVIDENCE constants (regression guard)", () => {
-  it("targetItems is 49", () => {
-    expect(MINIMUM_EVIDENCE.targetItems).toBe(49);
+  it("targetItems is 50", () => {
+    expect(MINIMUM_EVIDENCE.targetItems).toBe(50);
   });
 
   it("totalItems is 20", () => {

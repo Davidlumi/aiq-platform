@@ -297,11 +297,11 @@ describe("D1 — MINIMUM_EVIDENCE constants in ActiveScoringConfig", () => {
     expect(cfg).toHaveProperty("evidenceTargetItems");
   });
 
-  it("evidenceTargetItems defaults to 49", async () => {
+  it("evidenceTargetItems defaults to 50", async () => {
     const { getActiveScoringConfig, invalidateScoringConfigCache } = await import("./assessment/scoringConfig");
     invalidateScoringConfigCache();
     const cfg = await getActiveScoringConfig();
-    expect(cfg.evidenceTargetItems).toBe(49);
+    expect(cfg.evidenceTargetItems).toBe(50);
   });
 
   it("evidenceTotalItems defaults to 20", async () => {
@@ -321,7 +321,7 @@ describe("D1 — MINIMUM_EVIDENCE constants in ActiveScoringConfig", () => {
   it("MINIMUM_EVIDENCE legacy constant still exports the original defaults", async () => {
     const { MINIMUM_EVIDENCE } = await import("./assessment/sessionController");
     expect(MINIMUM_EVIDENCE.totalItems).toBe(20);
-    expect(MINIMUM_EVIDENCE.targetItems).toBe(49);
+    expect(MINIMUM_EVIDENCE.targetItems).toBe(50);
     expect(MINIMUM_EVIDENCE.highRiskProportion).toBe(0.25);
   });
 });

@@ -56,7 +56,7 @@ export const MINIMUM_EVIDENCE = {
   signalsPerCapability: 3,
   distinctInteractionTypes: 5,
   highRiskProportion: 0.25,
-  targetItems: 49,
+  targetItems: 50,
 };
 
 // ─── Session State ────────────────────────────────────────────────────────────

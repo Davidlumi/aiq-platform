@@ -4937,3 +4937,14 @@ test
 - [ ] Full corpus re-audit; confirm all six systemic checks improve
 - [ ] Per-module fix: scenario_ratio x 17 modules (replace definitional questions with scenario stems)
 - [ ] Per-module fix: mode_clarity x 12 modules (relabel quiz modules as Lesson or split reading)
+
+## Assessment Patch Brief v2
+
+- [ ] P0-1: Classify why all domains scored 5.0 — pull per-question raw scores, determine seeding artefact vs engine output
+- [ ] P0-2: Fix 'What you do well' strengths card — no placeholder copy, real content for all profile shapes
+- [x] P1-1: Align evidenceTargetItems to 50, update progress bar and start screen to 'up to 50 scenarios'
+- [x] P1-2: Hide 'Full breakdown' buttons until feature exists (remove dead toast affordance)
+- [x] P2-1: Add topic-tag display-label mapping (programme_design → Programme Design), audit all raw keys reaching UI
+- [x] P2-2: Collapse confidence scale to 3 single-label options (remove stacked double labels)
+- [x] P2-3: Fix domain mini-bar label truncation in results doughnut (all six must read cleanly)
+- [ ] P2-4: Verify dev-plan target derivation after real scores land — fix if still uniform +1.5 offset
