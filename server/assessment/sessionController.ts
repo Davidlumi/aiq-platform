@@ -345,8 +345,6 @@ export class SessionController {
     scoringCfg?: { intercept: number; multiplier: number; contributionCap?: number; contributionMultiplier?: number; blockingFailureMinItems?: number; downgradeFailureMinItems?: number; baseFailureThresholdMagnitude?: number; catastrophicMarginMultiplier?: number; atRiskConfidenceFloor?: number; provisionalConfidenceThreshold?: number; confidenceFloor?: number; minimumSafeClassificationConfidence?: number },
     /** S10: Org-level capability threshold overrides */
     orgThresholdOverrides?: Partial<Record<CapabilityKey, number>>,
-    /** S4: Proportion of required-reasoning items that received adequate reasoning */
-    reasoningCompleteness: number = 1.0
   ) {
     const roleArchetype = resolveRoleArchetype(userRoleHint);
 
@@ -438,7 +436,6 @@ export class SessionController {
       consistencyScore,
       gamingAnalysis.score,
       MINIMUM_EVIDENCE.targetItems,  // R2: pass actual target for evidence depth normalisation
-      reasoningCompleteness           // S4: reasoning completeness factor
     );
 
     // Risk band

@@ -601,6 +601,17 @@ export default function AssessmentResultsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
 
+      {/* ── U-3: Developmental-use-only statement ──────────────────────── */}
+      <div className="flex items-start gap-3 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-3 text-xs text-amber-200/80 leading-relaxed">
+        <span className="mt-0.5 shrink-0 text-amber-400" aria-hidden="true">⚠</span>
+        <p>
+          <strong className="text-amber-300 font-semibold">For development purposes only.</strong>{" "}
+          This assessment is designed to support individual learning and professional development. It has not been independently validated for use in recruitment, promotion, redundancy, or any other employment decision. Scores should not be used as the sole basis for any consequential HR decision. See our{" "}
+          <a href="/methodology" className="underline underline-offset-2 hover:text-amber-100 transition-colors">methodology disclosure</a>{" "}
+          for full limitations.
+        </p>
+      </div>
+
       {/* ── 1. TOP BAR ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         {/* Assessment date selector */}

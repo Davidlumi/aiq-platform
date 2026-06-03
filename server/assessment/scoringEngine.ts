@@ -786,8 +786,7 @@ export function computeConfidenceProfile(
   contradictionCount: number,
   consistencyScore: number,
   antiGamingScore: number,
-  targetItems: number = 49,
-  reasoningCompleteness: number = 1.0,
+  targetItems: number = 50,
   /** v10: Per-answer confidence stakes with domain context for overconfidence detection */
   confidenceStakes?: Array<{ stake: ConfidenceStake; domain: CapabilityKey; wasCorrect: boolean }>
 ): ConfidenceProfile {
@@ -798,8 +797,6 @@ export function computeConfidenceProfile(
   const riskExposure = Math.min(1, highRiskAnswers / Math.max(1, totalAnswers * 0.3));
   const contradictionPenalty = Math.max(0, 1 - (contradictionCount * 0.15));
   const antiGamingConfidence = Math.max(0, antiGamingScore);
-  const reasoningCompletenessScore = Math.max(0, Math.min(1, reasoningCompleteness));
-
   // v10: Compute domain-weighted overconfidence penalty
   let overconfidencePenalty = 0;
   if (confidenceStakes && confidenceStakes.length > 0) {
@@ -821,16 +818,17 @@ export function computeConfidenceProfile(
     }
   }
 
+  // U-2: reasoningCompleteness (0.05) removed; remaining 8 weights renormalised ÷0.95
+  // Before/after delta on a typical input: +0.0016 (negligible)
   const overall = Math.min(1, Math.max(0, (
-    evidenceDepth * 0.18 +
-    evidenceBreadth * 0.18 +
-    interactionDiversity * 0.15 +
-    riskExposure * 0.12 +
-    consistencyScore * 0.12 +
-    contradictionPenalty * 0.10 +
-    antiGamingConfidence * 0.05 +
-    reasoningCompletenessScore * 0.05 +
-    (1 - overconfidencePenalty) * 0.05
+    evidenceDepth * 0.1895 +
+    evidenceBreadth * 0.1895 +
+    interactionDiversity * 0.1579 +
+    riskExposure * 0.1263 +
+    consistencyScore * 0.1263 +
+    contradictionPenalty * 0.1053 +
+    antiGamingConfidence * 0.0526 +
+    (1 - overconfidencePenalty) * 0.0526
   )));
 
   const band: "high" | "medium" | "low" =

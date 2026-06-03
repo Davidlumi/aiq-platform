@@ -441,8 +441,7 @@ describe("computeConfidenceProfile", () => {
       0,               // contradictionCount
       0.85,            // consistencyScore
       0.9,             // antiGamingScore
-      49,              // targetItems
-      1.0,             // reasoningCompleteness
+      50,              // targetItems
       [
         { stake: "confident", domain: "ai_interaction" as CapabilityKey, wasCorrect: true },
         { stake: "tentative", domain: "ai_output_evaluation" as CapabilityKey, wasCorrect: true },

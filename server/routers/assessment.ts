@@ -133,8 +133,6 @@ type NextItem = {
   dataContext?: string;
   /** Immersive artefact type for rich rendering */
   artefactType?: string;
-  /** S4: Whether reasoning text is required (>=40 chars) before submit */
-  reasoningRequired: boolean;
   capability: string;
   capabilityKey: string;
   workflow: string;
@@ -384,7 +382,7 @@ async function persistAndBuildNextItem(
     dataContext: generated.dataContext,
     artefactType: generated.artefactType,
     // S4.2: reasoning required for high/critical risk items and governance/risk judgement types
-    reasoningRequired: generated.riskLevel === "High" || ["governance_decision", "risk_judgement", "ethical_dilemma", "scenario_critique"].includes(generated.interactionType),
+
     capability: CAPABILITY_DISPLAY[generated.capabilityKey] ?? generated.capabilityKey,
     capabilityKey: generated.capabilityKey,
     workflow: generated.workflow,
@@ -598,7 +596,7 @@ async function getEmergencyFallbackItem(
     displayOrder: (meta.display_order as number) ?? answeredCount + 1,
     isGenerated: false,
     // S4.2: reasoning required for high/critical risk items and governance/risk judgement types
-    reasoningRequired: ((meta.risk_level as string) ?? "Medium") === "High" || ((meta.risk_level as string) ?? "Medium") === "Critical" || ["governance_decision", "risk_judgement", "ethical_dilemma", "scenario_critique"].includes((meta.interaction_type as string) ?? ""),
+
     options: options.map(({ isCorrect: _ic, scoreWeight: _sw, signalDeltasJson: _sd, eventCodesJson: _ec, outcomeClass: _oc, ...o }) => o),
   };
 }
@@ -1545,9 +1543,6 @@ export const assessmentRouter = router({
         }
       } catch { /* non-fatal */ }
 
-      // B7: reasoningCompleteness hard-coded to 1.0 — reasoning text field removed
-      const reasoningCompleteness = 1.0;
-
       const results = SessionController.computeResults(answers, roleHint, {
         intercept: activeScoringCfg.intercept,
         multiplier: activeScoringCfg.multiplier,
@@ -1564,7 +1559,7 @@ export const assessmentRouter = router({
         provisionalConfidenceThreshold: activeScoringCfg.provisionalConfidenceThreshold,
         confidenceFloor: activeScoringCfg.confidenceFloor,
         minimumSafeClassificationConfidence: activeScoringCfg.minimumSafeClassificationConfidence,
-      }, orgThresholdOverrides as any, reasoningCompleteness);
+      }, orgThresholdOverrides as any);
 
       // C1: Load prior capability scores for longitudinal delta context in narrative
       let priorCapabilityScoresForNarrative: Record<string, number> | null = null;

@@ -4969,3 +4969,10 @@ test
 - [ ] Adverse-impact analysis (gate before any selection use)
 - [ ] One-page scoring explainer for users
 - [ ] DPA / data-flow documentation
+
+## Urgent Credibility Fixes v2
+- [x] U-1a: Remove false CIPD "AI Competency Framework" claim from carousel entirely (no substitute)
+- [x] U-1b: Correct wrong domain list (Data Interpretation / Governance → actual 6 domains) everywhere in copy
+- [x] U-1c: Audit all external statistics in carousel + MethodologyPage; 10 unverifiable stats replaced with qualitative statements; ISO/IEC 42001 and EU AI Act alignment marked self-assessed
+- [x] U-2: Remove free-text field from UI; remove reasoningRequired gate; renormalised 8 weights ÷0.95 (max delta +0.0016); rationale confirmed still renders from option rationale_text
+- [x] U-3: Added amber banner to results page and 7pt italic disclaimer to assessment report PDF footer; pending legal review flagged in diagnostic report

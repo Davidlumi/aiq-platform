@@ -447,17 +447,17 @@ export default function MethodologyPage() {
               {
                 standard: "ISO/IEC 42001:2023",
                 clause: "Clause 7.2 - Competence",
-                alignment: "AiQ provides documented evidence of AI competence assessment, directly addressing the requirement to 'determine the necessary competence of persons doing work under its control that affects its AI performance' and 'retain appropriate documented information as evidence of competence.'",
+                alignment: "AiQ provides documented evidence of AI competence assessment, addressing the requirement to determine and evidence the competence of persons whose work affects AI performance. This alignment is self-assessed and has not been audited or certified by an accredited body.",
               },
               {
                 standard: "EU AI Act",
                 clause: "Article 4 - AI Literacy",
-                alignment: "Article 4 requires organisations to 'ensure, to their best extent, a sufficient level of AI literacy of their staff.' AiQ provides the assessment mechanism to measure and evidence this - going beyond literacy to measure applied capability.",
+                alignment: "Article 4 requires organisations to 'ensure, to their best extent, a sufficient level of AI literacy of their staff.' AiQ provides the assessment mechanism to measure and evidence this - going beyond literacy to measure applied capability. This alignment is self-assessed and has not been audited or endorsed by any regulatory body.",
               },
               {
                 standard: "CIPD AI Skills Planning",
                 clause: "Five Principles for Practice",
-                alignment: "CIPD's principles of Transparent Intent, Human Accountability, and Evidence-Led Evolution map directly to AiQ's Ethics & Trust, Output Evaluation, and Workflow Design domains.",
+                alignment: "AiQ's design is informed by CIPD's AI Skills Planning guidance for people professionals (2026). The six measured domains reflect the applied capability areas identified in that guidance. This alignment is self-assessed and has not been audited or endorsed by CIPD.",
               },
               {
                 standard: "Alan Turing Institute",

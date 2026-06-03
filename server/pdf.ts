@@ -258,6 +258,14 @@ async function generateAssessmentReport(doc: PDFKit.PDFDocument, userId: string,
     doc.moveDown(0.6);
   });
 
+  // U-3: Developmental-use-only disclaimer
+  checkPageBreak(doc, 30, pageCounter);
+  doc.moveDown(1);
+  doc.fontSize(7).font("Helvetica-Oblique").fillColor(BRAND.slate)
+     .text(
+       "For development purposes only. This assessment is designed to support individual learning and professional development. It has not been independently validated for use in recruitment, promotion, redundancy, or any other employment decision. Scores should not be used as the sole basis for any consequential HR decision. See hraiq.co.uk/methodology for full limitations.",
+       40, doc.y, { width: doc.page.width - 80 }
+     );
   addFooter(doc, pageCounter.n);
 }
 
