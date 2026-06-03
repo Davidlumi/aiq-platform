@@ -14,6 +14,7 @@ import mysql from 'mysql2/promise';
 const DRY_RUN = process.argv.includes('--dry-run');
 const CAPABILITY_FILTER = process.argv.find(a => a.startsWith('--capability='))?.split('=')[1];
 const LIMIT = parseInt(process.argv.find(a => a.startsWith('--limit='))?.split('=')[1] ?? '999', 10);
+const IDS_FILTER = process.argv.find(a => a.startsWith('--ids='))?.split('=')[1]?.split(',').map(s => s.trim()).filter(Boolean) ?? null;
 
 const LLM_API_URL = process.env.BUILT_IN_FORGE_API_URL;
 const LLM_API_KEY = process.env.BUILT_IN_FORGE_API_KEY;
@@ -154,6 +155,7 @@ Requirements:
 
 [CONSTRAINT 1 — Section length]
 Each section body must be 100 words or fewer. If the material for one section would exceed 100 words, split it into two or more separate sections, each with its own heading. Never merge multiple ideas into one long block. Prefer more short sections over fewer long ones.
+Total reading body: the combined word count of ALL section bodies must not exceed 320 words. Count the words in every section body and sum them before submitting. If the total exceeds 320 words, shorten each section until the total is at or below 320.
 
 [CONSTRAINT 2 — Sentence length and reading grade]
 Write for a Flesch-Kincaid reading grade of 10 or below. Keep sentences to a maximum of 18 words. One idea per sentence. No sentence may contain more than one comma. Do not use semicolons.
@@ -221,7 +223,7 @@ Return JSON with EXACTLY this structure:
   ]
 }
 
-Include 3 concept sections. Make the content substantive and specific to ${cap.label} in HR contexts. Remember: every example must be compensation/reward-specific (pay, benchmarking, bonus, pay-equity). Every section body must be 100 words or fewer. Every sentence must be 18 words or fewer.`;
+Include 3 concept sections. Make the content substantive and specific to ${cap.label} in HR contexts. Remember: every example must be compensation/reward-specific (pay, benchmarking, bonus, pay-equity). Every section body must be 100 words or fewer. Every sentence must be 18 words or fewer. The combined word count of all three section bodies must not exceed 320 words total — count and verify before submitting.`;
 
   const coreContent = await invokeLLM(
     [
@@ -229,7 +231,7 @@ Include 3 concept sections. Make the content substantive and specific to ${cap.l
       { role: 'user', content: corePrompt },
     ],
     { type: 'json_object' },
-    4000
+    6000
   );
 
   let body;
@@ -256,6 +258,9 @@ Capability: ${cap.label}
 Level: ${levelLabel}
 
 Questions must test genuine understanding and application, not just recall. Make them challenging but fair.
+
+CRITICAL CONSTRAINT — All questions must be compensation and reward specific:
+Every question stem and every answer option must centre on compensation and reward work: pay, salary benchmarking, pay bands and grading, bonus and incentive design, or pay equity analysis. Do NOT use recruitment, hiring, résumé screening, candidate selection, onboarding, or talent acquisition examples. If you reach for a hiring example, rewrite it as a pay or benchmarking scenario instead. This constraint is mandatory — questions that test hiring knowledge instead of compensation knowledge will be rejected.
 
 Return JSON:
 {
@@ -431,6 +436,9 @@ Modality: ${mod.modality}
 
 Questions should test genuine understanding and application. Make them challenging but fair.
 
+CRITICAL CONSTRAINT — All questions must be compensation and reward specific:
+Every question stem and every answer option must centre on compensation and reward work: pay, salary benchmarking, pay bands and grading, bonus and incentive design, or pay equity analysis. Do NOT use recruitment, hiring, résumé screening, candidate selection, onboarding, or talent acquisition examples. If you reach for a hiring example, rewrite it as a pay or benchmarking scenario instead. This constraint is mandatory — questions that test hiring knowledge instead of compensation knowledge will be rejected.
+
 Return JSON:
 {
   "questions": [
@@ -525,6 +533,7 @@ function stripFiller(obj) {
  */
 function splitLongSentences(text) {
   if (!text) return text;
+  if (typeof text !== 'string') return text; // guard against numbers/booleans from LLM
 
   // Tokenise: split on sentence boundaries (terminal punct + space + capital letter)
   // Using a greedy match that stops at the first sentence boundary.
@@ -588,6 +597,7 @@ async function main() {
   console.log('🚀 Rich Module Content Regeneration');
   console.log(`   DRY_RUN: ${DRY_RUN}`);
   console.log(`   CAPABILITY: ${CAPABILITY_FILTER ?? 'all'}`);
+  console.log(`   IDS: ${IDS_FILTER ? IDS_FILTER.join(', ') : 'all'}`);
   console.log(`   LIMIT: ${LIMIT}`);
   console.log('');
 
@@ -595,7 +605,10 @@ async function main() {
 
   let query = 'SELECT id, `key`, title, subtitle, capability, modality, difficulty, duration_mins FROM learning_modules WHERE status = "published"';
   const params = [];
-  if (CAPABILITY_FILTER) {
+  if (IDS_FILTER && IDS_FILTER.length > 0) {
+    query += ` AND \`key\` IN (${IDS_FILTER.map(() => '?').join(', ')})`;
+    params.push(...IDS_FILTER);
+  } else if (CAPABILITY_FILTER) {
     query += ' AND capability = ?';
     params.push(CAPABILITY_FILTER);
   }

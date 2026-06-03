@@ -34,9 +34,13 @@ const modules = rows.map(mod => {
   const conceptSections = bj.conceptSections || [];
   const reading_sections = conceptSections.map(s => ({
     heading: s.heading || '',
-    // Append the separate 'example' field into body so the audit's
-    // examples_present check (which scans body text for phrase markers)
-    // can see examples that the LLM writes in the dedicated example field.
+    // body_prose: prose text only (used by wall_of_text check).
+    // The example callout is a visually separate UI element ("In practice" box)
+    // and must NOT be included in wall_of_text measurement.
+    body_prose: s.body || '',
+    // body: prose + example combined (used by examples_present check).
+    // examples_present scans for "For example:"/"In practice:" markers, so it
+    // needs to see the example text. Wall_of_text must NOT use this field.
     body: [s.body || '', s.example ? `For example: ${s.example}` : ''].filter(Boolean).join(' '),
     bullets: Array.isArray(s.keyPoints) ? s.keyPoints : [],
   }));
