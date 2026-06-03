@@ -100,22 +100,101 @@ function getHeroHeadline(score: number, priorityCount: number, growthThemes: str
   };
 }
 
+// ─── O-1: StrengthsFallback — real computed copy when LLM profile unavailable ─────
+function StrengthsFallback({
+  sortedDomains,
+  overallScore,
+}: {
+  sortedDomains: { key: string; name: string; score: number }[];
+  overallScore: number;
+}) {
+  // Top 2 domains by score
+  const top2 = sortedDomains.slice(0, 2);
+  // Bottom 2 domains by score
+  const bottom2 = [...sortedDomains].reverse().slice(0, 2);
+
+  // Determine profile shape
+  const allAbove60 = sortedDomains.every(d => d.score >= 60);
+  const topScore = top2[0]?.score ?? 0;
+  const bottomScore = bottom2[0]?.score ?? 0;
+  const spread = topScore - bottomScore;
+  const isBalanced = spread < 15;
+
+  if (sortedDomains.length === 0 || overallScore === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Complete the assessment to see your strength profile.
+      </p>
+    );
+  }
+
+  const bullets: { claim: string; evidence: string }[] = [];
+
+  if (isBalanced && allAbove60) {
+    // Balanced strong profile
+    bullets.push({
+      claim: "Consistent capability across all domains.",
+      evidence: `Your scores are closely grouped (${bottomScore}–${topScore}), indicating broad AI fluency rather than isolated pockets of strength.`,
+    });
+    bullets.push({
+      claim: `${top2[0]?.name ?? "AI Interaction"} leads your profile.`,
+      evidence: `Your highest score (${topScore}) is in ${top2[0]?.name ?? "AI Interaction"}, showing particularly strong practice in this area.`,
+    });
+  } else if (isBalanced) {
+    // Balanced developing profile
+    bullets.push({
+      claim: `${top2[0]?.name ?? "AI Interaction"} is your strongest area.`,
+      evidence: `With a score of ${topScore}, this is where your AI capability is most developed. ${top2[1] ? `${top2[1].name} (${top2[1].score}) is close behind.` : ""}`,
+    });
+    bullets.push({
+      claim: "Your scores are developing evenly.",
+      evidence: "The spread across domains is narrow, suggesting consistent progress rather than uneven development.",
+    });
+  } else {
+    // Differentiated profile — clear leaders
+    bullets.push({
+      claim: `${top2[0]?.name ?? "AI Interaction"} is your standout strength.`,
+      evidence: `Your score of ${topScore} in ${top2[0]?.name ?? "AI Interaction"} is your highest, indicating confident, effective practice in this domain.`,
+    });
+    if (top2[1]) {
+      bullets.push({
+        claim: `${top2[1].name} is a secondary strength.`,
+        evidence: `A score of ${top2[1].score} shows solid capability here, providing a strong foundation for the domains still developing.`,
+      });
+    }
+  }
+
+  return (
+    <ul className="space-y-4">
+      {bullets.map((b, i) => (
+        <li key={i} className="text-sm leading-relaxed">
+          <strong className="text-foreground font-semibold">{b.claim}</strong>{" "}
+          <span className="text-foreground/55">{b.evidence}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // ─── Domain Mini Bars (v2.2: accessible horizontal bars replacing radar chart) ────
 function DomainMiniBars({ domains }: { domains: { key: string; name?: string; score: number; colour: string }[] }) {
   if (domains.length === 0) return null;
   const DOMAIN_SHORT: Record<string, string> = {
     ai_interaction:         "Interact",
     ai_output_evaluation:   "Evaluate",
+    // O-2: full words — no mid-word truncation
     ai_workflow_design:     "Workflow",
     workforce_ai_readiness: "Readiness",
     ai_ethics_trust:        "Ethics",
     ai_change_leadership:   "Change",
   };
   return (
-    <div className="flex flex-col gap-1.5 w-[140px] shrink-0" aria-label="Domain scores">
+    // O-2: widened to w-[155px] so the 52px label column has room for "Readiness" (9 chars at 9px)
+    <div className="flex flex-col gap-1.5 w-[155px] shrink-0" aria-label="Domain scores">
       {domains.map(d => (
         <div key={d.key} className="flex items-center gap-1.5">
-          <span className="text-[9px] text-muted-foreground w-[42px] truncate text-right">{DOMAIN_SHORT[d.key] ?? d.key.slice(3, 9)}</span>
+          {/* O-2: w-[52px] no-truncate — all six labels fit cleanly */}
+          <span className="text-[9px] text-muted-foreground w-[52px] text-right leading-tight">{DOMAIN_SHORT[d.key] ?? d.key.replace(/_/g, " ").slice(0, 10)}</span>
           <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
             <div
               className="h-full rounded-full transition-all"
@@ -736,7 +815,8 @@ export default function AssessmentResultsPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-muted-foreground italic">Your strengths are concentrated in specific domains — see below.</p>
+                // O-1: Real computed strengths copy — never ship placeholder text
+                <StrengthsFallback sortedDomains={sortedDomains} overallScore={overallScore} />
               )}
             </div>
 

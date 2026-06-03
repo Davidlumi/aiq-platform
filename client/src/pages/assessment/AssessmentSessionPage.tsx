@@ -75,6 +75,87 @@ import type { CapabilityKey, InteractionType } from "@/lib/domains";
 
 const CAPABILITY_COLOURS: Record<string, string> = DOMAIN_COLOURS;
 
+// R-1: Display-label map for workflow/topic tags (prevents raw snake_case reaching the UI)
+const WORKFLOW_LABELS: Record<string, string> = {
+  // HR Generalist / HRBP
+  employee_relations:       "Employee Relations",
+  performance_management:   "Performance Management",
+  organisational_design:    "Organisational Design",
+  change_management:        "Change Management",
+  workforce_planning:       "Workforce Planning",
+  // HR Operations / Shared Services
+  onboarding:               "Onboarding",
+  policy_administration:    "Policy Administration",
+  employee_queries:         "Employee Queries",
+  absence_management:       "Absence Management",
+  basic_er:                 "Basic ER",
+  employee_support:         "Employee Support",
+  // ER Specialist
+  disciplinary_hearings:    "Disciplinary Hearings",
+  grievance_management:     "Grievance Management",
+  complex_er:               "Complex ER",
+  policy_interpretation:    "Policy Interpretation",
+  manager_coaching:         "Manager Coaching",
+  // Talent Acquisition
+  job_description_creation: "Job Description Creation",
+  candidate_screening:      "Candidate Screening",
+  interview_design:         "Interview Design",
+  offer_management:         "Offer Management",
+  sourcing:                 "Sourcing",
+  // ER Case Manager
+  investigation_management: "Investigation Management",
+  disciplinary_process:     "Disciplinary Process",
+  grievance_process:        "Grievance Process",
+  tribunal_preparation:     "Tribunal Preparation",
+  case_management:          "Case Management",
+  // L&D Specialist
+  content_creation:         "Content Creation",
+  needs_analysis:           "Needs Analysis",
+  programme_design:         "Programme Design",
+  learning_evaluation:      "Learning Evaluation",
+  skills_mapping:           "Skills Mapping",
+  // People Analytics
+  workforce_reporting:      "Workforce Reporting",
+  predictive_modelling:     "Predictive Modelling",
+  survey_analysis:          "Survey Analysis",
+  attrition_analysis:       "Attrition Analysis",
+  dashboard_design:         "Dashboard Design",
+  // HR Systems
+  payroll_support:          "Payroll Support",
+  system_administration:    "System Administration",
+  process_automation:       "Process Automation",
+  data_management:          "Data Management",
+  compliance_reporting:     "Compliance Reporting",
+  // Reward
+  benchmarking:             "Benchmarking",
+  pay_review:               "Pay Review",
+  job_evaluation:           "Job Evaluation",
+  benefits_design:          "Benefits Design",
+  equity_analysis:          "Equity Analysis",
+  // CHRO / CPO
+  ai_strategy:              "AI Strategy",
+  governance_design:        "Governance Design",
+  board_reporting:          "Board Reporting",
+  risk_oversight:           "Risk Oversight",
+  culture_change:           "Culture Change",
+  // Misc / fallback
+  general_hr:               "General HR",
+  capability_frameworks:    "Capability Frameworks",
+  change_architecture:      "Change Architecture",
+  culture_diagnostics:      "Culture Diagnostics",
+  data_migration:           "Data Migration",
+  integration_management:   "Integration Management",
+  knowledge_management:     "Knowledge Management",
+  process_standardisation:  "Process Standardisation",
+  query_management:         "Query Management",
+  self_service_design:      "Self-Service Design",
+  sla_management:           "SLA Management",
+  system_implementation:    "System Implementation",
+  team_effectiveness:       "Team Effectiveness",
+  vendor_evaluation:        "Vendor Evaluation",
+  automation_design:        "Automation Design",
+};
+
 const RISK_CONFIG = {
   High:   { color: "text-[#CC3344] bg-[#DC2626]/8 border-[#DC2626]/25", icon: AlertTriangle },
   Medium: { color: "text-[#99882A] bg-[#D97706]/8 border-[#D97706]/25", icon: AlertTriangle },
@@ -1645,11 +1726,11 @@ export default function AssessmentSessionPage() {
               </TooltipProvider>
             )}
 
-            {/* Workflow */}
+            {/* Workflow — R-1: use display-label map, never raw snake_case */}
             {(nextItem as any).workflow && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Briefcase className="w-3 h-3" />
-                {(nextItem as any).workflow}
+                {WORKFLOW_LABELS[(nextItem as any).workflow] ?? (nextItem as any).workflow.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
               </span>
             )}
 

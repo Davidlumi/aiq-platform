@@ -222,6 +222,23 @@ async function enrichAnswers(
         try { return JSON.parse(val); } catch { return val; }
       }
 
+      // G-1: Synthesise fallback signal deltas when the stored value is empty.
+      // LLM-generated items store {} in signal_deltas_json because the LLM prompt
+      // does not return per-option signal keys. We derive deterministic deltas from
+      // the item's capability_key + outcomeClass so the scoring engine receives
+      // real input instead of zero-delta noise.
+      let resolvedSignalDeltas: Record<string, number>;
+      try {
+        const raw = typeof a.signalDeltasJson === "string"
+          ? JSON.parse(a.signalDeltasJson as string) as Record<string, number>
+          : (a.signalDeltasJson as Record<string, number>) ?? {};
+        resolvedSignalDeltas = Object.keys(raw).length > 0
+          ? raw
+          : synthesizeFallbackDeltas(capabilityKey, a.outcomeClass);
+      } catch {
+        resolvedSignalDeltas = synthesizeFallbackDeltas(capabilityKey, a.outcomeClass);
+      }
+
       return {
         itemId: a.itemId,
         selectedValue: a.selectedValueJson ? safeJsonParse(a.selectedValueJson) as string : null,
@@ -229,7 +246,7 @@ async function enrichAnswers(
         confidenceScore: parseFloat(String(a.confidenceScore ?? "0.5")),
         timeToAnswerMs: a.timeToAnswerMs,
         outcomeClass: a.outcomeClass ?? null,
-        signalDeltasJson: a.signalDeltasJson ?? {},
+        signalDeltasJson: resolvedSignalDeltas,
         eventCodesJson: a.eventCodesJson ?? [],
         riskLevel,
         difficulty: itemDifficulty,
@@ -239,6 +256,33 @@ async function enrichAnswers(
       };
     })
   );
+}
+
+// ─── Domain-primary signal map (fallback delta synthesis for LLM-generated items) ──
+/**
+ * When a LLM-generated item has no stored signal_deltas_json (empty object or null),
+ * we synthesise deterministic fallback deltas from the item's capability_key and
+ * outcomeClass. Two primary signals per domain are used at unsigned magnitude 0.9.
+ * The sign is applied downstream by applyWeightedDeltas via OUTCOME_SCORE_MODIFIER.
+ */
+const DOMAIN_PRIMARY_SIGNALS: Record<string, [string, string]> = {
+  ai_interaction:         ["prompt_construction_quality",   "output_direction_skill"],
+  ai_output_evaluation:   ["output_evaluation_quality",     "error_detection_accuracy"],
+  ai_workflow_design:     ["workflow_redesign_quality",      "handoff_design_quality"],
+  workforce_ai_readiness: ["capability_diagnosis_accuracy",  "intervention_design_quality"],
+  ai_ethics_trust:        ["ethics_under_pressure",          "stakeholder_impact_awareness"],
+  ai_change_leadership:   ["resistance_response_quality",    "legitimate_concern_recognition"],
+};
+
+function synthesizeFallbackDeltas(
+  capabilityKey: string,
+  outcomeClass: string | null
+): Record<string, number> {
+  if (!outcomeClass) return {};
+  const signals = DOMAIN_PRIMARY_SIGNALS[capabilityKey];
+  if (!signals) return {};
+  // Unsigned magnitude 0.9 — sign is applied by applyWeightedDeltas
+  return { [signals[0]]: 0.9, [signals[1]]: 0.9 };
 }
 
 // ─── Helper: Apply weighted signal deltas (C1.6) ────────────────────────────────
@@ -1187,6 +1231,28 @@ export const assessmentRouter = router({
           eventCodesJson = selected.eventCodesJson ?? null;
           rationaleText = selected.rationaleText ?? null;
         }
+      }
+      // G-1: If signal_deltas_json is empty (LLM-generated items), synthesise fallback deltas
+      // so the scoring engine receives real domain-keyed input at completion time.
+      if (!signalDeltasJson || Object.keys(signalDeltasJson as Record<string, number>).length === 0) {
+        // Resolve capability_key for this item
+        let fallbackCapabilityKey = "ai_interaction";
+        try {
+          if (input.itemId.startsWith("cs-")) {
+            const cs = await db.select({ capabilityKey: contentScenarios.capabilityKey })
+              .from(contentScenarios).where(eq(contentScenarios.id, input.itemId.slice(3))).limit(1);
+            if (cs[0]) fallbackCapabilityKey = cs[0].capabilityKey;
+          } else {
+            const item = await db.select({ metadataJson: assessmentItems.metadataJson })
+              .from(assessmentItems).where(eq(assessmentItems.id, input.itemId)).limit(1);
+            if (item[0]) {
+              const m = (typeof item[0].metadataJson === "string" ? JSON.parse(item[0].metadataJson as string) : (item[0].metadataJson ?? {})) as Record<string, unknown>;
+              fallbackCapabilityKey = (m.capability_key as string) ?? "ai_interaction";
+            }
+          }
+        } catch {}
+        const fallback = synthesizeFallbackDeltas(fallbackCapabilityKey, outcomeClass);
+        if (Object.keys(fallback).length > 0) signalDeltasJson = fallback;
       }
       // Save answer
       await db.insert(assessmentAnswers).values({

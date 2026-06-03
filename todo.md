@@ -4948,3 +4948,12 @@ test
 - [x] P2-2: Collapse confidence scale to 3 single-label options (remove stacked double labels)
 - [x] P2-3: Fix domain mini-bar label truncation in results doughnut (all six must read cleanly)
 - [ ] P2-4: Verify dev-plan target derivation after real scores land — fix if still uniform +1.5 offset
+
+## Assessment Patch Brief v3
+
+- [x] G-1 (GATE): Re-seed a completed session with correct answer labels (not option indices); confirm varied score profile across 6 domains; capture results page screenshots + per-question raw scores
+- [x] R-1: Add topic-tag display-label mapping (learning_evaluation → Learning Evaluation, programme_design → Programme Design, etc.); audit all raw keys reaching the question screen UI
+- [x] O-1: Fix "What you do well" left card — replace placeholder copy with real content for all profile shapes (high-spread, low-spread, uniform, mixed)
+- [x] O-2: Fix truncated doughnut mini-bar labels — "Workfl…" → "Workflow", "Readin…" → "Readiness" (widen column or use shorter non-mid-word abbreviations)
+- [x] D-1: Decision — KEEP: "Explain your thinking" is optional, does not gate Next, feeds rationale generation
+- [x] D-2: CONFIRMED — "Preview mode" banner is Manus platform SDK (PreviewerModeAlert.tsx), gated by window.__MANUS_HOST_DEV__, never in production
