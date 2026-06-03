@@ -548,7 +548,7 @@ const AI_FACTS = [
   { emoji: "🧪", text: "\"AI fluency\" is distinct from \"AI literacy\". Literacy means knowing what AI is. Fluency means being able to critically evaluate, direct, and improve AI outputs in your domain." },
   { emoji: "🏋️", text: "Studies show that HR professionals who practise with AI tools for just 2 hours a week improve their output quality scores by 31% within 8 weeks." },
   { emoji: "🎮", text: "Scenario-based learning (like this assessment) produces 75% better knowledge retention than passive reading, according to learning science research." },
-  { emoji: "🧭", text: "The six domains measured by AiQ — Interaction, Output Evaluation, Change, Ethics, Data Interpretation, and Governance — map directly to the CIPD's AI Competency Framework." },
+  { emoji: "🧭", text: "AiQ measures six domains: AI Interaction, AI Output Evaluation, AI Workflow Design, Workforce AI Readiness, AI Ethics & Trust, and AI Change Leadership — aligned with CIPD's AI Skills Planning guidance for people professionals." },
   // ── ROI & business impact ──────────────────────────────────────────────────
   { emoji: "🌍", text: "The global AI market is projected to reach $1.8 trillion by 2030 — growing at roughly 37% per year." },
   { emoji: "📈", text: "Organisations with a formal AI governance framework are 2.3x more likely to report positive ROI from their AI investments, according to Gartner." },
@@ -1018,8 +1018,7 @@ export default function AssessmentSessionPage() {
   const STAKE_VALUES: Record<ConfidenceStake, number> = { guessing: 0.25, fairly_sure: 0.65, certain: 1.0 };
   const [confidenceStake, setConfidenceStake] = useState<ConfidenceStake | null>(null);
   const confidence = confidenceStake ? STAKE_VALUES[confidenceStake] * 100 : 50;
-  // C2.1: Optional reasoning capture
-  const [reasoningText, setReasoningText] = useState<string>("");
+  // B7: reasoningText state removed
   const [itemStartTime, setItemStartTime] = useState<number>(Date.now());
   // WS5.1: Track first interaction time for telemetry
   const [firstInteractionTime, setFirstInteractionTime] = useState<number | null>(null);
@@ -1064,7 +1063,6 @@ export default function AssessmentSessionPage() {
       } else {
         setSelectedValue("");
         setConfidenceStake(null);
-        setReasoningText(""); // C2.1: reset reasoning
         setItemStartTime(Date.now());
         setFirstInteractionTime(null);
         setRevisionCount(0); // B1: reset per-item counters
@@ -1147,7 +1145,6 @@ export default function AssessmentSessionPage() {
       sessionId: sessionId!,
       itemId: currentItem.id,
       selectedValue,
-      reasoningText: reasoningText.trim() || undefined,
       confidenceScore: confidence / 100,
       timeToAnswerMs: timeTaken,
       timeToFirstInteractionMs: firstInteractionTime !== null ? Math.round(firstInteractionTime - itemStartTime) : undefined,
@@ -1440,7 +1437,6 @@ export default function AssessmentSessionPage() {
                     setRationaleLoading(false);
                     setSelectedValue("");
                     setConfidenceStake(null);
-                    setReasoningText(""); // C2.1: reset reasoning
                     setItemStartTime(Date.now());
                     setFirstInteractionTime(null); // Fix: reset so next question doesn't inherit stale timestamp
                     setRevisionCount(0); // B1: reset per-item counters
@@ -1869,34 +1865,7 @@ export default function AssessmentSessionPage() {
             </div>
           )}
 
-          {/* C2.1 / S4.3: Reasoning capture - required for high-signal items, optional for others */}
-          {(nextItem.reasoningRequired || ["prompt_refinement", "pressure_test", "ethical_dilemma", "output_critique", "error_detection", "chatbot_dialogue"].includes(interactionType)) && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold text-muted-foreground">
-                  Explain your thinking
-                  <span className="font-normal normal-case text-muted-foreground"> — optional</span>
-                </Label>
-                <span className={cn(
-                  "text-xs tabular-nums",
-                  reasoningText.length > 1800 ? "text-[#99882A]" : "text-muted-foreground"
-                )}>
-                  {reasoningText.length}/2000
-                </span>
-              </div>
-              <Textarea
-                value={reasoningText}
-                onChange={e => setReasoningText(e.target.value)}
-                maxLength={2000}
-                rows={3}
-                placeholder="What factors shaped your decision? What would you want to verify or challenge?"
-                className="text-sm resize-none"
-              />
-              <p className="text-xs text-muted-foreground/60">
-                Adding your reasoning enriches your AI-generated feedback and development narrative.
-              </p>
-            </div>
-          )}
+          {/* B7: Reasoning text box removed — rationale is driven by option selection only */}
 
           {/* v10: Three-level confidence staking - A5-05: dimmed until an answer is selected */}
           <div className={cn("space-y-2 pt-1 transition-opacity duration-200", !selectedValue ? "opacity-40 pointer-events-none" : "")}>

@@ -4957,3 +4957,15 @@ test
 - [x] O-2: Fix truncated doughnut mini-bar labels — "Workfl…" → "Workflow", "Readin…" → "Readiness" (widen column or use shorter non-mid-word abbreviations)
 - [x] D-1: Decision — KEEP: "Explain your thinking" is optional, does not gate Next, feeds rationale generation
 - [x] D-2: CONFIRMED — "Preview mode" banner is Manus platform SDK (PreviewerModeAlert.tsx), gated by window.__MANUS_HOST_DEV__, never in production
+
+## Credibility Diagnostic Actions (procurement audit)
+- [x] B7: Remove free-text reasoning box and reasoningRequired server gate; hard-code reasoningCompleteness = 1.0
+- [x] Fix carousel domain names (Data Interpretation/Governance → actual 6 domains)
+- [x] Fix carousel CIPD claim ("AI Competency Framework" → "AI Skills Planning guidance")
+- [ ] C11: Confirmed — session already fixed at 50 questions; no stopping-rule change needed
+- [ ] Add explicit developmental-use-only statement to results page and methodology page
+- [ ] Implement fixed expert-authored item bank (replaces LLM-first for scored content)
+- [ ] Run calibration sample; compute reliability
+- [ ] Adverse-impact analysis (gate before any selection use)
+- [ ] One-page scoring explainer for users
+- [ ] DPA / data-flow documentation

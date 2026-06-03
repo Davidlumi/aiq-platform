@@ -1188,20 +1188,7 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (!session[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Active session not found" });
-      // S4.4: Validate reasoning_required items — reject if reasoning_text < 40 chars
-      if (input.itemId) {
-        const itemRow = await db
-          .select({ reasoningRequired: assessmentItems.reasoningRequired })
-          .from(assessmentItems)
-          .where(eq(assessmentItems.id, input.itemId))
-          .limit(1);
-        if (itemRow[0]?.reasoningRequired && (!input.reasoningText || input.reasoningText.trim().length < 40)) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "This item requires a reasoning explanation of at least 40 characters before you can submit.",
-          });
-        }
-      }
+      // B7: reasoningRequired gate removed — reasoning text is no longer collected
       // D1: Load active scoring config for configurable evidence thresholds
       const activeScoringCfg = await getActiveScoringConfig();
 
@@ -1558,25 +1545,8 @@ export const assessmentRouter = router({
         }
       } catch { /* non-fatal */ }
 
-      // S4: Compute reasoning completeness for confidence profile
-      // Count items with reasoning_required=true and check if reasoningText was provided
-      let reasoningCompleteness = 1.0;
-      try {
-        const requiredReasoningItems = await db
-          .select({ id: assessmentItems.id })
-          .from(assessmentItems)
-          .where(eq(assessmentItems.reasoningRequired, true));
-        const requiredIds = new Set(requiredReasoningItems.map(r => r.id));
-        if (requiredIds.size > 0) {
-          const answersForRequired = rawAnswers.filter(a => requiredIds.has(a.itemId));
-          const adequateReasoning = answersForRequired.filter(
-            a => a.reasoningText && a.reasoningText.length >= 40
-          ).length;
-          reasoningCompleteness = answersForRequired.length > 0
-            ? adequateReasoning / answersForRequired.length
-            : 1.0;
-        }
-      } catch { /* non-fatal */ }
+      // B7: reasoningCompleteness hard-coded to 1.0 — reasoning text field removed
+      const reasoningCompleteness = 1.0;
 
       const results = SessionController.computeResults(answers, roleHint, {
         intercept: activeScoringCfg.intercept,
