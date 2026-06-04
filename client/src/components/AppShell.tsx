@@ -375,9 +375,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [viewAsOpen, setViewAsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const gate = useGate();
-  // Use user.tenantMode as immediate fallback while gate is loading to avoid flash of wrong nav
+  // Derive tenantMode: prefer the loaded gate value; fall back to user.tenantMode while gate is loading.
+  // user.tenantMode comes from auth.me which queries the tenant row directly — it is always correct.
   const userTenantMode = (user as any)?.tenantMode as string | undefined;
-  const isRewardMode = gate.tenantMode === "reward" || (gate.isLoading && userTenantMode === "reward");
+  const userAiqRole = (user as any)?.aiqRole as string | undefined;
+  // Resolved tenantMode: use gate value once loaded, otherwise use user.tenantMode as fallback
+  const resolvedTenantMode: "cpo" | "reward" =
+    !gate.isLoading
+      ? gate.tenantMode
+      : (userTenantMode === "reward" ? "reward" : "cpo");
+  const isRewardMode = resolvedTenantMode === "reward";
+  const isCpoMode = resolvedTenantMode === "cpo";
 
   // Coach gating: only show if user has at least one completed assessment session
   const { data: coachGate } = trpc.assessment.hasCompleted.useQuery(undefined, {
@@ -410,11 +418,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [location]);
 
   // Resolve domain children status based on tenantMode
+  // CPO mode:    Company-wide = active, Reward = locked
+  // Reward mode: Reward = active, Company-wide = locked
   const resolvedDomains: DomainChild[] = HR_AI_STRATEGY_DOMAINS.map((d) => {
     if (isRewardMode) {
-      // In reward mode: Reward is active, Company-wide is locked
       if (d.label === "Reward") return { ...d, status: "active" as const };
       if (d.label === "Company-wide") return { ...d, status: "locked" as const };
+    } else {
+      // CPO mode (default): Company-wide active, Reward locked
+      if (d.label === "Company-wide") return { ...d, status: "active" as const };
+      if (d.label === "Reward") return { ...d, status: "locked" as const };
     }
     return d;
   });
@@ -472,8 +485,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isCpoUser = userRoles.some(r => CPO_ROLES.includes(r));
-  // Show HR AI Strategy expandable for CPO users OR reward mode (reward_leader)
-  const showHrAiStrategy = isCpoUser || isRewardMode;
+  // Show HR AI Strategy expandable for:
+  //   - CPO users (by role)
+  //   - Reward mode users (reward_leader)
+  //   - Any user whose tenant is in CPO mode (tenantMode === 'cpo')
+  //   - Any user whose aiqRole is 'cpo' or 'reward_leader'
+  const showHrAiStrategy =
+    isCpoUser ||
+    isRewardMode ||
+    isCpoMode ||
+    userAiqRole === "cpo" ||
+    userAiqRole === "reward_leader";
 
   const SidebarInner = () => (
     <div className="flex flex-col h-full aiq-sidebar-bg border-r border-sidebar-border">
