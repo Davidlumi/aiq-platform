@@ -52,15 +52,45 @@ import {
   ClipboardCheck,
   Award,
   Download,
+  Briefcase,
+  Users2,
+  Heart,
+  ChevronDown,
+  Lock,
+  Layers,
+  Shield,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type NavItem = { icon: React.ElementType; label: string; path: string };
 type NavSection = { section: string; items: NavItem[] };
+
+// --- Domain child types -------------------------------------------------------
+type DomainStatus = "active" | "locked" | "soon";
+type DomainChild = {
+  label: string;
+  path: string;
+  icon: React.ElementType;
+  status: DomainStatus;
+};
+
+// --- HR AI Strategy domain children (base — status resolved per tenant mode) --
+const HR_AI_DOMAINS_BASE: Omit<DomainChild, "status">[] = [
+  { label: "Company-wide",        path: "/company-assessment",       icon: Building2   },
+  { label: "Reward",              path: "/strategy/reward-prework",  icon: Briefcase   },
+  { label: "Talent",              path: "/talent",                   icon: Users2      },
+  { label: "L&D",                 path: "/ld",                       icon: GraduationCap },
+  { label: "Employee Relations",  path: "/er",                       icon: Shield      },
+  { label: "Employee Experience", path: "/ex",                       icon: Heart       },
+  { label: "D&I",                 path: "/di",                       icon: Layers      },
+];
 
 // --- Role helpers ------------------------------------------------------------
 const CPO_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];
@@ -76,100 +106,113 @@ function isRewardLeader(aiqRole?: string) {
   return aiqRole === "reward_leader";
 }
 
-// --- Reward Leader nav (shown instead of CPO nav) ----------------------------
-const REWARD_STRATEGY: NavSection = {
-  section: "Reward Strategy",
-  items: [
-    { icon: DollarSign,   label: "Overview",          path: "/strategy/reward-prework" },
-    { icon: Lightbulb,    label: "Vision & Principles",path: "/strategy/reward-vision" },
-    { icon: Target,       label: "Strategy",           path: "/strategy/reward-strategy" },
-    { icon: Award,        label: "Initiatives",        path: "/strategy/reward-initiatives" },
-    { icon: BarChart3,    label: "Success Measures",   path: "/strategy/reward-success-measures" },
-    { icon: FileText,     label: "Business Case",      path: "/strategy/reward-business-case" },
-    { icon: GraduationCap,   label: "Capability",  path: "/strategy/reward-capability" },
-    { icon: ClipboardCheck,  label: "Review",      path: "/strategy/reward-review" },
-    { icon: Download,        label: "Outputs",     path: "/strategy/reward-outputs" },
-  ],
-};
-
 // --- Nav definitions ---------------------------------------------------------
 const MY_DEVELOPMENT: NavSection = {
   section: "My Development",
   items: [
-    // AiQ Coach hidden — in development: { icon: MessageSquare, label: "AiQ Coach", path: "/coach" }
-    { icon: ClipboardList,  label: "AI Skills Check",path: "/assessment" },
-    { icon: BookOpen,       label: "Learning Plan",  path: "/learning" },
-    { icon: Map,            label: "Domain Pathways", path: "/development/ai_interaction" },
-    { icon: Library,        label: "Content Library",path: "/library" },
-    { icon: BookMarked,     label: "Knowledge Base", path: "/knowledge-base" },
+    { icon: MessageSquare,  label: "AiQ Coach",      path: "/coach"         },
+    { icon: ClipboardList,  label: "Skills Check",   path: "/assessment"    },
+    { icon: BookOpen,       label: "Learning Plan",  path: "/learning"      },
+    { icon: Map,            label: "Domain Pathways",path: "/development/ai_interaction" },
+    { icon: Library,        label: "Content Library",path: "/library"       },
+    { icon: BookMarked,     label: "Knowledge Base", path: "/knowledge-base"},
   ],
 };
 
 const MY_TEAM_CPO: NavSection = {
   section: "My Team",
   items: [
-    { icon: LayoutDashboard, label: "Overview",     path: "/dashboard" },
-    { icon: UserSearch,      label: "People",       path: "/people" },
+    { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
+    { icon: UserSearch,      label: "People",   path: "/people"    },
   ],
 };
 
 const AI_STRATEGY: NavSection = {
   section: "AI Strategy",
   items: [
-    { icon: Target,            label: "HR AI Strategy",        path: "/strategy" },
-    { icon: Sparkles,          label: "Build Strategy",         path: "/strategy/ambition" },
-    { icon: Building2,         label: "Company Assessment",     path: "/company-assessment" },
+    { icon: Target,            label: "HR AI Strategy",        path: "/strategy"               },
+    { icon: Sparkles,          label: "Build Strategy",         path: "/strategy/ambition"      },
+    { icon: Building2,         label: "Company Assessment",     path: "/company-assessment"     },
     { icon: BarChart3,         label: "Implementation Tracker", path: "/implementation-tracker" },
-    { icon: TrendingUp,        label: "Maturity Progression",   path: "/maturity-progression" },
-    { icon: UserCog,           label: "Manager Hub",            path: "/manager-hub" },
-    { icon: MessageSquarePlus, label: "Content Feedback",       path: "/content-requests" },
+    { icon: TrendingUp,        label: "Maturity Progression",   path: "/maturity-progression"   },
+    { icon: UserCog,           label: "Manager Hub",            path: "/manager-hub"            },
+    { icon: MessageSquarePlus, label: "Content Feedback",       path: "/content-requests"       },
   ],
 };
 
 const MY_TEAM_MANAGER: NavSection = {
   section: "My Team",
   items: [
-    { icon: LayoutDashboard, label: "Overview",     path: "/dashboard" },
-    { icon: UserSearch,      label: "People",       path: "/people" },
+    { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
+    { icon: UserSearch,      label: "People",   path: "/people"    },
   ],
 };
 
 const ADMIN: NavSection = {
   section: "Admin",
   items: [
-    { icon: Users, label: "Users", path: "/admin/users" },
-    { icon: BookOpen, label: "Content Library", path: "/admin/content-library" },
-    { icon: CalendarCheck2, label: "Content Review", path: "/admin/content-review" },
+    { icon: Users,          label: "Users",           path: "/admin/users"          },
+    { icon: BookOpen,       label: "Content Library", path: "/admin/content-library"},
+    { icon: CalendarCheck2, label: "Content Review",  path: "/admin/content-review" },
   ],
 };
 
 const REWARD_ADMIN: NavSection = {
   section: "Admin",
   items: [
-    { icon: Building2, label: "Company Profile", path: "/company-profile" },
-    { icon: Users, label: "People & Org", path: "/admin/people-org" },
+    { icon: Building2, label: "Company Profile", path: "/company-profile"   },
+    { icon: Users,     label: "People & Org",    path: "/admin/people-org"  },
+    { icon: Users,     label: "Users",           path: "/admin/users"       },
   ],
 };
 
+// --- Reward Leader nav sections (MY DEVELOPMENT + MY TEAM + AI STRATEGY with HR AI Strategy expandable) --
+// The HR AI Strategy expandable is rendered separately in the component.
+const REWARD_LEADER_MY_DEVELOPMENT: NavSection = {
+  section: "My Development",
+  items: MY_DEVELOPMENT.items,
+};
+
 function getNavSections(roles: string[], aiqRole?: string): NavSection[] {
-  // Reward Leader: individual development + team overview + Reward Strategy engine (no CPO admin)
   if (isRewardLeader(aiqRole)) {
-    return [MY_DEVELOPMENT, MY_TEAM_CPO, REWARD_STRATEGY, REWARD_ADMIN];
+    return [REWARD_LEADER_MY_DEVELOPMENT, MY_TEAM_CPO, REWARD_ADMIN];
   }
-  // CPO / HR Leader: full platform
   if (isCpo(roles)) {
     return [MY_DEVELOPMENT, MY_TEAM_CPO, AI_STRATEGY, ADMIN];
   }
   if (isManager(roles)) {
     return [MY_DEVELOPMENT, MY_TEAM_MANAGER];
   }
-  // Individual / learner
   return [MY_DEVELOPMENT];
+}
+
+// --- Page transition skeleton ------------------------------------------------
+function PageTransitionSkeleton() {
+  return (
+    <div className="animate-pulse p-6 space-y-6 max-w-4xl mx-auto">
+      <div className="space-y-2">
+        <div className="h-4 w-32 rounded bg-foreground/8" />
+        <div className="h-7 w-64 rounded bg-foreground/10" />
+        <div className="h-4 w-96 rounded bg-foreground/6" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border/30 bg-foreground/4 p-4 space-y-3 h-24">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-foreground/8" />
+              <div className="h-4 w-24 rounded bg-foreground/8" />
+            </div>
+            <div className="h-1.5 rounded-full bg-foreground/8" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // --- Width persistence --------------------------------------------------------
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
-const DEFAULT_WIDTH = 240; // v2.2 spec: 240px default
+const DEFAULT_WIDTH = 240;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
@@ -205,7 +248,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // v2.2 spec: 240px expanded, 56px collapsed
   return (
     <SidebarProvider style={{ "--sidebar-width": `${sidebarWidth}px`, "--sidebar-width-icon": "56px" } as React.CSSProperties & Record<string, string>}>
       <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
@@ -228,12 +270,50 @@ function DashboardLayoutContent({
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
+  const [hrAiStrategyOpen, setHrAiStrategyOpen] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevLocation = useRef(location);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { theme, toggleTheme } = useTheme();
 
   const roles: string[] = (user as any)?.roles ?? [];
   const aiqRole: string | undefined = (user as any)?.aiqRole;
+  const isRewardLeaderUser = isRewardLeader(aiqRole);
+
+  // Coach gating — check if user has at least one completed assessment
+  const { data: coachGate } = trpc.assessment.hasCompleted.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const coachUnlocked = !!coachGate?.hasCompleted;
+
+  // Resolve domain children status for reward_leader
+  const resolvedDomains: DomainChild[] = HR_AI_DOMAINS_BASE.map((d) => {
+    if (d.label === "Reward") return { ...d, status: "active" as DomainStatus };
+    if (d.label === "Company-wide") return { ...d, status: "locked" as DomainStatus };
+    return { ...d, status: "soon" as DomainStatus };
+  });
+
+  const isDomainActive = resolvedDomains.some(
+    (d) => d.status === "active" && (location === d.path || location.startsWith(d.path))
+  );
+
+  // Page transition skeleton on domain navigation
+  useEffect(() => {
+    const DOMAIN_PATHS = ["/company-assessment", "/strategy/reward"];
+    const isDomainNav = DOMAIN_PATHS.some(
+      (p) => location.startsWith(p) && !prevLocation.current.startsWith(p)
+    );
+    if (location !== prevLocation.current && isDomainNav) {
+      setIsTransitioning(true);
+      const t = setTimeout(() => setIsTransitioning(false), 420);
+      prevLocation.current = location;
+      return () => clearTimeout(t);
+    }
+    prevLocation.current = location;
+  }, [location]);
+
   const navSections = getNavSections(roles, aiqRole);
   const allItems = navSections.flatMap(s => s.items);
   const activeMenuItem = allItems.find(item =>
@@ -269,7 +349,6 @@ function DashboardLayoutContent({
   return (
     <>
       <div className="relative" ref={sidebarRef}>
-        {/* v2.2: sunken sidebar background */}
         <Sidebar collapsible="icon" className="border-r-0 bg-[var(--sidebar-bg,hsl(var(--muted)/0.4))]" disableTransition={isResizing}>
           {/* Header */}
           <SidebarHeader className="h-16 justify-center">
@@ -302,9 +381,27 @@ function DashboardLayoutContent({
                 )}
                 <SidebarMenu className="px-2 py-0">
                   {section.items.map(item => {
+                    const isCoach = item.path === "/coach";
                     const isActive =
                       location === item.path ||
                       (item.path !== "/" && location.startsWith(item.path));
+
+                    if (isCoach && !coachUnlocked) {
+                      return (
+                        <SidebarMenuItem key={item.path}>
+                          <SidebarMenuButton
+                            onClick={() => toast.info("Complete your Skills Check first to unlock AiQ Coach.")}
+                            tooltip="AiQ Coach — complete Skills Check to unlock"
+                            className="h-8 font-normal text-muted-foreground/40 cursor-pointer"
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span className="flex-1">{item.label}</span>
+                            {!isCollapsed && <Lock className="h-3 w-3 shrink-0 opacity-40" />}
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    }
+
                     return (
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
@@ -313,7 +410,7 @@ function DashboardLayoutContent({
                           tooltip={item.label}
                           className={`h-8 transition-all font-normal relative ${
                             isActive
-                              ? "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[3px] before:rounded-full before:bg-primary"  /* v2.2: 3px left active border */
+                              ? "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[3px] before:rounded-full before:bg-primary"
                               : ""
                           }`}
                         >
@@ -326,11 +423,111 @@ function DashboardLayoutContent({
                 </SidebarMenu>
               </div>
             ))}
+
+            {/* HR AI Strategy expandable parent — shown for reward_leader */}
+            {isRewardLeaderUser && (
+              <div>
+                {!isCollapsed && (
+                  <p className="px-4 pt-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+                    AI Strategy
+                  </p>
+                )}
+                <div className="px-2 py-0">
+                  {/* Expandable parent button */}
+                  <button
+                    onClick={() => { if (!isCollapsed) setHrAiStrategyOpen(v => !v); }}
+                    className={cn(
+                      "w-full flex items-center gap-2 h-8 rounded-md text-sm transition-all duration-150 cursor-pointer select-none px-2",
+                      isDomainActive
+                        ? "bg-accent text-primary font-medium"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    )}
+                    title={isCollapsed ? "HR AI Strategy" : undefined}
+                    aria-expanded={hrAiStrategyOpen}
+                  >
+                    <Target className={cn("h-4 w-4 shrink-0", isDomainActive ? "text-primary" : "")} />
+                    {!isCollapsed && (
+                      <>
+                        <span className="flex-1 text-left">HR AI Strategy</span>
+                        <ChevronDown
+                          className={cn(
+                            "h-3.5 w-3.5 transition-transform duration-200",
+                            hrAiStrategyOpen ? "rotate-180" : ""
+                          )}
+                        />
+                      </>
+                    )}
+                  </button>
+
+                  {/* Domain children */}
+                  <div
+                    className={cn(
+                      "overflow-hidden transition-all duration-250 ease-in-out",
+                      hrAiStrategyOpen && !isCollapsed ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                    )}
+                    style={{ transitionProperty: "max-height, opacity" }}
+                  >
+                    <div className="pl-3 mt-0.5 space-y-0.5">
+                      {resolvedDomains.map((domain) => {
+                        const Icon = domain.icon;
+                        const isActive =
+                          location === domain.path ||
+                          (domain.path !== "/" && location.startsWith(domain.path));
+
+                        if (domain.status === "soon") {
+                          return (
+                            <button
+                              key={domain.label}
+                              onClick={() => toast.info(`${domain.label} strategy module is coming soon.`)}
+                              className="w-full flex items-center gap-2 h-7 rounded-md text-xs px-2 text-muted-foreground/30 hover:bg-accent/30 cursor-pointer"
+                            >
+                              <Icon className="h-3.5 w-3.5 shrink-0" />
+                              <span className="flex-1 text-left">{domain.label}</span>
+                              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground/25 uppercase">Soon</span>
+                            </button>
+                          );
+                        }
+
+                        if (domain.status === "locked") {
+                          return (
+                            <button
+                              key={domain.label}
+                              onClick={() => toast.info(`${domain.label} is built but not active for your organisation. Contact your account manager to enable it.`)}
+                              className="w-full flex items-center gap-2 h-7 rounded-md text-xs px-2 text-muted-foreground/40 hover:bg-accent/30 cursor-pointer"
+                            >
+                              <Icon className="h-3.5 w-3.5 shrink-0" />
+                              <span className="flex-1 text-left">{domain.label}</span>
+                              <Lock className="h-3 w-3 shrink-0 opacity-40" />
+                            </button>
+                          );
+                        }
+
+                        // Active domain
+                        return (
+                          <button
+                            key={domain.label}
+                            onClick={() => setLocation(domain.path)}
+                            className={cn(
+                              "w-full flex items-center gap-2 h-7 rounded-md text-xs px-2 transition-all cursor-pointer relative",
+                              isActive
+                                ? "bg-accent text-primary font-medium before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:rounded-full before:bg-primary"
+                                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                            )}
+                          >
+                            <Icon className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "")} />
+                            <span className="flex-1 text-left">{domain.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </SidebarContent>
 
           {/* Footer */}
           <SidebarFooter className="p-3">
-            {/* Theme toggle row */}
             <button
               onClick={toggleTheme}
               className="flex items-center gap-2 w-full px-1 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors group-data-[collapsible=icon]:justify-center"
@@ -387,7 +584,9 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="flex-1 overflow-y-auto p-4">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4">
+          {isTransitioning ? <PageTransitionSkeleton /> : children}
+        </main>
       </SidebarInset>
     </>
   );

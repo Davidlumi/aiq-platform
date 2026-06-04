@@ -49,9 +49,10 @@ describe("UI Copy Snapshot (Fix 4)", () => {
     expect(content).toContain("Skills Check");
   });
 
-  it("DashboardLayout.tsx nav label for assessment is 'AI Skills Check'", () => {
+  it("DashboardLayout.tsx nav label for assessment is 'Skills Check'", () => {
     const content = readClient("components/DashboardLayout.tsx");
-    expect(content).toContain("AI Skills Check");
+    // Renamed from 'AI Skills Check' to 'Skills Check' in nav reorganisation
+    expect(content).toContain("Skills Check");
   });
 
   it("No UI file uses the ambiguous 'Capability Assessment' label as a quoted string", () => {
