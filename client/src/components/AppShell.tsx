@@ -88,7 +88,7 @@ const MANAGER_ROLES = ["manager"];
 // Status is resolved dynamically based on tenantMode in the component.
 // Base status here is for CPO mode; reward mode inverts Company-wide ↔ Reward.
 const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [
-  { label: "Company-wide",        path: "/company-assessment",         icon: Building2,    status: "active" },
+  { label: "Company-wide",        path: "/strategy",                   icon: Building2,    status: "active" },
   { label: "Reward",              path: "/strategy/reward-prework",    icon: Briefcase,    status: "locked" },
   { label: "Talent",              path: "/strategy/talent",            icon: UserSearch,   status: "soon"   },
   { label: "L&D",                 path: "/strategy/ld",                icon: GraduationCap, status: "soon"  },
