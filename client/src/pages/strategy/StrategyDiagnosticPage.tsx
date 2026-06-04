@@ -1715,7 +1715,7 @@ export default function StrategyDiagnosticPage() {
                 </p>
                 <div className="relative">
                   <Textarea
-                    placeholder="Type a few keywords or write your own… then hit ✨ AI to expand"
+                    placeholder="Type a few keywords… then click ✨ AI to generate a full narrative"
                     value={getField("E", "successNarrative") ?? ""}
                     onChange={e => {
                       updateSection("E", "successNarrative", e.target.value);
@@ -1745,7 +1745,7 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-3">
                 <Label>Top 3 pain points</Label>
-                <p className="text-xs text-muted-foreground">What's slowing HR down most right now? Type a few words then hit ✨ AI to expand.</p>
+                <p className="text-xs text-muted-foreground">What's slowing HR down most right now? Type a few words into each field, then click the <span className="inline-flex items-center gap-0.5 font-medium text-primary">✨ AI</span> button to generate a full sentence.</p>
                 {[0, 1, 2].map(i => {
                   const ppKey = `painPoint_${i}`;
                   return (
@@ -1785,7 +1785,7 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-3">
                 <Label>Strategic priorities</Label>
-                <p className="text-xs text-muted-foreground">Up to 5 strategic priorities for HR AI (optional). Type a few words then hit ✨ AI to expand.</p>
+                <p className="text-xs text-muted-foreground">Up to 5 strategic priorities for HR AI (optional). Type a few words into each field, then click the <span className="inline-flex items-center gap-0.5 font-medium text-primary">✨ AI</span> button to generate a full sentence.</p>
                 {[0, 1, 2, 3, 4].map(i => {
                   const spKey = `strategicPriority_${i}`;
                   const spArr = ((getField("E", "strategicPriorities") ?? []) as string[]);
