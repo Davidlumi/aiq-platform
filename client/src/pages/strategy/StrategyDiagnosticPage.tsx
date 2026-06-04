@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -45,6 +46,7 @@ import {
   Save, Clock, ArrowRight, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
 import StageProgressHeader from "@/components/StageProgressHeader";
 import { useGate } from "@/contexts/GateContext";
@@ -618,11 +620,65 @@ export default function StrategyDiagnosticPage() {
     <div className="flex h-full min-h-0">
       {/* ── Left: Section nav ─────────────────────────────────────────────── */}
       <div className="w-56 flex-shrink-0 border-r bg-muted/20 flex flex-col">
-        <div className="p-4 border-b">
-          <h2 className="text-sm font-semibold text-foreground">Background inputs</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {preworkDone ? (sessionDone ? "Session complete" : "Pre-work done") : "Pre-work in progress"}
-          </p>
+        <div className="p-4 border-b space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Background inputs</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {preworkDone ? (sessionDone ? "Session complete" : "Pre-work done") : "Pre-work in progress"}
+            </p>
+          </div>
+
+          {/* ── A–K progress bar ── */}
+          {(() => {
+            const completedCount = SECTIONS.filter(s => progressMap[s.id] === "complete").length;
+            const inProgressCount = SECTIONS.filter(s => progressMap[s.id] === "in_progress").length;
+            const pct = Math.round((completedCount / SECTIONS.length) * 100);
+            return (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-foreground/70">
+                    {completedCount === SECTIONS.length
+                      ? <span className="text-emerald-600 dark:text-emerald-400 font-semibold">All sections complete</span>
+                      : <>{completedCount} <span className="text-muted-foreground font-normal">of {SECTIONS.length} complete</span></>}
+                  </span>
+                  <span className="text-[11px] font-semibold tabular-nums text-foreground/60">{pct}%</span>
+                </div>
+                <Progress
+                  value={pct}
+                  className="h-1.5"
+                />
+                {/* Section pills A–K */}
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {SECTIONS.map(s => {
+                    const state = progressMap[s.id];
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setActiveSection(s.id)}
+                        title={`Section ${s.id}: ${s.label} — ${state === "complete" ? "Complete" : state === "in_progress" ? "In progress" : "Not started"}`}
+                        className={cn(
+                          "w-5 h-5 rounded text-[10px] font-bold transition-all duration-150 flex items-center justify-center",
+                          activeSection === s.id ? "ring-2 ring-primary ring-offset-1" : "",
+                          state === "complete"
+                            ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                            : state === "in_progress"
+                            ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                            : "bg-muted/60 text-muted-foreground/50"
+                        )}
+                      >
+                        {state === "complete" ? <Check className="w-2.5 h-2.5" /> : s.id}
+                      </button>
+                    );
+                  })}
+                </div>
+                {inProgressCount > 0 && completedCount < SECTIONS.length && (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                    {inProgressCount} section{inProgressCount > 1 ? "s" : ""} in progress
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {SECTIONS.map(sec => {

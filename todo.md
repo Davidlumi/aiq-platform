@@ -5045,3 +5045,10 @@ test
 - [x] Gate: Clicking a locked domain redirects to /strategy/diagnostic with "Complete Background Inputs first" toast
 - [x] Gate: Once gate.stage1Cleared=true, both Company-wide and Reward unlock in sidebar
 - [x] Gate: Amber padlock shown on both domains when pre-work not done; tooltip "Complete Background Inputs first"
+
+## Background Inputs Progress Bar (Jun 2026)
+
+- [x] Progress bar: show overall A–K completion percentage at the top of the Background Inputs page
+- [x] Progress bar: each section pill (A–K) shows filled/empty state (emerald=complete, amber=in-progress, muted=not started)
+- [x] Progress bar: updates live as user fills in fields (driven by existing progressMap/calcProgress logic)
+- [x] Progress bar: "X of 11 sections complete" label with percentage
