@@ -52,3 +52,24 @@ const requireCpoMode = t.middleware(async opts => {
 });
 
 export const cpoProcedure = t.procedure.use(requireCpoMode);
+
+/**
+ * superUserProcedure — guards platform-level back-office routes.
+ * Only users with isPlatformSuperuser === true can access these procedures.
+ * This flag is set only via direct SQL — no API path can grant it.
+ */
+const requireSuperUser = t.middleware(async opts => {
+  const { ctx, next } = opts;
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+  }
+  if (!ctx.user.isPlatformSuperuser) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Platform super-user access required.",
+    });
+  }
+  return next({ ctx: { ...ctx, user: ctx.user } });
+});
+
+export const superUserProcedure = t.procedure.use(requireSuperUser);

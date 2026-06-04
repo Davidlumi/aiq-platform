@@ -207,7 +207,7 @@ export const waitlistRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "super_admin", "hr_leader"].includes(r))) {
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
@@ -242,7 +242,7 @@ export const waitlistRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "super_admin", "hr_leader"].includes(r))) {
+      if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
@@ -286,7 +286,7 @@ export const waitlistRouter = router({
    */
   stats: protectedProcedure.query(async ({ ctx }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "super_admin", "hr_leader"].includes(r))) {
+    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
 

@@ -30,8 +30,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import CompanyProfileFlagsPanel from "@/components/CompanyProfileFlagsPanel";
 import { Building2, ChevronRight, ChevronLeft, CheckCircle2, Flag,
-  History, AlertCircle, Info, Loader2, Shield, Users,
+  History, AlertCircle, Info, Loader2, Shield, Users, BadgeCheck,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,19 @@ type ProfileDraft = {
   ukEmployeeHeadcount?: number;
   euEmployeeHeadcount?: number;
   listingExchange?: string;
+  // Provenance
+  sectorSource?: string;
+  sectorAsOf?: number;
+  sectorVerified?: boolean;
+  headcountSource?: string;
+  headcountAsOf?: number;
+  headcountVerified?: boolean;
+  annualRevenueGbpSource?: string;
+  annualRevenueGbpAsOf?: number;
+  annualRevenueGbpVerified?: boolean;
+  annualPayrollCostGbpSource?: string;
+  annualPayrollCostGbpAsOf?: number;
+  annualPayrollCostGbpVerified?: boolean;
 };
 
 // ── Option lists (schema v2 enum values) ──────────────────────────────────────
@@ -352,6 +366,81 @@ function AuditTrailTab() {
   );
 }
 
+// ── ProvenanceRow — source, as-of date, and verified flag ───────────────────
+
+function ProvenanceRow({
+  sourceField,
+  asOfField,
+  verifiedField,
+  draft,
+  updateField,
+  autosave,
+}: {
+  sourceField: keyof ProfileDraft;
+  asOfField: keyof ProfileDraft;
+  verifiedField: keyof ProfileDraft;
+  draft: ProfileDraft;
+  updateField: (f: keyof ProfileDraft, v: any) => void;
+  autosave: (patch: Partial<ProfileDraft>) => void;
+}) {
+  const verifiedVal = !!(draft[verifiedField] as boolean | undefined);
+  const sourceVal = (draft[sourceField] as string | undefined) ?? "";
+  const asOfVal = (draft[asOfField] as number | undefined);
+  const asOfStr = asOfVal ? new Date(asOfVal).toISOString().split("T")[0] : "";
+
+  return (
+    <div className="mt-2 p-3 rounded-md bg-muted/40 border border-border/50 space-y-2">
+      <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+        <BadgeCheck className="w-3.5 h-3.5" /> Data provenance
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs text-muted-foreground mb-1 block">Source</Label>
+          <Input
+            className="h-7 text-xs"
+            placeholder="e.g. Annual Report 2024"
+            value={sourceVal}
+            onChange={(e) => updateField(sourceField, e.target.value)}
+            onBlur={() => autosave({ [sourceField]: draft[sourceField] } as Partial<ProfileDraft>)}
+            maxLength={100}
+          />
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground mb-1 block">As of date</Label>
+          <Input
+            className="h-7 text-xs"
+            type="date"
+            value={asOfStr}
+            onChange={(e) => {
+              const ts = e.target.value ? new Date(e.target.value).getTime() : undefined;
+              updateField(asOfField, ts);
+            }}
+            onBlur={() => autosave({ [asOfField]: draft[asOfField] } as Partial<ProfileDraft>)}
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id={`verified-${String(verifiedField)}`}
+          checked={verifiedVal}
+          onCheckedChange={(checked) => {
+            updateField(verifiedField, !!checked);
+            autosave({ [verifiedField]: !!checked } as Partial<ProfileDraft>);
+          }}
+        />
+        <Label htmlFor={`verified-${String(verifiedField)}`} className="text-xs cursor-pointer">
+          Mark as verified
+        </Label>
+        {verifiedVal && (
+          <span className="ml-auto text-xs text-emerald-600 flex items-center gap-1">
+            <BadgeCheck className="w-3 h-3" /> Verified
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CompanyProfilePage() {
@@ -389,6 +478,19 @@ export default function CompanyProfilePage() {
       ukEmployeeHeadcount: profile.ukEmployeeHeadcount ?? undefined,
       euEmployeeHeadcount: profile.euEmployeeHeadcount ?? undefined,
       listingExchange: profile.listingExchange ?? undefined,
+      // Provenance
+      sectorSource: profile.sectorSource ?? undefined,
+      sectorAsOf: profile.sectorAsOf ?? undefined,
+      sectorVerified: !!(profile.sectorVerified),
+      headcountSource: profile.headcountSource ?? undefined,
+      headcountAsOf: profile.headcountAsOf ?? undefined,
+      headcountVerified: !!(profile.headcountVerified),
+      annualRevenueGbpSource: profile.annualRevenueGbpSource ?? undefined,
+      annualRevenueGbpAsOf: profile.annualRevenueGbpAsOf ?? undefined,
+      annualRevenueGbpVerified: !!(profile.annualRevenueGbpVerified),
+      annualPayrollCostGbpSource: profile.annualPayrollCostGbpSource ?? undefined,
+      annualPayrollCostGbpAsOf: profile.annualPayrollCostGbpAsOf ?? undefined,
+      annualPayrollCostGbpVerified: !!(profile.annualPayrollCostGbpVerified),
     });
     setDraftInit(true);
   }
@@ -636,6 +738,14 @@ export default function CompanyProfilePage() {
                         {SECTORS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                    <ProvenanceRow
+                      sourceField="sectorSource"
+                      asOfField="sectorAsOf"
+                      verifiedField="sectorVerified"
+                      draft={draft}
+                      updateField={updateField}
+                      autosave={autosave}
+                    />
                   </FieldWithFlag>
 
                   <FieldWithFlag
@@ -650,6 +760,14 @@ export default function CompanyProfilePage() {
                       onBlur={() => handleHeadcountBlur("headcount")}
                       placeholder="e.g. 4500"
                       min={1}
+                    />
+                    <ProvenanceRow
+                      sourceField="headcountSource"
+                      asOfField="headcountAsOf"
+                      verifiedField="headcountVerified"
+                      draft={draft}
+                      updateField={updateField}
+                      autosave={autosave}
                     />
                   </FieldWithFlag>
 
@@ -666,6 +784,14 @@ export default function CompanyProfilePage() {
                       placeholder="e.g. 850000000"
                       min={0}
                     />
+                    <ProvenanceRow
+                      sourceField="annualRevenueGbpSource"
+                      asOfField="annualRevenueGbpAsOf"
+                      verifiedField="annualRevenueGbpVerified"
+                      draft={draft}
+                      updateField={updateField}
+                      autosave={autosave}
+                    />
                   </FieldWithFlag>
 
                   <FieldWithFlag
@@ -680,6 +806,14 @@ export default function CompanyProfilePage() {
                       onBlur={() => handleBlur("annualPayrollCostGbp")}
                       placeholder="e.g. 210000000"
                       min={0}
+                    />
+                    <ProvenanceRow
+                      sourceField="annualPayrollCostGbpSource"
+                      asOfField="annualPayrollCostGbpAsOf"
+                      verifiedField="annualPayrollCostGbpVerified"
+                      draft={draft}
+                      updateField={updateField}
+                      autosave={autosave}
                     />
                   </FieldWithFlag>
 

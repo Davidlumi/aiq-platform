@@ -43,6 +43,7 @@ export const authRouter = router({
       jobFunction: ctx.user.jobFunction ?? null,
       aiqRole: ctx.user.aiqRole ?? "cpo",
       tenantMode,
+      isPlatformSuperuser: ctx.user.isPlatformSuperuser ?? false,
     };
   }),
 
@@ -166,6 +167,7 @@ export const authRouter = router({
         lastName: user.lastName,
         tenantId: user.tenantId,
         roles,
+        isPlatformSuperuser: user.isPlatformSuperuser ?? false,
       };
     }),
 

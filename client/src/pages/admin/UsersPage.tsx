@@ -16,12 +16,13 @@ import { Users, Plus, Search, Loader2, CheckCircle2, Clock, Ban, UserCheck, More
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ROLE_LABELS: Record<string, string> = {
-  platform_super_admin: "Super Admin",
-  tenant_admin: "Tenant Admin",
-  hr_leader: "HR Leader",
+  platform_super_admin: "Company Admin",
+  tenant_admin: "Company Admin",
+  hr_leader: "Strategy Builder",
   manager: "Manager",
-  learner: "Learner",
+  learner: "Individual",
   auditor: "Auditor",
+  hr_professional: "Individual",
 };
 
 const STATUS_STYLES: Record<string, string> = {

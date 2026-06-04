@@ -4979,9 +4979,62 @@ test
 
 ## Round-2 Reorganisation Patch (Jun 2026)
 
-- [ ] Fix 1: Reorder My Development nav — Skills Check → Learning Plan → Modules → AiQ Coach
-- [ ] Fix 1: Create /modules page with Content Library and Knowledge Base as tabs/sections
-- [ ] Fix 1: Remove Content Library and Knowledge Base as separate top-level nav items
-- [ ] Fix 2: Gate AiQ Coach — locked until user has at least one completed Skills Check session
+- [x] Fix 1: Reorder My Development nav — Skills Check → Learning Plan → Modules → AiQ Coach
+- [x] Fix 1: Create /modules page with Content Library and Knowledge Base as tabs/sections
+- [x] Fix 1: Remove Content Library and Knowledge Base as separate top-level nav items
+- [x] Fix 2: Gate AiQ Coach — locked until user has at least one completed Skills Check session
 - [ ] Check 1: Investigate "Re-assessment in progress / Re-assessment #3" banner on /strategy/reward-prework
 - [ ] Check 2: Confirm Company-wide locked state click behaviour
+
+## CPO Domain State Bug Fix (Jun 2026)
+
+- [x] Fix: Mifflin CPO user (tenantMode=cpo, aiqRole=cpo, roles=[]) now sees Company-wide as Active and Reward as Locked
+- [x] Fix: showHrAiStrategy now true for any user with tenantMode=cpo or aiqRole=cpo/reward_leader
+- [x] Fix: resolvedDomains has explicit CPO branch (Company-wide=active, Reward=locked)
+- [x] Fix: Mifflin tenant inserted into DB (mode=cpo, slug=mifflin, status=active)
+
+## Permissions & Back-office Brief (Jun 2026)
+
+### Part 1 — Audit
+- [x] Audit: auth flow (login, session, server-side user+role resolution)
+- [x] Audit: all role/permission values — where defined, where checked
+- [x] Audit: tenants.mode — how read, how scoped
+- [x] Audit: existing back-office code
+- [x] Audit: backend vs frontend-only enforcement gaps
+- [x] Audit: privilege-escalation paths (every path that can assign/edit roles)
+- [x] Audit: My Team — real feature (people.ts has full backend)
+
+### Part 2 & 3 — Permission model + migration
+- [x] Schema: map 5 permission types to existing role keys (Individual=learner, Manager=manager, Strategy Builder=hr_leader, Company Admin=tenant_admin, Super User=isPlatformSuperuser flag)
+- [x] Backend: enforce via superUserProcedure middleware on all back-office routes
+- [x] Migration: reward_leader → hr_leader (Strategy Builder) mapping confirmed
+- [x] ROLE_LABELS updated in UsersPage.tsx to use new permission type names
+- [x] Manager tier: My Team is real — manager role already enforced in people.ts
+
+### Part 4 — Super User
+- [x] Single protected account: isPlatformSuperuser boolean on users table (not a role, not grantable via API)
+- [x] Backend platform-level check: superUserProcedure middleware in server/_core/trpc.ts
+- [x] Enforced server-side on every back-office route (backoffice.ts: 34 procedures, initiativeDiscovery.ts)
+- [x] No escalation path: no API endpoint can set isPlatformSuperuser=true (only direct SQL)
+
+### Part 5 — Company back-office
+- [x] List/view all companies with mode and status — Super User only (backoffice.listOrgs)
+- [x] Create company (name, mode) — Super User only (backoffice.createOrg)
+- [x] Edit company name, mode, active status — Super User only (backoffice.updateOrg)
+- [x] All routes backend-enforced via superUserProcedure (not UI-only)
+- [x] Client guard updated to user.isPlatformSuperuser in BackOfficePage.tsx and InitiativeDiscoveryPage.tsx
+- [x] Login redirect updated to use isPlatformSuperuser in LoginPage.tsx
+
+### Part 6 — Company Profile provenance
+- [x] Schema: 12 provenance columns added to company_profile (sector/headcount/revenue/payroll × source/asOf/verified)
+- [x] DB migration applied
+- [x] Constraint: verified=true requires non-empty source (server-side validation in companyProfile.save)
+- [x] UI: ProvenanceRow component added to CompanyProfilePage.tsx for all 4 key fields
+- [x] Role check added to companyProfile.save and complete (tenant_admin or hr_leader required)
+
+### Verification
+- [x] All 81 test files pass (1999 tests, 0 failures) after all changes
+- [x] Isolation: tenantId scoping unchanged — all queries filter by ctx.user.tenantId
+- [x] DFS smoke: reward@dunder.com unaffected — hr_leader role still grants Strategy Builder access
+- [x] Super User unreachable: no API path sets isPlatformSuperuser (only direct SQL)
+- [ ] UI verification: manually confirm provenance UI renders in Company Profile page

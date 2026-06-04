@@ -69,6 +69,7 @@ function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
     updatedAt: new Date(),
     lastSignedIn: new Date(),
     onboardingCompleted: true,
+    isPlatformSuperuser: true, // default: super-user for most tests
     ...overrides,
   } as AuthenticatedUser;
 }
@@ -85,29 +86,24 @@ function makeCtx(user: AuthenticatedUser = makeUser()): TrpcContext {
  * Creates a mock Drizzle DB object that properly handles the chainable query pattern.
  * The key insight: Drizzle queries chain like db.select().from().innerJoin().where()
  * and the final call in the chain returns a Promise (thenable).
+ * Note: isSuperAdmin is no longer used for role-based checks (now uses isPlatformSuperuser on user).
  *
  * We track query sequence to return appropriate data for each query.
  */
 function createMockDb(options: {
-  isSuperAdmin?: boolean;
+  isSuperAdmin?: boolean; // kept for API compatibility, no longer used for role checks
   queryResults?: any[][];
 } = {}) {
-  const { isSuperAdmin = true, queryResults = [] } = options;
-
-  const roleResult = isSuperAdmin
-    ? [{ key: "super_admin" }]
-    : [{ key: "learner" }];
+  const { queryResults = [] } = options;
 
   let queryIndex = 0;
   const insertedValues: any[] = [];
   const updatedSets: any[] = [];
 
   // Each "query" is a full chain that ends with an await.
-  // The role check is always the first query.
   function getNextResult(): any[] {
     const idx = queryIndex++;
-    if (idx === 0) return roleResult; // First query is always role check
-    if (queryResults[idx - 1] !== undefined) return queryResults[idx - 1];
+    if (queryResults[idx] !== undefined) return queryResults[idx];
     return [];
   }
 
@@ -160,62 +156,53 @@ function createMockDb(options: {
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("Initiative Discovery Router — RBAC", () => {
-  it("stats rejects non-super_admin users with FORBIDDEN", async () => {
-    const mockDb = createMockDb({ isSuperAdmin: false });
+  it("stats rejects non-super-user with FORBIDDEN", async () => {
+    const mockDb = createMockDb();
     vi.mocked(getDb).mockResolvedValue(mockDb);
-
-    const caller = appRouter.createCaller(makeCtx());
-
+    // Non-super-user: isPlatformSuperuser = false
+    const caller = appRouter.createCaller(makeCtx(makeUser({ isPlatformSuperuser: false })));
     await expect(caller.initiativeDiscovery.stats()).rejects.toThrow(
-      /super admin/i
+      /super.user|forbidden/i
     );
   });
 
-  it("triggerScan rejects non-super_admin users with FORBIDDEN", async () => {
-    const mockDb = createMockDb({ isSuperAdmin: false });
+  it("triggerScan rejects non-super-user with FORBIDDEN", async () => {
+    const mockDb = createMockDb();
     vi.mocked(getDb).mockResolvedValue(mockDb);
-
-    const caller = appRouter.createCaller(makeCtx());
-
+    const caller = appRouter.createCaller(makeCtx(makeUser({ isPlatformSuperuser: false })));
     await expect(caller.initiativeDiscovery.triggerScan()).rejects.toThrow(
-      /super admin/i
+      /super.user|forbidden/i
     );
   });
 
-  it("listScans rejects non-super_admin users with FORBIDDEN", async () => {
-    const mockDb = createMockDb({ isSuperAdmin: false });
+  it("listScans rejects non-super-user with FORBIDDEN", async () => {
+    const mockDb = createMockDb();
     vi.mocked(getDb).mockResolvedValue(mockDb);
-
-    const caller = appRouter.createCaller(makeCtx());
-
+    const caller = appRouter.createCaller(makeCtx(makeUser({ isPlatformSuperuser: false })));
     await expect(caller.initiativeDiscovery.listScans({ limit: 10 })).rejects.toThrow(
-      /super admin/i
+      /super.user|forbidden/i
     );
   });
 
-  it("listCandidates rejects non-super_admin users with FORBIDDEN", async () => {
-    const mockDb = createMockDb({ isSuperAdmin: false });
+  it("listCandidates rejects non-super-user with FORBIDDEN", async () => {
+    const mockDb = createMockDb();
     vi.mocked(getDb).mockResolvedValue(mockDb);
-
-    const caller = appRouter.createCaller(makeCtx());
-
+    const caller = appRouter.createCaller(makeCtx(makeUser({ isPlatformSuperuser: false })));
     await expect(caller.initiativeDiscovery.listCandidates({ limit: 10 })).rejects.toThrow(
-      /super admin/i
+      /super.user|forbidden/i
     );
   });
 
-  it("assessCandidate rejects non-super_admin users with FORBIDDEN", async () => {
-    const mockDb = createMockDb({ isSuperAdmin: false });
+  it("assessCandidate rejects non-super-user with FORBIDDEN", async () => {
+    const mockDb = createMockDb();
     vi.mocked(getDb).mockResolvedValue(mockDb);
-
-    const caller = appRouter.createCaller(makeCtx());
-
+    const caller = appRouter.createCaller(makeCtx(makeUser({ isPlatformSuperuser: false })));
     await expect(
       caller.initiativeDiscovery.assessCandidate({
         candidateId: "cand-1",
         decision: "accepted",
       })
-    ).rejects.toThrow(/super admin/i);
+    ).rejects.toThrow(/super.user|forbidden/i);
   });
 });
 

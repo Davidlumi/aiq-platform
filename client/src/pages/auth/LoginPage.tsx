@@ -97,7 +97,7 @@ export default function LoginPage() {
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
       await utils.auth.me.fetch();
-      if (data.roles?.includes("super_admin")) {
+      if (data.isPlatformSuperuser) {
         navigate("/backoffice");
       } else {
         navigate("/dashboard");

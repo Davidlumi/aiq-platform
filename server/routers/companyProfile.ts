@@ -14,7 +14,7 @@ import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { protectedProcedure, router } from "../_core/trpc";
-import { getDb } from "../db";
+import { getDb, getUserRoleKeys } from "../db";
 import {
   companyProfile,
   companyProfileAudit,
@@ -48,6 +48,19 @@ const CompanyProfileSaveSchema = z.object({
   ukEmployeeHeadcount: z.number().int().nonnegative().optional(),
   euEmployeeHeadcount: z.number().int().nonnegative().optional(),
   listingExchange: z.string().max(50).optional(),
+  // Provenance fields
+  sectorSource: z.string().max(100).optional(),
+  sectorAsOf: z.number().int().nonnegative().optional(),
+  sectorVerified: z.boolean().optional(),
+  headcountSource: z.string().max(100).optional(),
+  headcountAsOf: z.number().int().nonnegative().optional(),
+  headcountVerified: z.boolean().optional(),
+  annualRevenueGbpSource: z.string().max(100).optional(),
+  annualRevenueGbpAsOf: z.number().int().nonnegative().optional(),
+  annualRevenueGbpVerified: z.boolean().optional(),
+  annualPayrollCostGbpSource: z.string().max(100).optional(),
+  annualPayrollCostGbpAsOf: z.number().int().nonnegative().optional(),
+  annualPayrollCostGbpVerified: z.boolean().optional(),
 });
 
 // ── Helper: write audit rows for changed fields ───────────────────────────────
@@ -103,6 +116,20 @@ export const companyProfileRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      // Role check: only tenant_admin or hr_leader may save company profile
+      const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+      const canEdit = ctx.user.isPlatformSuperuser ||
+        myRoles.some(r => ["tenant_admin", "hr_leader", "platform_super_admin"].includes(r));
+      if (!canEdit) throw new TRPCError({ code: "FORBIDDEN", message: "Company Admin or Strategy Builder role required" });
+      // Provenance constraint: verified=true requires a source
+      const provenanceFields = ["sector", "headcount", "annualRevenueGbp", "annualPayrollCostGbp"] as const;
+      for (const f of provenanceFields) {
+        const verified = (input as Record<string, unknown>)[`${f}Verified`];
+        const source = (input as Record<string, unknown>)[`${f}Source`];
+        if (verified === true && !source) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `A source is required when marking ${f} as verified.` });
+        }
+      }
       const tenantId = ctx.user.tenantId;
       const now = Date.now();
 
@@ -112,8 +139,14 @@ export const companyProfileRouter = router({
         .from(companyProfile)
         .where(eq(companyProfile.tenantId, tenantId));
 
+      // Convert boolean provenance flags to tinyint (0/1) for MySQL
+      const { sectorVerified, headcountVerified, annualRevenueGbpVerified, annualPayrollCostGbpVerified, ...restInput } = input;
       const fields = {
-        ...input,
+        ...restInput,
+        ...(sectorVerified !== undefined ? { sectorVerified: sectorVerified ? 1 : 0 } : {}),
+        ...(headcountVerified !== undefined ? { headcountVerified: headcountVerified ? 1 : 0 } : {}),
+        ...(annualRevenueGbpVerified !== undefined ? { annualRevenueGbpVerified: annualRevenueGbpVerified ? 1 : 0 } : {}),
+        ...(annualPayrollCostGbpVerified !== undefined ? { annualPayrollCostGbpVerified: annualPayrollCostGbpVerified ? 1 : 0 } : {}),
         updatedAt: now,
         updatedByUserId: ctx.user.id,
       };
@@ -194,6 +227,10 @@ export const companyProfileRouter = router({
 
   /** Mark company profile as completed (admin action) */
   complete: protectedProcedure.mutation(async ({ ctx }) => {
+    const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
+    const canComplete = ctx.user.isPlatformSuperuser ||
+      myRoles.some(r => ["tenant_admin", "hr_leader", "platform_super_admin"].includes(r));
+    if (!canComplete) throw new TRPCError({ code: "FORBIDDEN", message: "Company Admin or Strategy Builder role required" });
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
     const tenantId = ctx.user.tenantId;

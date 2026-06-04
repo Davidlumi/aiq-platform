@@ -83,6 +83,8 @@ export const users = mysqlTable("users", {
   modulePersonalisationCollapsed: tinyint("module_personalisation_collapsed").notNull().default(0),
   // Two-mode build: AiQ strategy role — determines which mode tenant is created at sign-up
   aiqRole: mysqlEnum("aiq_role", ["cpo", "reward_leader"]).default("cpo"),
+  // Platform super-user flag — set only via direct SQL, never via any API path
+  isPlatformSuperuser: boolean("is_platform_superuser").notNull().default(false),
 }, (t) => ({
   tenantEmailUnique: unique("tenant_email_unique").on(t.tenantId, t.email),
   tenantEmailIdx: index("idx_users_tenant_email").on(t.tenantId, t.email),
@@ -2327,6 +2329,19 @@ export const companyProfile = mysqlTable("company_profile", {
   ukEmployeeHeadcount: int("uk_employee_headcount"),
   euEmployeeHeadcount: int("eu_employee_headcount"),
   listingExchange: varchar("listing_exchange", { length: 50 }),
+  // Provenance fields — source, as-of date, and verified flag for key financial/identity fields
+  sectorSource: varchar("sector_source", { length: 100 }),
+  sectorAsOf: bigint("sector_as_of", { mode: "number" }),
+  sectorVerified: tinyint("sector_verified").notNull().default(0),
+  headcountSource: varchar("headcount_source", { length: 100 }),
+  headcountAsOf: bigint("headcount_as_of", { mode: "number" }),
+  headcountVerified: tinyint("headcount_verified").notNull().default(0),
+  annualRevenueGbpSource: varchar("annual_revenue_gbp_source", { length: 100 }),
+  annualRevenueGbpAsOf: bigint("annual_revenue_gbp_as_of", { mode: "number" }),
+  annualRevenueGbpVerified: tinyint("annual_revenue_gbp_verified").notNull().default(0),
+  annualPayrollCostGbpSource: varchar("annual_payroll_cost_gbp_source", { length: 100 }),
+  annualPayrollCostGbpAsOf: bigint("annual_payroll_cost_gbp_as_of", { mode: "number" }),
+  annualPayrollCostGbpVerified: tinyint("annual_payroll_cost_gbp_verified").notNull().default(0),
   // Metadata
   isCompleted: tinyint("is_completed").notNull().default(0),
   completedAt: bigint("completed_at", { mode: "number" }),

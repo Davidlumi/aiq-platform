@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { superUserProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   tenants, users, userRoles, roles, assessmentAnswers, assessmentSessions, assessmentItems, assessmentBlueprints,
@@ -32,27 +32,16 @@ import {
 } from "../assessment/featureFlags";
 
 // ─── Guard: super_admin only ──────────────────────────────────────────────────
-async function assertSuperAdmin(userId: string, tenantId: string, db: NonNullable<Awaited<ReturnType<typeof getDb>>>) {
-  const roleRows = await db
-    .select({ key: roles.key })
-    .from(userRoles)
-    .innerJoin(roles, eq(userRoles.roleId, roles.id))
-    .where(and(eq(userRoles.userId, userId), eq(userRoles.tenantId, tenantId)));
-  const keys = roleRows.map(r => r.key);
-  if (!keys.includes("super_admin")) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Super admin access required" });
-  }
-}
+// assertSuperAdmin removed — all back-office procedures now use superUserProcedure middleware
 
 export const backofficeRouter = router({
   // ── Orgs ──────────────────────────────────────────────────────────────────
 
-  listOrgs: protectedProcedure
+  listOrgs: superUserProcedure
     .input(z.object({ search: z.string().optional() }).optional())
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       const allTenants = await db.select().from(tenants).orderBy(asc(tenants.name));
       // Attach user counts
       const result = await Promise.all(
@@ -75,7 +64,7 @@ export const backofficeRouter = router({
       return result;
     }),
 
-  createOrg: protectedProcedure
+  createOrg: superUserProcedure
     .input(z.object({
       name: z.string().min(2).max(200),
       slug: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
@@ -86,7 +75,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       // Check slug uniqueness
       const existing = await db.select().from(tenants).where(eq(tenants.slug, input.slug)).limit(1);
       if (existing[0]) throw new TRPCError({ code: "CONFLICT", message: "Organisation slug already exists" });
@@ -102,7 +90,7 @@ export const backofficeRouter = router({
       return { tenantId, slug: input.slug };
     }),
 
-  updateOrg: protectedProcedure
+  updateOrg: superUserProcedure
     .input(z.object({
       tenantId: z.string(),
       name: z.string().min(2).max(200).optional(),
@@ -112,7 +100,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       const { tenantId, ...updates } = input;
       const updateData: Record<string, unknown> = {};
       if (updates.name !== undefined) updateData.name = updates.name;
@@ -123,12 +110,11 @@ export const backofficeRouter = router({
       return { success: true };
     }),
 
-  deleteOrg: protectedProcedure
+  deleteOrg: superUserProcedure
     .input(z.object({ tenantId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       // Prevent deleting the lumi platform tenant
       const tenant = await db.select().from(tenants).where(eq(tenants.id, input.tenantId)).limit(1);
       if (!tenant[0]) throw new TRPCError({ code: "NOT_FOUND" });
@@ -140,7 +126,7 @@ export const backofficeRouter = router({
 
   // ── Users ─────────────────────────────────────────────────────────────────
 
-  listUsers: protectedProcedure
+  listUsers: superUserProcedure
     .input(z.object({
       tenantId: z.string().optional(),
       search: z.string().optional(),
@@ -150,7 +136,6 @@ export const backofficeRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       const allUsers = await db
         .select({
           id: users.id,
@@ -204,7 +189,7 @@ export const backofficeRouter = router({
       return { users: paginated, total, page, pageSize };
     }),
 
-  createUser: protectedProcedure
+  createUser: superUserProcedure
     .input(z.object({
       tenantId: z.string(),
       email: z.string().email(),
@@ -218,7 +203,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       // Check email uniqueness within tenant
       const existing = await db.select().from(users)
         .where(and(eq(users.tenantId, input.tenantId), eq(users.email, input.email)))
@@ -251,7 +235,7 @@ export const backofficeRouter = router({
       return { userId, email: input.email };
     }),
 
-  updateUser: protectedProcedure
+  updateUser: superUserProcedure
     .input(z.object({
       userId: z.string(),
       firstName: z.string().min(1).max(100).optional(),
@@ -263,7 +247,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       const { userId, ...updates } = input;
       const updateData: Record<string, unknown> = {};
       if (updates.firstName !== undefined) updateData.firstName = updates.firstName;
@@ -277,7 +260,7 @@ export const backofficeRouter = router({
       return { success: true };
     }),
 
-  assignRole: protectedProcedure
+  assignRole: superUserProcedure
     .input(z.object({
       userId: z.string(),
       tenantId: z.string(),
@@ -287,7 +270,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       const roleRow = await db.select().from(roles).where(eq(roles.key, input.roleKey)).limit(1);
       if (!roleRow[0]) throw new TRPCError({ code: "NOT_FOUND", message: `Role '${input.roleKey}' not found` });
       if (input.replace) {
@@ -303,7 +285,7 @@ export const backofficeRouter = router({
       return { success: true };
     }),
 
-  resetPassword: protectedProcedure
+  resetPassword: superUserProcedure
     .input(z.object({
       userId: z.string(),
       newPassword: z.string().min(8),
@@ -311,7 +293,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       const passwordHash = await hashPassword(input.newPassword);
       await db.update(users)
         .set({ passwordHash, passwordResetToken: null, passwordResetExpiry: null })
@@ -319,15 +300,14 @@ export const backofficeRouter = router({
       return { success: true };
     }),
 
-  listRoles: protectedProcedure.query(async ({ ctx }) => {
+  listRoles: superUserProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     return db.select().from(roles).orderBy(asc(roles.key));
   }),
 
   // ── Reasoning Review ─────────────────────────────────────────────────────────
-  listReasoningAnswers: protectedProcedure
+  listReasoningAnswers: superUserProcedure
     .input(z.object({
       tenantId: z.string().optional(),
       userId: z.string().optional(),
@@ -339,7 +319,6 @@ export const backofficeRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
 
       // Fetch all answers where reasoning_text is present
       const answers = await db
@@ -436,14 +415,13 @@ export const backofficeRouter = router({
 
   // ── S1: Scoring Config Management ───────────────────────────────────────────
 
-  listScoringConfigs: protectedProcedure.query(async ({ ctx }) => {
+  listScoringConfigs: superUserProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     return db.select().from(scoringConfig).orderBy(desc(scoringConfig.createdAt));
   }),
 
-  createScoringConfig: protectedProcedure
+  createScoringConfig: superUserProcedure
     .input(z.object({
       version: z.string().min(1),
       intercept: z.number().min(0).max(100),
@@ -453,7 +431,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       // Deactivate all existing configs
       await db.update(scoringConfig).set({ isActive: false });
       const id = nanoid();
@@ -479,12 +456,11 @@ export const backofficeRouter = router({
       return { success: true };
     }),
 
-  activateScoringConfig: protectedProcedure
+  activateScoringConfig: superUserProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       await db.update(scoringConfig).set({ isActive: false });
       const idNum = parseInt(input.id, 10);
       await db.update(scoringConfig).set({ isActive: true }).where(eq(scoringConfig.id, idNum));
@@ -502,19 +478,18 @@ export const backofficeRouter = router({
 
   // ── S10: Org Capability Thresholds ─────────────────────────────────────────
 
-  listOrgThresholds: protectedProcedure
+  listOrgThresholds: superUserProcedure
     .input(z.object({ orgId: z.string() }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       return db
         .select()
         .from(organisationCapabilityThresholds)
         .where(eq(organisationCapabilityThresholds.orgId, input.orgId));
     }),
 
-  upsertOrgThreshold: protectedProcedure
+  upsertOrgThreshold: superUserProcedure
     .input(z.object({
       orgId: z.string(),
       archetypeId: z.string(),
@@ -525,7 +500,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       // Check if row exists
       const existing = await db
         .select({ id: organisationCapabilityThresholds.id })
@@ -568,12 +542,11 @@ export const backofficeRouter = router({
       return { id: thresholdId };
     }),
 
-  deleteOrgThreshold: protectedProcedure
+  deleteOrgThreshold: superUserProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       await db.delete(organisationCapabilityThresholds).where(eq(organisationCapabilityThresholds.id, input.id));
       await db.insert(auditLogs).values({
         id: nanoid(),
@@ -587,13 +560,12 @@ export const backofficeRouter = router({
       return { success: true };
     }),
   // ── WS2.2: Anti-gaming threshold management ───────────────────────────────
-  listAntiGamingThresholds: protectedProcedure.query(async ({ ctx }) => {
+  listAntiGamingThresholds: superUserProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     return db.select().from(antiGamingThresholds).orderBy(asc(antiGamingThresholds.roleKey));
   }),
-  upsertAntiGamingThreshold: protectedProcedure
+  upsertAntiGamingThreshold: superUserProcedure
     .input(z.object({
       roleKey: z.string().max(80),
       alwaysSafeChoiceRate: z.number().min(0).max(1),
@@ -606,7 +578,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       const existing = await db.select({ id: antiGamingThresholds.id })
         .from(antiGamingThresholds)
         .where(eq(antiGamingThresholds.roleKey, input.roleKey))
@@ -640,17 +611,16 @@ export const backofficeRouter = router({
       });
       return { id, action: "created" };
     }),
-  deleteAntiGamingThreshold: protectedProcedure
+  deleteAntiGamingThreshold: superUserProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       await db.delete(antiGamingThresholds).where(eq(antiGamingThresholds.id, input.id));
       return { success: true };
     }),
   // ── WS3: LLM item review queue ───────────────────────────────────────────────
-  listLlmReviewQueue: protectedProcedure
+  listLlmReviewQueue: superUserProcedure
     .input(z.object({
       status: z.enum(["pending", "approved", "rejected", "auto_approved", "all"]).optional().default("pending"),
       limit: z.number().int().min(1).max(100).optional().default(50),
@@ -658,7 +628,6 @@ export const backofficeRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       if (input.status !== "all") {
         return db.select().from(llmItemReviewQueue)
           .where(eq(llmItemReviewQueue.status, input.status as "pending" | "approved" | "rejected" | "auto_approved"))
@@ -669,7 +638,7 @@ export const backofficeRouter = router({
         .orderBy(desc(llmItemReviewQueue.createdAt))
         .limit(input.limit);
     }),
-  updateLlmReviewStatus: protectedProcedure
+  updateLlmReviewStatus: superUserProcedure
     .input(z.object({
       id: z.string(),
       status: z.enum(["approved", "rejected"]),
@@ -677,7 +646,6 @@ export const backofficeRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       await db.update(llmItemReviewQueue)
         .set({ status: input.status })
         .where(eq(llmItemReviewQueue.id, input.id));
@@ -685,11 +653,10 @@ export const backofficeRouter = router({
     }),
 
   // ── WS3.1: LLM Quality Gate Stats ────────────────────────────────────────────
-  qualityGateStats: protectedProcedure
+  qualityGateStats: superUserProcedure
     .query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
 
       const rows = await db.select().from(llmItemReviewQueue);
       const total = rows.length;
@@ -734,7 +701,7 @@ export const backofficeRouter = router({
     }),
 
   // ── WS4.3: Session review flags queue ────────────────────────────────────────
-  listSessionReviewFlags: protectedProcedure
+  listSessionReviewFlags: superUserProcedure
     .input(z.object({
       status: z.enum(["pending", "reviewed", "all"]).optional().default("pending"),
       limit: z.number().int().min(1).max(100).optional().default(50),
@@ -742,7 +709,6 @@ export const backofficeRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       if (input.status !== "all") {
         return db.select().from(assessmentReviewFlags)
           .where(eq(assessmentReviewFlags.status, input.status))
@@ -753,31 +719,28 @@ export const backofficeRouter = router({
         .orderBy(desc(assessmentReviewFlags.createdAt))
         .limit(input.limit);
     }),
-  resolveSessionReviewFlag: protectedProcedure
+  resolveSessionReviewFlag: superUserProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       await db.update(assessmentReviewFlags)
         .set({ status: "reviewed" })
         .where(eq(assessmentReviewFlags.id, input.id));
       return { success: true };
     }),
   // ── S8: Sector Vocabulary ─────────────────────────────────────────────────────
-  listSectors: protectedProcedure.query(async ({ ctx }) => {    const db = await getDb();
+  listSectors: superUserProcedure.query(async ({ ctx }) => {    const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     return db.select().from(sectorVocabulary).orderBy(asc(sectorVocabulary.label));
   }),
 
    // ── Delete User (hard delete with full cascade) ────────────────────────────
-  deleteUser: protectedProcedure
+  deleteUser: superUserProcedure
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       if (input.userId === ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You cannot delete your own account." });
       }
@@ -853,12 +816,11 @@ export const backofficeRouter = router({
     }),
 
   // ── Delete Company (hard delete with full cascade) ───────────────────────
-  deleteCompany: protectedProcedure
+  deleteCompany: superUserProcedure
     .input(z.object({ tenantId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
       if (input.tenantId === ctx.user.tenantId) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You cannot delete your own organisation." });
       }
@@ -940,10 +902,9 @@ export const backofficeRouter = router({
     }),
 
   // ── Feature Flags (TD-3) ───────────────────────────────────────────────
-  getFeatureFlags: protectedProcedure.query(async ({ ctx }) => {
+  getFeatureFlags: superUserProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     return [
       {
         key: "LLM_CHECKER_ENABLED",
@@ -997,10 +958,9 @@ export const backofficeRouter = router({
   }),
 
   // ── Platform stats ──────────────────────────────────────────────────
-  stats: protectedProcedure.query(async ({ ctx }) => {
+  stats: superUserProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     const allTenants = await db.select({ id: tenants.id, status: tenants.status }).from(tenants);
     const allUsers = await db.select({ id: users.id, status: users.status, createdAt: users.createdAt }).from(users);
     const now = new Date();
@@ -1019,7 +979,7 @@ export const backofficeRouter = router({
    * Delete all assessment sessions for a user and seed a realistic completed one.
    * Used for demo/testing purposes.
    */
-  seedCompletedAssessment: protectedProcedure
+  seedCompletedAssessment: superUserProcedure
     .input(z.object({
       userId: z.string(),
       overallScore: z.number().min(0).max(100).default(78),
@@ -1240,7 +1200,7 @@ export const backofficeRouter = router({
    * Seed realistic manager-team-member links from existing users.
    * Groups users by roleFamily and assigns the first user in each group as manager.
    */
-  seedManagerTeams: protectedProcedure.mutation(async ({ ctx }) => {
+  seedManagerTeams: superUserProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const callerRoles = await db.select({ key: roles.key }).from(roles)

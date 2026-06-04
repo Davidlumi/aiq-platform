@@ -1221,8 +1221,8 @@ export default function InitiativeDiscoveryPage() {
   const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
 
-  // Guard: must be super_admin
-  if (!authLoading && (!user || !user.roles?.includes("super_admin"))) {
+  // Guard: must be platform super-user
+  if (!authLoading && (!user || !user.isPlatformSuperuser)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <AlertCircle className="w-12 h-12 text-destructive" />

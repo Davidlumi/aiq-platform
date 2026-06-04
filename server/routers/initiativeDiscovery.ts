@@ -12,7 +12,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { cpoProcedure as protectedProcedure, router } from "../_core/trpc";
+import { cpoProcedure as protectedProcedure, superUserProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   discoveryScans,
@@ -30,32 +30,17 @@ import { assertLLMRateLimit } from "../_core/llmRateLimit";
 
 // ─── RBAC Helper ─────────────────────────────────────────────────────────────
 
-async function assertSuperAdmin(
-  userId: string,
-  tenantId: string,
-  db: NonNullable<Awaited<ReturnType<typeof getDb>>>
-) {
-  const roleRows = await db
-    .select({ key: roles.key })
-    .from(userRoles)
-    .innerJoin(roles, eq(userRoles.roleId, roles.id))
-    .where(and(eq(userRoles.userId, userId), eq(userRoles.tenantId, tenantId)));
-  const keys = roleRows.map((r) => r.key);
-  if (!keys.includes("super_admin")) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Super admin access required" });
-  }
-}
+// assertSuperAdmin removed — all procedures now use superUserProcedure middleware
 
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 export const initiativeDiscoveryRouter = router({
   // ── Scan History ────────────────────────────────────────────────────────────
-  listScans: protectedProcedure
+  listScans: superUserProcedure
     .input(z.object({ limit: z.number().min(1).max(50).default(20) }).optional())
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
 
       const limit = input?.limit ?? 20;
       const scans = await db
@@ -68,10 +53,9 @@ export const initiativeDiscoveryRouter = router({
     }),
 
   // ── Trigger Discovery Scan ──────────────────────────────────────────────────
-  triggerScan: protectedProcedure.mutation(async ({ ctx }) => {
+  triggerScan: superUserProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
     await assertLLMRateLimit(ctx.user.id);
 
     const scanId = nanoid();
@@ -105,7 +89,7 @@ export const initiativeDiscoveryRouter = router({
   }),
 
   // ── Candidate Queue ─────────────────────────────────────────────────────────
-  listCandidates: protectedProcedure
+  listCandidates: superUserProcedure
     .input(
       z.object({
         status: z.enum(["pending", "accepted", "rejected", "edited"]).optional(),
@@ -116,7 +100,6 @@ export const initiativeDiscoveryRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
 
       const conditions = [];
       if (input?.status) conditions.push(eq(discoveryCandidates.status, input.status));
@@ -136,7 +119,7 @@ export const initiativeDiscoveryRouter = router({
     }),
 
   // ── Assess Candidate (Accept/Reject/Edit) ───────────────────────────────────
-  assessCandidate: protectedProcedure
+  assessCandidate: superUserProcedure
     .input(
       z.object({
         candidateId: z.string().max(36),
@@ -152,7 +135,6 @@ export const initiativeDiscoveryRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
 
       const [candidate] = await db
         .select()
@@ -211,7 +193,7 @@ export const initiativeDiscoveryRouter = router({
     }),
 
   // ── Add to Library ──────────────────────────────────────────────────────────
-  addToLibrary: protectedProcedure
+  addToLibrary: superUserProcedure
     .input(
       z.object({
         candidateId: z.string().max(36),
@@ -235,7 +217,6 @@ export const initiativeDiscoveryRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
 
       // Verify candidate exists and is accepted/edited
       const [candidate] = await db
@@ -329,10 +310,9 @@ export const initiativeDiscoveryRouter = router({
     }),
 
   // ── Stats ───────────────────────────────────────────────────────────────────
-  stats: protectedProcedure.query(async ({ ctx }) => {
+  stats: superUserProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    await assertSuperAdmin(ctx.user.id, ctx.user.tenantId, db);
 
     const [scanCount] = await db
       .select({ count: sql<number>`COUNT(*)` })
