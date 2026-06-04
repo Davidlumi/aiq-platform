@@ -43,7 +43,7 @@ import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
   CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
   Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe, Sliders, Settings,
-  Save, Clock, ArrowRight, Sparkles,
+  Save, Clock, ArrowRight, Sparkles, Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -438,6 +438,31 @@ export default function StrategyDiagnosticPage() {
   const [aiDrafted, setAiDrafted] = useState<Record<string, boolean>>({});
   // Track which keys are currently generating
   const [aiPending, setAiPending] = useState<Record<string, boolean>>({});
+  // Store the previous value before each AI generation so the user can undo
+  const [aiPrevValues, setAiPrevValues] = useState<Record<string, string>>({});
+
+  const undoAiDraft = (
+    key: string,
+    fieldType: "successNarrative" | "painPoint" | "strategicPriority",
+    index?: number,
+  ) => {
+    const prev = aiPrevValues[key];
+    if (prev === undefined) return;
+    if (fieldType === "successNarrative") {
+      updateSection("E", "successNarrative", prev);
+    } else if (fieldType === "painPoint" && index !== undefined) {
+      const pts = [...((getField("E", "topPainPoints") ?? ["", "", ""]) as string[])];
+      pts[index] = prev;
+      updateSection("E", "topPainPoints", pts);
+    } else if (fieldType === "strategicPriority" && index !== undefined) {
+      const pts = [...((getField("E", "strategicPriorities") ?? ["", "", "", "", ""]) as string[])];
+      pts[index] = prev;
+      updateSection("E", "strategicPriorities", pts);
+    }
+    // Clear undo state and drafted flag for this key
+    setAiPrevValues(prev2 => { const n = { ...prev2 }; delete n[key]; return n; });
+    setAiDrafted(prev2 => ({ ...prev2, [key]: false }));
+  };
 
   // New UX: the textarea value IS the hint. AI button reads current field value as the keyword prompt,
   // then replaces it with the generated draft.
@@ -460,6 +485,8 @@ export default function StrategyDiagnosticPage() {
       toast.error("Type a few keywords first, then click AI to generate");
       return;
     }
+    // Snapshot current value before overwriting so user can undo
+    setAiPrevValues(prev => ({ ...prev, [key]: hint }));
     setAiPending(prev => ({ ...prev, [key]: true }));
     try {
       const result = await aiDraftMut.mutateAsync({ fieldType, hint, index });
@@ -476,6 +503,8 @@ export default function StrategyDiagnosticPage() {
       }
       setAiDrafted(prev => ({ ...prev, [key]: true }));
     } catch (err: unknown) {
+      // On failure, clear the snapshot so we don't show a stale undo
+      setAiPrevValues(prev => { const n = { ...prev }; delete n[key]; return n; });
       const msg = err instanceof Error ? err.message : "AI draft failed";
       toast.error("AI generation failed", { description: msg });
     } finally {
@@ -1724,19 +1753,34 @@ export default function StrategyDiagnosticPage() {
                     maxLength={1000}
                     className="min-h-[7rem] pr-24"
                   />
-                  <Button
-                    size="sm"
-                    variant={aiDrafted["successNarrative"] ? "outline" : "default"}
-                    className="absolute bottom-2 right-2 h-7 px-2.5 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
-                    disabled={aiPending["successNarrative"]}
-                    onClick={() => runAiDraft("successNarrative", "successNarrative")}
-                    type="button"
-                  >
-                    {aiPending["successNarrative"]
-                      ? <Loader2 className="w-3 h-3 animate-spin" />
-                      : <Sparkles className="w-3 h-3" />}
-                    {aiDrafted["successNarrative"] ? "Regen" : "AI"}
-                  </Button>
+                  <div className="absolute bottom-2 right-2 flex items-center gap-1">
+                    {aiPrevValues["successNarrative"] !== undefined && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-105 active:scale-95"
+                        onClick={() => undoAiDraft("successNarrative", "successNarrative")}
+                        type="button"
+                        title="Undo AI generation"
+                      >
+                        <Undo2 className="w-3 h-3" />
+                        Undo
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={aiDrafted["successNarrative"] ? "outline" : "default"}
+                      className="h-7 px-2.5 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
+                      disabled={aiPending["successNarrative"]}
+                      onClick={() => runAiDraft("successNarrative", "successNarrative")}
+                      type="button"
+                    >
+                      {aiPending["successNarrative"]
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Sparkles className="w-3 h-3" />}
+                      {aiDrafted["successNarrative"] ? "Regen" : "AI"}
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground text-right">
                   {(getField("E", "successNarrative") as string ?? "").length}/1000
@@ -1764,19 +1808,34 @@ export default function StrategyDiagnosticPage() {
                           maxLength={200}
                           className="text-sm leading-snug min-h-[2.5rem] pr-20"
                         />
-                        <Button
-                          size="sm"
-                          variant={aiDrafted[ppKey] ? "outline" : "default"}
-                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
-                          disabled={aiPending[ppKey]}
-                          onClick={() => runAiDraft(ppKey, "painPoint", i)}
-                          type="button"
-                        >
-                          {aiPending[ppKey]
-                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                            : <Sparkles className="w-3 h-3" />}
-                          {aiDrafted[ppKey] ? "Regen" : "AI"}
-                        </Button>
+                        <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1">
+                          {aiPrevValues[ppKey] !== undefined && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-1.5 text-xs gap-1 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-105 active:scale-95"
+                              onClick={() => undoAiDraft(ppKey, "painPoint", i)}
+                              type="button"
+                              title="Undo AI generation"
+                            >
+                              <Undo2 className="w-3 h-3" />
+                              Undo
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant={aiDrafted[ppKey] ? "outline" : "default"}
+                            className="h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
+                            disabled={aiPending[ppKey]}
+                            onClick={() => runAiDraft(ppKey, "painPoint", i)}
+                            type="button"
+                          >
+                            {aiPending[ppKey]
+                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                              : <Sparkles className="w-3 h-3" />}
+                            {aiDrafted[ppKey] ? "Regen" : "AI"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1806,19 +1865,34 @@ export default function StrategyDiagnosticPage() {
                           maxLength={200}
                           className="text-sm leading-snug min-h-[2.5rem] pr-20"
                         />
-                        <Button
-                          size="sm"
-                          variant={aiDrafted[spKey] ? "outline" : "default"}
-                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
-                          disabled={aiPending[spKey]}
-                          onClick={() => runAiDraft(spKey, "strategicPriority", i)}
-                          type="button"
-                        >
-                          {aiPending[spKey]
-                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                            : <Sparkles className="w-3 h-3" />}
-                          {aiDrafted[spKey] ? "Regen" : "AI"}
-                        </Button>
+                        <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1">
+                          {aiPrevValues[spKey] !== undefined && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-1.5 text-xs gap-1 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-105 active:scale-95"
+                              onClick={() => undoAiDraft(spKey, "strategicPriority", i)}
+                              type="button"
+                              title="Undo AI generation"
+                            >
+                              <Undo2 className="w-3 h-3" />
+                              Undo
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant={aiDrafted[spKey] ? "outline" : "default"}
+                            className="h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
+                            disabled={aiPending[spKey]}
+                            onClick={() => runAiDraft(spKey, "strategicPriority", i)}
+                            type="button"
+                          >
+                            {aiPending[spKey]
+                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                              : <Sparkles className="w-3 h-3" />}
+                            {aiDrafted[spKey] ? "Regen" : "AI"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
