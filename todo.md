@@ -5052,3 +5052,11 @@ test
 - [x] Progress bar: each section pill (A–K) shows filled/empty state (emerald=complete, amber=in-progress, muted=not started)
 - [x] Progress bar: updates live as user fills in fields (driven by existing progressMap/calcProgress logic)
 - [x] Progress bar: "X of 11 sections complete" label with percentage
+
+## Section E AI-Assisted Generation (Jun 2026)
+
+- [x] Server: add backgroundInputs.aiDraft tRPC mutation (keyword prompt + field type + org context → LLM → first-person draft)
+- [x] UI: inline AI prompt bar on success narrative field (keyword input + Generate button → fills textarea)
+- [x] UI: inline AI prompt bar on each pain point field (individual keyword input + Generate button)
+- [x] UI: inline AI prompt bar on each strategic priority field (individual keyword input + Generate button)
+- [x] UI: Regenerate option stays visible until user manually edits the field

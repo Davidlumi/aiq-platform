@@ -1125,6 +1125,65 @@ export const backgroundInputsRouter = router({
     }),
 
   /**
+   * AI-assisted field drafting for Section E free-text fields.
+   * Takes a keyword hint and field type, returns a first-person draft.
+   */
+  aiDraft: protectedProcedure
+    .input(z.object({
+      fieldType: z.enum(["successNarrative", "painPoint", "strategicPriority"]),
+      hint: z.string().max(300),
+      index: z.number().int().min(0).max(4).optional(), // for list items
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await assertLLMRateLimit(ctx.user.tenantId);
+      const { row } = await getOrCreateOrgContext(ctx.user.tenantId);
+      const bg = row.backgroundInputsJson ? JSON.parse(row.backgroundInputsJson) : {};
+      const a = (bg.sectionA as any) ?? {};
+      const e = (bg.sectionE as any) ?? {};
+
+      // Build a minimal org context snippet for grounding
+      const orgSnippet = [
+        a.companyName ? `Organisation: ${a.companyName}` : null,
+        a.sector ? `Sector: ${a.sector}` : null,
+        a.headcountBand ? `Size: ${a.headcountBand}` : null,
+        e.ambitionTier ? `AI ambition: ${e.ambitionTier}` : null,
+        e.hrPosture ? `HR posture: ${e.hrPosture}` : null,
+      ].filter(Boolean).join(" | ") || "Organisation context not yet captured";
+
+      const fieldInstructions: Record<string, string> = {
+        successNarrative:
+          `Write a vivid, first-person success narrative (2–4 sentences, max 200 words) for an HR leader. ` +
+          `It should describe what success looks like in 12–18 months if their HR AI strategy works. ` +
+          `Start with \"We\" or \"Our\". Be specific and aspirational. Do not use bullet points.`,
+        painPoint:
+          `Write a single, crisp first-person pain point statement (1 sentence, max 25 words) for an HR leader. ` +
+          `Start with \"We\" or \"Our\". Be specific and honest. No bullet points, no numbering.`,
+        strategicPriority:
+          `Write a single, board-ready strategic priority statement (1 sentence, max 20 words) for an HR AI strategy. ` +
+          `Start with a strong action verb (e.g. \"Build\", \"Deploy\", \"Establish\"). Be concrete and measurable.`,
+      };
+
+      const systemPrompt = `You are an expert HR strategy advisor helping a CPO articulate their organisation's context. ` +
+        `Write in first person. Be specific, professional, and concise. ` +
+        `Organisation context: ${orgSnippet}`;
+
+      const userPrompt = `${fieldInstructions[input.fieldType]}\n\nKeywords / rough idea from the user: "${input.hint}"\n\nReturn ONLY the generated text, no preamble, no quotes.`;
+
+      const resp = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      });
+
+      const content = resp?.choices?.[0]?.message?.content;
+      if (!content || typeof content !== "string") {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI draft generation failed" });
+      }
+      return { draft: content.trim() };
+    }),
+
+  /**
    * Get the draft generation state for the current tenant (polling endpoint).
    */
   getDraftState: protectedProcedure.query(async ({ ctx }) => {
