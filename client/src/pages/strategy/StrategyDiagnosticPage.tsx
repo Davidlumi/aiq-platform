@@ -1776,9 +1776,9 @@ export default function StrategyDiagnosticPage() {
                   const ppKey = `painPoint_${i}`;
                   return (
                     <div key={i} className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                        <Input
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
+                        <Textarea
                           placeholder={`Pain point ${i + 1}`}
                           value={((getField("E", "topPainPoints") ?? []) as string[])[i] ?? ""}
                           onChange={e => {
@@ -1789,12 +1789,13 @@ export default function StrategyDiagnosticPage() {
                             setAiDrafted(prev => ({ ...prev, [ppKey]: false }));
                           }}
                           maxLength={200}
-                          className="flex-1"
+                          rows={2}
+                          className="flex-1 min-w-0 resize-none text-sm leading-snug"
                         />
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1 flex-shrink-0"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1 flex-shrink-0 mt-0.5"
                           onClick={() => toggleAiPrompt(ppKey)}
                           type="button"
                         >
@@ -1849,9 +1850,9 @@ export default function StrategyDiagnosticPage() {
                   const spArrFull = [0,1,2,3,4].map(j => spArr[j] ?? "");
                   return (
                     <div key={i} className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                        <Input
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
+                        <Textarea
                           placeholder={`Priority ${i + 1}`}
                           value={spArrFull[i]}
                           onChange={e => {
@@ -1862,12 +1863,13 @@ export default function StrategyDiagnosticPage() {
                             setAiDrafted(prev => ({ ...prev, [spKey]: false }));
                           }}
                           maxLength={200}
-                          className="flex-1"
+                          rows={2}
+                          className="flex-1 min-w-0 resize-none text-sm leading-snug"
                         />
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1 flex-shrink-0"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1 flex-shrink-0 mt-0.5"
                           onClick={() => toggleAiPrompt(spKey)}
                           type="button"
                         >
