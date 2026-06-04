@@ -5038,3 +5038,10 @@ test
 - [x] DFS smoke: reward@dunder.com unaffected — hr_leader role still grants Strategy Builder access
 - [x] Super User unreachable: no API path sets isPlatformSuperuser (only direct SQL)
 - [ ] UI verification: manually confirm provenance UI renders in Company Profile page
+
+## Pre-work Gate (Jun 2026)
+
+- [x] Gate: Company-wide and Reward domain links locked until Background Inputs (Stage 1) is confirmed complete
+- [x] Gate: Clicking a locked domain redirects to /strategy/diagnostic with "Complete Background Inputs first" toast
+- [x] Gate: Once gate.stage1Cleared=true, both Company-wide and Reward unlock in sidebar
+- [x] Gate: Amber padlock shown on both domains when pre-work not done; tooltip "Complete Background Inputs first"

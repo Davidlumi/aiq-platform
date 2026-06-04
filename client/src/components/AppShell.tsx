@@ -75,8 +75,8 @@ type DomainChild = {
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
-  /** active = this org's current product; locked = built but not active; soon = not yet built */
-  status: "active" | "locked" | "soon";
+  /** active = this org's current product; locked = built but not active; soon = not yet built; prework = locked until Background Inputs complete */
+  status: "active" | "locked" | "soon" | "prework";
 };
 
 // ─── Role constants ───────────────────────────────────────────────────────────
@@ -254,6 +254,7 @@ function DomainChildRow({
 }) {
   const Icon = domain.icon;
   const status = domain.status;
+  const [, navigate] = useLocation();
 
   if (status === "soon") {
     return (
@@ -275,6 +276,34 @@ function DomainChildRow({
               <span className="text-[9px] font-semibold tracking-wide uppercase text-sidebar-foreground/25 bg-sidebar-foreground/8 border border-sidebar-foreground/10 rounded px-1.5 py-0.5">
                 Soon
               </span>
+            </>
+          )}
+        </button>
+      </li>
+    );
+  }
+
+  if (status === "prework") {
+    return (
+      <li>
+        <button
+          onClick={() => {
+            toast.info("Complete Background Inputs first to unlock this domain.");
+            navigate("/strategy/diagnostic");
+          }}
+          className={cn(
+            "w-full flex items-center gap-2.5 py-2 rounded-lg text-xs transition-all duration-150 cursor-pointer select-none",
+            collapsed ? "justify-center px-2" : "px-3 pl-7"
+          )}
+          title={collapsed ? `${domain.label} — Complete Background Inputs first` : undefined}
+        >
+          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-sidebar-foreground/35">
+            <Icon className="w-[15px] h-[15px]" />
+          </span>
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left text-sidebar-foreground/40">{domain.label}</span>
+              <Lock className="w-3 h-3 text-amber-400/70 shrink-0" />
             </>
           )}
         </button>
@@ -417,17 +446,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [location]);
 
-  // Resolve domain children status based on tenantMode
-  // CPO mode:    Company-wide = active, Reward = locked
-  // Reward mode: Reward = active, Company-wide = locked
+  // Resolve domain children status based on tenantMode and pre-work gate.
+  // Pre-work gate (stage1Cleared) takes precedence:
+  //   - If Background Inputs not yet confirmed, BOTH Company-wide and Reward are "prework" (amber lock, redirects to /strategy/diagnostic)
+  //   - Once stage1Cleared:
+  //     CPO mode:    Company-wide = active, Reward = locked
+  //     Reward mode: Reward = active, Company-wide = locked
+  const preworkDone = gate.stage1Cleared;
   const resolvedDomains: DomainChild[] = HR_AI_STRATEGY_DOMAINS.map((d) => {
-    if (isRewardMode) {
-      if (d.label === "Reward") return { ...d, status: "active" as const };
-      if (d.label === "Company-wide") return { ...d, status: "locked" as const };
-    } else {
-      // CPO mode (default): Company-wide active, Reward locked
-      if (d.label === "Company-wide") return { ...d, status: "active" as const };
-      if (d.label === "Reward") return { ...d, status: "locked" as const };
+    if (d.label === "Company-wide" || d.label === "Reward") {
+      if (!preworkDone) return { ...d, status: "prework" as const };
+      // Pre-work done — apply mode-based active/locked
+      if (isRewardMode) {
+        if (d.label === "Reward") return { ...d, status: "active" as const };
+        if (d.label === "Company-wide") return { ...d, status: "locked" as const };
+      } else {
+        // CPO mode (default): Company-wide active, Reward locked
+        if (d.label === "Company-wide") return { ...d, status: "active" as const };
+        if (d.label === "Reward") return { ...d, status: "locked" as const };
+      }
     }
     return d;
   });
