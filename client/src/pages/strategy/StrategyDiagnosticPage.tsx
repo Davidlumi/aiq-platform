@@ -1723,7 +1723,6 @@ export default function StrategyDiagnosticPage() {
                 </p>
                 <Textarea
                   placeholder="Capture verbatim…"
-                  rows={5}
                   value={getField("E", "successNarrative") ?? ""}
                   onChange={e => {
                     updateSection("E", "successNarrative", e.target.value);
@@ -1731,7 +1730,7 @@ export default function StrategyDiagnosticPage() {
                     setAiDrafted(prev => ({ ...prev, successNarrative: false }));
                   }}
                   maxLength={1000}
-                  className="resize-none"
+                  className="min-h-[7rem]"
                 />
                 {aiPromptOpen["successNarrative"] && (
                   <div className="flex items-center gap-2 p-2 rounded-md border border-primary/30 bg-primary/5">
@@ -1789,8 +1788,7 @@ export default function StrategyDiagnosticPage() {
                             setAiDrafted(prev => ({ ...prev, [ppKey]: false }));
                           }}
                           maxLength={200}
-                          rows={2}
-                          className="flex-1 min-w-0 resize-none text-sm leading-snug"
+                          className="flex-1 min-w-0 text-sm leading-snug min-h-[2.5rem]"
                         />
                         <Button
                           variant="ghost"
@@ -1863,8 +1861,7 @@ export default function StrategyDiagnosticPage() {
                             setAiDrafted(prev => ({ ...prev, [spKey]: false }));
                           }}
                           maxLength={200}
-                          rows={2}
-                          className="flex-1 min-w-0 resize-none text-sm leading-snug"
+                          className="flex-1 min-w-0 text-sm leading-snug min-h-[2.5rem]"
                         />
                         <Button
                           variant="ghost"
