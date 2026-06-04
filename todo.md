@@ -4976,3 +4976,12 @@ test
 - [x] U-1c: Audit all external statistics in carousel + MethodologyPage; 10 unverifiable stats replaced with qualitative statements; ISO/IEC 42001 and EU AI Act alignment marked self-assessed
 - [x] U-2: Remove free-text field from UI; remove reasoningRequired gate; renormalised 8 weights ÷0.95 (max delta +0.0016); rationale confirmed still renders from option rationale_text
 - [x] U-3: Added amber banner to results page and 7pt italic disclaimer to assessment report PDF footer; pending legal review flagged in diagnostic report
+
+## Round-2 Reorganisation Patch (Jun 2026)
+
+- [ ] Fix 1: Reorder My Development nav — Skills Check → Learning Plan → Modules → AiQ Coach
+- [ ] Fix 1: Create /modules page with Content Library and Knowledge Base as tabs/sections
+- [ ] Fix 1: Remove Content Library and Knowledge Base as separate top-level nav items
+- [ ] Fix 2: Gate AiQ Coach — locked until user has at least one completed Skills Check session
+- [ ] Check 1: Investigate "Re-assessment in progress / Re-assessment #3" banner on /strategy/reward-prework
+- [ ] Check 2: Confirm Company-wide locked state click behaviour

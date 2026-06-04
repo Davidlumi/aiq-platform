@@ -4,7 +4,7 @@
  * Sidebar: 240px expanded, 56px collapsed.
  *
  * Nav structure:
- * - MY DEVELOPMENT: Skills Check, AiQ Coach (gated), Learning Plan, Content Library, Knowledge Base
+ * - MY DEVELOPMENT: Skills Check, AiQ Coach (gated), Learning Plan, Modules
  * - MY TEAM: Overview, People (CPO + Manager)
  * - AI STRATEGY: HR AI Strategy (expandable, 7 domain children), Build Strategy, Board Report, Company Assessment, Company Profile
  * - ADMIN: People & Org, Users, Beta Applications
@@ -100,10 +100,9 @@ const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [
 const NAV_ITEMS: NavItem[] = [
   // -- My Development (all roles) ----------------------------------------------
   { label: "Skills Check",     path: "/assessment",     icon: ClipboardList, section: "mydev" },
-  { label: "AiQ Coach",        path: "/coach",          icon: MessageSquare, section: "mydev" },
   { label: "Learning Plan",    path: "/learning",       icon: BookOpen,      section: "mydev" },
-  { label: "Content Library",  path: "/library",        icon: Library,       section: "mydev" },
-  { label: "Knowledge Base",   path: "/knowledge-base", icon: BookMarked,    section: "mydev" },
+  { label: "Modules",          path: "/modules",        icon: Library,       section: "mydev" },
+  { label: "AiQ Coach",        path: "/coach",          icon: MessageSquare, section: "mydev" },
 
   // -- My Team (CPO + Manager) --------------------------------------------------
   {

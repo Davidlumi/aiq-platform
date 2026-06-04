@@ -60,6 +60,7 @@ import AssessmentResultsPage from "./pages/assessment/AssessmentResultsPage";
 import LearningPlanPage from "./pages/learning/LearningPlanPage";
 import ContentLibraryPage from "./pages/learning/ContentLibraryPage";
 import KnowledgeBasePage from "./pages/learning/KnowledgeBasePage";
+import ModulesPage from "./pages/learning/ModulesPage";
 import ModulePlayerPage from "./pages/learning/ModulePlayerPage";
 import DomainPathwayPage from "./pages/learning/DomainPathwayPage";
 import TeamDashboardPage from "./pages/learning/TeamDashboardPage";
@@ -281,11 +282,15 @@ function Router() {
       <Route path="/learning">
         <ProtectedRoute component={LearningPlanPage} />
       </Route>
+      <Route path="/modules">
+        <ProtectedRoute component={ModulesPage} />
+      </Route>
+      {/* Legacy routes — redirect to unified /modules page */}
       <Route path="/library">
-        <ProtectedRoute component={ContentLibraryPage} />
+        <Redirect to="/modules" />
       </Route>
       <Route path="/knowledge-base">
-        <ProtectedRoute component={KnowledgeBasePage} />
+        <Redirect to="/modules" />
       </Route>
       <Route path="/learning/module/:moduleId">
         <ProtectedRoute component={ModulePlayerPage} />
