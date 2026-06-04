@@ -3568,4 +3568,24 @@ Domain scores (sorted highest to lowest):\n${domainLines}\n\nGenerate:\n1. 2-3 c
         items: rows,
       };
     }),
+
+  /**
+   * Lightweight gate check: has the current user completed at least one assessment session?
+   * Used by AppShell to conditionally show the AiQ Coach nav item.
+   */
+  hasCompleted: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { hasCompleted: false };
+    const row = await db
+      .select({ id: assessmentSessions.id })
+      .from(assessmentSessions)
+      .where(
+        and(
+          eq(assessmentSessions.userId, ctx.user.id),
+          eq(assessmentSessions.state, "completed")
+        )
+      )
+      .limit(1);
+    return { hasCompleted: row.length > 0 };
+  }),
 });

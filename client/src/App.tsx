@@ -47,6 +47,7 @@ import CompanyOnboardingPage from "./pages/company/CompanyOnboardingPage";
 import CompanyAssessmentSessionPage from "./pages/company/CompanyAssessmentSessionPage";
 import CompanyAssessmentResultsPage from "./pages/company/CompanyAssessmentResultsPage";
 import CompanyAssessmentLandingPage from "./pages/company/CompanyAssessmentLandingPage";
+import CompanyAssessmentHomePage from "./pages/company/CompanyAssessmentHomePage";
 // Legacy dashboards (admin/auditor fallback)
 import AuditorDashboard from "./pages/dashboard/AuditorDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
@@ -480,6 +481,9 @@ function Router() {
       <Route path="/compare" component={ComparePage} />
       {/* Company HR AI Assessment routes */}
       <Route path="/company-assessment">
+        <ProtectedRoute component={CompanyAssessmentHomePage} />
+      </Route>
+      <Route path="/company-assessment/session">
         <ProtectedRoute component={CompanyAssessmentLandingPage} />
       </Route>
       <Route path="/company-assessment/new">

@@ -1524,7 +1524,7 @@ export default function AIStrategyPage() {
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground mb-1">No Company Assessment completed</p>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">Complete the Company Assessment to ground this strategy in your organisation's actual AI maturity.</p>
-              <a href="/company-assessment">
+              <a href="/company-assessment/session">
                 <Button size="sm" variant="outline" className="dark:border-blue-500/30 border-blue-300 dark:text-blue-400 text-blue-600 hover:bg-blue-500/10 h-7 text-xs">
                   <Building2 className="w-3 h-3 mr-1.5" />Complete Company Assessment
                 </Button>

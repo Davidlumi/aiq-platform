@@ -2,12 +2,20 @@
  * AppShell - AiQ Platform Navigation Shell
  * Uses semantic CSS variables from index.css for all colours.
  * Sidebar: 240px expanded, 56px collapsed.
+ *
+ * Nav structure:
+ * - MY DEVELOPMENT: Skills Check, AiQ Coach (gated), Learning Plan, Content Library, Knowledge Base
+ * - MY TEAM: Overview, People (CPO + Manager)
+ * - AI STRATEGY: HR AI Strategy (expandable, 7 domain children), Build Strategy, Board Report, Company Assessment, Company Profile
+ * - ADMIN: People & Org, Users, Beta Applications
  */
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useViewAs, VIEW_AS_LABELS, type ViewAsRole } from "@/contexts/ViewAsContext";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +30,6 @@ import {
   BookOpen,
   Library,
   BarChart3,
-  Shield,
   FileText,
   Users,
   Building2,
@@ -32,10 +39,7 @@ import {
   User,
   Menu,
   Bell,
-  FolderOpen,
-  Layers,
   BookMarked,
-  ShieldCheck,
   Target,
   UserSearch,
   Eye,
@@ -45,10 +49,19 @@ import {
   MessageSquare,
   Sun,
   Moon,
+  Lock,
+  Clock,
+  Briefcase,
+  GraduationCap,
+  Scale,
+  Heart,
+  Users2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useGate } from "@/contexts/GateContext";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type NavItem = {
   label: string;
@@ -58,17 +71,39 @@ type NavItem = {
   section?: string;
 };
 
-// --- Role constants -----------------------------------------------------------
+type DomainChild = {
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
+  /** active = this org's current product; locked = built but not active; soon = not yet built */
+  status: "active" | "locked" | "soon";
+};
+
+// ─── Role constants ───────────────────────────────────────────────────────────
+
 const CPO_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];
 const MANAGER_ROLES = ["manager"];
 
+// ─── HR AI Strategy domain children ──────────────────────────────────────────
+// Status is resolved dynamically based on tenantMode in the component.
+// Base status here is for CPO mode; reward mode inverts Company-wide ↔ Reward.
+const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [
+  { label: "Company-wide",        path: "/company-assessment",         icon: Building2,    status: "active" },
+  { label: "Reward",              path: "/strategy/reward-prework",    icon: Briefcase,    status: "locked" },
+  { label: "Talent",              path: "/strategy/talent",            icon: UserSearch,   status: "soon"   },
+  { label: "L&D",                 path: "/strategy/ld",                icon: GraduationCap, status: "soon"  },
+  { label: "Employee Relations",  path: "/strategy/er",                icon: Scale,        status: "soon"   },
+  { label: "Employee Experience", path: "/strategy/ex",                icon: Heart,        status: "soon"   },
+  { label: "D&I",                 path: "/strategy/di",                icon: Users2,       status: "soon"   },
+];
+
 const NAV_ITEMS: NavItem[] = [
   // -- My Development (all roles) ----------------------------------------------
-  { label: "AiQ Coach",       path: "/coach",          icon: MessageSquare, section: "mydev" },
-  { label: "AI Skills Check",  path: "/assessment",     icon: ClipboardList, section: "mydev" },
-  { label: "Learning Plan",   path: "/learning",       icon: BookOpen,      section: "mydev" },
-  { label: "Content Library", path: "/library",        icon: Library,       section: "mydev" },
-  { label: "Knowledge Base",  path: "/knowledge-base", icon: BookMarked,    section: "mydev" },
+  { label: "Skills Check",     path: "/assessment",     icon: ClipboardList, section: "mydev" },
+  { label: "AiQ Coach",        path: "/coach",          icon: MessageSquare, section: "mydev" },
+  { label: "Learning Plan",    path: "/learning",       icon: BookOpen,      section: "mydev" },
+  { label: "Content Library",  path: "/library",        icon: Library,       section: "mydev" },
+  { label: "Knowledge Base",   path: "/knowledge-base", icon: BookMarked,    section: "mydev" },
 
   // -- My Team (CPO + Manager) --------------------------------------------------
   {
@@ -85,15 +120,22 @@ const NAV_ITEMS: NavItem[] = [
     roles: [...CPO_ROLES, ...MANAGER_ROLES],
     section: "myteam",
   },
-
-  // -- AI Strategy (CPO only) ---------------------------------------------------
   {
-    label: "HR AI Strategy",
-    path: "/strategy",
-    icon: Target,
-    roles: CPO_ROLES,
-    section: "aistrategy",
+    label: "Team Progress",
+    path: "/manager/team-progress",
+    icon: BarChart3,
+    roles: MANAGER_ROLES,
+    section: "myteam",
   },
+  {
+    label: "Conversation Prompts",
+    path: "/manager/conversation-prompts",
+    icon: Bell,
+    roles: MANAGER_ROLES,
+    section: "myteam",
+  },
+
+  // -- AI Strategy (CPO only) — HR AI Strategy is rendered as expandable below -
   {
     label: "Build Strategy",
     path: "/strategy/diagnostic",
@@ -109,32 +151,11 @@ const NAV_ITEMS: NavItem[] = [
     section: "aistrategy",
   },
   {
-    label: "Company Assessment",
-    path: "/company-assessment",
-    icon: Building2,
-    roles: CPO_ROLES,
-    section: "aistrategy",
-  },
-  {
     label: "Company Profile",
     path: "/company-profile",
     icon: Building2,
     roles: CPO_ROLES,
     section: "aistrategy",
-  },
-  {
-    label: "Team Progress",
-    path: "/manager/team-progress",
-    icon: BarChart3,
-    roles: MANAGER_ROLES,
-    section: "myteam",
-  },
-  {
-    label: "Conversation Prompts",
-    path: "/manager/conversation-prompts",
-    icon: Bell,
-    roles: MANAGER_ROLES,
-    section: "myteam",
   },
 
   // -- Admin (CPO only) ---------------------------------------------------------
@@ -168,7 +189,8 @@ const SECTION_LABELS: Record<string, string> = {
   admin:       "Admin",
 };
 
-/** AiQ logo mark - dark slate circle, white A+Q, primary i dot */
+// ─── Logo components ──────────────────────────────────────────────────────────
+
 function AiQLogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg
@@ -218,13 +240,136 @@ function AiQWordmark({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+// ─── Domain child row ─────────────────────────────────────────────────────────
+
+function DomainChildRow({
+  domain,
+  isActive,
+  collapsed,
+  onNavigate,
+}: {
+  domain: DomainChild;
+  isActive: boolean;
+  collapsed: boolean;
+  onNavigate: () => void;
+}) {
+  const Icon = domain.icon;
+  const status = domain.status;
+
+  if (status === "soon") {
+    return (
+      <li>
+        <button
+          onClick={() => toast.info(`${domain.label} strategy module is coming soon.`)}
+          className={cn(
+            "w-full flex items-center gap-2.5 py-2 rounded-lg text-xs transition-all duration-150 cursor-pointer select-none",
+            collapsed ? "justify-center px-2" : "px-3 pl-7"
+          )}
+          title={collapsed ? `${domain.label} — Coming Soon` : undefined}
+        >
+          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-sidebar-foreground/25">
+            <Icon className="w-[15px] h-[15px]" />
+          </span>
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left text-sidebar-foreground/30">{domain.label}</span>
+              <span className="text-[9px] font-semibold tracking-wide uppercase text-sidebar-foreground/25 bg-sidebar-foreground/8 border border-sidebar-foreground/10 rounded px-1.5 py-0.5">
+                Soon
+              </span>
+            </>
+          )}
+        </button>
+      </li>
+    );
+  }
+
+  if (status === "locked") {
+    return (
+      <li>
+        <button
+          onClick={() => toast.info(`${domain.label} is built but not active for your organisation. Contact your account manager to enable it.`)}
+          className={cn(
+            "w-full flex items-center gap-2.5 py-2 rounded-lg text-xs transition-all duration-150 cursor-pointer select-none",
+            collapsed ? "justify-center px-2" : "px-3 pl-7"
+          )}
+          title={collapsed ? `${domain.label} — Locked` : undefined}
+        >
+          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-sidebar-foreground/35">
+            <Icon className="w-[15px] h-[15px]" />
+          </span>
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left text-sidebar-foreground/40">{domain.label}</span>
+              <Lock className="w-3 h-3 text-sidebar-foreground/25 shrink-0" />
+            </>
+          )}
+        </button>
+      </li>
+    );
+  }
+
+  // active
+  return (
+    <li>
+      <Link href={domain.path}>
+        <span
+          onClick={onNavigate}
+          className={cn(
+            "flex items-center gap-2.5 py-2 rounded-lg text-xs transition-all duration-150 cursor-pointer select-none",
+            collapsed ? "justify-center px-2" : "px-3 pl-7",
+            isActive
+              ? "bg-primary/14 text-primary font-semibold"
+              : "text-sidebar-foreground/55 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/80"
+          )}
+          title={collapsed ? domain.label : undefined}
+          aria-current={isActive ? "page" : undefined}
+        >
+          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center">
+            <Icon className="w-[15px] h-[15px]" />
+          </span>
+          {!collapsed && <span className="flex-1">{domain.label}</span>}
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+// ─── Page transition skeleton ─────────────────────────────────────────────────
+
+function PageTransitionSkeleton() {
+  return (
+    <div className="animate-pulse space-y-6 px-1 pt-2">
+      {/* Header bar */}
+      <div className="h-8 w-2/5 rounded-lg bg-foreground/8" />
+      {/* Sub-header */}
+      <div className="h-4 w-1/3 rounded bg-foreground/5" />
+      {/* Card grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="rounded-xl border border-border/40 bg-foreground/4 p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-foreground/8 shrink-0" />
+              <div className="h-4 w-2/3 rounded bg-foreground/8" />
+            </div>
+            <div className="h-3 w-full rounded bg-foreground/5" />
+            <div className="h-3 w-4/5 rounded bg-foreground/5" />
+            <div className="h-2 w-full rounded-full bg-foreground/5 mt-2" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
-  // SSE real-time notifications (replaces WebSocket requirement)
   useNotifications();
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [hrAiStrategyOpen, setHrAiStrategyOpen] = useState(true);
 
   const { viewAs, setViewAs, effectiveRoles } = useViewAs();
   const userRoles = ((user as any)?.roles as string[]) ?? [];
@@ -233,28 +378,60 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const gate = useGate();
   const isRewardMode = gate.tenantMode === "reward";
 
-  // Use effectiveRoles for nav filtering (demo role override)
-  // For reward-mode tenants, swap the CPO AI Strategy items for reward journey items.
-  // IMPORTANT: In reward mode we must include CPO-role-gated items BEFORE the role filter
-  // runs so they can be remapped to reward paths. reward_leader has roles:[] so without
-  // this exception the My Team and AI Strategy items are stripped before remapping.
-  const REWARD_REMAP_PATHS = new Set(["/strategy", "/strategy/diagnostic", "/strategy/board-report", "/company-assessment", "/dashboard", "/people"]);
+  // Coach gating: only show if user has at least one completed assessment session
+  const { data: coachGate } = trpc.assessment.hasCompleted.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const coachUnlocked = coachGate?.hasCompleted ?? false;
+
+  // Page transition state: show skeleton briefly when navigating to a domain page
+  const DOMAIN_PATHS = new Set(HR_AI_STRATEGY_DOMAINS.filter(d => d.status === "active").map(d => d.path));
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevLocation = useRef(location);
+
+  useEffect(() => {
+    const isDomainNav =
+      DOMAIN_PATHS.has(location) ||
+      location.startsWith("/strategy/reward") ||
+      location.startsWith("/company-assessment");
+
+    if (location !== prevLocation.current && isDomainNav) {
+      setIsTransitioning(true);
+      if (transitionTimer.current) clearTimeout(transitionTimer.current);
+      transitionTimer.current = setTimeout(() => setIsTransitioning(false), 420);
+    }
+    prevLocation.current = location;
+    return () => {
+      if (transitionTimer.current) clearTimeout(transitionTimer.current);
+    };
+  }, [location]);
+
+  // Resolve domain children status based on tenantMode
+  const resolvedDomains: DomainChild[] = HR_AI_STRATEGY_DOMAINS.map((d) => {
+    if (isRewardMode) {
+      // In reward mode: Reward is active, Company-wide is locked
+      if (d.label === "Reward") return { ...d, status: "active" as const };
+      if (d.label === "Company-wide") return { ...d, status: "locked" as const };
+    }
+    return d;
+  });
+
+  // Reward mode: remap strategy items to reward equivalents
+  const REWARD_REMAP_PATHS = new Set(["/strategy/diagnostic", "/strategy/board-report", "/dashboard", "/people"]);
   const rawVisibleItems = NAV_ITEMS
     .filter((item) => {
-      // In reward mode, always include items that will be remapped (regardless of role)
       if (isRewardMode && REWARD_REMAP_PATHS.has(item.path)) return true;
       return !item.roles || item.roles.some((r) => effectiveRoles.includes(r));
     })
     .map((item) => {
       if (!isRewardMode) return item;
-      // Replace CPO strategy items with reward equivalents
-      if (item.path === "/strategy") return { ...item, label: "Reward Strategy", path: "/strategy/reward-prework" };
       if (item.path === "/strategy/diagnostic") return { ...item, label: "Build Strategy", path: "/strategy/reward-principles" };
       if (item.path === "/strategy/board-report") return { ...item, label: "Outputs & Report", path: "/strategy/reward-outputs" };
-      if (item.path === "/company-assessment") return { ...item, label: "Capability Review", path: "/strategy/reward-capability" };
       return item;
     });
-  // Deduplicate by path — keep first occurrence only (prevents duplicate React keys)
+
   const seenPaths = new Set<string>();
   const visibleItems = rawVisibleItems.filter((item) => {
     if (seenPaths.has(item.path)) return false;
@@ -272,13 +449,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       ? `${(user as any).firstName} ${(user as any).lastName}`
       : (user as any)?.email ?? "User";
 
-  const primaryRole = userRoles[0] ?? "learner";
   const roleLabel = VIEW_AS_LABELS[viewAs];
 
   function isActive(path: string) {
     if (path === "/dashboard") return location === "/dashboard" || location === "/";
     return location === path || location.startsWith(path + "/");
   }
+
+  const isDomainActive = resolvedDomains.some((d) => d.status === "active" && isActive(d.path));
 
   // Group nav items by section
   const sections: { key: string; label: string; items: NavItem[] }[] = [];
@@ -291,6 +469,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
     sections[sections.length - 1].items.push(item);
   }
+
+  const isCpoUser = userRoles.some(r => CPO_ROLES.includes(r));
 
   const SidebarInner = () => (
     <div className="flex flex-col h-full aiq-sidebar-bg border-r border-sidebar-border">
@@ -334,7 +514,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {sections.map((section) => (
           <div key={section.key} className="mb-1">
             {section.label && !collapsed && (
-              // Change 7d: Reduced section divider weight — smaller, lighter, less prominent
               <div
                 className="px-4 pt-3 pb-1 text-[10px] font-medium tracking-[0.07em] uppercase text-sidebar-foreground/25"
                 aria-hidden="true"
@@ -346,29 +525,115 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               {section.items.map((item) => {
                 const active = isActive(item.path);
                 const Icon = item.icon;
+                const isCoach = item.path === "/coach";
+
+                // HR AI Strategy expandable parent — inject before aistrategy items
+                const isFirstAiStrategyItem = section.key === "aistrategy" && item === section.items[0];
+
                 return (
-                  <li key={item.path}>
-                    <Link href={item.path}>
-                      <span
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
-                          collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
-                          // Change 7d: Non-active items slightly more muted
-                          active
-                            ? "bg-primary/14 text-primary font-semibold border-l-primary"
-                            : "text-sidebar-foreground/45 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/75 border-l-transparent",
-                        )}
-                        title={collapsed ? item.label : undefined}
-                        aria-current={active ? "page" : undefined}
-                      >
-                        <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
-                          <Icon className="w-[18px] h-[18px]" />
-                        </span>
-                        {!collapsed && <span>{item.label}</span>}
-                      </span>
-                    </Link>
-                  </li>
+                  <>
+                    {isFirstAiStrategyItem && isCpoUser && (
+                      <li key="hr-ai-strategy-parent">
+                        {/* HR AI Strategy expandable parent */}
+                        <button
+                          onClick={() => {
+                            if (!collapsed) setHrAiStrategyOpen((v) => !v);
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
+                            collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
+                            isDomainActive
+                              ? "bg-primary/14 text-primary font-semibold border-l-primary"
+                              : "text-sidebar-foreground/45 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/75 border-l-transparent"
+                          )}
+                          title={collapsed ? "HR AI Strategy" : undefined}
+                          aria-expanded={hrAiStrategyOpen}
+                        >
+                          <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
+                            <Target className="w-[18px] h-[18px]" />
+                          </span>
+                          {!collapsed && (
+                            <>
+                              <span className="flex-1 text-left">HR AI Strategy</span>
+                              <ChevronDown
+                                className={cn(
+                                  "w-3.5 h-3.5 transition-transform duration-200",
+                                  hrAiStrategyOpen ? "rotate-180" : ""
+                                )}
+                              />
+                            </>
+                          )}
+                        </button>
+
+                        {/* Domain children — animated expand/collapse */}
+                        <div
+                          className={cn(
+                            "overflow-hidden transition-all duration-250 ease-in-out",
+                            hrAiStrategyOpen && !collapsed ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                          )}
+                          style={{ transitionProperty: "max-height, opacity" }}
+                        >
+                          <ul className="space-y-0.5 mt-0.5" role="list">
+                            {resolvedDomains.map((domain) => (
+                              <DomainChildRow
+                                key={domain.label}
+                                domain={domain}
+                                isActive={isActive(domain.path)}
+                                collapsed={collapsed}
+                                onNavigate={() => setMobileOpen(false)}
+                              />
+                            ))}
+                          </ul>
+                        </div>
+                      </li>
+                    )}
+
+                    <li key={item.path}>
+                      {isCoach && !coachUnlocked ? (
+                        // Locked Coach item
+                        <button
+                          onClick={() => toast.info("Complete your Skills Check first to unlock AiQ Coach.")}
+                          className={cn(
+                            "w-full flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
+                            collapsed ? "justify-center px-2" : "px-3 border-l-[3px] border-l-transparent",
+                            "text-sidebar-foreground/25 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/40"
+                          )}
+                          title={collapsed ? "AiQ Coach (complete Skills Check to unlock)" : undefined}
+                          aria-label="AiQ Coach — complete Skills Check to unlock"
+                        >
+                          <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
+                            <Icon className="w-[18px] h-[18px]" />
+                          </span>
+                          {!collapsed && (
+                            <>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              <Lock className="w-3 h-3 text-sidebar-foreground/20 shrink-0" />
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <Link href={item.path}>
+                          <span
+                            onClick={() => setMobileOpen(false)}
+                            className={cn(
+                              "flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
+                              collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
+                              active
+                                ? "bg-primary/14 text-primary font-semibold border-l-primary"
+                                : "text-sidebar-foreground/45 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/75 border-l-transparent",
+                            )}
+                            title={collapsed ? item.label : undefined}
+                            aria-current={active ? "page" : undefined}
+                          >
+                            <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
+                              <Icon className="w-[18px] h-[18px]" />
+                            </span>
+                            {!collapsed && <span>{item.label}</span>}
+                          </span>
+                        </Link>
+                      )}
+                    </li>
+                  </>
                 );
               })}
             </ul>
@@ -376,7 +641,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         ))}
       </nav>
 
-      {/* Change 7d: View As role switcher — admin/CPO users only */}
+      {/* View As role switcher — admin/CPO users only */}
       {!collapsed && (userRoles.some(r => CPO_ROLES.includes(r)) || userRoles.includes('platform_super_admin')) && (
         <div className="shrink-0 px-3 pb-2">
           <div className="relative">
@@ -411,7 +676,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-      {/* User profile footer — Change 7d: lower contrast */}
+
+      {/* User profile footer */}
       <div className="shrink-0 p-2 border-t border-sidebar-border/50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -422,7 +688,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               )}
               aria-label="Account menu"
             >
-              {/* Change 7d: Avatar lower contrast */}
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-sidebar-foreground/10 text-sidebar-foreground/50">
                 {initials}
               </div>
@@ -474,9 +739,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden aiq-main-bg">
-      {/* Skip to content link for keyboard/screen reader users */}
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
-      {/* Desktop sidebar - 240px expanded, 56px collapsed */}
+
+      {/* Desktop sidebar */}
       <aside
         className={cn(
           "hidden lg:flex flex-col transition-all shrink-0",
@@ -513,7 +778,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden aiq-dot-grid">
         {/* Top bar */}
         <header className="flex items-center h-14 px-4 lg:px-6 gap-3 shrink-0 aiq-header-glass sticky top-0 z-20">
-          {/* Mobile menu button */}
           <button
             onClick={() => setMobileOpen(true)}
             className="lg:hidden p-2 rounded transition-colors text-muted-foreground hover:text-foreground"
@@ -522,7 +786,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2">
             <AiQLogoMark size={26} />
             <span className="font-semibold text-[15px] text-foreground">
@@ -532,9 +795,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1" />
 
-          {/* Right actions */}
           <div className="flex items-center gap-1">
-            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -604,7 +865,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Page content */}
         <main id="main-content" className="flex-1 min-h-0 overflow-y-auto relative" tabIndex={-1}>
-          {/* Ambient glow blobs for depth */}
+          {/* Ambient glow blobs */}
           <div
             className="aiq-glow-blob"
             style={{
@@ -625,8 +886,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               background: 'oklch(13% 0.035 220 / 0.16)',
             }}
           />
-          <div key={location} className="aiq-fade-in relative z-10 px-6 md:px-10 py-6" style={{ animationDuration: '0.2s' }}>
-            {children}
+          <div className="relative z-10 px-6 md:px-10 py-6">
+            {isTransitioning ? (
+              <PageTransitionSkeleton />
+            ) : (
+              <div key={location} className="aiq-fade-in" style={{ animationDuration: '0.22s' }}>
+                {children}
+              </div>
+            )}
           </div>
         </main>
       </div>

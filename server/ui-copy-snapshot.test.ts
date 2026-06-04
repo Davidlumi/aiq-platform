@@ -43,9 +43,10 @@ describe("UI Copy Snapshot (Fix 4)", () => {
     expect(content).not.toMatch(/["'`]Capability Assessment["'`]/);
   });
 
-  it("AppShell.tsx nav label for assessment is 'AI Skills Check'", () => {
+  it("AppShell.tsx nav label for assessment is 'Skills Check'", () => {
     const content = readClient("components/AppShell.tsx");
-    expect(content).toContain("AI Skills Check");
+    // Renamed from 'AI Skills Check' to 'Skills Check' in nav reorganisation
+    expect(content).toContain("Skills Check");
   });
 
   it("DashboardLayout.tsx nav label for assessment is 'AI Skills Check'", () => {
