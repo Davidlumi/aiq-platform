@@ -56,6 +56,7 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
 
 const DEMO_CREDENTIALS = [
   { role: "Reward Leader", email: "reward@dunder.com", org: "dunder" },
+  { role: "CPO", email: "cpo@mifflin.com", org: "mifflin" },
 ];
 
 const FEATURES = [
