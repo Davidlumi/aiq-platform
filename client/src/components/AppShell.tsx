@@ -376,7 +376,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [viewAsOpen, setViewAsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const gate = useGate();
-  const isRewardMode = gate.tenantMode === "reward";
+  // Use user.tenantMode as immediate fallback while gate is loading to avoid flash of wrong nav
+  const userTenantMode = (user as any)?.tenantMode as string | undefined;
+  const isRewardMode = gate.tenantMode === "reward" || (gate.isLoading && userTenantMode === "reward");
 
   // Coach gating: only show if user has at least one completed assessment session
   const { data: coachGate } = trpc.assessment.hasCompleted.useQuery(undefined, {
@@ -471,6 +473,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isCpoUser = userRoles.some(r => CPO_ROLES.includes(r));
+  // Show HR AI Strategy expandable for CPO users OR reward mode (reward_leader)
+  const showHrAiStrategy = isCpoUser || isRewardMode;
 
   const SidebarInner = () => (
     <div className="flex flex-col h-full aiq-sidebar-bg border-r border-sidebar-border">
@@ -532,7 +536,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
                 return (
                   <Fragment key={item.path}>
-                    {isFirstAiStrategyItem && isCpoUser && (
+                    {isFirstAiStrategyItem && showHrAiStrategy && (
                       <li key="hr-ai-strategy-parent">
                         {/* HR AI Strategy expandable parent */}
                         <button
@@ -588,6 +592,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       </li>
                     )}
 
+                    {/* Hide flat aistrategy items when HR AI Strategy expandable parent is shown */}
+                    {!(section.key === "aistrategy" && showHrAiStrategy) && (
                     <li key={item.path}>
                       {isCoach && !coachUnlocked ? (
                         // Locked Coach item
@@ -633,6 +639,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         </Link>
                       )}
                     </li>
+                    )}
                   </Fragment>
                 );
               })}
