@@ -9,7 +9,7 @@
  * - AI STRATEGY: HR AI Strategy (expandable, 7 domain children), Build Strategy, Board Report, Company Assessment, Company Profile
  * - ADMIN: People & Org, Users, Beta Applications
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useViewAs, VIEW_AS_LABELS, type ViewAsRole } from "@/contexts/ViewAsContext";
 import { Link, useLocation } from "wouter";
@@ -531,7 +531,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 const isFirstAiStrategyItem = section.key === "aistrategy" && item === section.items[0];
 
                 return (
-                  <>
+                  <Fragment key={item.path}>
                     {isFirstAiStrategyItem && isCpoUser && (
                       <li key="hr-ai-strategy-parent">
                         {/* HR AI Strategy expandable parent */}
@@ -633,7 +633,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         </Link>
                       )}
                     </li>
-                  </>
+                  </Fragment>
                 );
               })}
             </ul>
