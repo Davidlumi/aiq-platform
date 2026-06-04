@@ -434,25 +434,30 @@ export default function StrategyDiagnosticPage() {
   // ── Section E: AI-assisted draft generation ──────────────────────────────
   const aiDraftMut = trpc.backgroundInputs.aiDraft.useMutation();
   // Key format: "successNarrative" | "painPoint_0" | "painPoint_1" | "painPoint_2" | "strategicPriority_0" … "strategicPriority_4"
-  const [aiPromptOpen, setAiPromptOpen] = useState<Record<string, boolean>>({});
-  const [aiHints, setAiHints] = useState<Record<string, string>>({});
   // Track which keys have ever had a draft generated (to show Regenerate)
   const [aiDrafted, setAiDrafted] = useState<Record<string, boolean>>({});
   // Track which keys are currently generating
   const [aiPending, setAiPending] = useState<Record<string, boolean>>({});
 
-  const toggleAiPrompt = (key: string) => {
-    setAiPromptOpen(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
+  // New UX: the textarea value IS the hint. AI button reads current field value as the keyword prompt,
+  // then replaces it with the generated draft.
   const runAiDraft = async (
     key: string,
     fieldType: "successNarrative" | "painPoint" | "strategicPriority",
     index?: number,
   ) => {
-    const hint = aiHints[key] ?? "";
+    // Read the current field value as the hint
+    let hint = "";
+    if (fieldType === "successNarrative") {
+      hint = (getField("E", "successNarrative") as string) ?? "";
+    } else if (fieldType === "painPoint" && index !== undefined) {
+      hint = (((getField("E", "topPainPoints") ?? []) as string[])[index]) ?? "";
+    } else if (fieldType === "strategicPriority" && index !== undefined) {
+      const spArr = ((getField("E", "strategicPriorities") ?? []) as string[]);
+      hint = spArr[index] ?? "";
+    }
     if (!hint.trim()) {
-      toast.error("Please enter a few keywords first");
+      toast.error("Type a few keywords first, then click AI to generate");
       return;
     }
     setAiPending(prev => ({ ...prev, [key]: true }));
@@ -470,7 +475,6 @@ export default function StrategyDiagnosticPage() {
         updateSection("E", "strategicPriorities", pts);
       }
       setAiDrafted(prev => ({ ...prev, [key]: true }));
-      setAiPromptOpen(prev => ({ ...prev, [key]: false }));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "AI draft failed";
       toast.error("AI generation failed", { description: msg });
@@ -1705,64 +1709,35 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Success narrative</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs text-muted-foreground hover:text-primary gap-1"
-                    onClick={() => toggleAiPrompt("successNarrative")}
-                    type="button"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    {aiDrafted["successNarrative"] ? "Regenerate" : "Generate"}
-                  </Button>
-                </div>
+                <Label>Success narrative</Label>
                 <p className="text-xs text-muted-foreground italic">
                   "Imagine it's {getField("E", "timeHorizonMonths") ? `${getField("E", "timeHorizonMonths")} months` : "[horizon]"} from now and someone asks how your strategy went — what do you want to be able to say?"
                 </p>
-                <Textarea
-                  placeholder="Capture verbatim…"
-                  value={getField("E", "successNarrative") ?? ""}
-                  onChange={e => {
-                    updateSection("E", "successNarrative", e.target.value);
-                    // Manual edit resets the drafted flag so Generate replaces Regenerate
-                    setAiDrafted(prev => ({ ...prev, successNarrative: false }));
-                  }}
-                  maxLength={1000}
-                  className="min-h-[7rem]"
-                />
-                {aiPromptOpen["successNarrative"] && (
-                  <div className="flex items-center gap-2 p-2 rounded-md border border-primary/30 bg-primary/5">
-                    <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                    <Input
-                      className="h-7 text-xs flex-1 border-0 bg-transparent focus-visible:ring-0 px-1"
-                      placeholder="Describe in a few words (e.g. 'faster hiring, less admin')"
-                      value={aiHints["successNarrative"] ?? ""}
-                      onChange={e => setAiHints(prev => ({ ...prev, successNarrative: e.target.value }))}
-                      onKeyDown={e => { if (e.key === "Enter") runAiDraft("successNarrative", "successNarrative"); }}
-                      autoFocus
-                    />
-                    <Button
-                      size="sm"
-                      className="h-7 px-3 text-xs"
-                      disabled={aiPending["successNarrative"]}
-                      onClick={() => runAiDraft("successNarrative", "successNarrative")}
-                      type="button"
-                    >
-                      {aiPending["successNarrative"] ? <Loader2 className="w-3 h-3 animate-spin" /> : "Generate"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground"
-                      onClick={() => toggleAiPrompt("successNarrative")}
-                      type="button"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
+                <div className="relative">
+                  <Textarea
+                    placeholder="Type a few keywords or write your own… then hit ✨ AI to expand"
+                    value={getField("E", "successNarrative") ?? ""}
+                    onChange={e => {
+                      updateSection("E", "successNarrative", e.target.value);
+                      setAiDrafted(prev => ({ ...prev, successNarrative: false }));
+                    }}
+                    maxLength={1000}
+                    className="min-h-[7rem] pr-24"
+                  />
+                  <Button
+                    size="sm"
+                    variant={aiDrafted["successNarrative"] ? "outline" : "default"}
+                    className="absolute bottom-2 right-2 h-7 px-2.5 text-xs gap-1"
+                    disabled={aiPending["successNarrative"]}
+                    onClick={() => runAiDraft("successNarrative", "successNarrative")}
+                    type="button"
+                  >
+                    {aiPending["successNarrative"]
+                      ? <Loader2 className="w-3 h-3 animate-spin" />
+                      : <Sparkles className="w-3 h-3" />}
+                    {aiDrafted["successNarrative"] ? "Regen" : "AI"}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground text-right">
                   {(getField("E", "successNarrative") as string ?? "").length}/1000
                 </p>
@@ -1770,68 +1745,39 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-3">
                 <Label>Top 3 pain points</Label>
-                <p className="text-xs text-muted-foreground">What's slowing HR down most right now?</p>
+                <p className="text-xs text-muted-foreground">What's slowing HR down most right now? Type a few words then hit ✨ AI to expand.</p>
                 {[0, 1, 2].map(i => {
                   const ppKey = `painPoint_${i}`;
                   return (
-                    <div key={i} className="space-y-1">
-                      <div className="flex items-start gap-2">
-                        <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
+                      <div className="relative flex-1 min-w-0">
                         <Textarea
-                          placeholder={`Pain point ${i + 1}`}
+                          placeholder={`Type a few words… e.g. "manual admin, no time for strategy"`}
                           value={((getField("E", "topPainPoints") ?? []) as string[])[i] ?? ""}
                           onChange={e => {
                             const pts = [...((getField("E", "topPainPoints") ?? ["", "", ""]) as string[])];
                             pts[i] = e.target.value;
                             updateSection("E", "topPainPoints", pts);
-                            // Manual edit resets drafted flag
                             setAiDrafted(prev => ({ ...prev, [ppKey]: false }));
                           }}
                           maxLength={200}
-                          className="flex-1 min-w-0 text-sm leading-snug min-h-[2.5rem]"
+                          className="text-sm leading-snug min-h-[2.5rem] pr-20"
                         />
                         <Button
-                          variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1 flex-shrink-0 mt-0.5"
-                          onClick={() => toggleAiPrompt(ppKey)}
+                          variant={aiDrafted[ppKey] ? "outline" : "default"}
+                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1"
+                          disabled={aiPending[ppKey]}
+                          onClick={() => runAiDraft(ppKey, "painPoint", i)}
                           type="button"
                         >
-                          <Sparkles className="w-3 h-3" />
+                          {aiPending[ppKey]
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <Sparkles className="w-3 h-3" />}
                           {aiDrafted[ppKey] ? "Regen" : "AI"}
                         </Button>
                       </div>
-                      {aiPromptOpen[ppKey] && (
-                        <div className="flex items-center gap-2 ml-6 p-2 rounded-md border border-primary/30 bg-primary/5">
-                          <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                          <Input
-                            className="h-7 text-xs flex-1 border-0 bg-transparent focus-visible:ring-0 px-1"
-                            placeholder="Describe in a few words…"
-                            value={aiHints[ppKey] ?? ""}
-                            onChange={e => setAiHints(prev => ({ ...prev, [ppKey]: e.target.value }))}
-                            onKeyDown={e => { if (e.key === "Enter") runAiDraft(ppKey, "painPoint", i); }}
-                            autoFocus
-                          />
-                          <Button
-                            size="sm"
-                            className="h-7 px-3 text-xs"
-                            disabled={aiPending[ppKey]}
-                            onClick={() => runAiDraft(ppKey, "painPoint", i)}
-                            type="button"
-                          >
-                            {aiPending[ppKey] ? <Loader2 className="w-3 h-3 animate-spin" /> : "Generate"}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-muted-foreground"
-                            onClick={() => toggleAiPrompt(ppKey)}
-                            type="button"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -1839,72 +1785,41 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-3">
                 <Label>Strategic priorities</Label>
-                <p className="text-xs text-muted-foreground">Up to 5 strategic priorities for HR AI (optional)</p>
+                <p className="text-xs text-muted-foreground">Up to 5 strategic priorities for HR AI (optional). Type a few words then hit ✨ AI to expand.</p>
                 {[0, 1, 2, 3, 4].map(i => {
                   const spKey = `strategicPriority_${i}`;
-                  // For display, we read by index from the stored array (which may be compacted)
-                  // We maintain a stable 5-slot display by padding with empty strings
                   const spArr = ((getField("E", "strategicPriorities") ?? []) as string[]);
                   const spArrFull = [0,1,2,3,4].map(j => spArr[j] ?? "");
                   return (
-                    <div key={i} className="space-y-1">
-                      <div className="flex items-start gap-2">
-                        <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
+                      <div className="relative flex-1 min-w-0">
                         <Textarea
-                          placeholder={`Priority ${i + 1}`}
+                          placeholder={`Type a few words… e.g. "automate screening, reduce time-to-hire"`}
                           value={spArrFull[i]}
                           onChange={e => {
                             const pts = [...spArrFull];
                             pts[i] = e.target.value;
                             updateSection("E", "strategicPriorities", pts.filter(Boolean));
-                            // Manual edit resets drafted flag
                             setAiDrafted(prev => ({ ...prev, [spKey]: false }));
                           }}
                           maxLength={200}
-                          className="flex-1 min-w-0 text-sm leading-snug min-h-[2.5rem]"
+                          className="text-sm leading-snug min-h-[2.5rem] pr-20"
                         />
                         <Button
-                          variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1 flex-shrink-0 mt-0.5"
-                          onClick={() => toggleAiPrompt(spKey)}
+                          variant={aiDrafted[spKey] ? "outline" : "default"}
+                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1"
+                          disabled={aiPending[spKey]}
+                          onClick={() => runAiDraft(spKey, "strategicPriority", i)}
                           type="button"
                         >
-                          <Sparkles className="w-3 h-3" />
+                          {aiPending[spKey]
+                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                            : <Sparkles className="w-3 h-3" />}
                           {aiDrafted[spKey] ? "Regen" : "AI"}
                         </Button>
                       </div>
-                      {aiPromptOpen[spKey] && (
-                        <div className="flex items-center gap-2 ml-6 p-2 rounded-md border border-primary/30 bg-primary/5">
-                          <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                          <Input
-                            className="h-7 text-xs flex-1 border-0 bg-transparent focus-visible:ring-0 px-1"
-                            placeholder="Describe in a few words…"
-                            value={aiHints[spKey] ?? ""}
-                            onChange={e => setAiHints(prev => ({ ...prev, [spKey]: e.target.value }))}
-                            onKeyDown={e => { if (e.key === "Enter") runAiDraft(spKey, "strategicPriority", i); }}
-                            autoFocus
-                          />
-                          <Button
-                            size="sm"
-                            className="h-7 px-3 text-xs"
-                            disabled={aiPending[spKey]}
-                            onClick={() => runAiDraft(spKey, "strategicPriority", i)}
-                            type="button"
-                          >
-                            {aiPending[spKey] ? <Loader2 className="w-3 h-3 animate-spin" /> : "Generate"}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-muted-foreground"
-                            onClick={() => toggleAiPrompt(spKey)}
-                            type="button"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
