@@ -1727,7 +1727,7 @@ export default function StrategyDiagnosticPage() {
                   <Button
                     size="sm"
                     variant={aiDrafted["successNarrative"] ? "outline" : "default"}
-                    className="absolute bottom-2 right-2 h-7 px-2.5 text-xs gap-1"
+                    className="absolute bottom-2 right-2 h-7 px-2.5 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
                     disabled={aiPending["successNarrative"]}
                     onClick={() => runAiDraft("successNarrative", "successNarrative")}
                     type="button"
@@ -1767,7 +1767,7 @@ export default function StrategyDiagnosticPage() {
                         <Button
                           size="sm"
                           variant={aiDrafted[ppKey] ? "outline" : "default"}
-                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1"
+                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
                           disabled={aiPending[ppKey]}
                           onClick={() => runAiDraft(ppKey, "painPoint", i)}
                           type="button"
@@ -1809,7 +1809,7 @@ export default function StrategyDiagnosticPage() {
                         <Button
                           size="sm"
                           variant={aiDrafted[spKey] ? "outline" : "default"}
-                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1"
+                          className="absolute bottom-1.5 right-1.5 h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
                           disabled={aiPending[spKey]}
                           onClick={() => runAiDraft(spKey, "strategicPriority", i)}
                           type="button"
