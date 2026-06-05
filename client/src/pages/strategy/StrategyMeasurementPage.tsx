@@ -1469,7 +1469,7 @@ export default function StrategyMeasurementPage() {
       {hasStrategy && <MethodologyBlock />}
 
       {/* ── T9: Baseline provenance warnings ── */}
-      {hasStrategy && !stage6Cleared && baselineHardBlockCount > 0 && (
+      {hasStrategy && gate.isStage7Accessible && !stage6Cleared && baselineHardBlockCount > 0 && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
           <div>
@@ -1480,7 +1480,7 @@ export default function StrategyMeasurementPage() {
           </div>
         </div>
       )}
-      {hasStrategy && !stage6Cleared && baselineSoftWarnCount > 0 && (
+      {hasStrategy && gate.isStage7Accessible && !stage6Cleared && baselineSoftWarnCount > 0 && (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <div>
@@ -1493,7 +1493,7 @@ export default function StrategyMeasurementPage() {
       )}
 
       {/* ── Gate confirm button ── */}
-      {hasStrategy && !stage6Cleared && (
+      {hasStrategy && gate.isStage7Accessible && !stage6Cleared && (
         <div
           className="rounded-2xl border p-5 flex items-center justify-between gap-4 transition-all duration-300"
           style={{
