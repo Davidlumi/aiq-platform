@@ -57,6 +57,19 @@ import {
   getDifficultyProfile,
 } from "../ail/adaptiveDifficultyEngineV2";
 
+// T8: Risk register item type
+export type RiskRegisterItem = {
+  id: string;
+  title: string;
+  description: string;
+  likelihood: number;  // 1-5
+  impact: number;     // 1-5
+  mitigation: string;
+  status: "pending" | "accepted" | "edited" | "dismissed";
+  aiSuggested: boolean;
+  createdAt: number;  // Unix ms
+};
+
 export const intelligenceRouter = router({
 
   // ── Profile ─────────────────────────────────────────────────────────────────
@@ -414,6 +427,102 @@ export const intelligenceRouter = router({
       return { roadmap: null };
     }
   }),
+
+  /**
+   * Get the saved risk register (Stage 8) for the current tenant.
+   */
+  getRiskRegister: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select({
+      riskRegisterJson: ailOrgContext.riskRegisterJson,
+    }).from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const raw = rows[0]?.riskRegisterJson ?? null;
+    if (!raw) return { risks: [] as RiskRegisterItem[] };
+    try {
+      const parsed = JSON.parse(raw) as { risks: RiskRegisterItem[] };
+      return { risks: parsed.risks ?? [] as RiskRegisterItem[] };
+    } catch {
+      return { risks: [] as RiskRegisterItem[] };
+    }
+  }),
+
+  /**
+   * Save the full risk register for the current tenant.
+   */
+  saveRiskRegister: protectedProcedure
+    .input(z.object({
+      risksJson: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(ailOrgContext)
+        .set({ riskRegisterJson: input.risksJson, updatedAt: new Date() })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { ok: true };
+    }),
+
+  /**
+   * Suggest AI risks for the current strategy context.
+   * Returns risks that must each be explicitly actioned (accepted/edited/dismissed) before Stage 8 can be confirmed.
+   */
+  suggestRisks: protectedProcedure
+    .input(z.object({
+      selectedInitiatives: z.array(z.string()).optional(),
+      ambitionTier: z.enum(["cautious", "progressive", "transformative"]).optional(),
+      sector: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const initiativeList = (input.selectedInitiatives ?? []).slice(0, 8).join(", ") || "AI-enabled HR initiatives";
+      const prompt = `You are an HR AI strategy risk advisor. Identify the top 3-5 implementation risks for a CPO pursuing an AI HR strategy.
+
+Context:
+- Ambition tier: ${input.ambitionTier ?? "progressive"}
+- Sector: ${input.sector ?? "general"}
+- Key initiatives: ${initiativeList}
+
+For each risk, provide:
+- title: short risk name (max 8 words)
+- description: what the risk is and why it matters (2-3 sentences)
+- likelihood: 1-5 (1=rare, 5=almost certain)
+- impact: 1-5 (1=negligible, 5=critical)
+- mitigation: concrete mitigation action (1-2 sentences)
+
+Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood": 3, "impact": 3, "mitigation": ""}]}`;
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system" as const, content: "You are an expert HR AI strategy risk advisor. Return only valid JSON." },
+          { role: "user" as const, content: prompt },
+        ],
+        response_format: { type: "json_schema", json_schema: { name: "risk_suggestions", strict: true, schema: { type: "object", properties: { risks: { type: "array", items: { type: "object", properties: { title: { type: "string" }, description: { type: "string" }, likelihood: { type: "integer" }, impact: { type: "integer" }, mitigation: { type: "string" } }, required: ["title", "description", "likelihood", "impact", "mitigation"], additionalProperties: false } } }, required: ["risks"], additionalProperties: false } } },
+      });
+      const rawContent = response.choices?.[0]?.message?.content ?? "{}";
+      const content = typeof rawContent === "string" ? rawContent : "{}";
+      let parsed: { risks: Array<{ title: string; description: string; likelihood: number; impact: number; mitigation: string }> } = { risks: [] };
+      try { parsed = JSON.parse(content); } catch { /* empty */ }
+      // Stamp each suggestion with a unique id and aiSuggested flag
+      const risks = (parsed.risks ?? []).map((r, i) => ({
+        id: `ai-${Date.now()}-${i}`,
+        ...r,
+        status: "pending" as const,
+        aiSuggested: true,
+        createdAt: Date.now(),
+      }));
+      return { risks };
+    }),
 
   /**
    * Save the full AI People Strategy.

@@ -957,6 +957,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   // Stage 6 Roadmap (T7 — new stage inserted between Stage 5 and old Stage 6)
   roadmapJson: text("roadmap_json"),                                                // JSON: { horizons: [{id, label, startDate?, endDate?, order}], assignments: [{initiativeId, horizonId}], dependencies: [{fromId, toId, reason?}] } — date fields exist from day one even if unused at launch
   stage6RoadmapConfirmedAt: timestamp("stage6_roadmap_confirmed_at"),              // When CPO confirmed Stage 6 Roadmap (T7 new stage)
+  riskRegisterJson: text("risk_register_json"),                                    // JSON: { risks: [{id, title, description, likelihood, impact, mitigation, status: 'accepted'|'edited'|'dismissed', aiSuggested: boolean, createdAt: number}] } — T8 risk register
   stage6ConfirmedAt: timestamp("stage6_confirmed_at"),                             // When CPO confirmed Stage 7 Success Measures (DB column kept as stage6 for stability; code refers to it as stage7)
   stage7ConfirmedAt: timestamp("stage7_confirmed_at"),                             // When CPO confirmed Stage 7 business case
   stage8ConfirmedAt: timestamp("stage8_confirmed_at"),                             // When CPO confirmed Stage 8 capability

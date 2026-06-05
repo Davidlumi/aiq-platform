@@ -5076,8 +5076,8 @@ test
 
 ### Phase C — Net-new features (hold for v2 brief)
 - [x] T7 — Build Stage 6: Roadmap (new) at /strategy/roadmap; roadmapJson with {label, startDate?, endDate?, order}; Now/Next/Later defaults; every initiative must have a horizon; dependencies optional; AI-suggested dependencies only where logic implies one
-- [ ] T8 — Add risk register to Stage 8 (Capability & Risk); riskRegisterJson; AI-suggested risks must be explicitly actioned before confirm; ≥1 risk with mitigation required
-- [ ] T9 — Stage 7 measure provenance: strategy-level measure with target + blank baseline = hard block; per-initiative primary measure with target + blank baseline = soft warning only
+- [x] T8 — Add risk register to Stage 8 (Capability & Risk); riskRegisterJson; AI-suggested risks must be explicitly actioned before confirm; ≥1 risk with mitigation required
+- [x] T9 — Stage 7 measure provenance: strategy-level measure with target + blank baseline = hard block; per-initiative primary measure with target + blank baseline = soft warning only
 - [ ] T10 — Strengthen Stage 10 Review: structured sign-off (agreed/conditions/unresolved) on all 8 elements; empty elements auto-mark N/A; reviewSignOffJson + reviewTensionsJson
 
 ### Phase D — Gate logic and re-confirmation

@@ -30,7 +30,7 @@ import {
   ChevronDown, ChevronUp, AlertTriangle, CheckCircle2,
   ArrowRight, CalendarDays, Sparkles, BarChart3,
   TrendingUp, ShieldAlert, Activity, Plus, Trash2,
-  Target, BarChart2, Loader2,
+  Target, BarChart2, Loader2, AlertCircle,
 } from "lucide-react";
 import { MEASUREMENT_CADENCE_OPTIONS } from "@/../../shared/strategyInputs";
 import { INITIATIVE_LIBRARY } from "@/../../shared/initiativeLibrary";
@@ -60,6 +60,7 @@ interface Outcome {
   tests_principle: number | null;
   ai_drafted: boolean;
   primary_measure?: string | null;
+  initiative_id?: string | null;
 }
 
 interface Principle {
@@ -1128,11 +1129,27 @@ export default function StrategyMeasurementPage() {
   //   2. Either no initiatives are selected, OR at least one primary measure is set
   //      (checking both local state AND saved primary_measure fields on outcomes)
   const savedPrimaryMeasureCount = (outcomes ?? []).filter(o => o.primary_measure?.trim()).length;
-  const canConfirm = outcomesCount >= 1 && (
-    selectedInitiatives.length === 0 ||
-    primaryMeasureCount > 0 ||
-    savedPrimaryMeasureCount > 0
+
+  // T9 — Baseline provenance guard
+  // Hard block: strategy-level outcome has a target_value but baseline_status = "not_measured" AND baseline_value is null
+  const strategyOutcomesWithTargetButNoBaseline = (outcomes ?? []).filter(
+    o => !o.initiative_id && o.target_value && (o.baseline_status === "not_measured" || o.baseline_value === null)
   );
+  const baselineHardBlockCount = strategyOutcomesWithTargetButNoBaseline.length;
+
+  // Soft warning: initiative primary measure has a target but no baseline (does NOT block confirm)
+  const initiativeMeasuresWithTargetButNoBaseline = (outcomes ?? []).filter(
+    o => !!o.initiative_id && o.target_value && (o.baseline_status === "not_measured" || o.baseline_value === null)
+  );
+  const baselineSoftWarnCount = initiativeMeasuresWithTargetButNoBaseline.length;
+
+  const canConfirm = outcomesCount >= 1 &&
+    baselineHardBlockCount === 0 &&
+    (
+      selectedInitiatives.length === 0 ||
+      primaryMeasureCount > 0 ||
+      savedPrimaryMeasureCount > 0
+    );
 
   return (
     <SectionPageLayout
@@ -1432,6 +1449,30 @@ export default function StrategyMeasurementPage() {
       {/* ── Block 7: Methodology ── */}
       {hasStrategy && <MethodologyBlock />}
 
+      {/* ── T9: Baseline provenance warnings ── */}
+      {hasStrategy && !stage6Cleared && baselineHardBlockCount > 0 && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red-400">Baseline required before confirming</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {baselineHardBlockCount} strategy-level outcome{baselineHardBlockCount !== 1 ? "s have" : " has"} a target value but no baseline. Either record the current baseline value, or mark it as “not yet measured” with a baseline study date.
+            </p>
+          </div>
+        </div>
+      )}
+      {hasStrategy && !stage6Cleared && baselineSoftWarnCount > 0 && (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-400">Initiative measure baseline missing (advisory)</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {baselineSoftWarnCount} initiative primary measure{baselineSoftWarnCount !== 1 ? "s are" : " is"} missing a baseline. This won’t block confirmation, but consider adding baselines before the Business Case stage.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Gate confirm button ── */}
       {hasStrategy && !stage6Cleared && (
         <div
@@ -1446,9 +1487,11 @@ export default function StrategyMeasurementPage() {
             <p className="text-xs text-muted-foreground">
               {outcomesCount < 1
                 ? "Define at least 1 strategy-level outcome to continue."
+                : baselineHardBlockCount > 0
+                ? `Add baselines to ${baselineHardBlockCount} outcome${baselineHardBlockCount !== 1 ? "s" : ""} before confirming.`
                 : selectedInitiatives.length > 0 && primaryMeasureCount === 0
                 ? "Set at least one initiative primary measure to continue."
-                : "Ready to confirm — this will lock Stage 6."}
+                : "Ready to confirm — this will lock Stage 7."}
             </p>
           </div>
           <Button

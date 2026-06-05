@@ -883,6 +883,7 @@ export const gateRouter = router({
   completeStage8: protectedProcedure
     .input(z.object({
       stage8CapabilityJson: z.string().min(1),
+      riskRegisterJson: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       let cap: Record<string, unknown> = {};
@@ -892,6 +893,29 @@ export const gateRouter = router({
       const filled = dims.filter(d => cap[d] && typeof cap[d] === "object");
       if (filled.length < 1) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "At least one capability dimension must be completed." });
+      }
+
+      // T8: Validate risk register
+      type RiskEntry = { id: string; title: string; mitigation?: string; status: string; aiSuggested: boolean };
+      let risks: RiskEntry[] = [];
+      if (input.riskRegisterJson) {
+        try {
+          const parsed = JSON.parse(input.riskRegisterJson) as { risks: RiskEntry[] };
+          risks = parsed.risks ?? [];
+        } catch { /* empty */ }
+      }
+      // Rule 1: At least one risk with a mitigation must be present
+      const risksWithMitigation = risks.filter(r => r.status !== "dismissed" && r.mitigation && r.mitigation.trim().length > 0);
+      if (risksWithMitigation.length < 1) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "At least one risk with a mitigation is required before confirming Stage 8." });
+      }
+      // Rule 2: Every AI-suggested risk must be explicitly actioned (accepted, edited, or dismissed — not pending)
+      const unactionedAiRisks = risks.filter(r => r.aiSuggested && r.status === "pending");
+      if (unactionedAiRisks.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `${unactionedAiRisks.length} AI-suggested risk${unactionedAiRisks.length !== 1 ? "s" : ""} must be actioned (accept, edit, or dismiss) before confirming.`,
+        });
       }
 
       const db = await getDb();
@@ -911,6 +935,7 @@ export const gateRouter = router({
       await db.update(ailOrgContext)
         .set({
           stage8CapabilityJson: input.stage8CapabilityJson,
+          ...(input.riskRegisterJson ? { riskRegisterJson: input.riskRegisterJson } : {}),
           stage8ConfirmedAt: new Date(),
           stageGateStateJson: JSON.stringify(gateState),
           updatedAt: new Date(),

@@ -39,7 +39,30 @@ import {
   Minus,
   ChevronRight,
   ArrowRight,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldX,
+  Pencil,
+  X,
+  Loader2,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
+// ─── Risk register types ──────────────────────────────────────────────────────
+
+type RiskStatus = "pending" | "accepted" | "edited" | "dismissed";
+
+interface RiskRegisterItem {
+  id: string;
+  title: string;
+  description: string;
+  likelihood: number;
+  impact: number;
+  mitigation: string;
+  status: RiskStatus;
+  aiSuggested: boolean;
+  createdAt: number;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -470,6 +493,112 @@ export default function CapabilityPage() {
     });
   };
 
+  // ── Risk register state ─────────────────────────────────────────────────
+  const [risks, setRisks] = useState<RiskRegisterItem[]>([]);
+  const [risksLoaded, setRisksLoaded] = useState(false);
+  const [editingRiskId, setEditingRiskId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<RiskRegisterItem>>({});
+  const [isSuggestingRisks, setIsSuggestingRisks] = useState(false);
+
+  const riskRegisterQ = trpc.intelligence.getRiskRegister.useQuery();
+  const saveRisksMut = trpc.intelligence.saveRiskRegister.useMutation();
+  const suggestRisksMut = trpc.intelligence.suggestRisks.useMutation({
+    onSuccess: (data) => {
+      const newRisks: RiskRegisterItem[] = (data.risks as any[]).map((r: any) => ({
+        id: crypto.randomUUID(),
+        title: r.title,
+        description: r.description,
+        likelihood: r.likelihood ?? 3,
+        impact: r.impact ?? 3,
+        mitigation: r.mitigation ?? "",
+        status: "pending" as RiskStatus,
+        aiSuggested: true,
+        createdAt: Date.now(),
+      }));
+      setRisks(prev => {
+        const merged = [...prev, ...newRisks.filter(nr => !prev.some(p => p.title === nr.title))];
+        saveRisksMut.mutate({ risksJson: JSON.stringify(merged) });
+        return merged;
+      });
+      setIsSuggestingRisks(false);
+      toast.success(`${newRisks.length} risk${newRisks.length !== 1 ? "s" : ""} suggested — review each one before confirming.`);
+    },
+    onError: () => {
+      setIsSuggestingRisks(false);
+      toast.error("Could not suggest risks. Please try again.");
+    },
+  });
+
+  // Load saved risks
+  useEffect(() => {
+    if (!risksLoaded && riskRegisterQ.data !== undefined) {
+      if (riskRegisterQ.data && Array.isArray(riskRegisterQ.data)) {
+        setRisks(riskRegisterQ.data as RiskRegisterItem[]);
+      }
+      setRisksLoaded(true);
+    }
+  }, [riskRegisterQ.data, risksLoaded]);
+
+  const saveRisksDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const persistRisks = useCallback((updated: RiskRegisterItem[]) => {
+    if (saveRisksDebounceRef.current) clearTimeout(saveRisksDebounceRef.current);
+    saveRisksDebounceRef.current = setTimeout(() => {
+      saveRisksMut.mutate({ risksJson: JSON.stringify(updated) });
+    }, 800);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const updateRisk = useCallback((id: string, patch: Partial<RiskRegisterItem>) => {
+    setRisks(prev => {
+      const updated = prev.map(r => r.id === id ? { ...r, ...patch } : r);
+      persistRisks(updated);
+      return updated;
+    });
+  }, [persistRisks]);
+
+  const addManualRisk = useCallback(() => {
+    const newRisk: RiskRegisterItem = {
+      id: crypto.randomUUID(),
+      title: "",
+      description: "",
+      likelihood: 3,
+      impact: 3,
+      mitigation: "",
+      status: "accepted",
+      aiSuggested: false,
+      createdAt: Date.now(),
+    };
+    setRisks(prev => {
+      const updated = [...prev, newRisk];
+      persistRisks(updated);
+      return updated;
+    });
+    setEditingRiskId(newRisk.id);
+    setEditDraft({ title: "", description: "", likelihood: 3, impact: 3, mitigation: "" });
+  }, [persistRisks]);
+
+  const deleteRisk = useCallback((id: string) => {
+    setRisks(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      persistRisks(updated);
+      return updated;
+    });
+  }, [persistRisks]);
+
+  const handleSuggestRisks = () => {
+    setIsSuggestingRisks(true);
+    suggestRisksMut.mutate({
+      sector: assessmentQ.data?.sector ?? undefined,
+      selectedInitiatives: selectedInitiativeNames,
+      ambitionTier,
+    });
+  };
+
+  // ── Risk gate validation ──────────────────────────────────────────────────
+  const pendingAiRisks = risks.filter(r => r.aiSuggested && r.status === "pending");
+  const actionedRisks = risks.filter(r => r.status !== "pending");
+  const risksWithMitigation = actionedRisks.filter(r => r.mitigation.trim().length > 0);
+  const riskGateOk = pendingAiRisks.length === 0 && risksWithMitigation.length >= 1;
+
   // ── Gate confirm ──────────────────────────────────────────────────────────
   const completeStage8Mut = trpc.gate.completeStage8.useMutation({
     onSuccess: () => {
@@ -483,6 +612,13 @@ export default function CapabilityPage() {
       toast.error(err.message ?? "Could not confirm capability plan.");
     },
   });
+
+  const handleConfirmStage8 = () => {
+    completeStage8Mut.mutate({
+      stage8CapabilityJson: JSON.stringify(cap),
+      riskRegisterJson: JSON.stringify(risks),
+    });
+  };
 
   // ── Validation ────────────────────────────────────────────────────────────
   const allDimsScored = activeDimConfig.every(
@@ -499,7 +635,7 @@ export default function CapabilityPage() {
   const narrativeWordCount = cap.deliveryNarrative.trim().split(/\s+/).filter(Boolean).length;
   const narrativeOk = narrativeWordCount >= 200;
 
-  const canConfirm = allDimsScored && allGapsCovered && narrativeOk;
+  const canConfirm = allDimsScored && allGapsCovered && narrativeOk && riskGateOk;
 
   const isLocked = !gate.isStage8Accessible;
 
@@ -528,7 +664,7 @@ export default function CapabilityPage() {
         isEdited: !!gate.stage8EditedAfterClearing,
         canConfirm,
         isPending: completeStage8Mut.isPending,
-        onConfirm: () => completeStage8Mut.mutate({ stage8CapabilityJson: JSON.stringify(cap) }),
+        onConfirm: handleConfirmStage8,
         backRoute: "/strategy/business-case",
         nextRoute: "/strategy/review",
         nextLabel: "Review Session",
@@ -634,6 +770,267 @@ export default function CapabilityPage() {
         )}
       </div>
 
+      {/* Risk Register */}
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-amber-400" />
+              Risk Register
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Identify delivery risks and confirm a mitigation for each. AI-suggested risks must be explicitly accepted, edited, or dismissed before you can confirm.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={handleSuggestRisks}
+              disabled={isSuggestingRisks || isLocked}
+            >
+              {isSuggestingRisks ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              {isSuggestingRisks ? "Suggesting…" : "Suggest risks"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={addManualRisk}
+              disabled={isLocked}
+            >
+              <Plus className="w-3 h-3" />
+              Add risk
+            </Button>
+          </div>
+        </div>
+
+        {risks.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border p-6 text-center">
+            <ShieldAlert className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No risks recorded yet.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Use “Suggest risks” to get AI-generated risks, or add your own.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {risks.map(risk => {
+              const isEditing = editingRiskId === risk.id;
+              const score = risk.likelihood * risk.impact;
+              const severity = score >= 16 ? "high" : score >= 9 ? "medium" : "low";
+              const severityColor = severity === "high" ? "text-red-400 bg-red-500/10 border-red-500/20" : severity === "medium" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+
+              return (
+                <div
+                  key={risk.id}
+                  className={`rounded-lg border p-4 space-y-3 transition-colors ${
+                    risk.status === "pending" ? "border-amber-500/40 bg-amber-500/5" :
+                    risk.status === "dismissed" ? "border-border bg-muted/20 opacity-60" :
+                    "border-border bg-muted/10"
+                  }`}
+                >
+                  {/* Header row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {risk.aiSuggested && (
+                        <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/20">AI</span>
+                      )}
+                      {risk.status === "pending" && (
+                        <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">Needs action</span>
+                      )}
+                      {risk.status === "dismissed" && (
+                        <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">Dismissed</span>
+                      )}
+                      {(risk.status === "accepted" || risk.status === "edited") && (
+                        <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Accepted</span>
+                      )}
+                      {isEditing ? (
+                        <Input
+                          value={editDraft.title ?? ""}
+                          onChange={e => setEditDraft(d => ({ ...d, title: e.target.value }))}
+                          placeholder="Risk title…"
+                          className="h-7 text-sm font-semibold"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="text-sm font-semibold text-foreground truncate">{risk.title || <span className="text-muted-foreground italic">Untitled risk</span>}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${severityColor}`}>
+                        {severity.toUpperCase()}
+                      </span>
+                      {!isLocked && !isEditing && (
+                        <>
+                          <button
+                            onClick={() => { setEditingRiskId(risk.id); setEditDraft({ title: risk.title, description: risk.description, likelihood: risk.likelihood, impact: risk.impact, mitigation: risk.mitigation }); }}
+                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => deleteRisk(risk.id)}
+                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-red-400 transition-colors"
+                            title="Delete"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  {isEditing ? (
+                    <Textarea
+                      value={editDraft.description ?? ""}
+                      onChange={e => setEditDraft(d => ({ ...d, description: e.target.value }))}
+                      placeholder="Describe the risk…"
+                      className="text-xs min-h-[60px] resize-none"
+                    />
+                  ) : risk.description ? (
+                    <p className="text-xs text-muted-foreground">{risk.description}</p>
+                  ) : null}
+
+                  {/* Likelihood / Impact */}
+                  {isEditing && (
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Likelihood (1–5)</label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={editDraft.likelihood ?? 3}
+                          onChange={e => setEditDraft(d => ({ ...d, likelihood: Math.min(5, Math.max(1, Number(e.target.value))) }))}
+                          className="h-7 text-sm mt-1"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Impact (1–5)</label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={editDraft.impact ?? 3}
+                          onChange={e => setEditDraft(d => ({ ...d, impact: Math.min(5, Math.max(1, Number(e.target.value))) }))}
+                          className="h-7 text-sm mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mitigation */}
+                  {isEditing ? (
+                    <div>
+                      <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Mitigation</label>
+                      <Textarea
+                        value={editDraft.mitigation ?? ""}
+                        onChange={e => setEditDraft(d => ({ ...d, mitigation: e.target.value }))}
+                        placeholder="How will you mitigate this risk?…"
+                        className="text-xs min-h-[60px] resize-none mt-1"
+                      />
+                    </div>
+                  ) : risk.mitigation ? (
+                    <div className="rounded bg-muted/30 border border-border px-3 py-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Mitigation</p>
+                      <p className="text-xs text-foreground">{risk.mitigation}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-amber-400 italic">No mitigation recorded yet.</p>
+                  )}
+
+                  {/* Action buttons */}
+                  {isEditing ? (
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => { setEditingRiskId(null); setEditDraft({}); }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          const wasAiPending = risk.aiSuggested && risk.status === "pending";
+                          updateRisk(risk.id, {
+                            title: editDraft.title ?? risk.title,
+                            description: editDraft.description ?? risk.description,
+                            likelihood: editDraft.likelihood ?? risk.likelihood,
+                            impact: editDraft.impact ?? risk.impact,
+                            mitigation: editDraft.mitigation ?? risk.mitigation,
+                            status: wasAiPending ? "edited" : risk.status === "pending" ? "accepted" : risk.status,
+                          });
+                          setEditingRiskId(null);
+                          setEditDraft({});
+                        }}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  ) : risk.status === "pending" ? (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1.5 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                        onClick={() => updateRisk(risk.id, { status: "accepted" })}
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" /> Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1.5"
+                        onClick={() => { setEditingRiskId(risk.id); setEditDraft({ title: risk.title, description: risk.description, likelihood: risk.likelihood, impact: risk.impact, mitigation: risk.mitigation }); }}
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> Edit & accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1.5 text-muted-foreground"
+                        onClick={() => updateRisk(risk.id, { status: "dismissed" })}
+                      >
+                        <ShieldX className="w-3.5 h-3.5" /> Dismiss
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Risk gate status */}
+        {risks.length > 0 && (
+          <div className="flex flex-wrap gap-3 pt-1 border-t border-border">
+            {pendingAiRisks.length > 0 && (
+              <p className="text-xs text-amber-400 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {pendingAiRisks.length} AI-suggested risk{pendingAiRisks.length !== 1 ? "s" : ""} need{pendingAiRisks.length === 1 ? "s" : ""} action before you can confirm.
+              </p>
+            )}
+            {risksWithMitigation.length === 0 && pendingAiRisks.length === 0 && (
+              <p className="text-xs text-amber-400 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" />
+                At least 1 accepted risk must have a mitigation.
+              </p>
+            )}
+            {riskGateOk && (
+              <p className="text-xs text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Risk register complete — {risksWithMitigation.length} risk{risksWithMitigation.length !== 1 ? "s" : ""} with mitigation.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Gate confirm */}
       {!isLocked && (
         <div className="flex items-center justify-between pt-4 border-t border-border">
@@ -716,7 +1113,7 @@ export default function CapabilityPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => completeStage8Mut.mutate({ stage8CapabilityJson: JSON.stringify(cap) })}
+              onClick={handleConfirmStage8}
               disabled={completeStage8Mut.isPending}
             >
               {completeStage8Mut.isPending ? "Confirming…" : "Confirm"}
