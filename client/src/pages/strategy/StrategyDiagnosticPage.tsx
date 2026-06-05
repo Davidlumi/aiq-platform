@@ -1980,39 +1980,77 @@ export default function StrategyDiagnosticPage() {
                 </div>
               </div>
 
-              {/* Non-negotiables — card list with shield icon */}
+              {/* Non-negotiables — tag chip input (same pattern as culture descriptors) */}
               <div className="space-y-3">
                 <div>
                   <Label>Non-negotiables</Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">Things you would never compromise on, even under pressure (up to 3)</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Things you would never compromise on, even under pressure (up to 3). Press <kbd className="px-1 py-0.5 rounded text-[10px] bg-muted border border-border">Enter</kbd> or comma to add.</p>
                 </div>
-                <div className="space-y-2">
-                  {[0, 1, 2].map(i => {
-                    const ns = ((getField("F", "nonNegotiables") ?? ["", "", ""]) as string[]);
-                    const val = ns[i] ?? "";
+                {/* Chip display + input */}
+                <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-border bg-muted/30 min-h-[3rem] items-center">
+                  {((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean).map((tag, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ns = ((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean);
+                          updateSection("F", "nonNegotiables", ns.filter((_, j) => j !== i));
+                        }}
+                        className="ml-0.5 hover:text-destructive transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean).length < 3 && (
+                    <input
+                      type="text"
+                      placeholder="Type a principle…"
+                      maxLength={80}
+                      className="flex-1 min-w-[160px] bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+                      onKeyDown={e => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          const val = (e.target as HTMLInputElement).value.trim().replace(/,/g, "");
+                          if (!val) return;
+                          const ns = ((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean);
+                          if (ns.length < 3 && !ns.includes(val)) {
+                            updateSection("F", "nonNegotiables", [...ns, val]);
+                          }
+                          (e.target as HTMLInputElement).value = "";
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+                {/* Suggestion chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-xs text-muted-foreground self-center mr-1">Suggestions:</span>
+                  {["Employee data privacy", "No surveillance AI", "Human in the loop", "Ethical AI only", "Transparency with employees", "No bias in hiring AI", "Manager accountability", "Union consultation"].map(s => {
+                    const current = ((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean);
+                    const alreadyAdded = current.includes(s);
+                    const atMax = current.length >= 3;
                     return (
-                      <div key={i} className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                        val ? "border-amber-500/30 bg-amber-500/5" : "border-border bg-muted/20"
-                      )}>
-                        <div className={cn(
-                          "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                          val ? "bg-amber-500/20 text-amber-400" : "bg-muted text-muted-foreground"
-                        )}>
-                          {val ? "🛡" : i + 1}
-                        </div>
-                        <Input
-                          placeholder={`e.g. "Employee data privacy", "No surveillance AI"`}
-                          value={val}
-                          onChange={e => {
-                            const updated = [...((getField("F", "nonNegotiables") ?? ["", "", ""]) as string[])];
-                            updated[i] = e.target.value;
-                            updateSection("F", "nonNegotiables", updated);
-                          }}
-                          maxLength={200}
-                          className="border-0 bg-transparent shadow-none focus-visible:ring-0 p-0 h-auto text-sm"
-                        />
-                      </div>
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={alreadyAdded || atMax}
+                        onClick={() => {
+                          if (alreadyAdded || atMax) return;
+                          updateSection("F", "nonNegotiables", [...current, s]);
+                        }}
+                        className={cn(
+                          "px-2 py-0.5 rounded-full text-xs border transition-all duration-150",
+                          alreadyAdded
+                            ? "border-amber-500/40 text-amber-500/40 cursor-default"
+                            : atMax
+                            ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                            : "border-border text-muted-foreground hover:border-amber-500/60 hover:text-amber-400 hover:bg-amber-500/5 cursor-pointer"
+                        )}
+                      >
+                        {alreadyAdded ? "✓ " : "+ "}{s}
+                      </button>
                     );
                   })}
                 </div>
