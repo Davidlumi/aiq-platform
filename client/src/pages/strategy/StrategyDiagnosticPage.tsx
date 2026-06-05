@@ -1903,45 +1903,119 @@ export default function StrategyDiagnosticPage() {
 
           {/* ── Section F ─────────────────────────────────────────────────── */}
           {activeSection === "F" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
+              {/* Culture descriptors — tag chip input */}
               <div className="space-y-3">
-                <Label>Culture descriptors</Label>
-                <p className="text-xs text-muted-foreground">Three words that honestly describe HR culture today</p>
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                    <Input
-                      placeholder={`Descriptor ${i + 1}`}
-                      value={((getField("F", "cultureDescriptors") ?? []) as string[])[i] ?? ""}
-                      onChange={e => {
-                        const ds = [...((getField("F", "cultureDescriptors") ?? ["", "", ""]) as string[])];
-                        ds[i] = e.target.value;
-                        updateSection("F", "cultureDescriptors", ds);
-                      }}
+                <div>
+                  <Label>Culture descriptors</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Up to 3 words that honestly describe HR culture today. Press <kbd className="px-1 py-0.5 rounded text-[10px] bg-muted border border-border">Enter</kbd> or comma to add.</p>
+                </div>
+                {/* Chip display + input */}
+                <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-border bg-muted/30 min-h-[3rem] items-center">
+                  {((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean).map((tag, i) => (
+                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/30">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ds = ((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean);
+                          updateSection("F", "cultureDescriptors", ds.filter((_, j) => j !== i));
+                        }}
+                        className="ml-0.5 hover:text-destructive transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean).length < 3 && (
+                    <input
+                      type="text"
+                      placeholder="Type a word…"
                       maxLength={30}
+                      className="flex-1 min-w-[120px] bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+                      onKeyDown={e => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          const val = (e.target as HTMLInputElement).value.trim().replace(/,/g, "");
+                          if (!val) return;
+                          const ds = ((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean);
+                          if (ds.length < 3 && !ds.includes(val)) {
+                            updateSection("F", "cultureDescriptors", [...ds, val]);
+                          }
+                          (e.target as HTMLInputElement).value = "";
+                        }
+                      }}
                     />
-                  </div>
-                ))}
+                  )}
+                </div>
+                {/* Suggestion chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-xs text-muted-foreground self-center mr-1">Suggestions:</span>
+                  {["Innovative", "Cautious", "Collaborative", "Fast-moving", "Risk-averse", "People-first", "Data-driven", "Hierarchical", "Agile"].map(s => {
+                    const current = ((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean);
+                    const alreadyAdded = current.includes(s);
+                    const atMax = current.length >= 3;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={alreadyAdded || atMax}
+                        onClick={() => {
+                          if (alreadyAdded || atMax) return;
+                          updateSection("F", "cultureDescriptors", [...current, s]);
+                        }}
+                        className={cn(
+                          "px-2 py-0.5 rounded-full text-xs border transition-all duration-150",
+                          alreadyAdded
+                            ? "border-primary/40 text-primary/40 cursor-default"
+                            : atMax
+                            ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                            : "border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 cursor-pointer"
+                        )}
+                      >
+                        {alreadyAdded ? "✓ " : "+ "}{s}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
+              {/* Non-negotiables — card list with shield icon */}
               <div className="space-y-3">
-                <Label>Non-negotiables</Label>
-                <p className="text-xs text-muted-foreground">Things you would never compromise on (up to 3)</p>
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                    <Input
-                      placeholder={`Non-negotiable ${i + 1}`}
-                      value={((getField("F", "nonNegotiables") ?? []) as string[])[i] ?? ""}
-                      onChange={e => {
-                        const ns = [...((getField("F", "nonNegotiables") ?? ["", "", ""]) as string[])];
-                        ns[i] = e.target.value;
-                        updateSection("F", "nonNegotiables", ns);
-                      }}
-                      maxLength={200}
-                    />
-                  </div>
-                ))}
+                <div>
+                  <Label>Non-negotiables</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Things you would never compromise on, even under pressure (up to 3)</p>
+                </div>
+                <div className="space-y-2">
+                  {[0, 1, 2].map(i => {
+                    const ns = ((getField("F", "nonNegotiables") ?? ["", "", ""]) as string[]);
+                    const val = ns[i] ?? "";
+                    return (
+                      <div key={i} className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                        val ? "border-amber-500/30 bg-amber-500/5" : "border-border bg-muted/20"
+                      )}>
+                        <div className={cn(
+                          "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                          val ? "bg-amber-500/20 text-amber-400" : "bg-muted text-muted-foreground"
+                        )}>
+                          {val ? "🛡" : i + 1}
+                        </div>
+                        <Input
+                          placeholder={`e.g. "Employee data privacy", "No surveillance AI"`}
+                          value={val}
+                          onChange={e => {
+                            const updated = [...((getField("F", "nonNegotiables") ?? ["", "", ""]) as string[])];
+                            updated[i] = e.target.value;
+                            updateSection("F", "nonNegotiables", updated);
+                          }}
+                          maxLength={200}
+                          className="border-0 bg-transparent shadow-none focus-visible:ring-0 p-0 h-auto text-sm"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-2">
