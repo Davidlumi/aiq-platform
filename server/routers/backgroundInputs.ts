@@ -1130,7 +1130,7 @@ export const backgroundInputsRouter = router({
    */
   aiDraft: protectedProcedure
     .input(z.object({
-      fieldType: z.enum(["successNarrative", "painPoint", "strategicPriority"]),
+      fieldType: z.enum(["successNarrative", "painPoint", "strategicPriority", "businessDirection", "topBusinessPriority", "peopleChallenge", "pivotalJobFamily", "employeeExperienceState"]),
       hint: z.string().max(300),
       index: z.number().int().min(0).max(4).optional(), // for list items
     }))
@@ -1154,13 +1154,29 @@ export const backgroundInputsRouter = router({
         successNarrative:
           `Write a vivid, first-person success narrative (2–4 sentences, max 200 words) for an HR leader. ` +
           `It should describe what success looks like in 12–18 months if their HR AI strategy works. ` +
-          `Start with \"We\" or \"Our\". Be specific and aspirational. Do not use bullet points.`,
+          `Start with "We" or "Our". Be specific and aspirational. Do not use bullet points.`,
         painPoint:
           `Write a single, crisp first-person pain point statement (1 sentence, max 25 words) for an HR leader. ` +
-          `Start with \"We\" or \"Our\". Be specific and honest. No bullet points, no numbering.`,
+          `Start with "We" or "Our". Be specific and honest. No bullet points, no numbering.`,
         strategicPriority:
           `Write a single, board-ready strategic priority statement (1 sentence, max 20 words) for an HR AI strategy. ` +
-          `Start with a strong action verb (e.g. \"Build\", \"Deploy\", \"Establish\"). Be concrete and measurable.`,
+          `Start with a strong action verb (e.g. "Build", "Deploy", "Establish"). Be concrete and measurable.`,
+        businessDirection:
+          `Write a clear, first-person paragraph (3–5 sentences, max 250 words) describing where the business is heading in the next 2–3 years. ` +
+          `Cover strategic moves, growth plans, transformation programmes, or M&A activity. ` +
+          `Start with "We" or "Our". Be specific and forward-looking. No bullet points.`,
+        topBusinessPriority:
+          `Write a single, concise business priority statement (1 sentence, max 20 words) for a senior HR leader's context document. ` +
+          `Start with a strong action verb (e.g. "Scale", "Accelerate", "Transform"). Be specific and outcome-focused.`,
+        peopleChallenge:
+          `Write a single, honest first-person people/talent challenge statement (1 sentence, max 25 words) for an HR leader. ` +
+          `Start with "We" or "Our". Be specific about the problem. No bullet points, no numbering.`,
+        pivotalJobFamily:
+          `Name a single pivotal job family (2–5 words) that is critical to business success and at risk from AI disruption. ` +
+          `Return ONLY the job family name, nothing else. Examples: "Software engineers", "Customer service agents", "Data analysts".`,
+        employeeExperienceState:
+          `Write a candid, first-person description (2–3 sentences, max 150 words) of the current employee experience. ` +
+          `Be honest about both strengths and frustrations. Start with "Our employees" or "The employee experience". No bullet points.`,
       };
 
       const systemPrompt = `You are an expert HR strategy advisor helping a CPO articulate their organisation's context. ` +
