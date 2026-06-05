@@ -388,6 +388,34 @@ export const intelligenceRouter = router({
   }),
 
   /**
+   * Get the saved roadmap (Stage 6) for the current tenant.
+   * Returns parsed roadmapJson or null if not yet saved.
+   */
+  getRoadmap: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const rows = await db.select({
+      roadmapJson: ailOrgContext.roadmapJson,
+    }).from(ailOrgContext)
+      .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+      .limit(1);
+    const raw = rows[0]?.roadmapJson ?? null;
+    if (!raw) return { roadmap: null };
+    try {
+      return { roadmap: JSON.parse(raw) as {
+        horizons: Array<{ id: string; label: string; startDate?: string | null; endDate?: string | null; order: number }>;
+        assignments: Array<{ initiativeId: string; horizonId: string }>;
+        dependencies: Array<{ fromId: string; toId: string; reason?: string }>;
+      }};
+    } catch {
+      return { roadmap: null };
+    }
+  }),
+
+  /**
    * Save the full AI People Strategy.
    */
   saveStrategy: protectedProcedure
@@ -2320,10 +2348,10 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       const isReward = input.mode === "reward";
       const isCpo = input.mode === "cpo" || (!input.mode && !isReward);
 
-      // ── T6: Fetch Stage 8 capability data to enrich the Business Case narrative ──
-      // This wires Stage 9 (Business Case) to consume Stage 8 (Capability) output.
-      // Stage 6 (Roadmap) horizon wiring will be added once T7 is built.
+      // ── T6: Fetch Stage 8 capability data + Stage 6 roadmap horizons to enrich the Business Case narrative ──
+      // This wires Stage 9 (Business Case) to consume Stage 8 (Capability) and Stage 6 (Roadmap) output.
       let capabilityContext: { gaps: string[]; totalDevCostGbp: number | null } | null = null;
+      let roadmapContext: { horizons: Array<{ label: string; initiativeCount: number }> } | null = null;
       try {
         const db = await getDb();
         if (!db) throw new Error("DB unavailable");
@@ -2348,6 +2376,34 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       } catch (e) {
         // Non-fatal — capability data enrichment is best-effort
         console.warn("[T6] Failed to fetch Stage 8 capability data for Business Case narrative:", e);
+      }
+
+      // T6: Fetch Stage 6 roadmap horizon data
+      try {
+        const db2 = await getDb();
+        if (db2) {
+          const roadmapRows = await db2
+            .select({ roadmapJson: ailOrgContext.roadmapJson })
+            .from(ailOrgContext)
+            .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+            .limit(1);
+          const raw = roadmapRows[0]?.roadmapJson;
+          if (raw) {
+            const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            const horizons: Array<{ id: string; label: string; order: number }> = parsed?.horizons ?? [];
+            const assignments: Array<{ initiativeId: string; horizonId: string }> = parsed?.assignments ?? [];
+            roadmapContext = {
+              horizons: horizons
+                .sort((a, b) => a.order - b.order)
+                .map(h => ({
+                  label: h.label,
+                  initiativeCount: assignments.filter(a => a.horizonId === h.id).length,
+                })),
+            };
+          }
+        }
+      } catch (e) {
+        console.warn("[T6] Failed to fetch Stage 6 roadmap data for Business Case narrative:", e);
       }
 
       // ── CPO path: compute structured model and pass to LLM (never-invents-numbers) ──
@@ -2389,15 +2445,18 @@ Tone guidance:
 - Value Narrative: what the numbers mean in practice — talent acquisition, retention, L&D efficiency, workforce planning
 - Risk and Assumptions: honest about what could move the numbers, name the overlap discount, call out programme funding separately`;
 
-        // T6: Enrich prompt with capability gap data from Stage 8 if available
+        // T6: Enrich prompt with capability gap data from Stage 8 and roadmap horizons from Stage 6
         const capabilitySection = capabilityContext && (capabilityContext.gaps.length > 0 || capabilityContext.totalDevCostGbp)
           ? `\n\nCapability context (from Stage 8 assessment):\n- Critical/high capability gaps: ${capabilityContext.gaps.length > 0 ? capabilityContext.gaps.join(", ") : "None identified"}\n- Estimated capability development cost: ${capabilityContext.totalDevCostGbp ? fmt(capabilityContext.totalDevCostGbp) : "Not quantified"}\nInclude these gaps and development cost in the Risk and Assumptions section. Do not invent additional figures.`
+          : "";
+        const roadmapSection = roadmapContext && roadmapContext.horizons.length > 0
+          ? `\n\nDelivery roadmap context (from Stage 6):\n${roadmapContext.horizons.map(h => `- ${h.label}: ${h.initiativeCount} initiative${h.initiativeCount !== 1 ? "s" : ""}`).join("\n")}\nReference this phasing in the Investment Rationale section to show a credible delivery sequence. Do not invent timelines beyond what is provided.`
           : "";
 
         const userPrompt = `Generate the four business case narrative sections for this HR AI programme.
 
 Data:
-${JSON.stringify(promptData, null, 2)}${capabilitySection}
+${JSON.stringify(promptData, null, 2)}${capabilitySection}${roadmapSection}
 
 Return a JSON object with keys: execSummary, investmentRationale, valueNarrative, riskAssumptions.
 Each value is a string containing 2–4 paragraphs of plain text (no markdown, no bullet points).`;

@@ -715,6 +715,81 @@ export const gateRouter = router({
     }),
 
   /**
+   * Complete Stage 6 (Roadmap) — NEW in v4.
+   * Validates: every selected initiative has a horizon assigned.
+   * Dependencies are optional — zero is a valid confirmable state.
+   * Sets stage6RoadmapConfirmedAt and clears stage6 gate.
+   */
+  completeStage6: protectedProcedure
+    .input(z.object({
+      roadmapJson: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Parse and validate the roadmap payload
+      let roadmap: {
+        horizons: Array<{ id: string; label: string; startDate?: string | null; endDate?: string | null; order: number }>;
+        assignments: Array<{ initiativeId: string; horizonId: string }>;
+        dependencies: Array<{ fromId: string; toId: string; reason?: string }>;
+      };
+      try {
+        roadmap = JSON.parse(input.roadmapJson);
+      } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid roadmapJson — could not parse." });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Fetch the tenant's selected initiatives to validate all are assigned
+      const row = await db
+        .select({
+          stageGateStateJson: ailOrgContext.stageGateStateJson,
+          selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
+        })
+        .from(ailOrgContext)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+        .limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Parse selected initiative IDs
+      let selectedIds: string[] = [];
+      try {
+        const parsed = JSON.parse(row[0].selectedInitiativesJson ?? "[]");
+        selectedIds = Array.isArray(parsed) ? parsed.map((x: unknown) => typeof x === "string" ? x : (x as { id: string }).id) : [];
+      } catch { /* empty */ }
+
+      // Gate: every selected initiative must have a horizon assigned
+      const assignedIds = new Set(roadmap.assignments.map(a => a.initiativeId));
+      const unassigned = selectedIds.filter(id => !assignedIds.has(id));
+      if (unassigned.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `All initiatives must be assigned to a horizon. Unassigned: ${unassigned.join(", ")}.`,
+        });
+      }
+
+      // Gate: at least one horizon must exist
+      if (!roadmap.horizons || roadmap.horizons.length === 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "At least one horizon must be defined." });
+      }
+
+      const gateState = parseGateState(row[0].stageGateStateJson);
+      gateState.stage6.completedAt = Date.now();
+      gateState.stage6.lastEditedAt = null;
+
+      await db.update(ailOrgContext)
+        .set({
+          roadmapJson: input.roadmapJson,
+          stage6RoadmapConfirmedAt: new Date(),
+          stageGateStateJson: JSON.stringify(gateState),
+          updatedAt: new Date(),
+        })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      return { ok: true, gateState };
+    }),
+
+  /**
    * Complete Stage 7 (Success Measures) — was Stage 6 in v3.
    * Validates: at least 1 outcome with a primary measure defined.
    * Sets stage6ConfirmedAt (DB col kept for compat) and clears stage7 gate.

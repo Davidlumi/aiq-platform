@@ -954,7 +954,10 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   stage4ConfirmedAt: timestamp("stage4_confirmed_at"),                             // When CPO confirmed Stage 4 principles + won't-do
   // v3 Strategy Flow — Increment 2 (Stages 5-8)
   stage5ConfirmedAt: timestamp("stage5_confirmed_at"),                             // When CPO confirmed Stage 5 initiatives
-  stage6ConfirmedAt: timestamp("stage6_confirmed_at"),                             // When CPO confirmed Stage 6 success measures
+  // Stage 6 Roadmap (T7 — new stage inserted between Stage 5 and old Stage 6)
+  roadmapJson: text("roadmap_json"),                                                // JSON: { horizons: [{id, label, startDate?, endDate?, order}], assignments: [{initiativeId, horizonId}], dependencies: [{fromId, toId, reason?}] } — date fields exist from day one even if unused at launch
+  stage6RoadmapConfirmedAt: timestamp("stage6_roadmap_confirmed_at"),              // When CPO confirmed Stage 6 Roadmap (T7 new stage)
+  stage6ConfirmedAt: timestamp("stage6_confirmed_at"),                             // When CPO confirmed Stage 7 Success Measures (DB column kept as stage6 for stability; code refers to it as stage7)
   stage7ConfirmedAt: timestamp("stage7_confirmed_at"),                             // When CPO confirmed Stage 7 business case
   stage8ConfirmedAt: timestamp("stage8_confirmed_at"),                             // When CPO confirmed Stage 8 capability
   businessCaseNarrative: text("business_case_narrative"),                          // AI-generated + CPO-edited business case narrative (400-600 words)

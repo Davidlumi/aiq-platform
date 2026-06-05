@@ -33,6 +33,7 @@ import StrategyDiagnosticPage from "./pages/strategy/StrategyDiagnosticPage";
 import StrategyAmbitionPage from "./pages/strategy/StrategyAmbitionPage";
 import StrategyPlanPage from "./pages/strategy/StrategyPlanPage";
 import StrategyRoadmapPage from "./pages/strategy/StrategyRoadmapPage";
+import StrategyRoadmapStagePage from "./pages/strategy/StrategyRoadmapStagePage";
 import StrategyInvestmentRiskPage from "./pages/strategy/StrategyInvestmentRiskPage";
 import StrategyValuePage from "./pages/strategy/StrategyValuePage";
 import BusinessCasePage from "./pages/strategy/BusinessCasePage";
@@ -338,12 +339,13 @@ function Router() {
       <Route path="/strategy/plan">
         <CpoProtectedRouteWithStrategyNav component={StrategyPlanPage} />
       </Route>
-      {/* T13: deep-dive moved to /strategy/roadmap/detail; /strategy/roadmap reserved for Stage 6 (T7) */}
+      {/* T13: deep-dive moved to /strategy/roadmap/detail */}
       <Route path="/strategy/roadmap/detail">
         <CpoProtectedRouteWithStrategyNav component={StrategyRoadmapPage} />
       </Route>
+      {/* T7: Stage 6 Roadmap — new 11-stage flow */}
       <Route path="/strategy/roadmap">
-        <Redirect to="/strategy/roadmap/detail" />
+        <CpoProtectedRouteWithStrategyNav component={StrategyRoadmapStagePage} />
       </Route>
       <Route path="/strategy/investment-risk">
         <CpoProtectedRouteWithStrategyNav component={StrategyInvestmentRiskPage} />
