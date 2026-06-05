@@ -30,7 +30,7 @@ import {
   ChevronDown, ChevronUp, AlertTriangle, CheckCircle2,
   ArrowRight, CalendarDays, Sparkles, BarChart3,
   TrendingUp, ShieldAlert, Activity, Plus, Trash2,
-  Target, BarChart2,
+  Target, BarChart2, Loader2,
 } from "lucide-react";
 import { MEASUREMENT_CADENCE_OPTIONS } from "@/../../shared/strategyInputs";
 import { INITIATIVE_LIBRARY } from "@/../../shared/initiativeLibrary";
@@ -931,6 +931,7 @@ export default function StrategyMeasurementPage() {
   const [outcomesOpen, setOutcomesOpen]         = useState(false);
   const [outcomeDrafting, setOutcomeDrafting]   = useState(false);
   const [confirmOpen, setConfirmOpen]           = useState(false);
+  const [justConfirmed, setJustConfirmed]        = useState(false);
 
   // Per-initiative primary measures (local state, saved on confirm)
   const [primaryMeasures, setPrimaryMeasures]   = useState<Record<string, string>>({});
@@ -990,7 +991,11 @@ export default function StrategyMeasurementPage() {
     onSuccess: () => {
       gate.refetch();
       setConfirmOpen(false);
-      toast.success("Stage 6 confirmed — success measures locked");
+      setJustConfirmed(true);
+      setTimeout(() => {
+        setJustConfirmed(false);
+        navigate("/strategy/business-case");
+      }, 2200);
     },
     onError: (err) => toast.error(err.message ?? "Failed to confirm Stage 6"),
   });
@@ -1295,7 +1300,13 @@ export default function StrategyMeasurementPage() {
 
       {/* ── Gate confirm button ── */}
       {hasStrategy && !stage6Cleared && (
-        <div className="rounded-2xl border border-teal-500/20 bg-teal-500/4 p-5 flex items-center justify-between gap-4">
+        <div
+          className="rounded-2xl border p-5 flex items-center justify-between gap-4 transition-all duration-300"
+          style={{
+            borderColor: canConfirm ? "rgba(45,212,191,0.3)" : "rgba(45,212,191,0.12)",
+            background: canConfirm ? "rgba(45,212,191,0.06)" : "rgba(45,212,191,0.02)",
+          }}
+        >
           <div>
             <p className="text-sm font-semibold text-foreground mb-0.5">Confirm success measures</p>
             <p className="text-xs text-muted-foreground">
@@ -1308,12 +1319,32 @@ export default function StrategyMeasurementPage() {
           </div>
           <Button
             size="sm"
-            className="bg-teal-500 hover:bg-teal-400 text-black font-semibold text-xs h-8 shrink-0"
-            disabled={!canConfirm}
+            className="bg-teal-500 hover:bg-teal-400 text-black font-semibold text-xs h-8 shrink-0 min-w-[140px] transition-all duration-200"
+            disabled={!canConfirm || completeStage6Mut.isPending}
             onClick={() => setConfirmOpen(true)}
           >
-            Confirm measures →
+            {completeStage6Mut.isPending ? (
+              <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Confirming…</>
+            ) : (
+              "Confirm measures →"
+            )}
           </Button>
+        </div>
+      )}
+
+      {/* ── Just-confirmed success flash ── */}
+      {justConfirmed && (
+        <div
+          className="rounded-2xl border border-emerald-500/30 bg-emerald-500/8 p-5 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        >
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/15 shrink-0">
+            <CheckCircle2 className="w-4 h-4 dark:text-emerald-400 text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold dark:text-emerald-400 text-emerald-600">Stage 6 confirmed</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Success measures locked. Moving to Business Case…</p>
+          </div>
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
         </div>
       )}
 
@@ -1369,11 +1400,15 @@ export default function StrategyMeasurementPage() {
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setConfirmOpen(false)}>Cancel</Button>
               <Button
-                className="flex-1 bg-teal-500 hover:bg-teal-400 text-black font-semibold"
+                className="flex-1 bg-teal-500 hover:bg-teal-400 text-black font-semibold transition-all duration-200"
                 disabled={completeStage6Mut.isPending}
                 onClick={handleConfirmMeasures}
               >
-                {completeStage6Mut.isPending ? "Confirming…" : "Confirm measures"}
+                {completeStage6Mut.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Confirming…</>
+                ) : (
+                  <><CheckCircle2 className="w-4 h-4 mr-2" />Confirm measures</>
+                )}
               </Button>
             </div>
           </div>
