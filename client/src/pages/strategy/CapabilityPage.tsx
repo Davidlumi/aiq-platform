@@ -375,6 +375,8 @@ export default function CapabilityPage() {
   const [cap, setCap] = useState<CapabilityState>(EMPTY_STATE);
   const [loaded, setLoaded] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // T11: material-gap soft prompt state
+  const [materialGapPromptOpen, setMaterialGapPromptOpen] = useState(false);
 
   // ── Load saved data ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -406,16 +408,24 @@ export default function CapabilityPage() {
 
   const updateCap = useCallback((next: CapabilityState) => {
     setCap(next);
-    if (loaded) debouncedSave(next);
-  }, [loaded, debouncedSave]);
+    if (loaded) {
+      debouncedSave(next);
+      // T11: editing capability after Stage 8 cleared → stale Stage 9 Business Case
+      if (gate.stage8Cleared) gate.markEdited("stage8");
+    }
+  }, [loaded, debouncedSave, gate]);
 
   const updateDim = useCallback((key: DimKey, data: DimData) => {
     setCap(prev => {
       const next = { ...prev, [key]: data };
-      if (loaded) debouncedSave(next);
+      if (loaded) {
+        debouncedSave(next);
+        // T11: editing capability after Stage 8 cleared → stale Stage 9 Business Case
+        if (gate.stage8Cleared) gate.markEdited("stage8");
+      }
       return next;
     });
-  }, [loaded, debouncedSave]);
+  }, [loaded, debouncedSave, gate]);
 
   // ── AI: suggest tactics ───────────────────────────────────────────────────
   const [suggestingDim, setSuggestingDim] = useState<DimKey | null>(null);
@@ -613,7 +623,19 @@ export default function CapabilityPage() {
     },
   });
 
+  // T11: material gap = any dimension where needed > current + 1 (i.e. gap > 1 level)
+  const hasMaterialGap = activeDimConfig.some(d => {
+    const dim = cap[d.key];
+    return dim.current > 0 && dim.needed > 0 && (dim.needed - dim.current) > 1;
+  });
+
   const handleConfirmStage8 = () => {
+    // T11: if a material gap exists and Stage 7 is already cleared, show soft prompt first
+    if (hasMaterialGap && gate.stage7Cleared && !materialGapPromptOpen) {
+      setMaterialGapPromptOpen(true);
+      return;
+    }
+    setMaterialGapPromptOpen(false);
     completeStage8Mut.mutate({
       stage8CapabilityJson: JSON.stringify(cap),
       riskRegisterJson: JSON.stringify(risks),
@@ -1060,7 +1082,7 @@ export default function CapabilityPage() {
             )}
             <Button
               disabled={!canConfirm || completeStage8Mut.isPending}
-              onClick={() => setConfirmOpen(true)}
+              onClick={() => { if (hasMaterialGap && gate.stage7Cleared) { handleConfirmStage8(); } else { setConfirmOpen(true); } }}
               className="gap-2 shrink-0"
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -1076,6 +1098,37 @@ export default function CapabilityPage() {
           label="Stage 8 confirmed"
         />
       )}
+
+      {/* T11: Material-gap soft prompt — fires before confirm when a material gap exists and Stage 7 is cleared */}
+      <Dialog open={materialGapPromptOpen} onOpenChange={setMaterialGapPromptOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-400" />
+              Material capability gap detected
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              You've recorded a material capability gap — one or more dimensions are more than one level below what the strategy requires.
+            </p>
+            <p className="font-medium text-foreground">
+              Do your Stage 7 success measure targets still hold given these gaps?
+            </p>
+            <p className="text-xs">
+              You can proceed without changing them — this is a prompt, not a block. If the gaps affect your targets, go back to Stage 7 first.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => { setMaterialGapPromptOpen(false); navigate("/strategy/measures"); }}>
+              Review Stage 7 targets
+            </Button>
+            <Button size="sm" onClick={handleConfirmStage8} disabled={completeStage8Mut.isPending}>
+              {completeStage8Mut.isPending ? "Confirming…" : "Targets still hold — confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>

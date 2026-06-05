@@ -74,6 +74,11 @@ function buildSectionPrompt(
     capabilityJson: string;
     reviewNotes: string;
     includeNotes: boolean;
+    // T12: new sourcing fields
+    roadmapJson: string;
+    riskRegisterJson: string;
+    reviewSignOffJson: string;
+    reviewTensionsJson: string;
   }
 ): string {
   const [minWords, maxWords] = SECTION_TARGET_WORDS[sectionId];
@@ -85,6 +90,72 @@ function buildSectionPrompt(
         .join("\n")
     : context.selectedInitiatives.join(", ") || "(none selected)";
 
+  // T12: parse roadmap horizons for human-readable summary
+  let roadmapSummary = "(no roadmap data)";
+  try {
+    const rm = JSON.parse(context.roadmapJson) as {
+      horizons: Array<{ label: string; startDate?: string | null; endDate?: string | null; order: number }>;
+      assignments: Array<{ initiativeId: string; horizonId: string }>;
+    };
+    if (rm.horizons && rm.horizons.length > 0) {
+      const horizonLabels = rm.horizons
+        .sort((a, b) => a.order - b.order)
+        .map(h => h.label + (h.startDate ? ` (${h.startDate}${h.endDate ? ` – ${h.endDate}` : ""})` : ""))
+        .join(" → ");
+      roadmapSummary = `Horizons: ${horizonLabels}. Assignments: ${rm.assignments.length} initiatives mapped.`;
+    }
+  } catch { /* non-fatal */ }
+
+  // T12: parse risk register for high-impact risks
+  let riskSummary = "(no risk register data)";
+  try {
+    const rr = JSON.parse(context.riskRegisterJson) as { risks: Array<{ title: string; likelihood: number; impact: number; mitigation: string; status: string }> };
+    const activeRisks = (rr.risks ?? []).filter(r => r.status !== "dismissed");
+    if (activeRisks.length > 0) {
+      const highImpact = activeRisks.filter(r => r.impact >= 4);
+      const riskLines = activeRisks.slice(0, 6).map(r =>
+        `- ${r.title} (likelihood ${r.likelihood}/5, impact ${r.impact}/5): ${r.mitigation || "mitigation TBD"}`
+      ).join("\n");
+      riskSummary = `${activeRisks.length} active risks (${highImpact.length} high-impact):\n${riskLines}`;
+    }
+  } catch { /* non-fatal */ }
+
+  // T12: parse review sign-off for unresolved/conditions items
+  let signOffSummary = "(no sign-off data)";
+  try {
+    const so = JSON.parse(context.reviewSignOffJson) as {
+      elements: Array<{ id: string; label: string; status: string; notes?: string; isEmpty?: boolean }>;
+      attendees?: string;
+      dateHeld?: string;
+      dissent?: Array<{ element: string; description: string }>;
+    };
+    if (so.elements && so.elements.length > 0) {
+      const agreed = so.elements.filter(e => e.status === "agreed").length;
+      const conditions = so.elements.filter(e => e.status === "agreed_with_conditions");
+      const unresolved = so.elements.filter(e => e.status === "unresolved");
+      const naCount = so.elements.filter(e => e.isEmpty || e.status === "na").length;
+      let lines = `Review sign-off: ${agreed} agreed, ${conditions.length} with conditions, ${unresolved.length} unresolved, ${naCount} N/A.`;
+      if (so.dateHeld) lines += ` Date held: ${so.dateHeld}.`;
+      if (so.attendees) lines += ` Attendees: ${so.attendees}.`;
+      if (conditions.length > 0) {
+        lines += `\nAgreed with conditions: ${conditions.map(e => `${e.label}${e.notes ? ` (${e.notes})` : ""}`).join("; ")}.`;
+      }
+      if (unresolved.length > 0) {
+        lines += `\nUnresolved: ${unresolved.map(e => `${e.label}${e.notes ? ` (${e.notes})` : ""}`).join("; ")}.`;
+      }
+      signOffSummary = lines;
+    }
+  } catch { /* non-fatal */ }
+
+  // T12: parse review tensions
+  let tensionsSummary = "";
+  try {
+    const tensions = JSON.parse(context.reviewTensionsJson) as Array<{ title: string; description?: string }>;
+    if (tensions && tensions.length > 0) {
+      tensionsSummary = `\nReview tensions/dissent: ${tensions.map(t => t.title).join("; ")}.`;
+    }
+  } catch { /* non-fatal */ }
+
   const sharedContext = `
 Organisation: ${context.orgName}
 HR Ambition: ${context.businessAmbitionLevel}/4, Business Ambition: ${context.businessAmbitionLevel}/4
@@ -92,9 +163,12 @@ Strategy archetype: ${context.strategyArchetype}
 Strategy statement: ${context.strategyStatement}
 Selected initiatives (${context.selectedInitiativesWithDescriptions.length} total):
 ${initiativeList}
-Outcomes: ${context.outcomesJson}
-Business case narrative: ${context.businessCaseNarrative}
-Capability assessment: ${context.capabilityJson}
+Success measures (Stage 7): ${context.outcomesJson}
+Roadmap (Stage 6): ${roadmapSummary}
+Business case narrative (Stage 9): ${context.businessCaseNarrative}
+Capability assessment (Stage 8): ${context.capabilityJson}
+Risk register (Stage 8): ${riskSummary}
+Leadership review sign-off (Stage 10): ${signOffSummary}${tensionsSummary}
 ${context.includeNotes && context.reviewNotes ? `Review session notes: ${context.reviewNotes}` : ""}
 `.trim();
 
@@ -109,10 +183,10 @@ Write only the section content.`;
   const sectionInstructions: Record<BoardReportSectionId, string> = {
     context: `Write the Context & Mandate section. Explain why the organisation is investing in AI-enabled HR capability now. Cover the business context, the HR function's current state, and the mandate for change. Ground this in the organisation's ambition levels and strategic archetype.`,
     strategic_direction: `Write the Strategic Direction section. Describe the chosen AI strategy archetype and what it means for the HR function. Explain the strategy statement in accessible terms for a board audience. Cover the principles that will guide decision-making and what the organisation has explicitly chosen not to do.`,
-    initiative_portfolio: `Write the Initiative Portfolio section. You MUST reference each of the selected initiatives by name (they are listed in the context above). Describe them as a coherent portfolio, not a list. Explain how they fit together, what sequencing logic underpins them, and how they connect to the strategic direction. Reference the outcomes and success measures. Do not invent initiatives that are not in the list.`,
-    investment_case: `Write the Investment Case section. Summarise the financial and qualitative case for investment. Draw on the business case narrative, value envelope estimates, and risk acknowledgements. Be honest about uncertainty while making a clear recommendation.`,
-    capability_readiness: `Write the Capability Readiness section. Describe the current capability gaps across the four dimensions (Skills, Capacity, Change readiness, Vendor ecosystem) and the tactics in place to close them. Assess overall delivery confidence.`,
-    governance: `Write the Governance & Next Steps section. Describe the governance model, review cadence, and escalation path. Outline the immediate next steps the board is being asked to approve or note. Include any conditions or dependencies that must be met for the strategy to succeed.`,
+    initiative_portfolio: `Write the Initiative Portfolio & Roadmap section (Section 3). You MUST reference each of the selected initiatives by name (they are listed in the context above). Describe them as a coherent portfolio, not a list. Explain how they fit together and how they are sequenced across the delivery horizons from Stage 6 (the roadmap horizons are in the context). Reference the success measures. Do not invent initiatives that are not in the list.`,
+    investment_case: `Write the Investment Case section (Section 4). Summarise the financial and qualitative case for investment. Draw on the Stage 9 business case narrative. Where the roadmap defines delivery horizons, phase the investment narrative accordingly — describe the cost and value across those horizons rather than as a single lump. Note that cost estimates are user-supplied estimates, not verified figures. Be honest about uncertainty while making a clear recommendation.`,
+    capability_readiness: `Write the Capability Readiness section (Section 5). Source this from the Stage 8 capability assessment in the context. Describe the current capability gaps across the four dimensions (Skills, Capacity, Change readiness, Vendor ecosystem) and the tactics in place to close them. Assess overall delivery confidence. Reference the risk register where capability gaps create delivery risk.`,
+    governance: `Write the Governance & Accountability section (Section 6). Source this from Stage 7 success measures, Stage 8 risk register, and Stage 10 leadership review sign-off and tensions — all of which are in the context. Include: (1) the success measures and how they will be tracked; (2) key risks from the risk register, especially high-impact ones; (3) the leadership review sign-off status — call out any elements agreed with conditions or left unresolved; (4) any tensions or dissent raised in the review. Do not omit unresolved items or conditions — they are exactly what the board needs to see.`,
   };
 
   return `${systemPrompt}\n\nContext:\n${sharedContext}\n\nInstruction:\n${sectionInstructions[sectionId]}`;
@@ -165,10 +239,11 @@ export function registerBoardReportStreamRoute(app: Express): void {
       return;
     }
 
+    // T12 (bug fix): use user.tenantId, not user.userId — session payload carries both
     const [ctx] = await db
       .select()
       .from(ailOrgContext)
-      .where(eq(ailOrgContext.tenantId, user.userId))
+      .where(eq(ailOrgContext.tenantId, user.tenantId))
       .limit(1);
 
     if (!ctx) {
@@ -274,6 +349,11 @@ export function registerBoardReportStreamRoute(app: Express): void {
         capabilityJson: ctx.stage8CapabilityJson ?? "{}",
         reviewNotes: ctx.reviewSessionNotes ?? "",
         includeNotes: ctx.boardReportIncludeNotes ?? false,
+        // T12: new sourcing fields for resequenced stages
+        roadmapJson: ctx.roadmapJson ?? "{}",
+        riskRegisterJson: ctx.riskRegisterJson ?? "{}",
+        reviewSignOffJson: ctx.reviewSignOffJson ?? "{}",
+        reviewTensionsJson: ctx.reviewTensionsJson ?? "[]",
       };
 
       const prompt = buildSectionPrompt(sectionId, sectionContext);

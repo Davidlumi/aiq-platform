@@ -1060,7 +1060,8 @@ export default function StrategyMeasurementPage() {
   async function handleOutcomesSave(newOutcomes: Outcome[]) {
     await saveAmbitionMut.mutateAsync({ section: "outcomes", value: newOutcomes });
     await ambitionQ.refetch();
-    gate.markEdited("stage6");
+    // T11: Stage 7 edits must stale Stage 9 Business Case (was incorrectly marking stage6)
+    gate.markEdited("stage7");
   }
 
   async function handleOutcomesDraft() {

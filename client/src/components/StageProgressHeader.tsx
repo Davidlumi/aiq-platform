@@ -171,7 +171,7 @@ export default function StageProgressHeader({
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-[11px] font-medium tracking-widest uppercase text-muted-foreground/50">
-              Stage {stageNumber} of 10
+              Stage {stageNumber} of 11
             </span>
             <StatusPill variant={statusVariant} />
           </div>

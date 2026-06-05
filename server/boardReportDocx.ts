@@ -68,7 +68,8 @@ export function registerBoardReportDocxRoute(app: Express): void {
     const db = await getDb();
     if (!db) { res.status(500).json({ error: "Database unavailable" }); return; }
 
-    const [ctx] = await db.select().from(ailOrgContext).where(eq(ailOrgContext.tenantId, user.userId)).limit(1);
+    // T12 (bug fix): use user.tenantId, not user.userId — session payload carries both
+    const [ctx] = await db.select().from(ailOrgContext).where(eq(ailOrgContext.tenantId, user.tenantId)).limit(1);
     if (!ctx) { res.status(404).json({ error: "No strategy context found" }); return; }
 
     const [tenant] = await db.select({ name: tenants.name }).from(tenants).where(eq(tenants.id, ctx.tenantId)).limit(1);
