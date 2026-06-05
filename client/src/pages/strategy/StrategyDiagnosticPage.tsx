@@ -387,6 +387,21 @@ export default function StrategyDiagnosticPage() {
   const [touchedSections, setTouchedSections] = useState<Set<SectionId>>(new Set());
   const touchSection = (id: SectionId) => setTouchedSections(prev => new Set(Array.from(prev).concat(id)));
 
+  // ── Missing-field navigation helper ─────────────────────────────────────
+  // Parses the backend error string (e.g. "...Workforce composition (Section I), ...") into
+  // clickable links that jump to the right section and scroll to the field.
+  const jumpToField = useCallback((sectionId: SectionId, fieldId?: string) => {
+    setActiveSection(sectionId);
+    setTouchedSections(prev => new Set(Array.from(prev).concat(sectionId)));
+    // Scroll after React re-renders the section
+    setTimeout(() => {
+      const el = fieldId
+        ? document.querySelector(`[data-field-id="${fieldId}"]`)
+        : document.querySelector(`[data-section-content="${sectionId}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  }, []);
+
   // tRPC queries
   const inputsQ = trpc.backgroundInputs.getInputs.useQuery(undefined, {
     refetchInterval: isSuperAdmin ? false : 3000,
@@ -2383,7 +2398,7 @@ export default function StrategyDiagnosticPage() {
                 This section grounds your HR AI strategy in the broader business context. The more specific you are, the more relevant your strategy drafts will be.
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2" data-field-id="field-businessDirection">
                 <div className="flex items-center justify-between">
                   <Label>Where is the business heading in the next 2–3 years? <span className="text-destructive">*</span></Label>
                   {aiDrafted["I_businessDirection"] && aiPrevValues["I_businessDirection"] !== undefined && (
@@ -2561,7 +2576,7 @@ export default function StrategyDiagnosticPage() {
                 })}
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3" data-field-id="field-peopleChallenges">
                 <Label>Top 3 people / talent challenges <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">Type a few keywords, then click ✨ AI to generate. What are the hardest people problems you're trying to solve?</p>
                 {[0, 1, 2].map(i => {
@@ -2676,8 +2691,8 @@ export default function StrategyDiagnosticPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Workforce composition</Label>
+              <div className="space-y-2" data-field-id="field-workforceComposition">
+                <Label>Workforce composition <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">What best describes the mix of your workforce?</p>
                 <Select
                   value={(getFieldI("workforceComposition") as string) ?? ""}
@@ -2712,7 +2727,7 @@ export default function StrategyDiagnosticPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2" data-field-id="field-skillsFrameworkStatus">
                 <Label>Skills framework maturity <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">How developed is your organisation’s skills taxonomy and framework?</p>
                 <Select
@@ -2925,7 +2940,7 @@ export default function StrategyDiagnosticPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2" data-field-id="field-performanceReviewCadence">
                 <Label>Performance review cadence <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">How frequently are formal performance reviews conducted?</p>
                 <Select
@@ -2978,7 +2993,7 @@ export default function StrategyDiagnosticPage() {
                 </Select>
               </div>
 
-              <div className="space-y-3">
+              <div className={cn("space-y-3 rounded-lg p-3 -m-3 transition-colors", fieldErr("K", !(getFieldK("hiringVolumeProfile") as string[] ?? []).length) ? "bg-destructive/5 border border-destructive/30" : "")} data-field-id="field-hiringVolumeProfile">
                 <Label>Hiring volume profile <span className="text-destructive">*</span></Label>
                 <p className="text-xs text-muted-foreground">Which hiring segments are most significant? (select all that apply)</p>
                 {[
@@ -3163,8 +3178,8 @@ export default function StrategyDiagnosticPage() {
                   disabled={completePreworkMut.isPending}
                   onClick={() => {
                     if (!allMandatoryComplete) {
-                      // Touch all mandatory sections to reveal all inline errors
-                      setTouchedSections(new Set(["A", "B", "C", "D", "E", "G", "I"] as SectionId[]));
+                      // Touch all mandatory sections (including K) to reveal all inline errors
+                      setTouchedSections(new Set(["A", "B", "C", "D", "E", "G", "I", "K"] as SectionId[]));
                       return;
                     }
                     setCompleteError(null);
@@ -3218,12 +3233,59 @@ export default function StrategyDiagnosticPage() {
             </Button>
           </div>
 
-          {completeError && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              {completeError}
-            </div>
-          )}
+          {completeError && (() => {
+            // Parse "Please complete required fields before finishing: Label (Section X), Label2 (Section Y)"
+            const prefix = "Please complete required fields before finishing: ";
+            const rawList = completeError.startsWith(prefix)
+              ? completeError.slice(prefix.length)
+              : completeError;
+            // Map backend labels → field anchors
+            const FIELD_MAP: Record<string, { section: SectionId; fieldId: string }> = {
+              "Business direction": { section: "I", fieldId: "field-businessDirection" },
+              "Top people challenges": { section: "I", fieldId: "field-peopleChallenges" },
+              "Workforce composition": { section: "I", fieldId: "field-workforceComposition" },
+              "Skills framework status": { section: "I", fieldId: "field-skillsFrameworkStatus" },
+              "Performance review cadence": { section: "K", fieldId: "field-performanceReviewCadence" },
+              "Hiring volume profile": { section: "K", fieldId: "field-hiringVolumeProfile" },
+            };
+            // Extract individual items — each has format "Label (Section X)"
+            const items = rawList.split(", ").map(item => {
+              const m = item.match(/^(.+?)\s*\(Section ([A-K])\)$/);
+              if (!m) return { label: item, section: null as SectionId | null, fieldId: undefined };
+              const label = m[1].trim();
+              const section = m[2] as SectionId;
+              const fieldId = FIELD_MAP[label]?.fieldId;
+              return { label, section, fieldId };
+            });
+            return (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium mb-1.5">Please complete these required fields before finishing:</p>
+                  <ul className="space-y-1">
+                    {items.map((item, idx) => (
+                      <li key={idx} className="flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-destructive/60 flex-shrink-0" />
+                        {item.section ? (
+                          <button
+                            type="button"
+                            onClick={() => jumpToField(item.section!, item.fieldId)}
+                            className="underline underline-offset-2 hover:opacity-80 transition-opacity text-left"
+                          >
+                            {item.label}
+                            <span className="ml-1 text-xs opacity-70 no-underline">(Section {item.section})</span>
+                          </button>
+                        ) : (
+                          <span>{item.label}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs mt-2 opacity-70">Click any field above to jump directly to it.</p>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Pre-work complete — prominent success state with navigation CTA */}
           {preworkDone && (
