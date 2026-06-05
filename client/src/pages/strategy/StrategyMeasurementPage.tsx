@@ -684,6 +684,20 @@ function OutcomeRow({
             </div>
           </div>
         )}
+        {outcome.baseline_status === "not_measured" && (
+          <div className="mt-2">
+            <Label className="text-[11px] text-muted-foreground">
+              Baseline study date <span className="text-red-400 ml-0.5">*</span>
+            </Label>
+            <Input
+              value={outcome.baseline_study_date ?? ""}
+              onChange={e => onChange("baseline_study_date", e.target.value || null)}
+              placeholder="e.g. Q1 2026 — when you will establish the baseline"
+              className="h-8 text-sm mt-1"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">Enter when you plan to establish this baseline to unlock confirmation.</p>
+          </div>
+        )}
       </div>
       <div>
         <Label className="text-[11px] text-muted-foreground">Target value</Label>
@@ -1132,9 +1146,13 @@ export default function StrategyMeasurementPage() {
   const savedPrimaryMeasureCount = (outcomes ?? []).filter(o => o.primary_measure?.trim()).length;
 
   // T9 — Baseline provenance guard
-  // Hard block: strategy-level outcome has a target_value but baseline_status = "not_measured" AND baseline_value is null
+  // Hard block: strategy-level outcome has a target_value but no baseline evidence.
+  // Passes if: baseline_status="measured" (with a value), OR baseline_status="not_measured" with a study date set.
   const strategyOutcomesWithTargetButNoBaseline = (outcomes ?? []).filter(
-    o => !o.initiative_id && o.target_value && (o.baseline_status === "not_measured" || o.baseline_value === null)
+    o => !o.initiative_id && o.target_value && (
+      (o.baseline_status === "measured" && o.baseline_value === null) ||
+      (o.baseline_status === "not_measured" && !o.baseline_study_date)
+    )
   );
   const baselineHardBlockCount = strategyOutcomesWithTargetButNoBaseline.length;
 
