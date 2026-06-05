@@ -62,46 +62,46 @@ const REWARD_ARCHETYPES: Array<{
 }> = [
   {
     key: "augmentation",
-    label: "Augmentation",
-    tagline: "AI enhances reward decisions",
+    label: "AI supports reward decisions",
+    tagline: "Humans stay in charge — AI helps them pay more fairly and accurately",
     description:
-      "Reward professionals use AI to make better, faster pay and benefits decisions — humans remain accountable for equity and fairness outcomes.",
+      "Your reward team uses AI to make faster, better-informed pay and benefits decisions, but a person is always responsible for the outcome. Keeps humans accountable for equity and fairness.",
     icon: <Cpu className="h-5 w-5" />,
     colour: "border-blue-500/40 hover:border-blue-500/70",
   },
   {
     key: "transformation",
-    label: "Transformation",
-    tagline: "AI reshapes reward operations",
+    label: "AI changes how reward works",
+    tagline: "Move from annual pay cycles to always-on, data-driven reward",
     description:
-      "AI fundamentally changes how reward is designed, delivered, and communicated — moving from annual cycles to continuous, data-driven compensation management.",
+      "AI fundamentally changes how pay and benefits are designed, delivered, and communicated — shifting reward from a once-a-year process to something continuous and responsive to the business.",
     icon: <TrendingUp className="h-5 w-5" />,
     colour: "border-violet-500/40 hover:border-violet-500/70",
   },
   {
     key: "differentiation",
-    label: "Differentiation",
-    tagline: "AI creates reward advantage",
+    label: "AI makes our reward offer stand out",
+    tagline: "Personalise pay and benefits in ways competitors can't easily copy",
     description:
-      "AI enables personalised total reward experiences that attract and retain talent — making your EVP impossible to replicate.",
+      "AI enables you to offer a total reward experience that feels personal to each employee — making your employer value proposition genuinely distinctive and harder for rivals to replicate.",
     icon: <Target className="h-5 w-5" />,
     colour: "border-emerald-500/40 hover:border-emerald-500/70",
   },
   {
     key: "efficiency",
-    label: "Efficiency",
-    tagline: "AI reduces reward admin burden",
+    label: "AI cuts reward admin",
+    tagline: "Automate benchmarking and compliance so the team can focus on strategy",
     description:
-      "AI automates routine reward processes — benchmarking, modelling, compliance checks — freeing the team for strategic work.",
+      "AI takes on routine reward tasks — pay benchmarking, modelling scenarios, running compliance checks — so your team spends less time on admin and more time on work that matters.",
     icon: <Zap className="h-5 w-5" />,
     colour: "border-amber-500/40 hover:border-amber-500/70",
   },
   {
     key: "defensive",
-    label: "Defensive",
-    tagline: "AI manages pay risk & compliance",
+    label: "AI keeps pay fair and compliant",
+    tagline: "Reduce pay equity risk and stay on the right side of regulation",
     description:
-      "AI is deployed primarily to ensure pay equity, regulatory compliance, and audit readiness — protecting the organisation from legal and reputational risk.",
+      "AI is used mainly to protect the organisation — monitoring for pay gaps, maintaining audit trails, and ensuring you meet legal requirements. Staying safe and compliant comes first.",
     icon: <ShieldCheck className="h-5 w-5" />,
     colour: "border-rose-500/40 hover:border-rose-500/70",
   },

@@ -48,46 +48,46 @@ const ARCHETYPES: Array<{
 }> = [
   {
     key: "augmentation",
-    label: "Augmentation",
-    tagline: "AI enhances human judgement",
+    label: "AI supports our people",
+    tagline: "Humans stay in charge — AI helps them decide better",
     description:
-      "HR professionals use AI to make better, faster decisions — but humans remain accountable for every significant outcome. Ideal for regulated sectors or organisations where trust is paramount.",
+      "Your HR team uses AI to make faster, better-informed decisions, but a person is always responsible for the outcome. The right choice if you work in a regulated industry or your organisation needs to build trust in AI before going further.",
     icon: <Cpu className="h-5 w-5" />,
     colour: "border-blue-500/40 hover:border-blue-500/70",
   },
   {
     key: "transformation",
-    label: "Transformation",
-    tagline: "AI reshapes how HR works",
+    label: "AI changes how HR works",
+    tagline: "HR leads a fundamental shift in how the function operates",
     description:
-      "AI fundamentally changes HR processes, roles, and operating models. HR leads the organisation's AI adoption. Requires high change readiness and strong executive sponsorship.",
+      "AI doesn't just assist — it changes the way HR is structured, how roles are defined, and how the function delivers value. HR takes the lead on AI adoption across the business. This needs strong leadership buy-in and a team ready for significant change.",
     icon: <TrendingUp className="h-5 w-5" />,
     colour: "border-violet-500/40 hover:border-violet-500/70",
   },
   {
     key: "differentiation",
-    label: "Differentiation",
-    tagline: "AI creates employer advantage",
+    label: "AI sets us apart as an employer",
+    tagline: "Use AI to build an employee experience competitors can't match",
     description:
-      "AI is used to create a distinctive employee experience, talent brand, or people capability that competitors cannot easily replicate. Ideal for talent-scarce markets.",
+      "AI helps you create a workplace, talent brand, or people capability that is genuinely hard for rivals to copy. The right choice if you compete for talent in a tight market and want to stand out.",
     icon: <Target className="h-5 w-5" />,
     colour: "border-emerald-500/40 hover:border-emerald-500/70",
   },
   {
     key: "efficiency",
-    label: "Efficiency",
-    tagline: "AI reduces cost and friction",
+    label: "AI cuts cost and admin",
+    tagline: "Automate the routine so HR can focus on what matters",
     description:
-      "AI automates routine HR tasks, reduces administrative burden, and frees HR capacity for higher-value work. Pragmatic and measurable — ideal for cost-conscious organisations.",
+      "AI takes on repetitive HR tasks — reducing paperwork, speeding up processes, and freeing your team for higher-value work. Practical and easy to measure. The right choice if reducing cost or headcount pressure is the main driver.",
     icon: <Zap className="h-5 w-5" />,
     colour: "border-amber-500/40 hover:border-amber-500/70",
   },
   {
     key: "defensive",
-    label: "Defensive",
-    tagline: "AI manages risk and compliance",
+    label: "AI keeps us safe and compliant",
+    tagline: "Reduce legal, regulatory, and reputational risk",
     description:
-      "AI is deployed primarily to reduce legal, regulatory, and reputational risk. Bias monitoring, governance frameworks, and audit trails take priority over capability building.",
+      "AI is used mainly to protect the organisation — checking for bias, maintaining audit trails, and ensuring you meet legal and regulatory requirements. Building capability comes second to managing risk.",
     icon: <ShieldCheck className="h-5 w-5" />,
     colour: "border-rose-500/40 hover:border-rose-500/70",
   },

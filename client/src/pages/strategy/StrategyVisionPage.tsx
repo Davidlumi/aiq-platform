@@ -37,11 +37,11 @@ import { cn } from "@/lib/utils";
 
 // ─── Archetype hint labels ────────────────────────────────────────────────────
 const ARCHETYPE_LABELS: Record<string, string> = {
-  augmentation: "Augmentation",
-  transformation: "Transformation",
-  differentiation: "Differentiation",
-  efficiency: "Efficiency",
-  defensive: "Defensive",
+  augmentation: "AI supports our people",
+  transformation: "AI changes how HR works",
+  differentiation: "AI sets us apart as an employer",
+  efficiency: "AI cuts cost and admin",
+  defensive: "AI keeps us safe and compliant",
 };
 
 // ─── Word count helper ────────────────────────────────────────────────────────
