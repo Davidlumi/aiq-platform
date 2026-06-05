@@ -580,7 +580,7 @@ export default function StrategyPlanPage() {
       utils.gate.getState.invalidate();  // eslint-disable-line @typescript-eslint/no-floating-promises
       setConfirmPlanOpen(false);
       toast.success("Plan confirmed — moving to Measurement");
-      navigate("/strategy/measurement");
+      navigate("/strategy/measures");
     },
     onError: (err) => {
       toast.error(err.message ?? "Failed to confirm plan");
@@ -935,9 +935,9 @@ export default function StrategyPlanPage() {
             isEdited={!!gate.stage5EditedAfterClearing}
             canConfirm={enriched.length > 0}
             isPending={confirmPlanMutation.isPending}
-            onConfirm={() => isStage5Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/measurement") : setConfirmPlanOpen(true)}
-            backRoute="/strategy/ambition"
-            nextRoute="/strategy/measurement"
+            onConfirm={() => isStage5Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/measures") : setConfirmPlanOpen(true)}
+            backRoute="/strategy/principles"
+            nextRoute="/strategy/measures"
             nextLabel="Outcomes"
           />
         )}

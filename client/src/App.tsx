@@ -328,14 +328,22 @@ function Router() {
       <Route path="/strategy/diagnostic">
         <CpoProtectedRouteWithStrategyNav component={StrategyDiagnosticPage} />
       </Route>
-      <Route path="/strategy/ambition">
+      <Route path="/strategy/principles">
         <CpoProtectedRouteWithStrategyNav component={StrategyAmbitionPage} />
+      </Route>
+      {/* T2: legacy redirect — /strategy/ambition → /strategy/principles */}
+      <Route path="/strategy/ambition">
+        <Redirect to="/strategy/principles" />
       </Route>
       <Route path="/strategy/plan">
         <CpoProtectedRouteWithStrategyNav component={StrategyPlanPage} />
       </Route>
-      <Route path="/strategy/roadmap">
+      {/* T13: deep-dive moved to /strategy/roadmap/detail; /strategy/roadmap reserved for Stage 6 (T7) */}
+      <Route path="/strategy/roadmap/detail">
         <CpoProtectedRouteWithStrategyNav component={StrategyRoadmapPage} />
+      </Route>
+      <Route path="/strategy/roadmap">
+        <Redirect to="/strategy/roadmap/detail" />
       </Route>
       <Route path="/strategy/investment-risk">
         <CpoProtectedRouteWithStrategyNav component={StrategyInvestmentRiskPage} />
@@ -349,8 +357,12 @@ function Router() {
       <Route path="/strategy/capability">
         <CpoProtectedRouteWithStrategyNav component={CapabilityPage} />
       </Route>
-      <Route path="/strategy/measurement">
+      <Route path="/strategy/measures">
         <CpoProtectedRouteWithStrategyNav component={StrategyMeasurementPage} />
+      </Route>
+      {/* T3: legacy redirect — /strategy/measurement → /strategy/measures */}
+      <Route path="/strategy/measurement">
+        <Redirect to="/strategy/measures" />
       </Route>
       <Route path="/strategy/review">
         <CpoProtectedRouteWithStrategyNav component={ReviewSessionPage} />
@@ -371,7 +383,7 @@ function Router() {
         <Redirect to="/strategy" />
       </Route>
       <Route path="/ai-strategy/assessment">
-        <Redirect to="/strategy/ambition" />
+        <Redirect to="/strategy/principles" />
       </Route>
       <Route path="/implementation-tracker">
         <ProtectedRoute component={ImplementationTrackerPage} />

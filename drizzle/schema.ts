@@ -912,7 +912,8 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   guidingPrinciplesJson: text("guiding_principles_json"),                   // JSON: [{title, description, capability_tags: string[], ai_drafted: boolean}] x5 principles
   strategyAssessmentCompletedAt: timestamp("strategy_assessment_completed_at"), // when assessment was last completed
   wontDoJson: text("wont_do_json"),                                              // JSON: {text: string, ai_drafted: boolean}[] - exclusion items
-  outcomesJson: text("outcomes_json"),                                              // JSON: [{number, title, unit, baseline_value, baseline_status, baseline_study_date, target_value, target_date, derived_summary, tests_principle, ai_drafted}]
+  outcomesJson: text("outcomes_json"),                                              // DORMANT (T4): kept as rollback safety net — do not write; read only as fallback when successMeasuresJson is null; log every fallback read
+  successMeasuresJson: text("success_measures_json"),                                // JSON: [{number, title, unit, baseline_value, baseline_status, baseline_study_date, target_value, target_date, derived_summary, tests_principle, ai_drafted}] — canonical field (renamed from outcomesJson in T4)
   approachLine: text("approach_line"),                                              // AI-generated posture statement (editable)
   visionAiFirstDraft: text("vision_ai_first_draft"),                                // Original AI draft of vision (preserved for comparison)
   visionLastEditedBy: varchar("vision_last_edited_by", { length: 36 }),             // user_id of last editor

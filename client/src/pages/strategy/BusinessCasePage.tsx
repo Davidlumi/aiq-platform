@@ -559,7 +559,7 @@ export default function BusinessCasePage() {
         canConfirm,
         isPending: confirmMut.isPending,
         onConfirm: () => gate.stage7Cleared && !gate.stage7EditedAfterClearing ? navigate("/strategy/capability") : setConfirmOpen(true),
-        backRoute: "/strategy/measurement",
+        backRoute: "/strategy/measures",
         nextRoute: "/strategy/capability",
         nextLabel: "Capability",
       } : undefined}

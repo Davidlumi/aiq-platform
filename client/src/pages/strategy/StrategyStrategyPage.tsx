@@ -252,9 +252,9 @@ export default function StrategyStrategyPage() {
           isEdited={!!gate.stage3EditedAfterClearing}
           canConfirm={canConfirm}
           isPending={completeStage3.isPending}
-          onConfirm={() => gate.stage3Cleared && !gate.stage3EditedAfterClearing ? navigate("/strategy/ambition") : handleConfirm()}
+          onConfirm={() => gate.stage3Cleared && !gate.stage3EditedAfterClearing ? navigate("/strategy/principles") : handleConfirm()}
           backRoute="/strategy/vision"
-          nextRoute="/strategy/ambition"
+          nextRoute="/strategy/principles"
           nextLabel="Principles"
         />
       )}
@@ -444,7 +444,7 @@ export default function StrategyStrategyPage() {
           <Button
             variant="outline"
             className="gap-2"
-            onClick={() => navigate("/strategy/ambition")}
+            onClick={() => navigate("/strategy/principles")}
           >
             Continue to Principles
             <ArrowRight className="h-4 w-4" />

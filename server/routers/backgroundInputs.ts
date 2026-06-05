@@ -957,7 +957,7 @@ export const backgroundInputsRouter = router({
         }
         if (drafts.principles) patch.guidingPrinciplesJson = JSON.stringify(drafts.principles);
         if (drafts.wontDo) patch.wontDoJson = JSON.stringify(drafts.wontDo);
-        if (drafts.outcomes) patch.outcomesJson = JSON.stringify(drafts.outcomes);
+        if (drafts.outcomes) patch.successMeasuresJson = JSON.stringify(drafts.outcomes); // T4: write to canonical field; outcomesJson is dormant
         if (drafts.approachLine) {
           const al = drafts.approachLine as any;
           patch.approachLine = al.approachLine ?? null;
@@ -1042,7 +1042,7 @@ export const backgroundInputsRouter = router({
           if (sectionsToRegenerate.includes("wontDo") && drafts.wontDo)
             patch.wontDoJson = JSON.stringify(drafts.wontDo);
           if (sectionsToRegenerate.includes("outcomes") && drafts.outcomes)
-            patch.outcomesJson = JSON.stringify(drafts.outcomes);
+            patch.successMeasuresJson = JSON.stringify(drafts.outcomes); // T4: write to canonical field; outcomesJson is dormant
           if (sectionsToRegenerate.includes("approachLine") && drafts.approachLine) {
             const al = drafts.approachLine as any;
             patch.approachLine = al.approachLine ?? null;

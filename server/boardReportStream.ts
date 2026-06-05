@@ -261,7 +261,15 @@ export function registerBoardReportStreamRoute(app: Express): void {
         businessAmbitionLevel: ctx.businessAmbitionLevel ?? 2,
         selectedInitiatives,
         selectedInitiativesWithDescriptions,
-        outcomesJson: ctx.outcomesJson ?? "[]",
+        // T4: read from successMeasuresJson (canonical); fall back to outcomesJson with loud log
+        outcomesJson: (() => {
+          if (ctx.successMeasuresJson) return ctx.successMeasuresJson;
+          if (ctx.outcomesJson) {
+            console.warn(`[T4-FALLBACK] boardReportStream: tenant=${ctx.tenantId} reading from dormant outcomesJson`);
+            return ctx.outcomesJson;
+          }
+          return "[]";
+        })(),
         businessCaseNarrative: ctx.businessCaseNarrative ?? "",
         capabilityJson: ctx.stage8CapabilityJson ?? "{}",
         reviewNotes: ctx.reviewSessionNotes ?? "",

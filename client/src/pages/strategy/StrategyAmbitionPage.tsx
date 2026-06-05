@@ -1106,7 +1106,7 @@ export default function StrategyAmbitionPage() {
     void seed();
   }, [sections, saveSectionM, sectionsQ]);
 
-  // Redirect to the appropriate stage if the user navigates to /strategy/ambition directly
+  // Redirect to the appropriate stage if the user navigates to /strategy/principles directly
   // and an earlier stage is not yet cleared.
   useEffect(() => {
     if (gate.isLoading) return;
@@ -1419,7 +1419,7 @@ export default function StrategyAmbitionPage() {
                 <CheckCircle2 className="w-3.5 h-3.5" /> Mark as reviewed
               </Button>
             )}
-            <Link href="/strategy/roadmap">
+            <Link href="/strategy/roadmap/detail">
               <button
                 className="h-8 px-3 text-xs flex items-center gap-1.5 rounded-md transition-colors"
                 style={{ background: "transparent", border: "0.5px solid rgba(255,255,255,0.2)" }}

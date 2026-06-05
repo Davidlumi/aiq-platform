@@ -913,7 +913,8 @@ Return JSON with this exact structure:
         visionLastEditedAt: ailOrgContext.visionLastEditedAt,
         guidingPrinciplesJson: ailOrgContext.guidingPrinciplesJson,
         wontDoJson: ailOrgContext.wontDoJson,
-        outcomesJson: ailOrgContext.outcomesJson,
+        outcomesJson: ailOrgContext.outcomesJson,           // T4: dormant fallback
+        successMeasuresJson: ailOrgContext.successMeasuresJson, // T4: canonical read
         approachLine: ailOrgContext.approachLine,
         businessAmbitionLevel: ailOrgContext.businessAmbitionLevel,
         peopleAmbitionLevel: ailOrgContext.peopleAmbitionLevel,
@@ -953,13 +954,29 @@ Return JSON with this exact structure:
         visionLastEditedAt: r.visionLastEditedAt ?? null,
         principles,
         wontDo: wontDo as Array<{ text: string; ai_drafted: boolean }> | null,
-        outcomes: parse(r.outcomesJson) as Array<{
-          number: number; title: string; unit: string;
-          baseline_value: number | null; baseline_status: "measured" | "not_measured";
-          baseline_study_date: string | null; target_value: number; target_date: string;
-          derived_summary: string; tests_principle: number | null; ai_drafted: boolean;
-          primary_measure?: string | null;
-        }> | null,
+        outcomes: (() => {
+          // T4: read from successMeasuresJson (canonical); fall back to outcomesJson with loud log
+          if (r.successMeasuresJson) {
+            return parse(r.successMeasuresJson) as Array<{
+              number: number; title: string; unit: string;
+              baseline_value: number | null; baseline_status: "measured" | "not_measured";
+              baseline_study_date: string | null; target_value: number; target_date: string;
+              derived_summary: string; tests_principle: number | null; ai_drafted: boolean;
+              primary_measure?: string | null;
+            }> | null;
+          }
+          if (r.outcomesJson) {
+            console.warn(`[T4-FALLBACK] getAmbitionSections: tenant=${ctx.user.tenantId} reading outcomes from dormant outcomesJson — successMeasuresJson is null. Migration may not have run.`);
+            return parse(r.outcomesJson) as Array<{
+              number: number; title: string; unit: string;
+              baseline_value: number | null; baseline_status: "measured" | "not_measured";
+              baseline_study_date: string | null; target_value: number; target_date: string;
+              derived_summary: string; tests_principle: number | null; ai_drafted: boolean;
+              primary_measure?: string | null;
+            }> | null;
+          }
+          return null;
+        })(),
         approachLine: r.approachLine ?? null,
         businessAmbitionLevel: r.businessAmbitionLevel ?? null,
         peopleAmbitionLevel: r.peopleAmbitionLevel ?? null,
@@ -1016,7 +1033,7 @@ Return JSON with this exact structure:
       const patch: Partial<typeof ailOrgContext.$inferInsert> = { updatedAt: new Date() };
       if (input.section === "principles") patch.guidingPrinciplesJson = JSON.stringify(input.value);
       else if (input.section === "wontDo") patch.wontDoJson = JSON.stringify(input.value);
-      else if (input.section === "outcomes") patch.outcomesJson = JSON.stringify(input.value);
+      else if (input.section === "outcomes") patch.successMeasuresJson = JSON.stringify(input.value); // T4: write to canonical field; outcomesJson is dormant
       else if (input.section === "approachLine") patch.approachLine = input.value;
       else if (input.section === "markReviewed") {
         patch.lastReviewedAt = new Date();
@@ -2095,7 +2112,8 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         visionStatement: ailOrgContext.visionStatement,
         guidingPrinciplesJson: ailOrgContext.guidingPrinciplesJson,
         wontDoJson: ailOrgContext.wontDoJson,
-        outcomesJson: ailOrgContext.outcomesJson,
+        outcomesJson: ailOrgContext.outcomesJson,           // T4: dormant fallback
+        successMeasuresJson: ailOrgContext.successMeasuresJson, // T4: canonical
         selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
         fitImpactResultsJson: (ailOrgContext as any).fitImpactResultsJson,
         backgroundInputsJson: ailOrgContext.backgroundInputsJson,
@@ -2115,7 +2133,15 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       const bgInputs = parse(row.backgroundInputsJson) ?? {};
       const principles = parse(row.guidingPrinciplesJson) ?? [];
       const wontDo = parse(row.wontDoJson) ?? [];
-      const outcomes = parse(row.outcomesJson) ?? [];
+      // T4: read from successMeasuresJson; fall back to outcomesJson with loud log
+      const outcomes = (() => {
+        if (row.successMeasuresJson) return parse(row.successMeasuresJson) ?? [];
+        if (row.outcomesJson) {
+          console.warn(`[T4-FALLBACK] generateStrategyDraftSection: tenant=${ctx.user.tenantId} reading from dormant outcomesJson`);
+          return parse(row.outcomesJson) ?? [];
+        }
+        return [];
+      })();
       const baseline = parse(row.operationalBaselineJson) ?? {};
       const selectedIds: string[] = parse(row.selectedInitiativesJson) ?? [];
       const fitResults: Array<{ id: string; fitStatus: string; phase: number; valueRange?: { low: number; high: number }; fitRationale?: string; y1CostRange?: { low: number; high: number } }> = parse((row as any).fitImpactResultsJson) ?? [];
@@ -2735,11 +2761,21 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
         strategyStatement: ailOrgContext.strategyStatement,
         strategyArchetype: ailOrgContext.strategyArchetype,
         selectedInitiativesJson: ailOrgContext.selectedInitiativesJson,
-        outcomesJson: ailOrgContext.outcomesJson,
+        outcomesJson: ailOrgContext.outcomesJson,           // T4: dormant fallback
+        successMeasuresJson: ailOrgContext.successMeasuresJson, // T4: canonical
         businessCaseNarrative: ailOrgContext.businessCaseNarrative,
         stage8CapabilityJson: ailOrgContext.stage8CapabilityJson,
       }).from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
-      return row ?? null;
+      if (!row) return null;
+      // T4: resolve canonical outcomes field with fallback
+      const resolvedRow = {
+        ...row,
+        outcomesJson: row.successMeasuresJson ?? (() => {
+          if (row.outcomesJson) console.warn(`[T4-FALLBACK] getReviewSession: tenant=${ctx.user.tenantId} reading from dormant outcomesJson`);
+          return row.outcomesJson;
+        })(),
+      };
+      return resolvedRow;
     }),
 
   /** Save review session notes and tensions */

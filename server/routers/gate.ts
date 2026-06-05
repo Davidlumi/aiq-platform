@@ -709,7 +709,7 @@ export const gateRouter = router({
    */
   completeStage6: protectedProcedure
     .input(z.object({
-      outcomesJson: z.string().min(1),
+      outcomesJson: z.string().min(1), // field name kept for API compatibility; data written to successMeasuresJson
     }))
     .mutation(async ({ ctx, input }) => {
       let outcomes: Array<{ primary_measure?: string; title?: string }> = [];
@@ -734,9 +734,10 @@ export const gateRouter = router({
       gateState.stage6.completedAt = Date.now();
       gateState.stage6.lastEditedAt = null;
 
+      // T4: write to successMeasuresJson (canonical); outcomesJson is dormant
       await db.update(ailOrgContext)
         .set({
-          outcomesJson: input.outcomesJson,
+          successMeasuresJson: input.outcomesJson,
           stage6ConfirmedAt: new Date(),
           stageGateStateJson: JSON.stringify(gateState),
           updatedAt: new Date(),

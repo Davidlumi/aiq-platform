@@ -214,7 +214,7 @@ function ConnectsPill({ c }: { c: ConnectsTo }) {
   const anchor = c.type === "outcome" ? `#outcome-${c.index}` : `#principle-${c.index}`;
   return (
     <button
-      onClick={() => navigate(`/strategy/ambition${anchor}`)}
+      onClick={() => navigate(`/strategy/principles${anchor}`)}
       className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 transition-colors"
       style={{
         border: "1px solid rgba(93,202,165,0.3)",

@@ -1,5 +1,5 @@
 /**
- * StrategyMeasurementPage — /strategy/measurement
+ * StrategyMeasurementPage — /strategy/measures
  * Stage 6: Success measures
  *
  * Blocks:

@@ -867,9 +867,9 @@ function GateFlowStrip() {
     { num: 1, label: "Pre-work",       href: "/strategy/diagnostic",   isAccessible: gate.isStage1Accessible, isCleared: gate.stage1Cleared },
     { num: 2, label: "Vision",         href: "/strategy/vision",        isAccessible: gate.isStage2Accessible, isCleared: gate.stage2Cleared },
     { num: 3, label: "Strategy",       href: "/strategy/strategy",      isAccessible: gate.isStage3Accessible, isCleared: gate.stage3Cleared },
-    { num: 4, label: "Principles",     href: "/strategy/ambition",      isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
+    { num: 4, label: "Principles",     href: "/strategy/principles",      isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
     { num: 5, label: "Initiatives",    href: "/strategy/builder",       isAccessible: gate.isStage5Accessible, isCleared: gate.stage5Cleared },
-    { num: 6, label: "Measurement",    href: "/strategy/measurement",   isAccessible: gate.isStage6Accessible, isCleared: gate.stage6Cleared },
+    { num: 6, label: "Measurement",    href: "/strategy/measures",   isAccessible: gate.isStage6Accessible, isCleared: gate.stage6Cleared },
     { num: 7, label: "Business case",  href: "/strategy/business-case", isAccessible: gate.isStage7Accessible, isCleared: gate.stage7Cleared },
     { num: 8, label: "Capability",     href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
     { num: 9,  label: modeLabels.stage9Label,  href: isReward ? "/strategy/reward-review"  : "/strategy/review",       isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
@@ -1199,7 +1199,7 @@ export default function StrategyOverviewPage() {
   }
   function handleEditStrategy() {
     (window as any).umami?.track("strategy.edit.clicked");
-    navigate("/strategy/ambition");
+    navigate("/strategy/principles");
   }
   function handleBuildCapability() {
     (window as any).umami?.track("strategy.capability.build-clicked");
@@ -1486,7 +1486,7 @@ export default function StrategyOverviewPage() {
                   <button
                     className="underline underline-offset-2 hover:no-underline"
                     style={{ color: "var(--muted-foreground)" }}
-                    onClick={() => navigate("/strategy/ambition")}
+                    onClick={() => navigate("/strategy/principles")}
                   >
                     Edit to make it yours
                   </button>
@@ -1494,11 +1494,11 @@ export default function StrategyOverviewPage() {
                 </p>
                 {/* Vision quote (no left bar — card provides the frame) */}
                 {displayVision ? (
-                  <VisionQuote text={displayVision} onReadMore={() => navigate("/strategy/ambition")} />
+                  <VisionQuote text={displayVision} onReadMore={() => navigate("/strategy/principles")} />
                 ) : (
                   <p className="text-sm text-muted-foreground italic">
                     No vision set yet —{" "}
-                    <button className="underline underline-offset-2 hover:no-underline" onClick={() => navigate("/strategy/ambition")}>
+                    <button className="underline underline-offset-2 hover:no-underline" onClick={() => navigate("/strategy/principles")}>
                       define your strategy ambition first
                     </button>
                   </p>
@@ -1537,15 +1537,15 @@ export default function StrategyOverviewPage() {
                 tierTag={ambitionTierTag}
                 items={ambitionItems}
                 extraCount={ambitionExtra}
-                footerLink="/strategy/ambition"
+                footerLink="/strategy/principles"
                 footerLabel="See full ambition"
                 emptyMessage="No commitments set yet — define your strategy ambition."
                 emptyCta="Go to ambition wizard →"
-                emptyCtaHref="/strategy/ambition"
+                emptyCtaHref="/strategy/principles"
                 onNavigate={navigate}
                 onCardClick={() => {
                   (window as any).umami?.track("strategy.card.clicked", { card: "ambition" });
-                  navigate("/strategy/ambition");
+                  navigate("/strategy/principles");
                 }}
                 outcomeRows={ambitionOutcomeRows}
                 outcomeExtra={ambitionOutcomeExtra}
@@ -1563,15 +1563,15 @@ export default function StrategyOverviewPage() {
                 tierTag={planTierTag}
                 items={planItems}
                 extraCount={planExtra}
-                footerLink="/strategy/roadmap"
+                footerLink="/strategy/roadmap/detail"
                 footerLabel="See the full plan"
                 emptyMessage="No initiatives defined yet — build your plan."
                 emptyCta="Go to plan flow →"
-                emptyCtaHref="/strategy/roadmap"
+                emptyCtaHref="/strategy/roadmap/detail"
                 onNavigate={navigate}
                 onCardClick={() => {
                   (window as any).umami?.track("strategy.card.clicked", { card: "plan" });
-                  navigate("/strategy/roadmap");
+                  navigate("/strategy/roadmap/detail");
                 }}
               />
             )}
@@ -1590,7 +1590,7 @@ export default function StrategyOverviewPage() {
                 footerLabel="See the business case"
                 emptyMessage="Cost not estimated yet — work through the plan."
                 emptyCta="Go to plan →"
-                emptyCtaHref="/strategy/roadmap"
+                emptyCtaHref="/strategy/roadmap/detail"
                 isEmpty={costIsEmpty}
                 onNavigate={navigate}
                 onCardClick={() => {
@@ -1614,7 +1614,7 @@ export default function StrategyOverviewPage() {
                 footerLabel="See the business case"
                 emptyMessage="Value not estimated yet — work through the plan."
                 emptyCta="Go to plan →"
-                emptyCtaHref="/strategy/roadmap"
+                emptyCtaHref="/strategy/roadmap/detail"
                 isEmpty={valueIsEmpty}
                 onNavigate={navigate}
                 onCardClick={() => {
@@ -1653,9 +1653,9 @@ export default function StrategyOverviewPage() {
             {/* ── Row 1: The Strategy (full-width) ── */}
             <div
               className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-violet-500/30 transition-all group"
-              onClick={() => navigate("/strategy/ambition?from=dashboard")}
+              onClick={() => navigate("/strategy/principles?from=dashboard")}
               role="button" tabIndex={0}
-              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/ambition?from=dashboard"); } }}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/principles?from=dashboard"); } }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -1799,9 +1799,9 @@ export default function StrategyOverviewPage() {
               {/* Success Measures */}
               <div
                 className="rounded-xl border border-border/60 bg-card p-5 cursor-pointer hover:border-teal-500/30 transition-all group"
-                onClick={() => navigate("/strategy/measurement?from=dashboard")}
+                onClick={() => navigate("/strategy/measures?from=dashboard")}
                 role="button" tabIndex={0}
-                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/measurement?from=dashboard"); } }}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/strategy/measures?from=dashboard"); } }}
               >
                 <p className="text-[10px] font-semibold tracking-widest uppercase text-teal-400 mb-2">Success Measures</p>
                 {pfOutcomes.length > 0 ? (

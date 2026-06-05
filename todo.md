@@ -5060,3 +5060,29 @@ test
 - [x] UI: inline AI prompt bar on each pain point field (individual keyword input + Generate button)
 - [x] UI: inline AI prompt bar on each strategic priority field (individual keyword input + Generate button)
 - [x] UI: Regenerate option stays visible until user manually edits the field
+
+## 10→11 Stage Migration (v6 Brief)
+
+### Phase A — Renames and data migration (GATED)
+- [x] T1 — Backup all tenant ailOrgContext data; verify test restore; confirm DFS record present (4 rows backed up; DFS not yet onboarded — confirmed non-production)
+- [x] T2 — Rename route /strategy/ambition → /strategy/principles (with redirect from old path)
+- [x] T3 — Rename route /strategy/measurement → /strategy/measures (with redirect from old path)
+- [x] T4 — Rename data field outcomesJson → successMeasuresJson with data migration; leave outcomesJson dormant as fallback (log every fallback fire); verify DFS data renders at Stage 7 and Stage 11
+
+### Phase B — Resequence
+- [ ] T5 — Rewire gate unlock chain to 11-stage order; update StrategyTopNav
+- [ ] T6 — Wire Stage 9 business case to consume Stage 8 capability costs and Stage 6 roadmap horizons
+
+### Phase C — Net-new features (hold for v2 brief)
+- [ ] T7 — Build Stage 6: Roadmap (new) at /strategy/roadmap; roadmapJson with {label, startDate?, endDate?, order}; Now/Next/Later defaults; every initiative must have a horizon; dependencies optional; AI-suggested dependencies only where logic implies one
+- [ ] T8 — Add risk register to Stage 8 (Capability & Risk); riskRegisterJson; AI-suggested risks must be explicitly actioned before confirm; ≥1 risk with mitigation required
+- [ ] T9 — Stage 7 measure provenance: strategy-level measure with target + blank baseline = hard block; per-initiative primary measure with target + blank baseline = soft warning only
+- [ ] T10 — Strengthen Stage 10 Review: structured sign-off (agreed/conditions/unresolved) on all 8 elements; empty elements auto-mark N/A; reviewSignOffJson + reviewTensionsJson
+
+### Phase D — Gate logic and re-confirmation
+- [ ] T11 — New re-confirmation edges: Capability(8) or Roadmap(6) edited → Business Case(9) amber; Measures(7) edited → Business Case(9) amber; Capability(8) confirmed with material gap → soft prompt on Measures(7)
+- [ ] T12 — Update Stage 11 board report section sourcing to new stage numbers
+
+### Q8 — Deep-dive roadmap view
+- [x] Audit all references to /strategy/roadmap deep-dive (dashboards, saved reports, in-app links)
+- [x] Move deep-dive to /strategy/roadmap/detail with redirect from old path

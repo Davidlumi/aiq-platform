@@ -1003,7 +1003,7 @@ export default function StrategyValuePage() {
               variant="outline"
               size="sm"
               className="text-xs h-8 border-border hover:border-border/80"
-              onClick={() => navigate("/strategy/measurement")}
+              onClick={() => navigate("/strategy/measures")}
             >
               View measurement plan <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Button>
