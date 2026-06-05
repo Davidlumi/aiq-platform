@@ -546,8 +546,14 @@ export default function BusinessCasePage() {
       accentColor="#60A5FA"
       icon={<Briefcase className="w-5 h-5" />}
       isLocked={!gate.isStage9Accessible}
-      editedAfterClearing={gate.stage9EditedAfterClearing}
-      upstreamStageLabel="Success Measures"
+      editedAfterClearing={gate.stage9EditedAfterClearing || gate.stage7EditedAfterClearing || gate.stage8EditedAfterClearing}
+      upstreamStageLabel={
+        gate.stage8EditedAfterClearing
+          ? "Capability (Stage 8)"
+          : gate.stage7EditedAfterClearing
+            ? "Success Measures (Stage 7)"
+            : "Success Measures"
+      }
       isDeepDive={isDeepDive}
       confirmedAt={gate.gateState?.stage9.completedAt}
       stageProgress={!isDeepDive && gate.isStage9Accessible ? {
@@ -555,10 +561,18 @@ export default function BusinessCasePage() {
         title: "Business Case",
         description: "Generate your investment narrative, review risk factors, and confirm the business case. Requires at least 50 words in the narrative.",
         isCleared: !!gate.stage9Cleared,
-        isEdited: !!gate.stage9EditedAfterClearing,
+        // T11: show amber in StageProgressHeader if stage9 OR upstream stage7/stage8 was edited
+        isEdited: !!(gate.stage9EditedAfterClearing || gate.stage7EditedAfterClearing || gate.stage8EditedAfterClearing),
         canConfirm,
         isPending: confirmMut.isPending,
-        onConfirm: () => gate.stage9Cleared && !gate.stage9EditedAfterClearing ? navigate("/strategy/review") : setConfirmOpen(true),
+        onConfirm: () => {
+          const upstreamEdited = gate.stage7EditedAfterClearing || gate.stage8EditedAfterClearing;
+          if (gate.stage9Cleared && !gate.stage9EditedAfterClearing && !upstreamEdited) {
+            navigate("/strategy/review");
+          } else {
+            setConfirmOpen(true);
+          }
+        },
         backRoute: "/strategy/capability",
         nextRoute: "/strategy/capability",
         nextLabel: "Capability",

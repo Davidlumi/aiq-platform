@@ -39,8 +39,9 @@ export const BOARD_REPORT_RUBRIC: Record<BoardReportSectionId, SectionSpec> = {
     ],
     contentSignalDescription: "Must reference the strategy, archetype, vision, or principles",
   },
+  // T12: updated label to match new section sourcing
   initiative_portfolio: {
-    label: "Initiative Portfolio",
+    label: "Initiative Portfolio & Roadmap",
     minWords: 180,
     contentSignals: [
       // Must name at least 2 initiative-like proper nouns (capitalised multi-word phrases)
@@ -64,13 +65,14 @@ export const BOARD_REPORT_RUBRIC: Record<BoardReportSectionId, SectionSpec> = {
     ],
     contentSignalDescription: "Must reference capability, skills, gaps, or readiness",
   },
+  // T12: updated label and signals to match new sourcing (sign-off, risk register, tensions)
   governance: {
-    label: "Governance & Next Steps",
+    label: "Governance & Accountability",
     minWords: 100,
     contentSignals: [
-      /\b(governance|next step|approv|review|cadence|escalat|oversight|board|committee|quarter|month)\b/i,
+      /\b(governance|accountability|risk|measure|sign.?off|tension|dissent|condition|unresolved|approv|review|cadence|escalat|oversight|board|committee|quarter|month)\b/i,
     ],
-    contentSignalDescription: "Must reference governance, next steps, approvals, or review cadence",
+    contentSignalDescription: "Must reference governance, accountability, risks, success measures, or sign-off status",
   },
 };
 

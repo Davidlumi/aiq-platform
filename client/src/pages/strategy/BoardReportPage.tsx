@@ -88,8 +88,9 @@ const SECTION_DEFS: Array<{ id: SectionId; title: string; description: string; t
   },
   {
     id: "initiative_portfolio",
-    title: "3. Initiative Portfolio",
-    description: "The selected initiatives, their rationale, and sequencing.",
+    // T12: updated to reflect roadmap sequencing content
+    title: "3. Initiative Portfolio & Roadmap",
+    description: "The selected initiatives, their rationale, sequencing across delivery horizons, and roadmap.",
     targetWords: "250–400 words",
   },
   {

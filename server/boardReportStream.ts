@@ -41,10 +41,12 @@ export type BoardReportSectionId =
 export const SECTION_LABELS: Record<BoardReportSectionId, string> = {
   context: "1. Context & Mandate",
   strategic_direction: "2. Strategic Direction",
-  initiative_portfolio: "3. Initiative Portfolio",
+  // T12: updated to reflect roadmap sequencing content
+  initiative_portfolio: "3. Initiative Portfolio & Roadmap",
   investment_case: "4. Investment Case",
   capability_readiness: "5. Capability Readiness",
-  governance: "6. Governance & Next Steps",
+  // T12: updated to reflect governance sourcing from sign-off + risk register
+  governance: "6. Governance & Accountability",
 };
 
 export const SECTION_TARGET_WORDS: Record<BoardReportSectionId, [number, number]> = {
@@ -442,7 +444,8 @@ export function registerBoardReportStreamRoute(app: Express): void {
       await db
         .update(ailOrgContext)
         .set({ boardReportSectionsJson: JSON.stringify(sectionsMap) })
-        .where(eq(ailOrgContext.tenantId, user.userId));
+        // T12 (bug fix): use user.tenantId — same fix as the load path above
+        .where(eq(ailOrgContext.tenantId, user.tenantId));
 
       sendEvent({ type: "done", wordCount });
       res.end();

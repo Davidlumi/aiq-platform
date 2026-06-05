@@ -31,10 +31,12 @@ import {
 const SECTION_TITLES: Record<string, string> = {
   context: "1. Context & Mandate",
   strategic_direction: "2. Strategic Direction",
-  initiative_portfolio: "3. Initiative Portfolio",
+  // T12: updated to match new section sourcing
+  initiative_portfolio: "3. Initiative Portfolio & Roadmap",
   investment_case: "4. Investment Case",
   capability_readiness: "5. Capability Readiness",
-  governance: "6. Governance & Next Steps",
+  // T12: updated to match new section sourcing
+  governance: "6. Governance & Accountability",
 };
 
 const SECTION_ORDER = [
