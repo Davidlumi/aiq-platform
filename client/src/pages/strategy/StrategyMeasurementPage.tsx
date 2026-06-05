@@ -1105,7 +1105,7 @@ export default function StrategyMeasurementPage() {
       accentColor="#2DD4BF"
       icon={<Target className="w-5 h-5" />}
       isLocked={!gate.isStage6Accessible}
-      editedAfterClearing={gate.stage5EditedAfterClearing}
+      editedAfterClearing={gate.stage6EditedAfterClearing}
       upstreamStageLabel="Initiatives"
       isDeepDive={isDeepDive}
       confirmedAt={gate.gateState?.stage6.completedAt}
@@ -1114,10 +1114,10 @@ export default function StrategyMeasurementPage() {
         title: "Success Measures",
         description: "Define success measures for each outcome, set review cadence, and confirm when all outcomes have at least one primary measure.",
         isCleared: !!stage6Cleared,
-        isEdited: !!gate.stage5EditedAfterClearing,
+        isEdited: !!gate.stage6EditedAfterClearing,
         canConfirm,
         isPending: completeStage6Mut.isPending,
-        onConfirm: () => stage6Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/business-case") : handleConfirmMeasures(),
+        onConfirm: () => stage6Cleared && !gate.stage6EditedAfterClearing ? navigate("/strategy/business-case") : handleConfirmMeasures(),
         backRoute: "/strategy/plan",
         nextRoute: "/strategy/business-case",
         nextLabel: "Business Case",

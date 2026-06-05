@@ -1110,11 +1110,15 @@ export default function StrategyAmbitionPage() {
   // and an earlier stage is not yet cleared.
   useEffect(() => {
     if (gate.isLoading) return;
-    if (!gate.isStage3Accessible) {
-      // Stage 3 not accessible — redirect to Stage 2 (vision) or Stage 1 (pre-work)
-      navigate(gate.isStage2Accessible ? "/strategy/vision" : "/strategy");
+    if (!gate.isStage4Accessible) {
+      // Stage 4 not accessible — redirect to the furthest accessible earlier stage
+      navigate(
+        gate.isStage3Accessible ? "/strategy/strategy" :
+        gate.isStage2Accessible ? "/strategy/vision" :
+        "/strategy"
+      );
     }
-  }, [gate.isLoading, gate.isStage3Accessible, gate.isStage2Accessible, navigate]);
+  }, [gate.isLoading, gate.isStage4Accessible, gate.isStage3Accessible, gate.isStage2Accessible, navigate]);
 
   const lastReviewedAt: number | null = sections?.lastReviewedAt
     ? (sections.lastReviewedAt instanceof Date ? sections.lastReviewedAt.getTime() : sections.lastReviewedAt as unknown as number)

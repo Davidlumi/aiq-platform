@@ -1,15 +1,17 @@
 /**
  * Gate Router — v3 Strategy Flow Stage Gate State Machine
  *
- * Manages the 8-stage gate state for the v3 strategy flow:
- *   Stage 1: Pre-work (validated by completePrework in backgroundInputs router)
- *   Stage 2: Vision
- *   Stage 3: Strategy
- *   Stage 4: Principles + Won't Do (triggers engine re-fire)
- *   Stage 5: Initiatives (plan curation)
- *   Stage 6: Success Measures
- *   Stage 7: Business Case
- *   Stage 8: Capability
+ * Manages the 10-stage gate state for the v3 strategy flow:
+ *   Stage 1:  Data Input / Pre-work (validated by completePrework in backgroundInputs router)
+ *   Stage 2:  Vision
+ *   Stage 3:  Strategy
+ *   Stage 4:  Principles + Won't Do (triggers engine re-fire)
+ *   Stage 5:  Initiatives (plan curation)
+ *   Stage 6:  Outcomes / Success Measures
+ *   Stage 7:  Business Case
+ *   Stage 8:  Capability
+ *   Stage 9:  Leadership Review (soft gate — self-attestation)
+ *   Stage 10: Board Report
  *
  * Gate state is persisted in ailOrgContext.stageGateStateJson as:
  * {
@@ -156,12 +158,16 @@ export const gateRouter = router({
           isStage6Accessible: false,
           isStage7Accessible: false,
           isStage8Accessible: false,
+          isStage9Accessible: false,
+          isStage10Accessible: false,
           stage1Cleared: false, stage2Cleared: false, stage3Cleared: false, stage4Cleared: false,
           stage5Cleared: false, stage6Cleared: false, stage7Cleared: false, stage8Cleared: false,
+          stage9Cleared: false, stage10Cleared: false,
           stage1EditedAfterClearing: false, stage2EditedAfterClearing: false,
           stage3EditedAfterClearing: false, stage4EditedAfterClearing: false,
           stage5EditedAfterClearing: false, stage6EditedAfterClearing: false,
           stage7EditedAfterClearing: false, stage8EditedAfterClearing: false,
+          stage9EditedAfterClearing: false, stage10EditedAfterClearing: false,
           visionStatement: null,
           visionInspirationSource: null,
           strategyArchetype: null,
