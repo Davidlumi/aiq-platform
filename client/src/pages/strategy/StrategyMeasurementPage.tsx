@@ -1306,23 +1306,125 @@ export default function StrategyMeasurementPage() {
               {primaryMeasureCount} of {selectedInitiatives.length} set
             </span>
           </div>
-          <div className="px-6 pb-6 pt-4 space-y-3">
-            <p className="text-xs text-muted-foreground">
-              One measure per initiative — how you'll know each is working.
+          <div className="px-6 pb-6 pt-4 space-y-2">
+            <p className="text-xs text-muted-foreground mb-3">
+              One measure per initiative — how you’ll know each is working. Click any saved measure to edit, or delete it to start over.
             </p>
-            {selectedInitiatives.map(init => (
-              <div key={init.id} className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-background/40">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">{init.name}</p>
+            {selectedInitiatives.map(init => {
+              const saved = primaryMeasures[init.id]?.trim();
+              return (
+                <div
+                  key={init.id}
+                  className="group flex items-center gap-3 p-3 rounded-lg border transition-colors"
+                  style={{
+                    borderColor: saved ? "rgba(139,92,246,0.25)" : "rgba(139,92,246,0.12)",
+                    background: saved ? "rgba(139,92,246,0.04)" : "transparent",
+                  }}
+                >
+                  {/* Initiative label */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{init.name}</p>
+                  </div>
+
+                  {/* Saved pill or input */}
+                  {saved ? (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-xs text-foreground bg-foreground/8 border border-border/50 rounded-md px-2.5 py-1 max-w-[220px] truncate">
+                        {saved}
+                      </span>
+                      {/* Edit button */}
+                      <button
+                        type="button"
+                        aria-label={`Edit measure for ${init.name}`}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-foreground/8 transition-colors"
+                        onClick={() => {
+                          // Move value into an editable input by temporarily clearing the saved value
+                          // We store a separate editing flag via a temp key
+                          setPrimaryMeasures(prev => ({ ...prev, [`${init.id}__editing`]: prev[init.id], [init.id]: "" }));
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      {/* Delete button */}
+                      <button
+                        type="button"
+                        aria-label={`Delete measure for ${init.name}`}
+                        className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        onClick={() => setPrimaryMeasures(prev => {
+                          const next = { ...prev };
+                          delete next[init.id];
+                          delete next[`${init.id}__editing`];
+                          return next;
+                        })}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Input
+                        autoFocus={!!primaryMeasures[`${init.id}__editing`]}
+                        defaultValue={primaryMeasures[`${init.id}__editing`] ?? ""}
+                        placeholder="e.g. Manager hours saved per week"
+                        className="w-56 h-7 text-xs"
+                        onBlur={e => {
+                          const val = e.target.value.trim();
+                          if (val) {
+                            setPrimaryMeasures(prev => {
+                              const next = { ...prev, [init.id]: val };
+                              delete next[`${init.id}__editing`];
+                              return next;
+                            });
+                          } else if (primaryMeasures[`${init.id}__editing`]) {
+                            // Restore previous value if user blurs with empty field
+                            setPrimaryMeasures(prev => {
+                              const next = { ...prev, [init.id]: prev[`${init.id}__editing`]! };
+                              delete next[`${init.id}__editing`];
+                              return next;
+                            });
+                          }
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (val) {
+                              setPrimaryMeasures(prev => {
+                                const next = { ...prev, [init.id]: val };
+                                delete next[`${init.id}__editing`];
+                                return next;
+                              });
+                            }
+                          }
+                          if (e.key === "Escape") {
+                            if (primaryMeasures[`${init.id}__editing`]) {
+                              setPrimaryMeasures(prev => {
+                                const next = { ...prev, [init.id]: prev[`${init.id}__editing`]! };
+                                delete next[`${init.id}__editing`];
+                                return next;
+                              });
+                            }
+                          }
+                        }}
+                      />
+                      {primaryMeasures[`${init.id}__editing`] && (
+                        <button
+                          type="button"
+                          aria-label="Cancel edit"
+                          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-foreground/8 transition-colors text-xs"
+                          onClick={() => setPrimaryMeasures(prev => {
+                            const next = { ...prev, [init.id]: prev[`${init.id}__editing`]! };
+                            delete next[`${init.id}__editing`];
+                            return next;
+                          })}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <Input
-                  value={primaryMeasures[init.id] ?? ""}
-                  onChange={e => setPrimaryMeasures(prev => ({ ...prev, [init.id]: e.target.value }))}
-                  placeholder="e.g. Manager hours saved per week"
-                  className="w-64 h-7 text-xs"
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
