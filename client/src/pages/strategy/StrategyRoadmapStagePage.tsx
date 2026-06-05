@@ -520,21 +520,25 @@ export default function StrategyRoadmapStagePage() {
       if (prev.some(d => d.fromId === fromId && d.toId === toId)) return prev;
       return [...prev, { fromId, toId }];
     });
-  }, []);
+    if (gate.stage6Cleared) gate.markEdited("stage6");
+  }, [gate]);
 
   const handleRemoveDependency = useCallback((fromId: string, toId: string) => {
     setDependencies(prev => prev.filter(d => !(d.fromId === fromId && d.toId === toId)));
-  }, []);
+    if (gate.stage6Cleared) gate.markEdited("stage6");
+  }, [gate]);
 
   // Add horizon
   const handleAddHorizon = () => {
     const newId = `horizon_${Date.now()}`;
     setHorizons(prev => [...prev, { id: newId, label: `Horizon ${prev.length + 1}`, startDate: null, endDate: null, order: prev.length }]);
+    if (gate.stage6Cleared) gate.markEdited("stage6");
   };
 
   // Edit horizon
   const handleSaveHorizon = (updated: Horizon) => {
     setHorizons(prev => prev.map(h => h.id === updated.id ? updated : h));
+    if (gate.stage6Cleared) gate.markEdited("stage6");
   };
 
   // Delete horizon (reassign its initiatives to unassigned)
@@ -542,6 +546,7 @@ export default function StrategyRoadmapStagePage() {
     if (horizons.length <= 1) return; // must keep at least one
     setHorizons(prev => prev.filter(h => h.id !== horizonId));
     setAssignments(prev => prev.filter(a => a.horizonId !== horizonId));
+    if (gate.stage6Cleared) gate.markEdited("stage6");
   };
 
   // AI suggest: auto-assign unassigned initiatives using phaseV3 heuristic

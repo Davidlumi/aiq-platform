@@ -615,8 +615,8 @@ export default function CapabilityPage() {
       gate.refetch();
       utils.gate.getState.invalidate();
       setConfirmOpen(false);
-      toast.success("Stage 8 confirmed — capability plan locked.");
-      navigate("/strategy");
+      toast.success("Stage 8 confirmed — Business Case unlocked.");
+      navigate("/strategy/business-case");
     },
     onError: (err) => {
       toast.error(err.message ?? "Could not confirm capability plan.");
@@ -687,9 +687,9 @@ export default function CapabilityPage() {
         canConfirm,
         isPending: completeStage8Mut.isPending,
         onConfirm: handleConfirmStage8,
-        backRoute: "/strategy/business-case",
-        nextRoute: "/strategy/review",
-        nextLabel: "Review Session",
+        backRoute: "/strategy/measures",
+        nextRoute: "/strategy/business-case",
+        nextLabel: "Business Case",
       } : undefined}
     >
       {/* Intro */}

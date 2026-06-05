@@ -24,7 +24,7 @@ interface SectionSpec {
 
 export const BOARD_REPORT_RUBRIC: Record<BoardReportSectionId, SectionSpec> = {
   context: {
-    label: "Context & Mandate",
+    label: "Context & Background",
     minWords: 120,
     contentSignals: [
       /\b(organisation|organization|company|business|team|function)\b/i,

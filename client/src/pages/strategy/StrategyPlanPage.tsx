@@ -579,8 +579,8 @@ export default function StrategyPlanPage() {
       utils.intelligence.getStrategy.invalidate();
       utils.gate.getState.invalidate();  // eslint-disable-line @typescript-eslint/no-floating-promises
       setConfirmPlanOpen(false);
-      toast.success("Plan confirmed — moving to Measurement");
-      navigate("/strategy/measures");
+      toast.success("Plan confirmed — Roadmap unlocked");
+      navigate("/strategy/roadmap");
     },
     onError: (err) => {
       toast.error(err.message ?? "Failed to confirm plan");
@@ -624,13 +624,18 @@ export default function StrategyPlanPage() {
   );
 
   // Mutations
+  const markEditedMut = trpc.gate.markEdited.useMutation();
   const patchInitiative = trpc.intelligence.patchStrategyInitiative.useMutation({
-    onSuccess: () => utils.intelligence.getStrategyInitiatives.invalidate(),
+    onSuccess: () => {
+      utils.intelligence.getStrategyInitiatives.invalidate();
+      if (gate.stage5Cleared) markEditedMut.mutate({ stage: "stage5" });
+    },
   });
   const saveStrategy = trpc.intelligence.saveStrategy.useMutation({
     onSuccess: () => {
       utils.intelligence.getStrategy.invalidate();
       utils.intelligence.getStrategyInitiatives.invalidate();
+      if (gate.stage5Cleared) markEditedMut.mutate({ stage: "stage5" });
     },
   });
 
@@ -930,15 +935,15 @@ export default function StrategyPlanPage() {
           <StageProgressHeader
             stageNumber={5}
             title="The Plan"
-            description="Review your AI initiative portfolio, adjust phases and priorities, then confirm the plan to unlock Success Measures."
+            description="Review your AI initiative portfolio, adjust phases and priorities, then confirm the plan to unlock the Roadmap."
             isCleared={!!isStage5Cleared}
             isEdited={!!gate.stage5EditedAfterClearing}
             canConfirm={enriched.length > 0}
             isPending={confirmPlanMutation.isPending}
-            onConfirm={() => isStage5Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/measures") : setConfirmPlanOpen(true)}
+            onConfirm={() => isStage5Cleared && !gate.stage5EditedAfterClearing ? navigate("/strategy/roadmap") : setConfirmPlanOpen(true)}
             backRoute="/strategy/principles"
-            nextRoute="/strategy/measures"
-            nextLabel="Outcomes"
+            nextRoute="/strategy/roadmap"
+            nextLabel="Roadmap"
           />
         )}
         {/* ── Stage 5 banner: shown after principles confirmed ── */}

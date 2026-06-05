@@ -29,7 +29,7 @@ import {
 } from "docx";
 
 const SECTION_TITLES: Record<string, string> = {
-  context: "1. Context & Mandate",
+  context: "1. Context & Background",
   strategic_direction: "2. Strategic Direction",
   // T12: updated to match new section sourcing
   initiative_portfolio: "3. Initiative Portfolio & Roadmap",

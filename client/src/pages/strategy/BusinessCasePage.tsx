@@ -463,7 +463,7 @@ export default function BusinessCasePage() {
   const confirmMut = trpc.gate.completeStage9.useMutation({
     onSuccess: () => {
       gate.refetch();
-      toast.success("Business case confirmed — Stage 8 unlocked");
+      toast.success("Business case confirmed — Review Session unlocked");
       setConfirmOpen(false);
       navigate("/strategy/review");
     },
@@ -574,8 +574,8 @@ export default function BusinessCasePage() {
           }
         },
         backRoute: "/strategy/capability",
-        nextRoute: "/strategy/capability",
-        nextLabel: "Capability",
+        nextRoute: "/strategy/review",
+        nextLabel: "Review Session",
       } : undefined}
       actions={
         <Button

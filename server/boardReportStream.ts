@@ -39,7 +39,7 @@ export type BoardReportSectionId =
   | "governance";
 
 export const SECTION_LABELS: Record<BoardReportSectionId, string> = {
-  context: "1. Context & Mandate",
+  context: "1. Context & Background",
   strategic_direction: "2. Strategic Direction",
   // T12: updated to reflect roadmap sequencing content
   initiative_portfolio: "3. Initiative Portfolio & Roadmap",
@@ -183,7 +183,7 @@ Do not include a section heading — the heading will be added by the UI.
 Write only the section content.`;
 
   const sectionInstructions: Record<BoardReportSectionId, string> = {
-    context: `Write the Context & Mandate section. Explain why the organisation is investing in AI-enabled HR capability now. Cover the business context, the HR function's current state, and the mandate for change. Ground this in the organisation's ambition levels and strategic archetype.`,
+    context: `Write the Context & Background section. Explain why the organisation is investing in AI-enabled HR capability now. Cover the business context, the HR function's current state, and the mandate for change. Ground this in the organisation's ambition levels and strategic archetype.`,
     strategic_direction: `Write the Strategic Direction section. Describe the chosen AI strategy archetype and what it means for the HR function. Explain the strategy statement in accessible terms for a board audience. Cover the principles that will guide decision-making and what the organisation has explicitly chosen not to do.`,
     initiative_portfolio: `Write the Initiative Portfolio & Roadmap section (Section 3). You MUST reference each of the selected initiatives by name (they are listed in the context above). Describe them as a coherent portfolio, not a list. Explain how they fit together and how they are sequenced across the delivery horizons from Stage 6 (the roadmap horizons are in the context). Reference the success measures. Do not invent initiatives that are not in the list.`,
     investment_case: `Write the Investment Case section (Section 4). Summarise the financial and qualitative case for investment. Draw on the Stage 9 business case narrative. Where the roadmap defines delivery horizons, phase the investment narrative accordingly — describe the cost and value across those horizons rather than as a single lump. Note that cost estimates are user-supplied estimates, not verified figures. Be honest about uncertainty while making a clear recommendation.`,

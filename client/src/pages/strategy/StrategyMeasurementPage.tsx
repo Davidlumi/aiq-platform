@@ -1019,7 +1019,7 @@ export default function StrategyMeasurementPage() {
       setJustConfirmed(true);
       setTimeout(() => {
         setJustConfirmed(false);
-        navigate("/strategy/business-case");
+        navigate("/strategy/capability");
       }, 2200);
     },
     onError: (err) => toast.error(err.message ?? "Failed to confirm Stage 6"),
@@ -1049,6 +1049,7 @@ export default function StrategyMeasurementPage() {
       });
       setCadenceSavedAt(new Date());
       await assessmentQ.refetch();
+      if (gate.stage7Cleared) gate.markEdited("stage7");
     } catch {
       setCadenceSaveError("Save failed — please try again");
       toast.error("Failed to save cadence change");
@@ -1056,7 +1057,6 @@ export default function StrategyMeasurementPage() {
       setCadenceSaving(false);
     }
   }
-
   async function handleOutcomesSave(newOutcomes: Outcome[]) {
     await saveAmbitionMut.mutateAsync({ section: "outcomes", value: newOutcomes });
     await ambitionQ.refetch();
@@ -1172,10 +1172,10 @@ export default function StrategyMeasurementPage() {
         isEdited: !!gate.stage7EditedAfterClearing,
         canConfirm,
         isPending: completeStage6Mut.isPending,
-        onConfirm: () => stage6Cleared && !gate.stage7EditedAfterClearing ? navigate("/strategy/business-case") : handleConfirmMeasures(),
+        onConfirm: () => stage6Cleared && !gate.stage7EditedAfterClearing ? navigate("/strategy/capability") : handleConfirmMeasures(),
         backRoute: "/strategy/roadmap",
-        nextRoute: "/strategy/business-case",
-        nextLabel: "Business Case",
+        nextRoute: "/strategy/capability",
+        nextLabel: "Capability",
       } : undefined}
       actions={
         <Button
