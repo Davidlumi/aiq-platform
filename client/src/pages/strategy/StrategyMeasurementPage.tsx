@@ -1,6 +1,6 @@
 /**
  * StrategyMeasurementPage — /strategy/measures
- * Stage 6: Success measures
+ * Stage 7: Success measures
  *
  * Blocks:
  *  1. Strategy-level outcomes (3–5) with AI suggest + edit modal
@@ -1036,7 +1036,7 @@ export default function StrategyMeasurementPage() {
         navigate("/strategy/capability");
       }, 2200);
     },
-    onError: (err) => toast.error(err.message ?? "Failed to confirm Stage 6"),
+    onError: (err) => toast.error(err.message ?? "Failed to confirm Stage 7"),
   });
 
   async function handleCadenceSave(newCadence: CadenceValue) {
@@ -1584,7 +1584,7 @@ export default function StrategyMeasurementPage() {
           <DialogHeader>
             <DialogTitle>Confirm success measures</DialogTitle>
             <DialogDescription>
-              This will lock Stage 6. You can still edit measures later, but the gate will need to be re-confirmed.
+              This will lock Stage 7. You can still edit measures later, but the gate will need to be re-confirmed.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-2">

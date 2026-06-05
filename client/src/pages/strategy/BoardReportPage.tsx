@@ -748,7 +748,7 @@ export default function BoardReportPage() {
           <Label htmlFor="include-notes" className="cursor-pointer">
             <span className="text-sm font-medium">Include review session notes as appendix</span>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Appends your Stage 9 session notes to the exported PDF and Word document.
+              Appends your Stage 10 session notes to the exported PDF and Word document.
             </p>
           </Label>
         </div>

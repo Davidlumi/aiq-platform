@@ -1194,9 +1194,9 @@ export default function BusinessCasePage() {
           </p>
           <p className="text-sm text-muted-foreground">
             {gate.stage9Cleared
-              ? "Business case confirmed. Continue to Stage 8: Capability to deliver."
+              ? "Business case confirmed. Continue to Stage 10: Leadership Review."
               : canConfirm
-                ? "Your narrative is ready. Confirm to unlock Stage 8."
+                ? "Your narrative is ready. Confirm to unlock Stage 10: Leadership Review."
                 : "Write or generate a narrative (min 50 words) to confirm."
             }
           </p>
@@ -1219,7 +1219,7 @@ export default function BusinessCasePage() {
           </Button>
           {gate.stage9Cleared && (
             <Button variant="outline" size="sm" className="text-xs h-8 border-border" onClick={() => navigate("/strategy/review")}>
-              Continue to Stage 8 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              Continue to Stage 10 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Button>
           )}
           <Button
