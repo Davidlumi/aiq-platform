@@ -958,6 +958,7 @@ Return JSON with this exact structure:
           baseline_value: number | null; baseline_status: "measured" | "not_measured";
           baseline_study_date: string | null; target_value: number; target_date: string;
           derived_summary: string; tests_principle: number | null; ai_drafted: boolean;
+          primary_measure?: string | null;
         }> | null,
         approachLine: r.approachLine ?? null,
         businessAmbitionLevel: r.businessAmbitionLevel ?? null,

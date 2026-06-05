@@ -984,6 +984,30 @@ export default function StrategyMeasurementPage() {
     (window as any).umami?.track("strategy.section.viewed", { section: "measurement" });
   }, []);
 
+  // Seed primaryMeasures from saved outcomes + assessment data on first load
+  const seededRef = React.useRef(false);
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (!outcomes && !assessment) return;
+    seededRef.current = true;
+    const seed: Record<string, string> = {};
+    // Seed per-outcome primary measures (keyed outcome-N)
+    if (outcomes) {
+      for (const o of outcomes) {
+        if (o.primary_measure) seed[`outcome-${o.number}`] = o.primary_measure;
+      }
+    }
+    // Seed per-initiative primary measures from structuredInputs if stored there
+    const si = (assessment?.structuredInputs as Record<string, unknown> | null) ?? {};
+    const initiativeMeasures = si.initiative_primary_measures as Record<string, string> | undefined;
+    if (initiativeMeasures) {
+      for (const [id, val] of Object.entries(initiativeMeasures)) {
+        if (val) seed[id] = val;
+      }
+    }
+    if (Object.keys(seed).length > 0) setPrimaryMeasures(seed);
+  }, [outcomes, assessment]);
+
   const saveAssessmentMut   = trpc.intelligence.saveStrategyAssessment.useMutation();
   const saveAmbitionMut     = trpc.intelligence.saveAmbitionSection.useMutation();
   const draftAmbitionMut    = trpc.intelligence.draftAmbitionSection.useMutation();
@@ -1099,8 +1123,16 @@ export default function StrategyMeasurementPage() {
     />
   );
 
-  // Gate validation
-  const canConfirm = outcomesCount >= 1 && (primaryMeasureCount > 0 || selectedInitiatives.length === 0);
+  // Gate validation — allow confirm if:
+  //   1. At least 1 outcome exists, AND
+  //   2. Either no initiatives are selected, OR at least one primary measure is set
+  //      (checking both local state AND saved primary_measure fields on outcomes)
+  const savedPrimaryMeasureCount = (outcomes ?? []).filter(o => o.primary_measure?.trim()).length;
+  const canConfirm = outcomesCount >= 1 && (
+    selectedInitiatives.length === 0 ||
+    primaryMeasureCount > 0 ||
+    savedPrimaryMeasureCount > 0
+  );
 
   return (
     <SectionPageLayout
