@@ -440,6 +440,28 @@ export default function StrategyDiagnosticPage() {
   const [aiPending, setAiPending] = useState<Record<string, boolean>>({});
   // Store the previous value before each AI generation so the user can undo
   const [aiPrevValues, setAiPrevValues] = useState<Record<string, string>>({});
+  // Tag chip animation state — tracks which chip keys are entering or exiting
+  const [chipEntering, setChipEntering] = useState<Set<string>>(new Set());
+  const [chipExiting, setChipExiting] = useState<Set<string>>(new Set());
+
+  const addChipAnimated = (field: "cultureDescriptors" | "nonNegotiables", value: string) => {
+    const current = ((getField("F", field) ?? []) as string[]).filter(Boolean);
+    if (current.length >= 3 || current.includes(value)) return;
+    const key = `${field}:${value}`;
+    updateSection("F", field, [...current, value]);
+    setChipEntering(prev => { const n = new Set(prev); n.add(key); return n; });
+    setTimeout(() => setChipEntering(prev => { const n = new Set(prev); n.delete(key); return n; }), 250);
+  };
+
+  const removeChipAnimated = (field: "cultureDescriptors" | "nonNegotiables", index: number, value: string) => {
+    const key = `${field}:${value}`;
+    setChipExiting(prev => { const n = new Set(prev); n.add(key); return n; });
+    setTimeout(() => {
+      setChipExiting(prev => { const n = new Set(prev); n.delete(key); return n; });
+      const current = ((getField("F", field) ?? []) as string[]).filter(Boolean);
+      updateSection("F", field, current.filter((_, j) => j !== index));
+    }, 150);
+  };
 
   const undoAiDraft = (
     key: string,
@@ -1912,21 +1934,28 @@ export default function StrategyDiagnosticPage() {
                 </div>
                 {/* Chip display + input */}
                 <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-border bg-muted/30 min-h-[3rem] items-center">
-                  {((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean).map((tag, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/30">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const ds = ((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean);
-                          updateSection("F", "cultureDescriptors", ds.filter((_, j) => j !== i));
-                        }}
-                        className="ml-0.5 hover:text-destructive transition-colors"
+                  {((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean).map((tag, i) => {
+                    const chipKey = `cultureDescriptors:${tag}`;
+                    return (
+                      <span
+                        key={tag}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/30",
+                          chipEntering.has(chipKey) && "tag-chip-enter",
+                          chipExiting.has(chipKey) && "tag-chip-exit"
+                        )}
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeChipAnimated("cultureDescriptors", i, tag)}
+                          className="ml-0.5 hover:text-destructive transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
                   {((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean).length < 3 && (
                     <input
                       type="text"
@@ -1938,10 +1967,7 @@ export default function StrategyDiagnosticPage() {
                           e.preventDefault();
                           const val = (e.target as HTMLInputElement).value.trim().replace(/,/g, "");
                           if (!val) return;
-                          const ds = ((getField("F", "cultureDescriptors") ?? []) as string[]).filter(Boolean);
-                          if (ds.length < 3 && !ds.includes(val)) {
-                            updateSection("F", "cultureDescriptors", [...ds, val]);
-                          }
+                          addChipAnimated("cultureDescriptors", val);
                           (e.target as HTMLInputElement).value = "";
                         }
                       }}
@@ -1960,10 +1986,7 @@ export default function StrategyDiagnosticPage() {
                         key={s}
                         type="button"
                         disabled={alreadyAdded || atMax}
-                        onClick={() => {
-                          if (alreadyAdded || atMax) return;
-                          updateSection("F", "cultureDescriptors", [...current, s]);
-                        }}
+                        onClick={() => addChipAnimated("cultureDescriptors", s)}
                         className={cn(
                           "px-2 py-0.5 rounded-full text-xs border transition-all duration-150",
                           alreadyAdded
@@ -1988,21 +2011,28 @@ export default function StrategyDiagnosticPage() {
                 </div>
                 {/* Chip display + input */}
                 <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-border bg-muted/30 min-h-[3rem] items-center">
-                  {((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean).map((tag, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const ns = ((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean);
-                          updateSection("F", "nonNegotiables", ns.filter((_, j) => j !== i));
-                        }}
-                        className="ml-0.5 hover:text-destructive transition-colors"
+                  {((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean).map((tag, i) => {
+                    const chipKey = `nonNegotiables:${tag}`;
+                    return (
+                      <span
+                        key={tag}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30",
+                          chipEntering.has(chipKey) && "tag-chip-enter",
+                          chipExiting.has(chipKey) && "tag-chip-exit"
+                        )}
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeChipAnimated("nonNegotiables", i, tag)}
+                          className="ml-0.5 hover:text-destructive transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
                   {((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean).length < 3 && (
                     <input
                       type="text"
@@ -2014,10 +2044,7 @@ export default function StrategyDiagnosticPage() {
                           e.preventDefault();
                           const val = (e.target as HTMLInputElement).value.trim().replace(/,/g, "");
                           if (!val) return;
-                          const ns = ((getField("F", "nonNegotiables") ?? []) as string[]).filter(Boolean);
-                          if (ns.length < 3 && !ns.includes(val)) {
-                            updateSection("F", "nonNegotiables", [...ns, val]);
-                          }
+                          addChipAnimated("nonNegotiables", val);
                           (e.target as HTMLInputElement).value = "";
                         }
                       }}
@@ -2036,10 +2063,7 @@ export default function StrategyDiagnosticPage() {
                         key={s}
                         type="button"
                         disabled={alreadyAdded || atMax}
-                        onClick={() => {
-                          if (alreadyAdded || atMax) return;
-                          updateSection("F", "nonNegotiables", [...current, s]);
-                        }}
+                        onClick={() => addChipAnimated("nonNegotiables", s)}
                         className={cn(
                           "px-2 py-0.5 rounded-full text-xs border transition-all duration-150",
                           alreadyAdded
