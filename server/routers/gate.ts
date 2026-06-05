@@ -952,10 +952,27 @@ export const gateRouter = router({
   completeStage10: protectedProcedure
     .input(z.object({
       reviewHeldAt: z.number().optional(),
+      reviewSignOffJson: z.string().optional(), // T10: structured sign-off JSON
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // T10: validate sign-off if provided — all populated elements must have a status
+      if (input.reviewSignOffJson) {
+        try {
+          const signOff = JSON.parse(input.reviewSignOffJson) as { elements?: Array<{ id: string; status: string; isEmpty?: boolean }> };
+          const blocked = (signOff.elements ?? []).filter(el => !el.isEmpty && !el.status);
+          if (blocked.length > 0) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Sign-off incomplete: ${blocked.length} element(s) require a status before confirmation.`,
+            });
+          }
+        } catch (e) {
+          if (e instanceof TRPCError) throw e;
+          // malformed JSON — allow through, don't block on parse error
+        }
+      }
       const row = await db.select({ stageGateStateJson: ailOrgContext.stageGateStateJson })
         .from(ailOrgContext)
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
@@ -964,14 +981,14 @@ export const gateRouter = router({
       const gateState = parseGateState(row[0].stageGateStateJson);
       gateState.stage10 = { completedAt: Date.now(), lastEditedAt: null };
       const heldAt = input.reviewHeldAt ? new Date(input.reviewHeldAt) : new Date();
-      await db.update(ailOrgContext)
-        .set({
-          reviewHeldAt: heldAt,
-          stage9ConfirmedAt: heldAt, // DB column kept for backward compat
-          stageGateStateJson: JSON.stringify(gateState),
-          updatedAt: new Date(),
-        })
-        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      const updates: Record<string, unknown> = {
+        reviewHeldAt: heldAt,
+        stage9ConfirmedAt: heldAt, // DB column kept for backward compat
+        stageGateStateJson: JSON.stringify(gateState),
+        updatedAt: new Date(),
+      };
+      if (input.reviewSignOffJson) updates.reviewSignOffJson = input.reviewSignOffJson;
+      await db.update(ailOrgContext).set(updates).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       return { ok: true, gateState };
     }),
 

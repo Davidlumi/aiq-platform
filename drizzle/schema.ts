@@ -967,6 +967,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   reviewHeldAt: timestamp("review_held_at"),                                         // When CPO marked review as held (Stage 9 gate)
   reviewSessionNotes: text("review_session_notes"),                                  // Free-text session notes (optional, single-user visibility)
   reviewTensionsJson: text("review_tensions_json"),                                  // JSON: most recent generated tensions list [{title, description, question}]
+  reviewSignOffJson: text("review_sign_off_json"),                                    // JSON: { elements: [{id, label, status, notes?, isEmpty}], attendees, dateHeld, dissent[] }
   stage9ConfirmedAt: timestamp("stage9_confirmed_at"),                               // When CPO confirmed Stage 9 (= reviewHeldAt)
   stage10ConfirmedAt: timestamp("stage10_confirmed_at"),                             // When CPO confirmed Stage 10 board report
   boardReportSectionsJson: text("board_report_sections_json"),                       // JSON: { [sectionId]: { content, lockedAt, generatedAt, editedAt, isAiGenerated, wordCount } }

@@ -2960,6 +2960,7 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
         reviewHeldAt: ailOrgContext.reviewHeldAt,
         reviewSessionNotes: ailOrgContext.reviewSessionNotes,
         reviewTensionsJson: ailOrgContext.reviewTensionsJson,
+        reviewSignOffJson: ailOrgContext.reviewSignOffJson,
         stage9ConfirmedAt: ailOrgContext.stage9ConfirmedAt,
         strategyStatement: ailOrgContext.strategyStatement,
         strategyArchetype: ailOrgContext.strategyArchetype,
@@ -2986,6 +2987,7 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
     .input(z.object({
       reviewSessionNotes: z.string().optional(),
       reviewTensionsJson: z.string().optional(),
+      reviewSignOffJson: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -2993,6 +2995,7 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       const updates: Record<string, unknown> = {};
       if (input.reviewSessionNotes !== undefined) updates.reviewSessionNotes = input.reviewSessionNotes;
       if (input.reviewTensionsJson !== undefined) updates.reviewTensionsJson = input.reviewTensionsJson;
+      if (input.reviewSignOffJson !== undefined) updates.reviewSignOffJson = input.reviewSignOffJson;
       if (Object.keys(updates).length === 0) return { success: true };
       await db.update(ailOrgContext).set(updates).where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       return { success: true };
