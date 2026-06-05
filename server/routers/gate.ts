@@ -1,17 +1,18 @@
 /**
- * Gate Router — v3 Strategy Flow Stage Gate State Machine
+ * Gate Router — v4 Strategy Flow Stage Gate State Machine
  *
- * Manages the 10-stage gate state for the v3 strategy flow:
+ * Manages the 11-stage gate state for the v4 strategy flow:
  *   Stage 1:  Data Input / Pre-work (validated by completePrework in backgroundInputs router)
  *   Stage 2:  Vision
  *   Stage 3:  Strategy
  *   Stage 4:  Principles + Won't Do (triggers engine re-fire)
  *   Stage 5:  Initiatives (plan curation)
- *   Stage 6:  Outcomes / Success Measures
- *   Stage 7:  Business Case
- *   Stage 8:  Capability
- *   Stage 9:  Leadership Review (soft gate — self-attestation)
- *   Stage 10: Board Report
+ *   Stage 6:  Roadmap (NEW — horizons, initiative sequencing)
+ *   Stage 7:  Success Measures (was Stage 6)
+ *   Stage 8:  Capability & Risk (was Stage 8, now before Business Case)
+ *   Stage 9:  Business Case (was Stage 7, now after Capability)
+ *   Stage 10: Leadership Review (was Stage 9)
+ *   Stage 11: Board Report (was Stage 10)
  *
  * Gate state is persisted in ailOrgContext.stageGateStateJson as:
  * {
@@ -52,6 +53,7 @@ export type StageGateState = {
   stage8: StageGateEntry;
   stage9: StageGateEntry;
   stage10: StageGateEntry;
+  stage11: StageGateEntry;
 };
 
 export const DEFAULT_GATE_STATE: StageGateState = {
@@ -65,6 +67,7 @@ export const DEFAULT_GATE_STATE: StageGateState = {
   stage8: { completedAt: null, lastEditedAt: null },
   stage9: { completedAt: null, lastEditedAt: null },
   stage10: { completedAt: null, lastEditedAt: null },
+  stage11: { completedAt: null, lastEditedAt: null },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -73,7 +76,7 @@ function freshEntry(): StageGateEntry {
   return { completedAt: null, lastEditedAt: null };
 }
 function parseGateState(json: string | null | undefined): StageGateState {
-  const empty = () => ({ stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry(), stage5: freshEntry(), stage6: freshEntry(), stage7: freshEntry(), stage8: freshEntry(), stage9: freshEntry(), stage10: freshEntry() });
+  const empty = () => ({ stage1: freshEntry(), stage2: freshEntry(), stage3: freshEntry(), stage4: freshEntry(), stage5: freshEntry(), stage6: freshEntry(), stage7: freshEntry(), stage8: freshEntry(), stage9: freshEntry(), stage10: freshEntry(), stage11: freshEntry() });
   if (!json) return empty();
   try {
     const parsed = JSON.parse(json) as Partial<StageGateState>;
@@ -88,6 +91,7 @@ function parseGateState(json: string | null | undefined): StageGateState {
       stage8: parsed.stage8 ? { ...parsed.stage8 } : freshEntry(),
       stage9: parsed.stage9 ? { ...parsed.stage9 } : freshEntry(),
       stage10: parsed.stage10 ? { ...parsed.stage10 } : freshEntry(),
+      stage11: parsed.stage11 ? { ...parsed.stage11 } : freshEntry(),
     };
   } catch {
     return empty();
@@ -160,14 +164,16 @@ export const gateRouter = router({
           isStage8Accessible: false,
           isStage9Accessible: false,
           isStage10Accessible: false,
+          isStage11Accessible: false,
           stage1Cleared: false, stage2Cleared: false, stage3Cleared: false, stage4Cleared: false,
           stage5Cleared: false, stage6Cleared: false, stage7Cleared: false, stage8Cleared: false,
-          stage9Cleared: false, stage10Cleared: false,
+          stage9Cleared: false, stage10Cleared: false, stage11Cleared: false,
           stage1EditedAfterClearing: false, stage2EditedAfterClearing: false,
           stage3EditedAfterClearing: false, stage4EditedAfterClearing: false,
           stage5EditedAfterClearing: false, stage6EditedAfterClearing: false,
           stage7EditedAfterClearing: false, stage8EditedAfterClearing: false,
           stage9EditedAfterClearing: false, stage10EditedAfterClearing: false,
+          stage11EditedAfterClearing: false,
           visionStatement: null,
           visionInspirationSource: null,
           strategyArchetype: null,
@@ -191,7 +197,12 @@ export const gateRouter = router({
       const stage6Cleared = isStageCleared(gateState.stage6);
       const stage7Cleared = isStageCleared(gateState.stage7);
       const stage8Cleared = isStageCleared(gateState.stage8);
+      const stage9Cleared = isStageCleared(gateState.stage9);
+      const stage10Cleared = isStageCleared(gateState.stage10);
+      const stage11Cleared = isStageCleared(gateState.stage11);
 
+      // v4 11-stage unlock chain:
+      // 1→2→3→4→5→6(Roadmap)→7(Measures)→8(Capability)→9(BusinessCase)→10(Review)→11(BoardReport)
       return {
         gateState,
         isStage1Accessible: true,
@@ -202,12 +213,12 @@ export const gateRouter = router({
         isStage6Accessible: stage5Cleared,
         isStage7Accessible: stage6Cleared,
         isStage8Accessible: stage7Cleared,
-        isStage9Accessible: isStageCleared(gateState.stage8),
-        isStage10Accessible: isStageCleared(gateState.stage9),
+        isStage9Accessible: stage8Cleared,
+        isStage10Accessible: stage9Cleared,
+        isStage11Accessible: stage10Cleared,
         stage1Cleared, stage2Cleared, stage3Cleared, stage4Cleared,
         stage5Cleared, stage6Cleared, stage7Cleared, stage8Cleared,
-        stage9Cleared: isStageCleared(gateState.stage9),
-        stage10Cleared: isStageCleared(gateState.stage10),
+        stage9Cleared, stage10Cleared, stage11Cleared,
         stage1EditedAfterClearing: isStageEditedAfterClearing(gateState.stage1),
         stage2EditedAfterClearing: isStageEditedAfterClearing(gateState.stage2),
         stage3EditedAfterClearing: isStageEditedAfterClearing(gateState.stage3),
@@ -218,6 +229,7 @@ export const gateRouter = router({
         stage8EditedAfterClearing: isStageEditedAfterClearing(gateState.stage8),
         stage9EditedAfterClearing: isStageEditedAfterClearing(gateState.stage9),
         stage10EditedAfterClearing: isStageEditedAfterClearing(gateState.stage10),
+        stage11EditedAfterClearing: isStageEditedAfterClearing(gateState.stage11),
         visionStatement: orgCtx.visionStatement ?? null,
         visionInspirationSource: orgCtx.visionInspirationSource ?? null,
         strategyArchetype: orgCtx.strategyArchetype ?? null,
@@ -232,7 +244,7 @@ export const gateRouter = router({
    */
   markEdited: protectedProcedure
     .input(z.object({
-      stage: z.enum(["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "stage9", "stage10"]),
+      stage: z.enum(["stage1", "stage2", "stage3", "stage4", "stage5", "stage6", "stage7", "stage8", "stage9", "stage10", "stage11"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -703,11 +715,11 @@ export const gateRouter = router({
     }),
 
   /**
-   * Complete Stage 6 (Success Measures).
+   * Complete Stage 7 (Success Measures) — was Stage 6 in v3.
    * Validates: at least 1 outcome with a primary measure defined.
-   * Sets stage6ConfirmedAt and clears stage6 gate.
+   * Sets stage6ConfirmedAt (DB col kept for compat) and clears stage7 gate.
    */
-  completeStage6: protectedProcedure
+  completeStage7: protectedProcedure
     .input(z.object({
       outcomesJson: z.string().min(1), // field name kept for API compatibility; data written to successMeasuresJson
     }))
@@ -731,8 +743,8 @@ export const gateRouter = router({
       if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
 
       const gateState = parseGateState(row[0].stageGateStateJson);
-      gateState.stage6.completedAt = Date.now();
-      gateState.stage6.lastEditedAt = null;
+      gateState.stage7.completedAt = Date.now();
+      gateState.stage7.lastEditedAt = null;
 
       // T4: write to successMeasuresJson (canonical); outcomesJson is dormant
       await db.update(ailOrgContext)
@@ -748,11 +760,11 @@ export const gateRouter = router({
     }),
 
   /**
-   * Complete Stage 7 (Business Case).
+   * Complete Stage 9 (Business Case) — was Stage 7 in v3.
    * Validates: businessCaseNarrative is at least 50 words.
-   * Sets stage7ConfirmedAt and clears stage7 gate.
+   * Sets stage7ConfirmedAt (DB column kept for compatibility) and clears stage9 gate.
    */
-  completeStage7: protectedProcedure
+  completeStage9: protectedProcedure
     .input(z.object({
       businessCaseNarrative: z.string().min(1),
     }))
@@ -773,13 +785,13 @@ export const gateRouter = router({
       if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
 
       const gateState = parseGateState(row[0].stageGateStateJson);
-      gateState.stage7.completedAt = Date.now();
-      gateState.stage7.lastEditedAt = null;
+      gateState.stage9.completedAt = Date.now();
+      gateState.stage9.lastEditedAt = null;
 
       await db.update(ailOrgContext)
         .set({
           businessCaseNarrative: input.businessCaseNarrative,
-          stage7ConfirmedAt: new Date(),
+          stage7ConfirmedAt: new Date(), // DB column kept for backward compat
           stageGateStateJson: JSON.stringify(gateState),
           updatedAt: new Date(),
         })
@@ -789,7 +801,7 @@ export const gateRouter = router({
     }),
 
   /**
-   * Complete Stage 8 (Capability).
+   * Complete Stage 8 (Capability & Risk) — position unchanged in v4.
    * Validates: stage8CapabilityJson is present with at least one dimension filled.
    * Sets stage8ConfirmedAt and clears stage8 gate.
    */
@@ -834,10 +846,10 @@ export const gateRouter = router({
     }),
 
   /**
-   * Complete Stage 9 — mark review as held (soft gate: self-attestation).
-   * Sets reviewHeldAt, stage9ConfirmedAt, and stageGateState.stage9.completedAt.
+   * Complete Stage 10 — mark review as held (soft gate: self-attestation). Was Stage 9 in v3.
+   * Sets reviewHeldAt, stage9ConfirmedAt (DB col kept for compat), and stageGateState.stage10.completedAt.
    */
-  completeStage9: protectedProcedure
+  completeStage10: protectedProcedure
     .input(z.object({
       reviewHeldAt: z.number().optional(),
     }))
@@ -850,12 +862,12 @@ export const gateRouter = router({
         .limit(1);
       if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
       const gateState = parseGateState(row[0].stageGateStateJson);
-      gateState.stage9 = { completedAt: Date.now(), lastEditedAt: null };
+      gateState.stage10 = { completedAt: Date.now(), lastEditedAt: null };
       const heldAt = input.reviewHeldAt ? new Date(input.reviewHeldAt) : new Date();
       await db.update(ailOrgContext)
         .set({
           reviewHeldAt: heldAt,
-          stage9ConfirmedAt: heldAt,
+          stage9ConfirmedAt: heldAt, // DB column kept for backward compat
           stageGateStateJson: JSON.stringify(gateState),
           updatedAt: new Date(),
         })
@@ -864,11 +876,11 @@ export const gateRouter = router({
     }),
 
   /**
-   * Complete Stage 10 — confirm board report is ready.
+   * Complete Stage 11 — confirm board report is ready. Was Stage 10 in v3.
    * Validates: all 6 sections present, total word count 1200-4000.
-   * Sets stage10ConfirmedAt and stageGateState.stage10.completedAt.
+   * Sets stage10ConfirmedAt (DB col kept for compat) and stageGateState.stage11.completedAt.
    */
-  completeStage10: protectedProcedure
+  completeStage11: protectedProcedure
     .input(z.object({
       boardReportSectionsJson: z.string(),
       boardReportIncludeNotes: z.boolean().optional(),
@@ -901,10 +913,10 @@ export const gateRouter = router({
         .limit(1);
       if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
       const gateState = parseGateState(row[0].stageGateStateJson);
-      gateState.stage10 = { completedAt: Date.now(), lastEditedAt: null };
+      gateState.stage11 = { completedAt: Date.now(), lastEditedAt: null };
       const updates: Record<string, unknown> = {
         boardReportSectionsJson: input.boardReportSectionsJson,
-        stage10ConfirmedAt: new Date(),
+        stage10ConfirmedAt: new Date(), // DB column kept for backward compat
         stageGateStateJson: JSON.stringify(gateState),
         updatedAt: new Date(),
       };

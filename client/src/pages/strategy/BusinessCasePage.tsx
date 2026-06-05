@@ -1,6 +1,6 @@
 /**
  * BusinessCasePage — /strategy/business-case
- * Stage 7 of 10: Business case
+ * Stage 9 of 11: Business case
  *
  * Layout (per brief Section 6.3):
  *   1. AI-generated narrative (THE CASE) — centerpiece, 400–600 words, Generate/Refine/Challenge
@@ -186,7 +186,7 @@ function ConfirmBusinessCaseDialog({ open, wordCount, onConfirm, onClose, isLoad
             Your business case narrative ({wordCount} words) will be confirmed and locked. You can still edit it later, but the gate will need to be re-confirmed.
           </p>
           <div className="rounded-lg border border-border bg-foreground/3 px-3 py-2">
-            <p className="text-xs text-muted-foreground">This unlocks Stage 8: Capability to deliver.</p>
+            <p className="text-xs text-muted-foreground">This unlocks Stage 10: Leadership Review.</p>
           </div>
         </div>
         <DialogFooter className="gap-2">
@@ -208,12 +208,12 @@ export default function BusinessCasePage() {
   const { isDeepDive } = useDeepDive();
   const isRewardMode = gate.tenantMode === "reward";
   const utils = trpc.useUtils();
-  // Gate redirect: Stage 7 (Business Case) requires Stage 6 to be cleared
+  // Gate redirect: Stage 9 (Business Case) requires Stage 8 to be cleared
   useEffect(() => {
-    if (!gate.isLoading && !gate.isStage7Accessible) {
+    if (!gate.isLoading && !gate.isStage9Accessible) {
       navigate("/strategy");
     }
-  }, [gate.isLoading, gate.isStage7Accessible, navigate]);
+  }, [gate.isLoading, gate.isStage9Accessible, navigate]);
 
   // ── Data queries ──────────────────────────────────────────────────────────
   const assessmentQ  = trpc.intelligence.getStrategyAssessment.useQuery();
@@ -460,12 +460,12 @@ export default function BusinessCasePage() {
   // ── Gate confirm ──────────────────────────────────────────────────────────
   const [confirmOpen, setConfirmOpen] = useState(false);
   const markEditedMut = trpc.gate.markEdited.useMutation();
-  const confirmMut = trpc.gate.completeStage7.useMutation({
+  const confirmMut = trpc.gate.completeStage9.useMutation({
     onSuccess: () => {
       gate.refetch();
       toast.success("Business case confirmed — Stage 8 unlocked");
       setConfirmOpen(false);
-      navigate("/strategy/capability");
+      navigate("/strategy/review");
     },
     onError: (e) => toast.error(`Confirmation failed: ${e.message}`),
   });
@@ -480,8 +480,8 @@ export default function BusinessCasePage() {
 
   // Mark edited when narrative changes after gate cleared
   useEffect(() => {
-    if (gate.stage7Cleared && narrativeLoaded && narrative) {
-      markEditedMut.mutate({ stage: "stage7" });
+    if (gate.stage9Cleared && narrativeLoaded && narrative) {
+      markEditedMut.mutate({ stage: "stage9" });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [narrative]);
@@ -513,7 +513,7 @@ export default function BusinessCasePage() {
 
   if (isLoading) {
     return (
-      <SectionPageLayout sectionNumber="07" sectionLabel="Business Case" title="Business case" accentColor="#60A5FA" icon={<Briefcase className="w-5 h-5" />}>
+      <SectionPageLayout sectionNumber="09" sectionLabel="Business Case" title="Business case" accentColor="#60A5FA" icon={<Briefcase className="w-5 h-5" />}>
         <div className="space-y-5">
           {[...Array(4)].map((_, i) => <BlockSkeleton key={i} lines={4} />)}
         </div>
@@ -523,7 +523,7 @@ export default function BusinessCasePage() {
 
   if (!hasStrategy) {
     return (
-      <SectionPageLayout sectionNumber="07" sectionLabel="Business Case" title="Business case" accentColor="#60A5FA" icon={<Briefcase className="w-5 h-5" />}>
+      <SectionPageLayout sectionNumber="09" sectionLabel="Business Case" title="Business case" accentColor="#60A5FA" icon={<Briefcase className="w-5 h-5" />}>
         <div className="rounded-xl border border-dashed border-blue-500/20 bg-blue-500/4 p-8 flex items-start gap-4">
           <Briefcase className="w-5 h-5 dark:text-blue-400 text-blue-600 flex-shrink-0 mt-0.5" />
           <div>
@@ -540,26 +540,26 @@ export default function BusinessCasePage() {
 
   return (
     <SectionPageLayout
-      sectionNumber="07"
+      sectionNumber="09"
       sectionLabel="Business Case"
       title="Business case"
       accentColor="#60A5FA"
       icon={<Briefcase className="w-5 h-5" />}
-      isLocked={!gate.isStage7Accessible}
-      editedAfterClearing={gate.stage7EditedAfterClearing}
+      isLocked={!gate.isStage9Accessible}
+      editedAfterClearing={gate.stage9EditedAfterClearing}
       upstreamStageLabel="Success Measures"
       isDeepDive={isDeepDive}
-      confirmedAt={gate.gateState?.stage7.completedAt}
-      stageProgress={!isDeepDive && gate.isStage7Accessible ? {
-        stageNumber: 7,
+      confirmedAt={gate.gateState?.stage9.completedAt}
+      stageProgress={!isDeepDive && gate.isStage9Accessible ? {
+        stageNumber: 9,
         title: "Business Case",
         description: "Generate your investment narrative, review risk factors, and confirm the business case. Requires at least 50 words in the narrative.",
-        isCleared: !!gate.stage7Cleared,
-        isEdited: !!gate.stage7EditedAfterClearing,
+        isCleared: !!gate.stage9Cleared,
+        isEdited: !!gate.stage9EditedAfterClearing,
         canConfirm,
         isPending: confirmMut.isPending,
-        onConfirm: () => gate.stage7Cleared && !gate.stage7EditedAfterClearing ? navigate("/strategy/capability") : setConfirmOpen(true),
-        backRoute: "/strategy/measures",
+        onConfirm: () => gate.stage9Cleared && !gate.stage9EditedAfterClearing ? navigate("/strategy/review") : setConfirmOpen(true),
+        backRoute: "/strategy/capability",
         nextRoute: "/strategy/capability",
         nextLabel: "Capability",
       } : undefined}
@@ -1167,19 +1167,19 @@ export default function BusinessCasePage() {
       </div>
 
       {/* ── Gate confirm footer ────────────────────────────────────────────── */}
-      {gate.stage7Cleared && isDeepDive ? (
+      {gate.stage9Cleared && isDeepDive ? (
         <DeepDiveConfirmedStatus
-          confirmedAt={gate.gateState?.stage7.completedAt}
-          label="Stage 7 confirmed"
+          confirmedAt={gate.gateState?.stage9.completedAt}
+          label="Stage 9 confirmed"
         />
       ) : (
       <div className="rounded-2xl border border-border bg-white/2 p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
-            {gate.stage7Cleared ? "Stage 7 confirmed" : "Confirm business case"}
+            {gate.stage9Cleared ? "Stage 9 confirmed" : "Confirm business case"}
           </p>
           <p className="text-sm text-muted-foreground">
-            {gate.stage7Cleared
+            {gate.stage9Cleared
               ? "Business case confirmed. Continue to Stage 8: Capability to deliver."
               : canConfirm
                 ? "Your narrative is ready. Confirm to unlock Stage 8."
@@ -1192,7 +1192,7 @@ export default function BusinessCasePage() {
             variant="outline"
             size="sm"
             className="text-xs h-8 border-border"
-            title="Intermediate export — final board report is produced at Stage 10"
+            title="Intermediate export — final board report is produced at Stage 11"
             onClick={() => {
               const a = document.createElement("a");
               a.href = "/api/pdf/business_case";
@@ -1203,8 +1203,8 @@ export default function BusinessCasePage() {
             <FileDown className="w-3.5 h-3.5 mr-1.5" />
             Export intermediate report
           </Button>
-          {gate.stage7Cleared && (
-            <Button variant="outline" size="sm" className="text-xs h-8 border-border" onClick={() => navigate("/strategy/capability")}>
+          {gate.stage9Cleared && (
+            <Button variant="outline" size="sm" className="text-xs h-8 border-border" onClick={() => navigate("/strategy/review")}>
               Continue to Stage 8 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Button>
           )}
@@ -1215,7 +1215,7 @@ export default function BusinessCasePage() {
             onClick={() => setConfirmOpen(true)}
           >
             {confirmMut.isPending && <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />}
-            {gate.stage7Cleared ? "Re-confirm" : "Confirm business case →"}
+            {gate.stage9Cleared ? "Re-confirm" : "Confirm business case →"}
           </Button>
         </div>
       </div>

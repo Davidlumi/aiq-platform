@@ -77,7 +77,7 @@ export default function ProductPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { icon: Target, color: greenHex, label: "AI Strategy Builder", sub: "10-stage guided process" },
+              { icon: Target, color: greenHex, label: "AI Strategy Builder", sub: "11-stage guided process" },
               { icon: Brain, color: indigo, label: "Adaptive Assessment", sub: "79+ real-world scenarios" },
               { icon: MessageSquare, color: cyan, label: "AI Coach", sub: "Context-aware guidance" },
               { icon: BookOpen, color: amber, label: "Learning & Development", sub: "Gap-targeted plans" },
@@ -110,7 +110,7 @@ export default function ProductPage() {
               </div>
               <h2 className="text-3xl font-bold mb-6" style={{ color: navy, letterSpacing: "-0.02em" }}>
                 Build your AI strategy in{" "}
-                <span style={{ color: greenHex }}>10 guided stages.</span>
+                <span style={{ color: greenHex }}>11 guided stages.</span>
               </h2>
               <p className="text-slate-600 leading-relaxed mb-6">
                 Not a blank canvas. Not a template. A structured process that builds from diagnostic through to

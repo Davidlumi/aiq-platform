@@ -5070,8 +5070,9 @@ test
 - [x] T4 — Rename data field outcomesJson → successMeasuresJson with data migration; leave outcomesJson dormant as fallback (log every fallback fire); verify DFS data renders at Stage 7 and Stage 11
 
 ### Phase B — Resequence
-- [ ] T5 — Rewire gate unlock chain to 11-stage order; update StrategyTopNav
-- [ ] T6 — Wire Stage 9 business case to consume Stage 8 capability costs and Stage 6 roadmap horizons
+- [x] T5 — Rewire gate unlock chain to 11-stage order; update StrategyTopNav (gate.ts, GateContext, StrategyTopNav, all stage pages renumbered)
+- [x] T6 — Wire Stage 9 business case to consume Stage 8 capability costs (Stage 6 roadmap horizon wiring deferred to T7 when Roadmap page is built)
+- [x] Marketing copy updated: all 5 marketing pages updated from 10-stage to 11-stage
 
 ### Phase C — Net-new features (hold for v2 brief)
 - [ ] T7 — Build Stage 6: Roadmap (new) at /strategy/roadmap; roadmapJson with {label, startDate?, endDate?, order}; Now/Next/Later defaults; every initiative must have a horizon; dependencies optional; AI-suggested dependencies only where logic implies one

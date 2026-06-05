@@ -891,7 +891,7 @@ function GateFlowStrip() {
             Strategy build progress
           </p>
           <p className="text-[11px] text-muted-foreground">
-            {allDone ? "All 10 stages complete" : `${totalCleared} of 10 stages done`}
+            {allDone ? "All 11 stages complete" : `${totalCleared} of 11 stages done`}
           </p>
         </div>
         {/* Single primary CTA: navigate to the next incomplete stage */}

@@ -33,7 +33,7 @@ const CATEGORIES: { title: string; icon: React.ComponentType<{ className?: strin
     icon: Target,
     color: greenHex,
     features: [
-      { feature: "AI-guided strategy builder (10 stages)", aiq: "full", lms: "none", competency: "none", manual: "partial" },
+      { feature: "AI-guided strategy builder (11 stages)", aiq: "full", lms: "none", competency: "none", manual: "partial" },
       { feature: "Board-ready strategy documents", aiq: "full", lms: "none", competency: "none", manual: "partial" },
       { feature: "Dual mode (CPO + Reward specialist)", aiq: "full", lms: "none", competency: "none", manual: "none" },
       { feature: "Initiative library (68+ AI initiatives)", aiq: "full", lms: "none", competency: "partial", manual: "none" },

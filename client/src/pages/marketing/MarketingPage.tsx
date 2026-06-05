@@ -1,6 +1,6 @@
 /**
  * AiQ Marketing Home Page — v5.0 (Complete Platform Overhaul)
- * Reflects the full platform: AI Strategy Builder (10-stage, dual CPO/Reward modes),
+ * Reflects the full platform: AI Strategy Builder (11-stage, dual CPO/Reward modes),
  * Adaptive Assessment, AI Coach, Personalised Learning, Team Intelligence, Board Reporting.
  */
 import { Link } from "wouter";
@@ -234,7 +234,7 @@ function Hero() {
             <span style={{ color: greenHex }}>intelligence platform</span> for HR.
           </h1>
           <p className="text-lg lg:text-xl text-slate-300 leading-relaxed mb-4 max-w-3xl mx-auto">
-            Build your HR AI strategy in 10 guided stages. Measure actual capability through adaptive assessment.
+            Build your HR AI strategy in 11 guided stages. Measure actual capability through adaptive assessment.
             Close gaps with personalised development. Report to your board with evidence.
           </p>
           <p className="text-slate-400 mb-10 max-w-2xl mx-auto">
@@ -257,7 +257,7 @@ function Hero() {
           {/* Stats row */}
           <div className="flex flex-wrap justify-center gap-8 lg:gap-16">
             {[
-              { value: "10", label: "Strategy stages" },
+              { value: "11", label: "Strategy stages" },
               { value: "68", label: "AI initiatives" },
               { value: "6", label: "Capability domains" },
               { value: "79+", label: "Assessment scenarios" },
@@ -312,8 +312,8 @@ function PlatformPillars() {
       icon: Target,
       color: greenHex,
       title: "AI Strategy Builder",
-      subtitle: "10-stage guided process",
-      desc: "Build a board-grade HR AI strategy through 10 structured stages — from diagnostic and vision through to business case, capability assessment, and board report. AI-assisted at every step.",
+      subtitle: "11-stage guided process",
+      desc: "Build a board-grade HR AI strategy through 11 structured stages — from diagnostic and vision through to business case, capability assessment, and board report. AI-assisted at every step.",
     },
     {
       icon: Brain,
@@ -435,7 +435,7 @@ function StrategyBuilder() {
           </div>
           <h2 className="text-4xl font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
             Build your AI strategy in{" "}
-            <span style={{ color: greenHex }}>10 guided stages.</span>
+            <span style={{ color: greenHex }}>11 guided stages.</span>
           </h2>
           <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
             From initial diagnostic through to board-ready report. Each stage builds on the last. AI suggests, you decide. The output is yours — rigorous, evidenced, and defensible.
@@ -832,7 +832,7 @@ function Testimonials() {
       color: indigo,
     },
     {
-      quote: "We went from 'we probably need some AI training' to a fully costed, board-approved capability strategy in six weeks. The 10-stage process kept us honest — no shortcuts, no hand-waving.",
+      quote: "We went from 'we probably need some AI training' to a fully costed, board-approved capability strategy in six weeks. The 11-stage process kept us honest — no shortcuts, no hand-waving.",
       name: "Rachel Okafor",
       role: "VP People & Culture",
       org: "Atlas Technologies",

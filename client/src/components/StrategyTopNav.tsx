@@ -1,5 +1,5 @@
 /**
- * StrategyTopNav — persistent top navigation bar for the 10-stage AI strategy flow.
+ * StrategyTopNav — persistent top navigation bar for the 11-stage AI strategy flow.
  *
  * Visual states per step:
  *   locked      — grey padlock, non-clickable
@@ -90,20 +90,20 @@ const STAGES: StageDefinition[] = [
   },
   {
     number: 6,
-    label: "Outcomes",
-    shortLabel: "Outcomes",
-    route: "/strategy/measures",
-    what: "Define success measures and outcomes for each initiative",
+    label: "Roadmap",
+    shortLabel: "Roadmap",
+    route: "/strategy/roadmap",
+    what: "Sequence initiatives across Now / Next / Later horizons",
     accessibleKey: "isStage6Accessible",
     clearedKey: "stage6Cleared",
     editedKey: "stage6EditedAfterClearing",
   },
   {
     number: 7,
-    label: "Business Case",
-    shortLabel: "Biz Case",
-    route: "/strategy/business-case",
-    what: "Build the financial narrative and investment case",
+    label: "Outcomes",
+    shortLabel: "Outcomes",
+    route: "/strategy/measures",
+    what: "Define success measures and outcomes for each initiative",
     accessibleKey: "isStage7Accessible",
     clearedKey: "stage7Cleared",
     editedKey: "stage7EditedAfterClearing",
@@ -120,23 +120,33 @@ const STAGES: StageDefinition[] = [
   },
   {
     number: 9,
-    label: "Review",
-    shortLabel: "Review",
-    route: "/strategy/review",
-    what: "Hold your leadership review session and record tensions",
+    label: "Business Case",
+    shortLabel: "Biz Case",
+    route: "/strategy/business-case",
+    what: "Build the financial narrative and investment case",
     accessibleKey: "isStage9Accessible",
     clearedKey: "stage9Cleared",
     editedKey: "stage9EditedAfterClearing",
   },
   {
     number: 10,
+    label: "Review",
+    shortLabel: "Review",
+    route: "/strategy/review",
+    what: "Hold your leadership review session and record tensions",
+    accessibleKey: "isStage10Accessible",
+    clearedKey: "stage10Cleared",
+    editedKey: "stage10EditedAfterClearing",
+  },
+  {
+    number: 11,
     label: "Board Report",
     shortLabel: "Report",
     route: "/strategy/board-report",
     what: "Generate and finalise your board-ready strategy report",
-    accessibleKey: "isStage10Accessible",
-    clearedKey: "stage10Cleared",
-    editedKey: "stage10EditedAfterClearing",
+    accessibleKey: "isStage11Accessible",
+    clearedKey: "stage11Cleared",
+    editedKey: "stage11EditedAfterClearing",
   },
 ];
 
@@ -354,15 +364,17 @@ export default function StrategyTopNav() {
     isStage8Accessible: false,
     isStage9Accessible: false,
     isStage10Accessible: false,
+    isStage11Accessible: false,
     stage1Cleared: false, stage2Cleared: false, stage3Cleared: false,
     stage4Cleared: false, stage5Cleared: false, stage6Cleared: false,
     stage7Cleared: false, stage8Cleared: false, stage9Cleared: false,
-    stage10Cleared: false,
+    stage10Cleared: false, stage11Cleared: false,
     stage1EditedAfterClearing: false, stage2EditedAfterClearing: false,
     stage3EditedAfterClearing: false, stage4EditedAfterClearing: false,
     stage5EditedAfterClearing: false, stage6EditedAfterClearing: false,
     stage7EditedAfterClearing: false, stage8EditedAfterClearing: false,
     stage9EditedAfterClearing: false, stage10EditedAfterClearing: false,
+    stage11EditedAfterClearing: false,
   };
 
   const clearedCount = STAGES.filter(s => !!(effectiveGate[s.clearedKey] as boolean)).length;

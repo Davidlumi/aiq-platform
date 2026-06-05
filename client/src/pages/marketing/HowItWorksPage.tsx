@@ -115,7 +115,7 @@ export default function HowItWorksPage() {
             </div>
             <div className="lg:col-span-8">
               <p className="text-slate-600 leading-relaxed mb-6">
-                Before you can measure capability, you need to know what capability you need. AiQ's 10-stage Strategy Builder
+                Before you can measure capability, you need to know what capability you need. AiQ's 11-stage Strategy Builder
                 guides you from diagnostic through to board-ready output — with AI suggesting at every step and you deciding.
               </p>
               <p className="text-slate-600 leading-relaxed mb-6">
@@ -123,7 +123,7 @@ export default function HowItWorksPage() {
                 your success measures, and your investment case. It produces the targets that everything else in the platform measures against.
               </p>
               <div className="rounded-xl border p-6 mb-6 bg-white" style={{ borderColor: borderL }}>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: greenHex }}>10-stage process</p>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: greenHex }}>11-stage process</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     "Company Diagnostic", "Vision & Ambition", "Strategic Posture",

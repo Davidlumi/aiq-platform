@@ -915,10 +915,10 @@ export default function StrategyMeasurementPage() {
   const [, navigate] = useLocation();
   // Gate redirect: Stage 6 (Measurement) requires Stage 5 to be cleared
   useEffect(() => {
-    if (!gate.isLoading && !gate.isStage6Accessible) {
+    if (!gate.isLoading && !gate.isStage7Accessible) {
       navigate("/strategy");
     }
-  }, [gate.isLoading, gate.isStage6Accessible, navigate]);
+  }, [gate.isLoading, gate.isStage7Accessible, navigate]);
 
   const assessmentQ  = trpc.intelligence.getStrategyAssessment.useQuery();
   const strategyQ    = trpc.intelligence.getStrategy.useQuery();
@@ -976,7 +976,7 @@ export default function StrategyMeasurementPage() {
   const principles = ambition?.principles as unknown as Principle[] | null | undefined;
 
   // Gate state
-  const stage6Cleared = gate.stage6Cleared;
+  const stage6Cleared = gate.stage7Cleared;
   const outcomesCount = outcomes?.length ?? 0;
   const primaryMeasureCount = Object.values(primaryMeasures).filter(v => v.trim().length > 0).length;
 
@@ -1011,7 +1011,7 @@ export default function StrategyMeasurementPage() {
   const saveAssessmentMut   = trpc.intelligence.saveStrategyAssessment.useMutation();
   const saveAmbitionMut     = trpc.intelligence.saveAmbitionSection.useMutation();
   const draftAmbitionMut    = trpc.intelligence.draftAmbitionSection.useMutation();
-  const completeStage6Mut   = trpc.gate.completeStage6.useMutation({
+  const completeStage6Mut   = trpc.gate.completeStage7.useMutation({
     onSuccess: () => {
       gate.refetch();
       setConfirmOpen(false);
@@ -1136,26 +1136,26 @@ export default function StrategyMeasurementPage() {
 
   return (
     <SectionPageLayout
-      sectionNumber="06"
+      sectionNumber="07"
       sectionLabel="Success measures"
       title="Define what success looks like"
       accentColor="#2DD4BF"
       icon={<Target className="w-5 h-5" />}
-      isLocked={!gate.isStage6Accessible}
-      editedAfterClearing={gate.stage6EditedAfterClearing}
+      isLocked={!gate.isStage7Accessible}
+      editedAfterClearing={gate.stage7EditedAfterClearing}
       upstreamStageLabel="Initiatives"
       isDeepDive={isDeepDive}
-      confirmedAt={gate.gateState?.stage6.completedAt}
-      stageProgress={!isDeepDive && gate.isStage6Accessible ? {
-        stageNumber: 6,
+      confirmedAt={gate.gateState?.stage7.completedAt}
+      stageProgress={!isDeepDive && gate.isStage7Accessible ? {
+        stageNumber: 7,
         title: "Success Measures",
         description: "Define success measures for each outcome, set review cadence, and confirm when all outcomes have at least one primary measure.",
         isCleared: !!stage6Cleared,
-        isEdited: !!gate.stage6EditedAfterClearing,
+        isEdited: !!gate.stage7EditedAfterClearing,
         canConfirm,
         isPending: completeStage6Mut.isPending,
-        onConfirm: () => stage6Cleared && !gate.stage6EditedAfterClearing ? navigate("/strategy/business-case") : handleConfirmMeasures(),
-        backRoute: "/strategy/plan",
+        onConfirm: () => stage6Cleared && !gate.stage7EditedAfterClearing ? navigate("/strategy/business-case") : handleConfirmMeasures(),
+        backRoute: "/strategy/roadmap",
         nextRoute: "/strategy/business-case",
         nextLabel: "Business Case",
       } : undefined}
@@ -1475,7 +1475,7 @@ export default function StrategyMeasurementPage() {
             <CheckCircle2 className="w-4 h-4 dark:text-emerald-400 text-emerald-600" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold dark:text-emerald-400 text-emerald-600">Stage 6 confirmed</p>
+            <p className="text-sm font-semibold dark:text-emerald-400 text-emerald-600">Stage 7 confirmed</p>
             <p className="text-xs text-muted-foreground mt-0.5">Success measures locked. Moving to Business Case…</p>
           </div>
           <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
@@ -1486,7 +1486,7 @@ export default function StrategyMeasurementPage() {
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 flex items-center gap-3">
           <CheckCircle2 className="w-4 h-4 dark:text-emerald-400 text-emerald-600 flex-shrink-0" />
           <div>
-            <p className="text-sm font-semibold dark:text-emerald-400 text-emerald-600">Stage 6 confirmed</p>
+            <p className="text-sm font-semibold dark:text-emerald-400 text-emerald-600">Stage 7 confirmed</p>
             <p className="text-xs text-muted-foreground">Success measures locked. Continue to Business Case.</p>
           </div>
           <Button
@@ -1500,8 +1500,8 @@ export default function StrategyMeasurementPage() {
       )}
       {stage6Cleared && isDeepDive && (
         <DeepDiveConfirmedStatus
-          confirmedAt={gate.gateState?.stage6.completedAt}
-          label="Stage 6 confirmed"
+          confirmedAt={gate.gateState?.stage7.completedAt}
+          label="Stage 7 confirmed"
         />
       )}
 

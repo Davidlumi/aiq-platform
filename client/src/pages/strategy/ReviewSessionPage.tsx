@@ -1,5 +1,5 @@
 /**
- * ReviewSessionPage — Stage 9: Review Session
+ * ReviewSessionPage — Stage 10: Review Session
  *
  * Helps the CPO prepare for and record a strategy review session.
  * Sections:
@@ -7,7 +7,7 @@
  *   2. Session notes (free text, auto-saved)
  *   3. Soft gate: self-attestation that the review was held
  *
- * Gate: completeStage9 (soft gate — self-attestation only)
+ * Gate: completeStage10 (soft gate — self-attestation only)
  */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -107,10 +107,10 @@ export default function ReviewSessionPage() {
       navigate("/strategy/reward-review");
       return;
     }
-    if (!gate.isLoading && !gate.isStage9Accessible) {
+    if (!gate.isLoading && !gate.isStage10Accessible) {
       navigate("/strategy");
     }
-  }, [gate.isLoading, gate.isStage9Accessible, gate.tenantMode, navigate]);
+  }, [gate.isLoading, gate.isStage10Accessible, gate.tenantMode, navigate]);
 
   // Data
   const sessionQ = trpc.intelligence.getReviewSession.useQuery(undefined, {
@@ -156,10 +156,10 @@ export default function ReviewSessionPage() {
     onError: () => toast.error("Failed to generate tensions — please try again"),
   });
 
-  const completeStage9Mutation = trpc.gate.completeStage9.useMutation({
+  const completeStage9Mutation = trpc.gate.completeStage10.useMutation({
     onSuccess: () => {
       gate.refetch();
-      toast.success("Stage 9 confirmed — review session recorded");
+      toast.success("Stage 10 confirmed — review session recorded");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -211,13 +211,13 @@ export default function ReviewSessionPage() {
   };
 
   const isLoading = gate.isLoading || sessionQ.isLoading;
-  const stage9Cleared = gate.stage9Cleared;
+  const stage9Cleared = gate.stage10Cleared;
 
   if (isLoading) {
     return (
-      <SectionPageLayout sectionNumber="09"
+      <SectionPageLayout sectionNumber="10"
       isDeepDive={isDeepDive}
-      confirmedAt={gate.gateState?.stage9.completedAt}
+      confirmedAt={gate.gateState?.stage10.completedAt}
       sectionLabel="Review" title="Review Session" accentColor="#6366f1" icon={<Users className="w-4 h-4 text-white" />}>
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -228,15 +228,15 @@ export default function ReviewSessionPage() {
 
   return (
     <SectionPageLayout
-      sectionNumber="09"
+      sectionNumber="10"
       isDeepDive={isDeepDive}
-      confirmedAt={gate.gateState?.stage9.completedAt}
+      confirmedAt={gate.gateState?.stage10.completedAt}
       sectionLabel="Review"
       title="Review Session"
       accentColor="#6366f1"
       icon={<Users className="w-4 h-4 text-white" />}
       stageProgress={!isDeepDive ? {
-        stageNumber: 9,
+        stageNumber: 10,
         title: "Leadership Review Session",
         description: `Hold your strategy review session with leadership stakeholders, capture tensions and notes, then confirm the session took place to unlock the ${reportTitle}.`,
         isCleared: !!stage9Cleared,
@@ -258,15 +258,15 @@ export default function ReviewSessionPage() {
             <div>
               <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Review session confirmed</p>
               <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
-                Stage 9 cleared. You can still update your notes below.
+                Stage 10 cleared. You can still update your notes below.
               </p>
             </div>
           </div>
         )}
       {stage9Cleared && isDeepDive && (
         <DeepDiveConfirmedStatus
-          confirmedAt={gate.gateState?.stage9.completedAt}
-          label="Stage 9 confirmed"
+          confirmedAt={gate.gateState?.stage10.completedAt}
+          label="Stage 10 confirmed"
         />
       )}
 
@@ -346,7 +346,7 @@ export default function ReviewSessionPage() {
             <div>
               <h3 className="text-sm font-semibold text-foreground">Confirm review held</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Self-attestation that the strategy review session has taken place. This unlocks Stage 10: {reportTitle}.
+                Self-attestation that the strategy review session has taken place. This unlocks Stage 11: {reportTitle}.
               </p>
             </div>
             <div className="flex gap-2 flex-shrink-0">

@@ -40,7 +40,7 @@ const CASE_STUDIES: CaseStudy[] = [
     person: { name: "Sarah Thornton", role: "Chief People Officer" },
     headline: "From reactive compliance training to predictive capability intelligence in 12 weeks",
     challenge: "Northbridge was spending £2.1M annually on generic AI training programmes with no measurable impact on workforce readiness. Their annual engagement survey showed 67% of employees felt 'unprepared for AI-augmented workflows,' yet HR had no way to identify specific capability gaps or target interventions. The board was demanding evidence that the organisation could safely deploy AI across regulated advisory functions — and the CPO had 90 days to present a credible roadmap.",
-    solution: "AiQ's 10-stage Strategy Builder gave Northbridge a structured path from ambition-setting through to board-ready reporting. The adaptive assessment engine profiled all 4,200 employees across six capability domains in under 3 weeks, revealing that the real gap wasn't in 'AI knowledge' (which scored well) but in AI Output Evaluation and AI Ethics — the exact domains that matter most in regulated financial services.",
+    solution: "AiQ's 11-stage Strategy Builder gave Northbridge a structured path from ambition-setting through to board-ready reporting. The adaptive assessment engine profiled all 4,200 employees across six capability domains in under 3 weeks, revealing that the real gap wasn't in 'AI knowledge' (which scored well) but in AI Output Evaluation and AI Ethics — the exact domains that matter most in regulated financial services.",
     approach: [
       "Deployed adaptive assessments across all business units in a phased 3-week rollout",
       "Used the AI Strategy Builder to define a 'Responsible AI Advisory' ambition with the executive team",
@@ -160,7 +160,7 @@ const CASE_STUDIES: CaseStudy[] = [
     person: { name: "James Whitfield", role: "Director of Reward" },
     headline: "Using capability intelligence to redesign reward strategy around AI-readiness tiers",
     challenge: "Harrington's reward structure hadn't evolved to reflect the reality that AI-capable employees were delivering disproportionate value. The company was losing top AI talent to competitors offering 20-30% premiums, while simultaneously over-investing in roles that would be augmented or automated within 18 months. James needed an evidence base to redesign the reward architecture — but had no objective way to measure 'AI capability' across 12,000 employees spanning retail, logistics, corporate, and digital functions.",
-    solution: "AiQ's Reward mode gave James exactly what he needed: an objective, validated capability measurement across all functions that could be directly linked to reward tiers. The platform's strategic shift analysis showed which roles were gaining value (AI-augmented advisory, creative direction) and which were at displacement risk (routine processing, basic reporting). The 10-stage strategy builder helped James build a board-ready reward transformation case with projected ROI.",
+    solution: "AiQ's Reward mode gave James exactly what he needed: an objective, validated capability measurement across all functions that could be directly linked to reward tiers. The platform's 11-stage strategy builder helped James build a board-ready reward transformation case with projected ROI.",
     approach: [
       "Deployed assessments in Reward mode across all 4 divisions (12,000 employees over 6 weeks)",
       "Used AiQ's strategic posture analysis to categorise roles into 5 AI-impact tiers",

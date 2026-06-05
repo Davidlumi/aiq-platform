@@ -2320,6 +2320,36 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       const isReward = input.mode === "reward";
       const isCpo = input.mode === "cpo" || (!input.mode && !isReward);
 
+      // ── T6: Fetch Stage 8 capability data to enrich the Business Case narrative ──
+      // This wires Stage 9 (Business Case) to consume Stage 8 (Capability) output.
+      // Stage 6 (Roadmap) horizon wiring will be added once T7 is built.
+      let capabilityContext: { gaps: string[]; totalDevCostGbp: number | null } | null = null;
+      try {
+        const db = await getDb();
+        if (!db) throw new Error("DB unavailable");
+        const capRows = await db
+          .select({ stage8CapabilityJson: ailOrgContext.stage8CapabilityJson })
+          .from(ailOrgContext)
+          .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+          .limit(1);
+        if (capRows[0]?.stage8CapabilityJson) {
+          const capData = typeof capRows[0].stage8CapabilityJson === "string"
+            ? JSON.parse(capRows[0].stage8CapabilityJson)
+            : capRows[0].stage8CapabilityJson;
+          // Extract top capability gaps and estimated development cost
+          const roles: any[] = capData?.roles ?? capData?.gaps ?? [];
+          const gaps = roles
+            .filter((r: any) => r.gap === "high" || r.gap === "critical" || r.gapLevel === "high" || r.gapLevel === "critical")
+            .map((r: any) => r.roleName ?? r.name ?? r.role ?? "Unknown role")
+            .slice(0, 5);
+          const totalDevCost = capData?.totalDevelopmentCostGbp ?? capData?.totalCostGbp ?? null;
+          capabilityContext = { gaps, totalDevCostGbp: totalDevCost };
+        }
+      } catch (e) {
+        // Non-fatal — capability data enrichment is best-effort
+        console.warn("[T6] Failed to fetch Stage 8 capability data for Business Case narrative:", e);
+      }
+
       // ── CPO path: compute structured model and pass to LLM (never-invents-numbers) ──
       if (isCpo && input.cpoEngineInputs && input.selectedInitiatives?.length) {
         const profile: CpoCompanyProfile = {
@@ -2359,10 +2389,15 @@ Tone guidance:
 - Value Narrative: what the numbers mean in practice — talent acquisition, retention, L&D efficiency, workforce planning
 - Risk and Assumptions: honest about what could move the numbers, name the overlap discount, call out programme funding separately`;
 
+        // T6: Enrich prompt with capability gap data from Stage 8 if available
+        const capabilitySection = capabilityContext && (capabilityContext.gaps.length > 0 || capabilityContext.totalDevCostGbp)
+          ? `\n\nCapability context (from Stage 8 assessment):\n- Critical/high capability gaps: ${capabilityContext.gaps.length > 0 ? capabilityContext.gaps.join(", ") : "None identified"}\n- Estimated capability development cost: ${capabilityContext.totalDevCostGbp ? fmt(capabilityContext.totalDevCostGbp) : "Not quantified"}\nInclude these gaps and development cost in the Risk and Assumptions section. Do not invent additional figures.`
+          : "";
+
         const userPrompt = `Generate the four business case narrative sections for this HR AI programme.
 
 Data:
-${JSON.stringify(promptData, null, 2)}
+${JSON.stringify(promptData, null, 2)}${capabilitySection}
 
 Return a JSON object with keys: execSummary, investmentRationale, valueNarrative, riskAssumptions.
 Each value is a string containing 2–4 paragraphs of plain text (no markdown, no bullet points).`;

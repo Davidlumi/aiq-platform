@@ -1,16 +1,16 @@
 /**
- * GateContext — React context for the v3 strategy flow stage gate state machine.
+ * GateContext — React context for the v4 strategy flow stage gate state machine.
  *
  * Provides:
  *   - gateState: current stage gate state from the server
- *   - accessibility flags: isStage{1-10}Accessible
- *   - cleared flags: stage{1-10}Cleared
- *   - editedAfterClearing flags: stage{1-10}EditedAfterClearing
+ *   - accessibility flags: isStage{1-11}Accessible
+ *   - cleared flags: stage{1-11}Cleared
+ *   - editedAfterClearing flags: stage{1-11}EditedAfterClearing
  *   - refetch(): force re-fetch gate state
  *   - markEdited(stage): mark a stage as edited (invalidates gate)
  *
  * Usage:
- *   const { isStage9Accessible, stage9Cleared } = useGate();
+ *   const { isStage10Accessible, stage10Cleared } = useGate();
  */
 import React, { createContext, useContext } from "react";
 import { trpc } from "@/lib/trpc";
@@ -32,9 +32,10 @@ type StageGateState = {
   stage8: StageGateEntry;
   stage9: StageGateEntry;
   stage10: StageGateEntry;
+  stage11: StageGateEntry;
 };
 
-type StageKey = "stage1" | "stage2" | "stage3" | "stage4" | "stage5" | "stage6" | "stage7" | "stage8" | "stage9" | "stage10";
+type StageKey = "stage1" | "stage2" | "stage3" | "stage4" | "stage5" | "stage6" | "stage7" | "stage8" | "stage9" | "stage10" | "stage11";
 
 type GateContextValue = {
   gateState: StageGateState | null;
@@ -50,6 +51,7 @@ type GateContextValue = {
   isStage8Accessible: boolean;
   isStage9Accessible: boolean;
   isStage10Accessible: boolean;
+  isStage11Accessible: boolean;
   stage1Cleared: boolean;
   stage2Cleared: boolean;
   stage3Cleared: boolean;
@@ -60,6 +62,7 @@ type GateContextValue = {
   stage8Cleared: boolean;
   stage9Cleared: boolean;
   stage10Cleared: boolean;
+  stage11Cleared: boolean;
   stage1EditedAfterClearing: boolean;
   stage2EditedAfterClearing: boolean;
   stage3EditedAfterClearing: boolean;
@@ -70,6 +73,7 @@ type GateContextValue = {
   stage8EditedAfterClearing: boolean;
   stage9EditedAfterClearing: boolean;
   stage10EditedAfterClearing: boolean;
+  stage11EditedAfterClearing: boolean;
   visionStatement: string | null;
   visionInspirationSource: string | null;
   strategyArchetype: string | null;
@@ -92,6 +96,7 @@ const DEFAULT_CONTEXT: GateContextValue = {
   isStage8Accessible: false,
   isStage9Accessible: false,
   isStage10Accessible: false,
+  isStage11Accessible: false,
   stage1Cleared: false,
   stage2Cleared: false,
   stage3Cleared: false,
@@ -102,6 +107,7 @@ const DEFAULT_CONTEXT: GateContextValue = {
   stage8Cleared: false,
   stage9Cleared: false,
   stage10Cleared: false,
+  stage11Cleared: false,
   stage1EditedAfterClearing: false,
   stage2EditedAfterClearing: false,
   stage3EditedAfterClearing: false,
@@ -112,6 +118,7 @@ const DEFAULT_CONTEXT: GateContextValue = {
   stage8EditedAfterClearing: false,
   stage9EditedAfterClearing: false,
   stage10EditedAfterClearing: false,
+  stage11EditedAfterClearing: false,
   visionStatement: null,
   visionInspirationSource: null,
   strategyArchetype: null,
@@ -155,6 +162,7 @@ export function GateProvider({ children }: { children: React.ReactNode }) {
     isStage8Accessible: data?.isStage8Accessible ?? false,
     isStage9Accessible: data?.isStage9Accessible ?? false,
     isStage10Accessible: data?.isStage10Accessible ?? false,
+    isStage11Accessible: data?.isStage11Accessible ?? false,
     stage1Cleared: data?.stage1Cleared ?? false,
     stage2Cleared: data?.stage2Cleared ?? false,
     stage3Cleared: data?.stage3Cleared ?? false,
@@ -165,6 +173,7 @@ export function GateProvider({ children }: { children: React.ReactNode }) {
     stage8Cleared: data?.stage8Cleared ?? false,
     stage9Cleared: data?.stage9Cleared ?? false,
     stage10Cleared: data?.stage10Cleared ?? false,
+    stage11Cleared: data?.stage11Cleared ?? false,
     stage1EditedAfterClearing: data?.stage1EditedAfterClearing ?? false,
     stage2EditedAfterClearing: data?.stage2EditedAfterClearing ?? false,
     stage3EditedAfterClearing: data?.stage3EditedAfterClearing ?? false,
@@ -175,6 +184,7 @@ export function GateProvider({ children }: { children: React.ReactNode }) {
     stage8EditedAfterClearing: data?.stage8EditedAfterClearing ?? false,
     stage9EditedAfterClearing: data?.stage9EditedAfterClearing ?? false,
     stage10EditedAfterClearing: data?.stage10EditedAfterClearing ?? false,
+    stage11EditedAfterClearing: data?.stage11EditedAfterClearing ?? false,
     visionStatement: data?.visionStatement ?? null,
     visionInspirationSource: data?.visionInspirationSource ?? null,
     strategyArchetype: data?.strategyArchetype ?? null,

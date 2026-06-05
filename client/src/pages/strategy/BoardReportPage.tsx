@@ -1,5 +1,5 @@
 /**
- * BoardReportPage — Stage 10: Board Report
+ * BoardReportPage — Stage 11: Board Report
  *
  * 6-section editor for the final board-ready strategy report.
  * Sections:
@@ -16,7 +16,7 @@
  *   - AI-generated indicator badge (amber) vs Edited badge (blue)
  *   - Generate all sections button
  *   - Word count per section + total
- *   - Gate: completeStage10 (all 6 sections, 1200-4000 total words)
+ *   - Gate: completeStage11 (all 6 sections, 1200-4000 total words)
  *   - PDF + Word export buttons
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -310,10 +310,10 @@ export default function BoardReportPage() {
   const savePreferencesMutation = trpc.intelligence.saveBoardReportPreferences.useMutation({
     onError: (e) => toast.error(e.message),
   });
-  const completeStage10Mutation = trpc.gate.completeStage10.useMutation({
+  const completeStage10Mutation = trpc.gate.completeStage11.useMutation({
     onSuccess: (data) => {
       gate.refetch();
-      toast.success(`Stage 10 confirmed — ${data.totalWords} words`);
+      toast.success(`Stage 11 confirmed — ${data.totalWords} words`);
     },
     onError: (err) => toast.error(err.message),
   });
@@ -498,10 +498,10 @@ export default function BoardReportPage() {
   };
 
   const isLoading = gate.isLoading || reportQ.isLoading;
-  const stage10Cleared = gate.stage10Cleared;
+  const stage10Cleared = gate.stage11Cleared;
 
   // Blocking gate screen — shown when Stage 10 is not yet accessible
-  if (!gate.isLoading && !gate.isStage10Accessible) {
+  if (!gate.isLoading && !gate.isStage11Accessible) {
     const stagesNeeded = [
       { num: 1, label: "Background Inputs", cleared: !!gate.stage1Cleared, route: "/strategy/diagnostic" },
       { num: 2, label: "Vision Statement", cleared: !!gate.stage2Cleared, route: "/strategy/vision" },
@@ -573,9 +573,9 @@ export default function BoardReportPage() {
 
   if (isLoading) {
     return (
-      <SectionPageLayout sectionNumber="10"
+      <SectionPageLayout sectionNumber="11"
       isDeepDive={isDeepDive}
-      confirmedAt={gate.gateState?.stage10.completedAt}
+      confirmedAt={gate.gateState?.stage11.completedAt}
       sectionLabel={reportTitle} title={reportTitle} accentColor="#0f172a" icon={<FileText className="w-4 h-4 text-white" />}>
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -586,15 +586,15 @@ export default function BoardReportPage() {
 
   return (
     <SectionPageLayout
-      sectionNumber="10"
+      sectionNumber="11"
       isDeepDive={isDeepDive}
-      confirmedAt={gate.gateState?.stage10.completedAt}
+      confirmedAt={gate.gateState?.stage11.completedAt}
       sectionLabel={reportTitle}
       title={reportTitle}
       accentColor="#0f172a"
       icon={<FileText className="w-4 h-4 text-white" />}
       stageProgress={!isDeepDive ? {
-        stageNumber: 10,
+        stageNumber: 11,
         title: reportTitle,
         description: "Generate all 6 report sections, review and edit them, then confirm when the total word count is between 1,200 and 4,000 words.",
         isCleared: !!stage10Cleared,
@@ -664,15 +664,15 @@ export default function BoardReportPage() {
             <div>
               <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Board report confirmed</p>
               <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
-                Stage 10 cleared. You can still edit and re-export the report.
+                Stage 11 cleared. You can still edit and re-export the report.
               </p>
             </div>
           </div>
         )}
       {stage10Cleared && isDeepDive && (
         <DeepDiveConfirmedStatus
-          confirmedAt={gate.gateState?.stage10.completedAt}
-          label="Stage 10 confirmed"
+          confirmedAt={gate.gateState?.stage11.completedAt}
+          label="Stage 11 confirmed"
         />
       )}
 
@@ -803,7 +803,7 @@ export default function BoardReportPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm {reportTitle.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will mark Stage 10 as complete and lock the report version. You can still edit and re-confirm at any time. Total word count: {totalWords.toLocaleString()}.
+              This will mark Stage 11 as complete and lock the report version. You can still edit and re-confirm at any time. Total word count: {totalWords.toLocaleString()}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
