@@ -855,102 +855,94 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
 
 
 // ─── Gate Flow Strip ──────────────────────────────────────────────────────────
-const STAGE_LABELS: Record<number, string> = {
-  1: "Pre-work",
-  2: "Vision",
-  3: "Strategy",
-  4: "Principles",
-};
-
 function GateFlowStrip() {
   const gate = useGate();
   const [, navigate] = useLocation();
   const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
+  const isReward = gate.tenantMode === "reward";
 
   type StageInfo = { num: number; label: string; href: string; isAccessible: boolean; isCleared: boolean };
 
-  const row1: StageInfo[] = [
-    { num: 1, label: "Pre-work",    href: "/strategy/diagnostic",   isAccessible: gate.isStage1Accessible, isCleared: gate.stage1Cleared },
-    { num: 2, label: "Vision",      href: "/strategy/vision",        isAccessible: gate.isStage2Accessible, isCleared: gate.stage2Cleared },
-    { num: 3, label: "Strategy",    href: "/strategy/strategy",      isAccessible: gate.isStage3Accessible, isCleared: gate.stage3Cleared },
-    { num: 4, label: "Principles",  href: "/strategy/ambition",      isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
-  ];
-  const row2: StageInfo[] = [
-    { num: 5, label: "Initiatives",   href: "/strategy/builder",       isAccessible: gate.isStage5Accessible, isCleared: gate.stage5Cleared },
-    { num: 6, label: "Measurement",   href: "/strategy/measurement",   isAccessible: gate.isStage6Accessible, isCleared: gate.stage6Cleared },
-    { num: 7, label: "Business case", href: "/strategy/business-case", isAccessible: gate.isStage7Accessible, isCleared: gate.stage7Cleared },
-    { num: 8, label: "Capability",    href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
-  ];
-  const isReward = gate.tenantMode === "reward";
-  const row3: StageInfo[] = [
-    { num: 9,  label: modeLabels.stage9Label,  href: isReward ? "/strategy/reward-review"  : "/strategy/review",        isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
-    { num: 10, label: modeLabels.stage10Label, href: isReward ? "/strategy/reward-outputs" : "/strategy/board-report",  isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
+  const allStages: StageInfo[] = [
+    { num: 1, label: "Pre-work",       href: "/strategy/diagnostic",   isAccessible: gate.isStage1Accessible, isCleared: gate.stage1Cleared },
+    { num: 2, label: "Vision",         href: "/strategy/vision",        isAccessible: gate.isStage2Accessible, isCleared: gate.stage2Cleared },
+    { num: 3, label: "Strategy",       href: "/strategy/strategy",      isAccessible: gate.isStage3Accessible, isCleared: gate.stage3Cleared },
+    { num: 4, label: "Principles",     href: "/strategy/ambition",      isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
+    { num: 5, label: "Initiatives",    href: "/strategy/builder",       isAccessible: gate.isStage5Accessible, isCleared: gate.stage5Cleared },
+    { num: 6, label: "Measurement",    href: "/strategy/measurement",   isAccessible: gate.isStage6Accessible, isCleared: gate.stage6Cleared },
+    { num: 7, label: "Business case",  href: "/strategy/business-case", isAccessible: gate.isStage7Accessible, isCleared: gate.stage7Cleared },
+    { num: 8, label: "Capability",     href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
+    { num: 9,  label: modeLabels.stage9Label,  href: isReward ? "/strategy/reward-review"  : "/strategy/review",       isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
+    { num: 10, label: modeLabels.stage10Label, href: isReward ? "/strategy/reward-outputs" : "/strategy/board-report", isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
   ];
 
-  function StageRow({ stages }: { stages: StageInfo[] }) {
-    return (
-      <div className="flex items-center gap-0">
-        {stages.map((s, idx) => {
-          const isLocked = !s.isAccessible;
-          return (
-            <React.Fragment key={s.num}>
-              {idx > 0 && (
-                <div className={cn(
-                  "h-px flex-1 mx-1",
-                  stages[idx - 1].isCleared ? "bg-emerald-500/60" : "bg-border"
-                )} />
-              )}
-              <button
-                onClick={() => !isLocked && navigate(gate.stage8Cleared ? s.href + "?from=dashboard" : s.href)}
-                disabled={isLocked}
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap",
-                  s.isCleared && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15",
-                  !s.isCleared && !isLocked && "text-foreground bg-background border border-border hover:bg-muted/50",
-                  isLocked && "text-muted-foreground/40 cursor-not-allowed"
-                )}
-              >
-                {s.isCleared ? (
-                  <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
-                ) : isLocked ? (
-                  <Lock className="w-3 h-3 flex-shrink-0" />
-                ) : (
-                  <Circle className="w-3 h-3 flex-shrink-0" />
-                )}
-                <span>S{s.num} — {s.label}</span>
-              </button>
-            </React.Fragment>
-          );
-        })}
-      </div>
-    );
-  }
+  const totalCleared = allStages.filter(s => s.isCleared).length;
+  const allDone = totalCleared === 10;
 
-  const totalCleared = [gate.stage1Cleared, gate.stage2Cleared, gate.stage3Cleared, gate.stage4Cleared,
-    gate.stage5Cleared, gate.stage6Cleared, gate.stage7Cleared, gate.stage8Cleared,
-    gate.stage9Cleared, gate.stage10Cleared].filter(Boolean).length;
+  // Find the first stage that is accessible but not yet cleared — this is the user's next action
+  const nextStage = allStages.find(s => s.isAccessible && !s.isCleared);
 
   return (
-    <div className="mb-6 rounded-xl border border-border bg-muted/20 px-4 py-3">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          STRATEGY BUILD PROGRESS
-        </p>
-        <span className="text-[10px] text-muted-foreground">{totalCleared}/10 stages cleared</span>
+    <div className="mb-6 rounded-xl border border-border bg-muted/20 px-4 py-4">
+      {/* Header row: progress count + next CTA */}
+      <div className="flex items-center justify-between mb-3 gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">
+            Strategy build progress
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {allDone ? "All 10 stages complete" : `${totalCleared} of 10 stages done`}
+          </p>
+        </div>
+        {/* Single primary CTA: navigate to the next incomplete stage */}
+        {!allDone && nextStage && (
+          <Button
+            size="sm"
+            className="gap-2 font-semibold text-sm px-4 h-9 shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+            onClick={() => navigate(gate.stage8Cleared ? nextStage.href + "?from=dashboard" : nextStage.href)}
+          >
+            <ArrowRight className="w-4 h-4" />
+            Continue: Stage {nextStage.num} — {nextStage.label}
+          </Button>
+        )}
+        {allDone && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Strategy complete
+          </span>
+        )}
       </div>
-      <div className="space-y-2">
-        <div>
-          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1.5">Foundation (Stages 1–4)</p>
-          <StageRow stages={row1} />
-        </div>
-        <div>
-          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1.5">Execution (Stages 5–8)</p>
-          <StageRow stages={row2} />
-        </div>
-        <div>
-          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest mb-1.5">Delivery (Stages 9–10)</p>
-          <StageRow stages={row3} />
-        </div>
+
+      {/* Stage pills — compact, non-primary, collapsed into a single row */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {allStages.map((s) => {
+          const isLocked = !s.isAccessible;
+          const isNext = nextStage?.num === s.num;
+          return (
+            <button
+              key={s.num}
+              onClick={() => !isLocked && navigate(gate.stage8Cleared ? s.href + "?from=dashboard" : s.href)}
+              disabled={isLocked}
+              title={isLocked ? `Locked — complete earlier stages first` : s.isCleared ? `Stage ${s.num} complete — click to revisit` : `Stage ${s.num} — in progress`}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap",
+                s.isCleared && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/8 hover:bg-emerald-500/15",
+                isNext && "text-foreground bg-primary/15 border border-primary/40 hover:bg-primary/20",
+                !s.isCleared && !isLocked && !isNext && "text-muted-foreground bg-muted/40 hover:bg-muted/60",
+                isLocked && "text-muted-foreground/30 cursor-not-allowed"
+              )}
+            >
+              {s.isCleared ? (
+                <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+              ) : isLocked ? (
+                <Lock className="w-3 h-3 flex-shrink-0" />
+              ) : (
+                <Circle className="w-3 h-3 flex-shrink-0" />
+              )}
+              <span>{s.num}. {s.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
