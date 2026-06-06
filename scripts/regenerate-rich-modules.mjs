@@ -153,23 +153,32 @@ async function generateModuleContent(mod) {
 
 Requirements:
 
-[CONSTRAINT 1 — Section length]
-Each section body must be 100 words or fewer. If the material for one section would exceed 100 words, split it into two or more separate sections, each with its own heading. Never merge multiple ideas into one long block. Prefer more short sections over fewer long ones.
-Total reading body: the combined word count of ALL section bodies must not exceed 320 words. Count the words in every section body and sum them before submitting. If the total exceeds 320 words, shorten each section until the total is at or below 320.
+[CONSTRAINT 1 — Section length — wall_of_text]
+Each section body must be 80 words or fewer. If the material for one section would exceed 80 words, split it into two or more separate sections, each with its own heading. Never merge multiple ideas into one long block. Prefer more short sections over fewer long ones.
+Total reading body: the combined word count of ALL section bodies must not exceed 280 words. Count the words in every section body and sum them before submitting. If the total exceeds 280 words, shorten each section until the total is at or below 280.
+Self-check: Before submitting, count every section body word by word. If any single section exceeds 80 words, split it. If the total exceeds 280 words, trim the longest sections first.
 
 [CONSTRAINT 2 — Sentence length and reading grade]
-Write for a Flesch-Kincaid reading grade of 10 or below. Keep sentences to a maximum of 18 words. One idea per sentence. No sentence may contain more than one comma. Do not use semicolons.
+Write for a Flesch-Kincaid reading grade of 9 or below. Keep sentences to a maximum of 16 words. One idea per sentence. No sentence may contain more than one comma. Do not use semicolons. Avoid subordinate clauses — write direct subject-verb-object sentences.
+Self-check (mandatory): After writing each section, re-read every sentence and count its words. Rewrite any sentence over 16 words as two shorter sentences. If a sentence contains more than one comma, split it. Do not submit a section until every sentence passes this check.
 
-Self-check (mandatory): After writing each section, re-read every sentence and count its words. Rewrite any sentence over 18 words as two shorter sentences. If a sentence contains more than one comma, split it. Do not submit a section until every sentence passes this check.
-
-[CONSTRAINT 3 — Key points must add new information]
-Each keyPoints item must state a concrete implication or action the reader should take — something not already written in the body. Do not summarise or restate body sentences. If a key point only repeats the paragraph, delete it. Test: after reading the body, each key point should still tell the reader something new.
+[CONSTRAINT 3 — Key points must add new information — no redundancy]
+Each keyPoints item must state a concrete implication or action the reader should take — something not already written in the body. Do not summarise or restate body sentences. If a key point only repeats the paragraph, delete it and write a new one. Test: after reading the body, each key point should still tell the reader something new.
+Anti-redundancy rule: No two key points may make the same underlying claim. No key point may begin with the same verb as another. If two points overlap, merge them into one or delete the weaker one.
 
 [CONSTRAINT 4 — Jargon and acronyms]
-Define every technical acronym in plain words on its first use in the module — e.g. "applicant tracking system (the software that stores and filters job applications, often shortened to ATS)". Never use an acronym before defining it. Replace corporate filler — leverage, utilise, facilitate, operationalise, holistic, paradigm, robust, transformative — with plain words (use, help, do, whole, strong, major). The reader is a compensation specialist, not a technologist; assume no prior AI vocabulary.
+Define every technical acronym in plain words on its first use in the module — e.g. "applicant tracking system (the software that stores and filters job applications, often shortened to ATS)". Never use an acronym before defining it.
+Banned corporate filler words — replace with the plain alternative shown:
+  leverage/utilise/utilize → use | facilitate → help | operationalise → put into practice | holistic → complete | paradigm → approach | robust → reliable | transformative → significant | seamless → smooth | scalable → expandable | actionable → practical | proactive → early | data-driven → evidence-based | streamline → simplify | foster → support | synergy → combined effect | value-add → useful | solution-oriented → practical
+The reader is a compensation specialist, not a technologist; assume no prior AI vocabulary.
 
 [CONSTRAINT 5 — Examples must be Reward/compensation specific]
 Every example, scenario, and illustration must center on compensation and reward work — pay, salary benchmarking, pay bands and grading, bonus and incentive design, or pay equity. Do not use recruitment, hiring, résumé-screening, onboarding, or performance-review examples; these target the wrong audience and will be rejected. If you reach for a hiring example, rewrite it as a pay or benchmarking example instead.
+Self-check: Before submitting, scan every example and scenario. If it mentions candidates, applicants, job postings, or interviews, rewrite it as a pay or benchmarking scenario.
+
+[CONSTRAINT 6 — Quiz feedback must explain why each wrong answer is wrong]
+For every quiz question, the explanation field must contain exactly four sentences — one per answer option. Each sentence must name the option letter (A, B, C, or D) and state specifically why that option is correct or incorrect. Do not write a single combined explanation. Do not use vague phrases like "this is not the best answer" — state the specific flaw or the specific reason the correct answer is right.
+Format: "Option B is correct because [specific reason]. Option A is wrong because [specific flaw]. Option C is wrong because [specific flaw]. Option D is wrong because [specific flaw]."
 
 ${isAdvanced ? '- Reference real research from MIT, Accenture, CIPD, McKinsey, Deloitte, WEF' : ''}
 - Write in professional but engaging prose

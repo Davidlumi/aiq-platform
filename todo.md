@@ -4928,8 +4928,8 @@ test
 - [x] Full test suite: 1999 passing | 2 todo | 0 failing (81 files)
 
 ## Module Regeneration (Systemic Fault Fix — v2 Audit)
-- [ ] Edit six prompt constraints in regenerate-rich-modules.mjs (wall_of_text, reading_grade, redundancy, jargon, examples, feedback_why)
-- [ ] Dry-run to confirm prompt changes parse correctly
+- [x] Edit six prompt constraints in regenerate-rich-modules.mjs (wall_of_text, reading_grade, redundancy, jargon, examples, feedback_why) — CONSTRAINT 1: tightened to 80 words/section, 280 total; CONSTRAINT 2: grade 9, 16-word max; CONSTRAINT 3: anti-redundancy rule added; CONSTRAINT 4: expanded banned word list; CONSTRAINT 5: added self-check scan; CONSTRAINT 6: added to system prompt (4-sentence per-option feedback format)
+- [x] Dry-run to confirm prompt changes parse correctly — node --check passes, exit 0
 - [ ] Pilot regeneration: --capability=ai_workflow_design
 - [ ] Re-audit pilot output with module_audit_REGENERATED.py; confirm reading_grade + wall_of_text drop to near-zero
 - [ ] Human accuracy read of 3-4 pilot modules
