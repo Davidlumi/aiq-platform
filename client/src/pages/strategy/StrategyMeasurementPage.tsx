@@ -1031,6 +1031,7 @@ export default function StrategyMeasurementPage() {
       gate.refetch();
       setConfirmOpen(false);
       setJustConfirmed(true);
+      toast.success("Outcomes confirmed — Capability unlocked");
       setTimeout(() => {
         setJustConfirmed(false);
         navigate("/strategy/capability");

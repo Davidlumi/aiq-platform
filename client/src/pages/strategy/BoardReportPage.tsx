@@ -601,7 +601,7 @@ export default function BoardReportPage() {
         isCleared: !!stage10Cleared,
         canConfirm,
         isPending: completeStage10Mutation.isPending,
-        onConfirm: () => stage10Cleared ? setConfirmOpen(true) : setConfirmOpen(true),
+        onConfirm: () => setConfirmOpen(true),
         backRoute: "/strategy/review",
       } : undefined}
     >

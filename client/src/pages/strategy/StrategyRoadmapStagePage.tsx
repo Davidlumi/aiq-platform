@@ -30,6 +30,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { trpc } from "@/lib/trpc";
 import { useGate } from "@/contexts/GateContext";
 import SectionPageLayout from "@/components/SectionPageLayout";
+import { toast } from "sonner";
 import { INITIATIVE_LIBRARY } from "../../../../shared/initiativeLibrary";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -452,8 +453,10 @@ export default function StrategyRoadmapStagePage() {
     onSuccess: () => {
       gate.refetch();
       setJustConfirmed(true);
+      toast.success("Roadmap confirmed — Outcomes unlocked");
       setTimeout(() => navigate("/strategy/measures"), 2200);
     },
+    onError: (err) => toast.error(err.message ?? "Could not confirm roadmap."),
   });
 
   // Local state
@@ -627,7 +630,7 @@ export default function StrategyRoadmapStagePage() {
           onConfirm: handleConfirm,
           backRoute: "/strategy/plan",
           nextRoute: "/strategy/measures",
-          nextLabel: "Success Measures",
+          nextLabel: "Outcomes",
         }}
       >
         {/* Success flash */}
@@ -635,9 +638,9 @@ export default function StrategyRoadmapStagePage() {
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-emerald-300">Stage 6 confirmed — Roadmap locked.</p>
+              <p className="text-sm font-semibold text-emerald-300">Stage 6 confirmed — Outcomes unlocked.</p>
               <p className="text-xs text-emerald-400/70 mt-0.5 flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin" /> Moving to Success Measures…
+                <Loader2 className="w-3 h-3 animate-spin" /> Moving to Outcomes…
               </p>
             </div>
           </div>

@@ -492,6 +492,7 @@ export default function ReviewSessionPage() {
     onSuccess: () => {
       gate.refetch();
       setSuccessFlash(true);
+      toast.success("Review confirmed — Board Report unlocked");
       setTimeout(() => navigate("/strategy/board-report"), 2200);
     },
     onError: (err) => toast.error(err.message),
