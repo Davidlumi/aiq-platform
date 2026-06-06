@@ -493,7 +493,9 @@ export default function BusinessCasePage() {
   const fmtGbk  = formatGbpK;
 
   const isLoading   = assessmentQ.isLoading;
-  const hasStrategy = !!(assessmentQ.data?.completed && selectedIds.length > 0);
+  // hasStrategy: selectedInitiativeIds populated + stage 3 gate cleared (strategy_assessment_completed_at
+  // may be NULL for tenants who confirmed via the gate before the field was added)
+  const hasStrategy = selectedIds.length > 0 && (!!assessmentQ.data?.completed || !!gate.stage3Cleared);
 
   const tierConfig = {
     cautious:       { label: "Cautious",       color: "#4ADE80", bg: "#4ADE8020" },
