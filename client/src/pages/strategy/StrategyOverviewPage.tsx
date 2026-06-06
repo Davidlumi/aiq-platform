@@ -864,20 +864,21 @@ function GateFlowStrip() {
   type StageInfo = { num: number; label: string; href: string; isAccessible: boolean; isCleared: boolean };
 
   const allStages: StageInfo[] = [
-    { num: 1, label: "Pre-work",       href: "/strategy/diagnostic",   isAccessible: gate.isStage1Accessible, isCleared: gate.stage1Cleared },
-    { num: 2, label: "Vision",         href: "/strategy/vision",        isAccessible: gate.isStage2Accessible, isCleared: gate.stage2Cleared },
-    { num: 3, label: "Strategy",       href: "/strategy/strategy",      isAccessible: gate.isStage3Accessible, isCleared: gate.stage3Cleared },
-    { num: 4, label: "Principles",     href: "/strategy/principles",      isAccessible: gate.isStage4Accessible, isCleared: gate.stage4Cleared },
-    { num: 5, label: "Initiatives",    href: "/strategy/builder",       isAccessible: gate.isStage5Accessible, isCleared: gate.stage5Cleared },
-    { num: 6, label: "Measurement",    href: "/strategy/measures",   isAccessible: gate.isStage6Accessible, isCleared: gate.stage6Cleared },
-    { num: 7, label: "Business case",  href: "/strategy/business-case", isAccessible: gate.isStage7Accessible, isCleared: gate.stage7Cleared },
-    { num: 8, label: "Capability",     href: "/strategy/capability",    isAccessible: gate.isStage8Accessible, isCleared: gate.stage8Cleared },
-    { num: 9,  label: modeLabels.stage9Label,  href: isReward ? "/strategy/reward-review"  : "/strategy/review",       isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
-    { num: 10, label: modeLabels.stage10Label, href: isReward ? "/strategy/reward-outputs" : "/strategy/board-report", isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
+    { num: 1,  label: "Pre-work",      href: "/strategy/diagnostic",                                           isAccessible: gate.isStage1Accessible,  isCleared: gate.stage1Cleared  },
+    { num: 2,  label: "Vision",        href: "/strategy/vision",                                               isAccessible: gate.isStage2Accessible,  isCleared: gate.stage2Cleared  },
+    { num: 3,  label: "Strategy",      href: "/strategy/strategy",                                             isAccessible: gate.isStage3Accessible,  isCleared: gate.stage3Cleared  },
+    { num: 4,  label: "Principles",    href: "/strategy/principles",                                           isAccessible: gate.isStage4Accessible,  isCleared: gate.stage4Cleared  },
+    { num: 5,  label: "Initiatives",   href: "/strategy/builder",                                              isAccessible: gate.isStage5Accessible,  isCleared: gate.stage5Cleared  },
+    { num: 6,  label: "Roadmap",       href: "/strategy/roadmap",                                              isAccessible: gate.isStage6Accessible,  isCleared: gate.stage6Cleared  },
+    { num: 7,  label: "Outcomes",      href: "/strategy/measures",                                             isAccessible: gate.isStage7Accessible,  isCleared: gate.stage7Cleared  },
+    { num: 8,  label: "Capability",    href: "/strategy/capability",                                           isAccessible: gate.isStage8Accessible,  isCleared: gate.stage8Cleared  },
+    { num: 9,  label: "Business Case", href: "/strategy/business-case",                                        isAccessible: gate.isStage9Accessible,  isCleared: gate.stage9Cleared  },
+    { num: 10, label: modeLabels.stage9Label,  href: isReward ? "/strategy/reward-review"  : "/strategy/review",      isAccessible: gate.isStage10Accessible, isCleared: gate.stage10Cleared },
+    { num: 11, label: modeLabels.stage10Label, href: isReward ? "/strategy/reward-outputs" : "/strategy/board-report", isAccessible: gate.isStage11Accessible, isCleared: gate.stage11Cleared },
   ];
 
   const totalCleared = allStages.filter(s => s.isCleared).length;
-  const allDone = totalCleared === 10;
+  const allDone = totalCleared === 11;
 
   // Find the first stage that is accessible but not yet cleared — this is the user's next action
   const nextStage = allStages.find(s => s.isAccessible && !s.isCleared);
@@ -899,7 +900,7 @@ function GateFlowStrip() {
           <Button
             size="sm"
             className="gap-2 font-semibold text-sm px-4 h-9 shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
-            onClick={() => navigate(gate.stage8Cleared ? nextStage.href + "?from=dashboard" : nextStage.href)}
+            onClick={() => navigate(gate.stage9Cleared ? nextStage.href + "?from=dashboard" : nextStage.href)}
           >
             <ArrowRight className="w-4 h-4" />
             Continue: Stage {nextStage.num} — {nextStage.label}
@@ -921,7 +922,7 @@ function GateFlowStrip() {
           return (
             <button
               key={s.num}
-              onClick={() => !isLocked && navigate(gate.stage8Cleared ? s.href + "?from=dashboard" : s.href)}
+              onClick={() => !isLocked && navigate(gate.stage9Cleared ? s.href + "?from=dashboard" : s.href)}
               disabled={isLocked}
               title={isLocked ? `Locked — complete earlier stages first` : s.isCleared ? `Stage ${s.num} complete — click to revisit` : `Stage ${s.num} — in progress`}
               className={cn(
@@ -967,7 +968,7 @@ export default function StrategyOverviewPage() {
   const orgContextQ         = trpc.intelligence.orgContext.useQuery();
   const ambitionSectionsQ   = trpc.intelligence.getAmbitionSections.useQuery(
     undefined,
-    { enabled: gate.stage8Cleared }
+    { enabled: gate.stage7Cleared }
   );
   const capabilityQ         = trpc.intelligence.getCapabilityAssessment.useQuery(
     undefined,
@@ -1519,8 +1520,8 @@ export default function StrategyOverviewPage() {
           teamLabel={modeLabels.teamLabel}
         />
 
-        {/* ══ STRATEGY CARDS — 2×2 GRID (mid-flow, hidden after Stage 8 cleared) ═════ */}
-        {!gate.stage8Cleared && (
+        {/* ══ STRATEGY CARDS — 2×2 GRID (mid-flow, hidden after Stage 9 cleared) ═════ */}
+        {!gate.stage9Cleared && (
           <div
             className="grid grid-cols-2 gap-3 mb-8"
             role="list"
@@ -1647,8 +1648,8 @@ export default function StrategyOverviewPage() {
         </div>
         )}
 
-        {/* ══ POST-FLOW SUMMARY CARDS (5-card layout, shown once Stage 8 cleared) ════ */}
-        {gate.stage8Cleared && (
+        {/* ══ POST-FLOW SUMMARY CARDS (5-card layout, shown once Stage 9 cleared) ════ */}
+        {gate.stage9Cleared && (
           <div className="space-y-4 mb-8">
             {/* ── Row 1: The Strategy (full-width) ── */}
             <div
@@ -1837,8 +1838,8 @@ export default function StrategyOverviewPage() {
           hasInitiatives={selectedInitiativeIds.size > 0}
         />
 
-        {/* ══ POST-FLOW EXPORTS (shown once Stage 8 is cleared) ═══════════════════════ */}
-        {gate.stage8Cleared && (
+        {/* ══ POST-FLOW EXPORTS (shown once Stage 9 is cleared) ═══════════════════════ */}
+        {gate.stage9Cleared && (
           <div className="mt-8 rounded-xl border border-border/60 bg-card p-6 space-y-5">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">Exports</span>
@@ -1851,13 +1852,13 @@ export default function StrategyOverviewPage() {
                   <p className="text-xs font-semibold tracking-widest uppercase text-emerald-500 mb-1">Primary deliverable</p>
                   <p className="text-sm font-semibold text-foreground">{modeLabels.stage10Label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {gate.stage10Cleared
-                      ? `Stage 10 confirmed — ready to share with your ${modeLabels.sponsorLabel}.`
-                      : `Complete Stage 10 to generate and confirm your ${modeLabels.stage10Label.toLowerCase()}.`}
+                    {gate.stage11Cleared
+                      ? `Stage 11 confirmed — ready to share with your ${modeLabels.sponsorLabel}.`
+                      : `Complete Stage 11 to generate and confirm your ${modeLabels.stage10Label.toLowerCase()}.`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {gate.stage10Cleared ? (
+                  {gate.stage11Cleared ? (
                     <>
                       <button
                         onClick={() => window.open("/api/pdf/board_report", "_blank")}
