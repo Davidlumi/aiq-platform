@@ -527,7 +527,7 @@ export default function CapabilityPage() {
       }));
       setRisks(prev => {
         const merged = [...prev, ...newRisks.filter(nr => !prev.some(p => p.title === nr.title))];
-        saveRisksMut.mutate({ risksJson: JSON.stringify(merged) });
+        saveRisksMut.mutate({ risksJson: JSON.stringify({ risks: merged }) });
         return merged;
       });
       setIsSuggestingRisks(false);
@@ -542,8 +542,10 @@ export default function CapabilityPage() {
   // Load saved risks
   useEffect(() => {
     if (!risksLoaded && riskRegisterQ.data !== undefined) {
-      if (riskRegisterQ.data && Array.isArray(riskRegisterQ.data)) {
-        setRisks(riskRegisterQ.data as RiskRegisterItem[]);
+      // getRiskRegister returns { risks: RiskRegisterItem[] }, not a plain array
+      const loaded = (riskRegisterQ.data as { risks?: RiskRegisterItem[] })?.risks;
+      if (loaded && Array.isArray(loaded)) {
+        setRisks(loaded);
       }
       setRisksLoaded(true);
     }
@@ -553,7 +555,7 @@ export default function CapabilityPage() {
   const persistRisks = useCallback((updated: RiskRegisterItem[]) => {
     if (saveRisksDebounceRef.current) clearTimeout(saveRisksDebounceRef.current);
     saveRisksDebounceRef.current = setTimeout(() => {
-      saveRisksMut.mutate({ risksJson: JSON.stringify(updated) });
+      saveRisksMut.mutate({ risksJson: JSON.stringify({ risks: updated }) });
     }, 800);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -638,7 +640,7 @@ export default function CapabilityPage() {
     setMaterialGapPromptOpen(false);
     completeStage8Mut.mutate({
       stage8CapabilityJson: JSON.stringify(cap),
-      riskRegisterJson: JSON.stringify(risks),
+      riskRegisterJson: JSON.stringify({ risks }),
     });
   };
 
@@ -1066,6 +1068,8 @@ export default function CapabilityPage() {
                 {!allDimsScored && <li>• Score all 4 dimensions (current and needed)</li>}
                 {!allGapsCovered && <li>• Add at least 1 tactic for each gap area</li>}
                 {!narrativeOk && <li>• Delivery narrative must be at least 200 words ({narrativeWordCount} / 200)</li>}
+                {!riskGateOk && pendingAiRisks.length > 0 && <li>• Review and accept/dismiss all AI-suggested risks before confirming</li>}
+                {!riskGateOk && pendingAiRisks.length === 0 && risksWithMitigation.length < 1 && <li>• Add at least 1 risk with a mitigation strategy in the Risk Register below</li>}
               </ul>
             )}
           </div>

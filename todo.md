@@ -4941,7 +4941,7 @@ test
 ## Assessment Patch Brief v2
 
 - [ ] P0-1: Classify why all domains scored 5.0 — pull per-question raw scores, determine seeding artefact vs engine output
-- [ ] P0-2: Fix 'What you do well' strengths card — no placeholder copy, real content for all profile shapes
+- [x] P0-2: Fix 'What you do well' strengths card — StrengthsFallback component implemented in AssessmentResultsPage.tsx with real computed bullets for all profile shapes (balanced-strong, balanced-developing, differentiated)
 - [x] P1-1: Align evidenceTargetItems to 50, update progress bar and start screen to 'up to 50 scenarios'
 - [x] P1-2: Hide 'Full breakdown' buttons until feature exists (remove dead toast affordance)
 - [x] P2-1: Add topic-tag display-label mapping (programme_design → Programme Design), audit all raw keys reaching UI
@@ -4962,8 +4962,8 @@ test
 - [x] B7: Remove free-text reasoning box and reasoningRequired server gate; hard-code reasoningCompleteness = 1.0
 - [x] Fix carousel domain names (Data Interpretation/Governance → actual 6 domains)
 - [x] Fix carousel CIPD claim ("AI Competency Framework" → "AI Skills Planning guidance")
-- [ ] C11: Confirmed — session already fixed at 50 questions; no stopping-rule change needed
-- [ ] Add explicit developmental-use-only statement to results page and methodology page
+- [x] C11: Confirmed — session already fixed at 50 questions; no stopping-rule change needed
+- [x] Add explicit developmental-use-only statement to results page and methodology page — amber banner already on AssessmentResultsPage.tsx (line 605); matching banner added to MethodologyPage.tsx Limitations section
 - [ ] Implement fixed expert-authored item bank (replaces LLM-first for scored content)
 - [ ] Run calibration sample; compute reliability
 - [ ] Adverse-impact analysis (gate before any selection use)
@@ -4983,8 +4983,8 @@ test
 - [x] Fix 1: Create /modules page with Content Library and Knowledge Base as tabs/sections
 - [x] Fix 1: Remove Content Library and Knowledge Base as separate top-level nav items
 - [x] Fix 2: Gate AiQ Coach — locked until user has at least one completed Skills Check session
-- [ ] Check 1: Investigate "Re-assessment in progress / Re-assessment #3" banner on /strategy/reward-prework
-- [ ] Check 2: Confirm Company-wide locked state click behaviour
+- [x] Check 1: Investigate "Re-assessment in progress / Re-assessment #3" banner on /strategy/reward-prework — banner is correct; shows when reassessmentCount>0 and prework not re-completed; dismissible
+- [x] Check 2: Confirm Company-wide locked state click behaviour — correct; locked domain shows toast + does not navigate; prework-locked shows toast + navigates to /strategy/diagnostic
 
 ## CPO Domain State Bug Fix (Jun 2026)
 
@@ -5037,7 +5037,7 @@ test
 - [x] Isolation: tenantId scoping unchanged — all queries filter by ctx.user.tenantId
 - [x] DFS smoke: reward@dunder.com unaffected — hr_leader role still grants Strategy Builder access
 - [x] Super User unreachable: no API path sets isPlatformSuperuser (only direct SQL)
-- [ ] UI verification: manually confirm provenance UI renders in Company Profile page
+- [x] UI verification: ProvenanceRow component confirmed present in admin/CompanyProfilePage.tsx for all 4 key fields (sector, headcount, revenue, payroll)
 
 ## Pre-work Gate (Jun 2026)
 
@@ -5087,3 +5087,8 @@ test
 ### Q8 — Deep-dive roadmap view
 - [x] Audit all references to /strategy/roadmap deep-dive (dashboards, saved reports, in-app links)
 - [x] Move deep-dive to /strategy/roadmap/detail with redirect from old path
+
+## Stage 8 Capability Confirmation Bug Fix (Jun 2026)
+- [x] Fix: risk register loading bug — getRiskRegister returns {risks:[]} but client checked Array.isArray(data) which is always false; risks never loaded from server; riskGateOk always false
+- [x] Fix: all risk save calls now use JSON.stringify({risks:updated}) format to match server's {risks:[]} read format
+- [x] Fix: added missing riskGateOk error messages to canConfirm error list (pending AI risks message + no-mitigation message)

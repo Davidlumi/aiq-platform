@@ -488,6 +488,15 @@ export default function MethodologyPage() {
             <h2 className="text-xl font-bold text-foreground">Limitations & Transparency</h2>
           </div>
 
+          {/* Developmental-use-only statement */}
+          <div className="flex items-start gap-3 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-3 text-xs text-amber-200/80 leading-relaxed">
+            <span className="mt-0.5 shrink-0 text-amber-400" aria-hidden="true">⚠</span>
+            <p>
+              <strong className="text-amber-300 font-semibold">For individual development purposes only.</strong>{" "}
+              This assessment is designed to support personal learning and professional development. It has not been independently validated for use in recruitment, promotion, redundancy, or any other employment decision. Scores must not be used as the sole or primary basis for any consequential HR decision. Results should be treated as indicative and developmental, not as definitive capability measures.
+            </p>
+          </div>
+
           <p className="text-sm text-muted-foreground leading-relaxed">
             We believe credibility is built through honest disclosure. The following limitations
             are known and are being actively addressed through our validation roadmap.
