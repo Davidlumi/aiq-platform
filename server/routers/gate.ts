@@ -900,8 +900,13 @@ export const gateRouter = router({
       let risks: RiskEntry[] = [];
       if (input.riskRegisterJson) {
         try {
-          const parsed = JSON.parse(input.riskRegisterJson) as { risks: RiskEntry[] };
-          risks = parsed.risks ?? [];
+          const parsed = JSON.parse(input.riskRegisterJson);
+          // Handle both formats: { risks: [...] } (new) and [...] (legacy flat array)
+          if (Array.isArray(parsed)) {
+            risks = parsed as RiskEntry[];
+          } else {
+            risks = (parsed as { risks: RiskEntry[] }).risks ?? [];
+          }
         } catch { /* empty */ }
       }
       // Rule 1: At least one risk with a mitigation must be present

@@ -445,8 +445,12 @@ export const intelligenceRouter = router({
     const raw = rows[0]?.riskRegisterJson ?? null;
     if (!raw) return { risks: [] as RiskRegisterItem[] };
     try {
-      const parsed = JSON.parse(raw) as { risks: RiskRegisterItem[] };
-      return { risks: parsed.risks ?? [] as RiskRegisterItem[] };
+      const parsed = JSON.parse(raw);
+      // Handle both formats: { risks: [...] } (new) and [...] (legacy flat array)
+      if (Array.isArray(parsed)) {
+        return { risks: parsed as RiskRegisterItem[] };
+      }
+      return { risks: (parsed as { risks: RiskRegisterItem[] }).risks ?? [] as RiskRegisterItem[] };
     } catch {
       return { risks: [] as RiskRegisterItem[] };
     }

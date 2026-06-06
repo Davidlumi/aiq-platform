@@ -1,0 +1,10 @@
+import mysql from 'mysql2/promise';
+import { config } from 'dotenv';
+config({ path: '/home/ubuntu/aiq-platform/.env' });
+const conn = await mysql.createConnection(process.env.DATABASE_URL);
+const [rows] = await conn.execute('SELECT tenant_id, success_measures_json, risk_register_json FROM ail_org_context WHERE tenant_id = ?', ['259e9782-a4e2-45de-b9f1-00456eecbc2d']);
+const r = rows[0];
+console.log('TENANT:', r.tenant_id);
+console.log('success_measures_json:', r.success_measures_json ? r.success_measures_json.substring(0, 300) : 'NULL');
+console.log('risk_register_json:', r.risk_register_json ? r.risk_register_json.substring(0, 300) : 'NULL');
+await conn.end();

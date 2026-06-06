@@ -1,0 +1,11 @@
+import { createConnection } from 'mysql2/promise';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envContent = readFileSync(join(__dirname, '..', '.env'), 'utf8');
+const dbUrl = envContent.match(/^DATABASE_URL=(.+)$/m)?.[1]?.trim();
+const conn = await createConnection(dbUrl);
+const [rows] = await conn.execute('SELECT id, email, name, role, tenant_id FROM users LIMIT 10');
+for (const r of rows) console.log(JSON.stringify(r));
+await conn.end();
