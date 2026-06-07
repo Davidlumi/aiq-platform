@@ -603,6 +603,8 @@ export default function BoardReportPage() {
         isPending: completeStage10Mutation.isPending,
         onConfirm: () => setConfirmOpen(true),
         backRoute: "/strategy/review",
+        nextRoute: "/strategy/summary",
+        nextLabel: "Finish & view strategy summary",
       } : undefined}
     >
       <div className="max-w-3xl mx-auto space-y-6 px-2 sm:px-0">

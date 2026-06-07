@@ -5092,3 +5092,7 @@ test
 - [x] Fix: risk register loading bug — getRiskRegister returns {risks:[]} but client checked Array.isArray(data) which is always false; risks never loaded from server; riskGateOk always false
 - [x] Fix: all risk save calls now use JSON.stringify({risks:updated}) format to match server's {risks:[]} read format
 - [x] Fix: added missing riskGateOk error messages to canConfirm error list (pending AI risks message + no-mitigation message)
+
+### Phase E — Completion page and export
+- [x] T14 — Strategy Summary page (/strategy/summary): StrategySummaryPage.tsx built, routed in App.tsx, BoardReportPage nextRoute set to /strategy/summary with label "Finish & view strategy summary"
+- [ ] T15 — Export fix: pdf.ts reads successMeasuresJson with fallback to outcomesJson (code fix done); user must regenerate all 6 board report sections from Stage 11 to get fresh content sourced from roadmap/risk register data

@@ -257,7 +257,15 @@ export const gateRouter = router({
       if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
 
       const gateState = parseGateState(row[0].stageGateStateJson);
-      gateState[input.stage].lastEditedAt = Date.now();
+      const now = Date.now();
+      gateState[input.stage].lastEditedAt = now;
+
+      // T11 — Re-confirmation cascade edges:
+      // Editing Stage 6 (Roadmap), 7 (Success Measures), or 8 (Capability)
+      // invalidates Stage 9 (Business Case) — investment number / value justification stale.
+      if (["stage6", "stage7", "stage8"].includes(input.stage) && isStageCleared(gateState.stage9)) {
+        gateState.stage9.lastEditedAt = now;
+      }
 
       await db.update(ailOrgContext)
         .set({ stageGateStateJson: JSON.stringify(gateState), updatedAt: new Date() })
@@ -933,9 +941,18 @@ export const gateRouter = router({
         .limit(1);
       if (!row[0]) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const gateState = parseGateState(row[0].stageGateStateJson);
+            const gateState = parseGateState(row[0].stageGateStateJson);
       gateState.stage8.completedAt = Date.now();
       gateState.stage8.lastEditedAt = null;
+
+      // T11 edge 3: detect material gap (any dimension where needed > current by > 1 level)
+      // Rating model: current/needed are 1–5 integers. Material = gap > 1.
+      type DimData = { current?: number; needed?: number };
+      const hasMaterialGap = dims.some(d => {
+        const dim = cap[d] as DimData | undefined;
+        if (!dim || typeof dim.current !== "number" || typeof dim.needed !== "number") return false;
+        return (dim.needed - dim.current) > 1;
+      });
 
       await db.update(ailOrgContext)
         .set({
@@ -946,8 +963,7 @@ export const gateRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
-
-      return { ok: true, gateState };
+      return { ok: true, gateState, hasMaterialGap };
     }),
 
   /**

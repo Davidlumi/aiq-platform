@@ -42,6 +42,7 @@ import StrategyMeasurementPage from "./pages/strategy/StrategyMeasurementPage";
 import StrategyDraftPage from "./pages/strategy/StrategyDraftPage";
 import ReviewSessionPage from "./pages/strategy/ReviewSessionPage";
 import BoardReportPage from "./pages/strategy/BoardReportPage";
+import StrategySummaryPage from "./pages/strategy/StrategySummaryPage";
 import StrategyVisionPage from "./pages/strategy/StrategyVisionPage";
 import StrategyStrategyPage from "./pages/strategy/StrategyStrategyPage";
 import CompanyOnboardingPage from "./pages/company/CompanyOnboardingPage";
@@ -371,6 +372,10 @@ function Router() {
       </Route>
       <Route path="/strategy/board-report">
         <CpoProtectedRouteWithStrategyNav component={BoardReportPage} />
+      </Route>
+      {/* T14: Strategy Summary — persistent landing after Stage 11 cleared */}
+      <Route path="/strategy/summary">
+        <CpoProtectedRouteWithStrategyNav component={StrategySummaryPage} />
       </Route>
       <Route path="/strategy/draft">
         <CpoProtectedRouteWithStrategyNav component={StrategyDraftPage} />

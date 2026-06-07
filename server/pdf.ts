@@ -1409,11 +1409,16 @@ async function generateBusinessCasePDF(
     }
   } catch {}
 
-  // Parse outcomes
+  // Parse outcomes — T4: read successMeasuresJson (canonical); fall back to outcomesJson with loud log
   type Outcome = { title?: string; baseline_value?: string; target_value?: string; target_date?: string; primary_measure?: string };
   let outcomes: Outcome[] = [];
   try {
-    const raw = (ctx as any)?.outcomesJson;
+    const rawNew = (ctx as any)?.successMeasuresJson;
+    const rawOld = (ctx as any)?.outcomesJson;
+    const raw = rawNew ?? (() => {
+      if (rawOld) console.warn(`[T4-FALLBACK] generateBusinessCasePDF: tenant=${tenantId} reading from dormant outcomesJson — successMeasuresJson is null`);
+      return rawOld;
+    })();
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (Array.isArray(parsed)) outcomes = parsed;
   } catch {}
