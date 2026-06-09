@@ -5152,3 +5152,16 @@ test
 - [ ] Library content — H2 entry (EU AI Act Annex III deployer obligations): awaiting founder curation
 - [ ] Library content — H3 entry (Art. 15 SAR on succession rankings): awaiting founder curation
 - [ ] Library launch scope decision: which 8–12 initiatives get full curation (founder scope decision)
+
+## Phase D — Signal Matching + Honesty Gate
+
+- [x] Schema: `signal` table (founderApproved, category, asOfDate, sourceUrl, sourceLabel)
+- [x] Schema: `signal_match` table (fired-only, application dedup, assumptionTextAtMatch snapshot, dismissReason, refreshSuggestionId FK)
+- [x] Schema: add `external_signal` to `strategy_refresh_suggestions.triggerType` enum
+- [x] Generate migration SQL; apply via webdev_execute_sql
+- [x] `server/routers/signals.ts`: matching engine (LLM-based, per-assumption verdict, jurisdiction-aware, silence-when-uncertain), dismiss-with-reason, refresh_suggestions lifecycle reuse
+- [x] Application dedup logic: active → suppress; dismissed+text-unchanged → suppress; dismissed+text-changed → allow; concurrency comment at dedup site
+- [x] Register `signals` router in `server/routers.ts`
+- [x] Vitest: `server/signals.test.ts` covering dedup logic, fired-only persistence, dismiss-prevents-re-raise, text-change allows re-fire
+- [x] TypeScript: 0 errors after build
+- [x] Gate run: 13 signals × 5 initiatives, raw output pasted, founder-judged per signal

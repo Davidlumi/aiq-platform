@@ -2108,6 +2108,7 @@ export const strategyRefreshSuggestions = mysqlTable("strategy_refresh_suggestio
     "library_version_update",
     "milestone_completion",
     "manual",
+    "external_signal",
   ]).notNull(),
   triggerDetail: text("trigger_detail"),
   currentLibraryVersion: varchar("current_library_version", { length: 20 }),
@@ -3118,3 +3119,66 @@ export const initiativeRisk = mysqlTable("initiative_risk", {
 }));
 export type InitiativeRisk = typeof initiativeRisk.$inferSelect;
 export type InitiativeRiskInsert = typeof initiativeRisk.$inferInsert;
+
+// --- Phase D: Signal Matching ------------------------------------------------
+
+// D1: signal — an external development (regulatory, market, research) that may
+// threaten one or more named assumptions. Founder-approved before client surfacing.
+export const signal = mysqlTable("signal", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  title: varchar("title", { length: 500 }).notNull(),
+  summary: text("summary").notNull(),
+  sourceUrl: text("source_url"),
+  sourceLabel: varchar("source_label", { length: 300 }),
+  asOfDate: varchar("as_of_date", { length: 10 }),                        // ISO date YYYY-MM-DD
+  category: mysqlEnum("category", [
+    "regulatory",
+    "market",
+    "research",
+    "technology",
+    "geopolitical",
+    "other",
+  ]).notNull().default("other"),
+  founderApproved: boolean("founder_approved").notNull().default(false),  // gate: no client sees a signal with founderApproved=false
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  categoryIdx: index("idx_signal_category").on(t.category),
+  approvedIdx: index("idx_signal_approved").on(t.founderApproved),
+}));
+export type Signal = typeof signal.$inferSelect;
+export type SignalInsert = typeof signal.$inferInsert;
+
+// D2: signal_match — a fired match between a signal and a named assumption.
+// Fired-only: absence of a row means no impact. Every row is an affected match.
+// Application dedup (not a UNIQUE constraint — see dedup logic in signals router):
+//   - active match exists → suppress duplicate
+//   - dismissed + assumptionTextAtMatch == current text → suppress (same class)
+//   - dismissed + assumptionTextAtMatch != current text → allow (materially changed assumption)
+export const signalMatch = mysqlTable("signal_match", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  signalId: varchar("signal_id", { length: 36 }).notNull(),
+  assumptionId: varchar("assumption_id", { length: 36 }).notNull(),
+  initiativeId: varchar("initiative_id", { length: 36 }).notNull(),       // denormalised for query convenience
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  matchRationale: text("match_rationale").notNull(),                      // named assumption + why this signal affects it
+  assumptionTextAtMatch: text("assumption_text_at_match").notNull(),      // immutable snapshot of assumption.statement at match time
+  citedSourceUrl: text("cited_source_url"),                               // specific URL cited in the rationale
+  confidenceLevel: mysqlEnum("confidence_level", ["high", "medium", "low"]).notNull(),
+  refreshSuggestionId: varchar("refresh_suggestion_id", { length: 36 }), // FK → strategy_refresh_suggestions.id (nullable)
+  dismissedAt: timestamp("dismissed_at"),                                 // NULL = active; NOT NULL = dismissed
+  dismissReason: text("dismiss_reason"),                                  // written at dismiss time
+  dismissedByUserId: varchar("dismissed_by_user_id", { length: 36 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  // Plain index (not UNIQUE) — dedup is application-level to support re-fire after assumption text change
+  signalAssumptionTenantIdx: index("idx_sm_signal_assumption_tenant").on(t.signalId, t.assumptionId, t.tenantId),
+  tenantInitiativeIdx: index("idx_sm_tenant_initiative").on(t.tenantId, t.initiativeId),
+  assumptionIdx: index("idx_sm_assumption").on(t.assumptionId),
+  signalIdx: index("idx_sm_signal").on(t.signalId),
+  refreshSuggestionIdx: index("idx_sm_refresh_suggestion").on(t.refreshSuggestionId),
+  activeIdx: index("idx_sm_active").on(t.tenantId, t.dismissedAt),       // fast query for active (non-dismissed) matches
+}));
+export type SignalMatch = typeof signalMatch.$inferSelect;
+export type SignalMatchInsert = typeof signalMatch.$inferInsert;

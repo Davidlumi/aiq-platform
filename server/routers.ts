@@ -42,6 +42,7 @@ import { rewardReviewRouter } from "./routers/rewardReview";
 import { initiativeDiscoveryRouter } from "./routers/initiativeDiscovery";
 import { leadsRouter } from "./routers/leads";
 import { assumptionsRouter } from "./routers/assumptions";
+import { signalsRouter } from "./routers/signals";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -86,6 +87,7 @@ export const appRouter = router({
   initiativeDiscovery: initiativeDiscoveryRouter,
   leads: leadsRouter,
   assumptions: assumptionsRouter,
+  signals: signalsRouter,
 });
 
 export type AppRouter = typeof appRouter;
