@@ -77,7 +77,7 @@ export function registerBoardReportDocxRoute(app: Express): void {
     const [tenant] = await db.select({ name: tenants.name }).from(tenants).where(eq(tenants.id, ctx.tenantId)).limit(1);
     const orgName = tenant?.name ?? "Organisation";
 
-    let sectionsMap: Record<string, { content?: string }> = {};
+    let sectionsMap: Record<string, { content?: string; isAiGenerated?: boolean; confirmedAt?: number | null; editedAt?: number | null }> = {};
     try { sectionsMap = ctx.boardReportSectionsJson ? JSON.parse(ctx.boardReportSectionsJson) : {}; } catch { /* ignore */ }
 
     // Fix 5 (P1): Validate rubric before serving the DOCX export
@@ -139,6 +139,39 @@ export function registerBoardReportDocxRoute(app: Express): void {
           spacing: { before: 400, after: 160 },
         }),
       );
+
+      // B2b: per-section draft/accepted status line
+      if (section?.isAiGenerated && !section?.confirmedAt && !section?.editedAt) {
+        children.push(new Paragraph({
+          children: [new TextRun({
+            text: "\u26A0 AI draft — not yet reviewed. Accept this section in the AiQ platform before board submission.",
+            italics: true,
+            color: "D97706",
+            size: 18,
+          })],
+          spacing: { after: 120 },
+        }));
+      } else if (section?.confirmedAt) {
+        children.push(new Paragraph({
+          children: [new TextRun({
+            text: `\u2713 AI draft accepted ${new Date(section.confirmedAt).toLocaleDateString("en-GB")}`,
+            italics: true,
+            color: "059669",
+            size: 18,
+          })],
+          spacing: { after: 120 },
+        }));
+      } else if (section?.editedAt) {
+        children.push(new Paragraph({
+          children: [new TextRun({
+            text: `Edited ${new Date(section.editedAt).toLocaleDateString("en-GB")}`,
+            italics: true,
+            color: "2563EB",
+            size: 18,
+          })],
+          spacing: { after: 120 },
+        }));
+      }
 
       if (content) {
         children.push(...textToParagraphs(content));
