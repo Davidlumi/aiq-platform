@@ -5125,3 +5125,14 @@ test
 - [x] A-5.6: Wire dual-write into intelligence.ts saveStrategyAssessment (writer 5, unconditional)
 - [x] A-5.7: Wire dual-write into intelligence.ts runFitImpactAnalysis (writer 6, conditional)
 - [ ] A-5.8 [Phase B]: Remove all 6 dual-write calls and selectedInitiativesJson blob writes once all 16 readers are migrated to initiative table
+
+## Phase B — B1–B4 Build (Approved 2026-06-09)
+
+- [x] B3: Reduce completePrework gate to 3 mandatory fields (sector, headcount/headcountBand, ambitionTier); all other fields return fieldWarnings only
+- [x] B1: Add InputFieldBasis type (benchmark_default | self_declared | user_provided) to shared/strategyInputs.ts; update computeSectorDefaultBaseline to populate _field_basis alongside _sector_default_used
+- [x] B2a: Add ai_drafted flags to 8 gap elements — visionAiDrafted, strategyStatementAiDrafted, businessCaseAiDrafted (DB columns); aiDrafted JSON field on strategy doc sections and capability narrative; existing riskRegisterJson.aiSuggested and boardReportSectionsJson.isAiGenerated already covered
+- [x] B2b: Board report section Accept mechanism — confirmedAt field added to sectionsMap; acceptBoardReportSection procedure; Accept button in BoardReportPage SectionEditor
+- [x] B2c: Enrichment initiative suggestions — enrichmentSuggestionsJson column added to DB; generateDrafts now saves suggestions; getInputs exposes them; addEnrichmentSuggestionToPortfolio procedure (explicit user action only, never auto-writes); enrichment suggestions panel in AIStrategyPage with Add to portfolio button
+- [x] B4: Self-declare capability path — basis field (assessed | self_declared) added to SectionGSchema; capabilityBasis state in StrategyDiagnosticPage; self-declare toggle UI in Section G header; basis badge in AIStrategyPage capability section
+- [x] Phase B tests (server/phase-b.test.ts) — 24/24 passing (B1: 4, B2a: 4, B2b: 3, B2c: 4, B3: 5, B4: 4)
+- [x] Checkpoint saved: 460e0d74 (pre-tests) + final checkpoint after tests pass
