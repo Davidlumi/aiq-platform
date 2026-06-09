@@ -34,6 +34,7 @@ import { evaluateAllInitiatives, evaluateAllInitiativesWithSemanticAlignment, ty
 import { computeAlignmentCacheKey } from "../services/semanticPrincipleAlignment";
 import { invokeLLM } from "../_core/llm";
 import { assertLLMRateLimit } from "../_core/llmRateLimit";
+import { upsertInitiativeRows } from "../lib/initiativeDualWrite"; // Finding A-5: temporary dual-write
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -639,6 +640,12 @@ export const gateRouter = router({
         .set(patch as any)
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
 
+      // Finding A-5: dual-write — mirror conditional blob write to initiative rows
+      if (updatedSelectedInitiativesJson) {
+        const ids: string[] = JSON.parse(updatedSelectedInitiativesJson);
+        await upsertInitiativeRows(db as any, ctx.user.tenantId, ids, "draft");
+      }
+
       return { ok: true, gateState, engineRefired: !!updatedFitResultsJson };
     }),
 
@@ -718,6 +725,9 @@ export const gateRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      // Finding A-5: dual-write — unconditional blob write → upsert initiative rows
+      await upsertInitiativeRows(db as any, ctx.user.tenantId, input.selectedInitiativeIds, "committed");
 
       return { ok: true, gateState };
     }),

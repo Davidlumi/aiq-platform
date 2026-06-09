@@ -5114,3 +5114,14 @@ test
 - [x] A12: Gate — downstream-FK proof (selectedInitiativesJson still present; downstream reads unbroken)
 - [x] A13: Produce findings list, save checkpoint, stop for sign-off
 >>>>>>> Stashed changes
+
+## Phase A — Finding A-5 Dual-Write (Option C, Authorised 2026-06-09)
+
+- [x] A-5.1: Create server/lib/initiativeDualWrite.ts helper (upsertInitiativeRows)
+- [x] A-5.2: Wire dual-write into gate.ts completeStage4 (writer 1, conditional)
+- [x] A-5.3: Wire dual-write into gate.ts completeStage5 (writer 2, unconditional)
+- [x] A-5.4: Wire dual-write into backgroundInputs.ts generateDrafts (writer 3, conditional)
+- [x] A-5.5: Wire dual-write into intelligence.ts saveStrategy (writer 4, unconditional)
+- [x] A-5.6: Wire dual-write into intelligence.ts saveStrategyAssessment (writer 5, unconditional)
+- [x] A-5.7: Wire dual-write into intelligence.ts runFitImpactAnalysis (writer 6, conditional)
+- [ ] A-5.8 [Phase B]: Remove all 6 dual-write calls and selectedInitiativesJson blob writes once all 16 readers are migrated to initiative table

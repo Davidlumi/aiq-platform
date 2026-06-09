@@ -24,6 +24,7 @@ import { invokeLLM } from "../\_core/llm";
 import { assertLLMRateLimit } from "../_core/llmRateLimit";
 import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
+import { upsertInitiativeRows } from "../lib/initiativeDualWrite"; // Finding A-5: temporary dual-write
 
 // ── Zod schemas for each section ─────────────────────────────────────────────
 
@@ -967,6 +968,12 @@ export const backgroundInputsRouter = router({
         await db2.update(ailOrgContext)
           .set(patch as any)
           .where(eq(ailOrgContext.tenantId, tenantId));
+
+        // Finding A-5: dual-write — mirror conditional blob write to initiative rows
+        if (autoSelectedInitiativesJson) {
+          const ids: string[] = JSON.parse(autoSelectedInitiativesJson);
+          await upsertInitiativeRows(db2 as any, tenantId, ids, "draft");
+        }
       } catch (err) {
         console.error("[backgroundInputs] Draft generation failed:", err);
         // Set state back to "none" so CPO can retry

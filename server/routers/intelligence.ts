@@ -41,6 +41,7 @@ import {
 } from "../strategyEngine";
 import { getLibraryMeta, getContentLibrary, getAllInitiatives, resolveInitiativeIds } from "../contentLibrary";
 import { INITIATIVE_LIBRARY } from "../../shared/initiativeLibrary";
+import { upsertInitiativeRows } from "../lib/initiativeDualWrite"; // Finding A-5: temporary dual-write
 import { evaluateAllInitiatives, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { computeCpoBusinessCase, buildCpoNarrativePromptData, type CpoScenario, type CpoCompanyProfile } from "../services/cpoBusinessCaseEngine";
 import { VOCAB_BLACKLIST, FORBIDDEN_WORDS_PROMPT, sanitizeOutput } from "../../shared/vocabBlacklist";
@@ -611,6 +612,8 @@ Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood"
           snapshotDomainScoresJson,
         });
       }
+      // Finding A-5: dual-write — unconditional blob write → upsert initiative rows (saveStrategy)
+      await upsertInitiativeRows(db as any, ctx.user.tenantId, input.selectedInitiativeIds ?? [], "draft");
       return { success: true };
     }),
 
@@ -828,6 +831,8 @@ Return JSON with this exact structure:
       } else {
         await db.insert(ailOrgContext).values({ id: nanoid(), tenantId: ctx.user.tenantId, ...payload });
       }
+      // Finding A-5: dual-write — unconditional blob write → upsert initiative rows (saveStrategyAssessment)
+      await upsertInitiativeRows(db as any, ctx.user.tenantId, input.selectedInitiativeIds ?? [], "draft");
       return { success: true };
     }),
 
@@ -1849,6 +1854,12 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       await db.update(ailOrgContext)
         .set({ fitImpactResultsJson, ...(selectedInitiativesJson ? { selectedInitiativesJson } : {}) })
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+
+      // Finding A-5: dual-write — mirror conditional blob write to initiative rows (runFitImpactAnalysis)
+      if (selectedInitiativesJson) {
+        const ids: string[] = JSON.parse(selectedInitiativesJson);
+        await upsertInitiativeRows(db as any, ctx.user.tenantId, ids, "draft");
+      }
 
       return { success: true, count: autoSelected.length };
     }),

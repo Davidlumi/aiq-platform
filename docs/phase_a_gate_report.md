@@ -181,3 +181,39 @@ All four gate criteria from spec §5 are met:
 | Reversibility: backup columns present | PASS |
 
 **Phase A gate: PASSED. Ready for sign-off.**
+
+---
+
+## Finding A-5 — Dual-Write Implementation (Option C, Authorised)
+
+**Status:** RESOLVED — dual-write wired across all 6 live writers.
+
+**Date:** 2026-06-09
+
+**Background:** Evidence check 3 revealed that `ail_org_context.selectedInitiativesJson` has 6 active write paths across 3 server files. After migration, the `initiative` table rows and the blob could diverge silently. Option C (temporary dual-write) was authorised to prevent this.
+
+**Implementation:**
+
+A helper module `server/lib/initiativeDualWrite.ts` was created. It exports `upsertInitiativeRows(db, tenantId, ids, status)` which:
+1. Accepts an array of IDs (slugs, `init-XX` format, or UUIDs)
+2. Resolves slugs via the static library JSON (`scripts/initiative_library.json`)
+3. Upserts matching rows in the `initiative` table (insert if not exists, update `status` if exists)
+4. Creates new `ai_drafted` rows for any IDs not found in the static library
+
+**Writers wired (all 6):**
+
+| # | File | Procedure | Write type | Status |
+|---|---|---|---|---|
+| 1 | `gate.ts:643` | `completeStage4` | Conditional | Wired |
+| 2 | `gate.ts:729` | `completeStage5` | Unconditional | Wired |
+| 3 | `backgroundInputs.ts:972` | `generateDrafts` | Conditional | Wired |
+| 4 | `intelligence.ts:615` | `saveStrategy` | Unconditional | Wired |
+| 5 | `intelligence.ts:834` | `saveStrategyAssessment` | Unconditional | Wired |
+| 6 | `intelligence.ts:1858` | `runFitImpactAnalysis` | Conditional | Wired |
+
+**Phase B action required:** When Phase B migrates all 16 readers from the blob to the `initiative` table, the 6 dual-write calls and the `selectedInitiativesJson` blob write can be removed. The `// Finding A-5: temporary dual-write` comments mark every site.
+
+**Evidence:**
+- TypeScript: 0 errors after wiring
+- Server: clean restart, no runtime errors
+- DB: 14 initiative rows confirmed present (2 Lumi HR, 12 Acme)
