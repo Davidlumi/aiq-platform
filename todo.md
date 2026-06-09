@@ -5144,4 +5144,11 @@ test
 - [x] Register `assumptions` router in `server/routers.ts`
 - [x] Vitest: `server/assumptions.test.ts` covering Layer 1 output shape, Layer 2 lookup, no-coverage flag, confirm mutation
 - [x] TypeScript: 0 errors after build
-- [ ] Gate run: paste not-seeded grep, per-case output (C1/C2/H1/H2/H3), PASS-L1 count as own line
+- [x] Gate run: paste not-seeded grep, per-case output (C1/C2/H1/H2/H3), PASS-L1 count as own line
+- [x] Differentiation test: H3 and H1, blind scoring, library burden sizing
+- [x] Phase C closure record: engine sign-off, corrected library framing, permanent review property locked
+- [x] Three-part architecture locked: LLM baseline + curated library (characterised gap) + mandatory permanent review
+- [ ] Library content — H1 entry (score-use-protocol as deployment gate): awaiting founder curation
+- [ ] Library content — H2 entry (EU AI Act Annex III deployer obligations): awaiting founder curation
+- [ ] Library content — H3 entry (Art. 15 SAR on succession rankings): awaiting founder curation
+- [ ] Library launch scope decision: which 8–12 initiatives get full curation (founder scope decision)
