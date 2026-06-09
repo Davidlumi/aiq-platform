@@ -3032,3 +3032,83 @@ export const marketingLeads = mysqlTable("marketing_leads", {
   metadata:  json("metadata"),
   createdAt: int("created_at").notNull(),
 });
+
+// --- Phase A Rebuild: initiative, assumption, initiative_risk ----------------
+// Spec: AiQ_PhaseA_Schema_Spec_v2_LOCKED.md, locked 9 June 2026
+
+// §1 — initiative: one row per AI initiative in a tenant's strategy.
+// Replaces the string-ID array in ail_org_context.selected_initiatives_json.
+export const initiative = mysqlTable("initiative", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  // Linkage to the existing content library (kept). Null when user-authored from scratch.
+  libraryInitiativeId: varchar("library_initiative_id", { length: 36 }),   // FK → strategy_initiative_library.id (only when it resolves)
+  sourceSlug: varchar("source_slug", { length: 100 }),                     // DEVIATION #1 (approved): static-library slug from shared/initiativeLibrary.ts
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description"),
+  // Where it came from — author provenance at the initiative level.
+  basis: mysqlEnum("basis", ["user_authored", "library_selected", "ai_drafted"]).notNull().default("library_selected"),
+  aiDrafted: boolean("ai_drafted").notNull().default(false),              // mirrors existing ai_drafted convention
+  ownedAt: timestamp("owned_at"),                                         // set when the user actively confirms/edits — the "authoring moment"
+  // Priority / sequencing (lightweight; roadmap detail stays in roadmap structure).
+  priorityRank: int("priority_rank"),
+  domain: varchar("domain", { length: 60 }),                             // for the precondition library lookup (Phase C); free-string in A, enum in C
+  // Lifecycle on the living position.
+  status: mysqlEnum("status", ["draft", "committed", "superseded", "dropped"]).notNull().default("draft"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_initiative_tenant").on(t.tenantId),
+  libIdx: index("idx_initiative_library").on(t.libraryInitiativeId),
+}));
+export type Initiative = typeof initiative.$inferSelect;
+export type InitiativeInsert = typeof initiative.$inferInsert;
+
+// §2 — assumption: one row per assumption. An initiative is a bundle of these.
+export const assumption = mysqlTable("assumption", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  initiativeId: varchar("initiative_id", { length: 36 }).notNull(),       // FK → initiative.id
+  type: mysqlEnum("type", ["cost", "capability", "market", "pressure", "precondition"]).notNull(),
+  statement: text("statement").notNull(),                                  // the assumption in plain English
+  // Provenance — generalises the _sector_default_used pattern.
+  basis: mysqlEnum("basis", [
+    "self_declared", "assessed", "benchmark_default", "calculated", "ai_drafted", "user_confirmed",
+  ]).notNull(),
+  sourceRef: varchar("source_ref", { length: 300 }),                      // citation / source for the value or claim
+  asOfDate: timestamp("as_of_date"),                                       // as-of date for the basis (integrity standard)
+  // Strength — how much weight this assumption can bear. Enum, not a free score, to keep it defensible.
+  strength: mysqlEnum("strength", ["strong", "moderate", "weak", "unverified"]).notNull().default("unverified"),
+  confidence: mysqlEnum("confidence", ["high", "medium", "low"]).notNull().default("medium"), // engine's confidence — drives "least confident surfaced for confirmation"
+  ownedAt: timestamp("owned_at"),                                          // set when user confirms/edits this assumption
+  aiDrafted: boolean("ai_drafted").notNull().default(true),                // assumptions are engine-drafted by default; user confirms
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_assumption_tenant").on(t.tenantId),
+  initiativeIdx: index("idx_assumption_initiative").on(t.initiativeId),
+  typeIdx: index("idx_assumption_type").on(t.type),
+}));
+export type Assumption = typeof assumption.$inferSelect;
+export type AssumptionInsert = typeof assumption.$inferInsert;
+
+// §3 — initiative_risk: risks as rows (migrated from risk_register_json).
+// Preserves existing aiSuggested flag and status values from both lineages.
+export const initiativeRisk = mysqlTable("initiative_risk", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  initiativeId: varchar("initiative_id", { length: 36 }),                  // FK → initiative.id (nullable: strategy-level risks)
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description"),
+  likelihood: mysqlEnum("likelihood", ["low", "medium", "high"]),
+  impact: mysqlEnum("impact", ["low", "medium", "high"]),
+  mitigation: text("mitigation"),
+  status: mysqlEnum("status", ["accepted", "edited", "dismissed", "open", "mitigated"]).notNull().default("open"),
+  aiSuggested: boolean("ai_suggested").notNull().default(false),           // preserves existing aiSuggested flag
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  tenantIdx: index("idx_initiative_risk_tenant").on(t.tenantId),
+  initiativeIdx: index("idx_initiative_risk_initiative").on(t.initiativeId),
+}));
+export type InitiativeRisk = typeof initiativeRisk.$inferSelect;
+export type InitiativeRiskInsert = typeof initiativeRisk.$inferInsert;

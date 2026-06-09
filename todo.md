@@ -5093,6 +5093,24 @@ test
 - [x] Fix: all risk save calls now use JSON.stringify({risks:updated}) format to match server's {risks:[]} read format
 - [x] Fix: added missing riskGateOk error messages to canConfirm error list (pending AI risks message + no-mitigation message)
 
+<<<<<<< Updated upstream
 ### Phase E — Completion page and export
 - [x] T14 — Strategy Summary page (/strategy/summary): StrategySummaryPage.tsx built, routed in App.tsx, BoardReportPage nextRoute set to /strategy/summary with label "Finish & view strategy summary"
 - [ ] T15 — Export fix: pdf.ts reads successMeasuresJson with fallback to outcomesJson (code fix done); user must regenerate all 6 board report sections from Stage 11 to get fresh content sourced from roadmap/risk register data
+=======
+## Phase A — Schema Rebuild (initiative, assumption, initiative_risk)
+
+- [x] A1: Add `initiative` table to drizzle/schema.ts (exact spec §1)
+- [x] A2: Add `assumption` table to drizzle/schema.ts (exact spec §3)
+- [x] A3: Add `initiative_risk` table to drizzle/schema.ts (exact spec §3)
+- [x] A4: Generate Drizzle migration SQL and apply via webdev_execute_sql
+- [x] A5: Data migration — selected_initiatives_json → initiative rows (with ID map)
+- [x] A6: Data migration — risk_register_json → initiative_risk rows (using ID map)
+- [x] A7: Remap roadmap_json assignments/dependencies to new initiative.id values (P1 fix)
+- [x] A8: Gate — conformance check (schema diff vs spec)
+- [x] A9: Gate — migration integrity (before/after counts, blobs preserved)
+- [x] A10: Gate — reference integrity query (roadmap resolves to live initiative.id)
+- [x] A11: Gate — attachment proof (all 5 risks migrated; unattached per source data — see Finding A-3)
+- [x] A12: Gate — downstream-FK proof (selectedInitiativesJson still present; downstream reads unbroken)
+- [x] A13: Produce findings list, save checkpoint, stop for sign-off
+>>>>>>> Stashed changes
