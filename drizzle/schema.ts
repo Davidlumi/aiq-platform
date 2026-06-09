@@ -3086,6 +3086,8 @@ export const assumption = mysqlTable("assumption", {
   confidence: mysqlEnum("confidence", ["high", "medium", "low"]).notNull().default("medium"), // engine's confidence — drives "least confident surfaced for confirmation"
   ownedAt: timestamp("owned_at"),                                          // set when user confirms/edits this assumption
   aiDrafted: boolean("ai_drafted").notNull().default(true),                // assumptions are engine-drafted by default; user confirms
+  // Phase C: stores the whyItKills text from the precondition library entry
+  rationale: text("rationale"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({

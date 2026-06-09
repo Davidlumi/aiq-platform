@@ -5136,3 +5136,12 @@ test
 - [x] B4: Self-declare capability path — basis field (assessed | self_declared) added to SectionGSchema; capabilityBasis state in StrategyDiagnosticPage; self-declare toggle UI in Section G header; basis badge in AIStrategyPage capability section
 - [x] Phase B tests (server/phase-b.test.ts) — 24/24 passing (B1: 4, B2a: 4, B2b: 3, B2c: 4, B3: 5, B4: 4)
 - [x] Checkpoint saved: 460e0d74 (pre-tests) + final checkpoint after tests pass
+
+## Phase C — Precondition Library & Decomposition Engine
+- [x] Schema: add `rationale` text column to `assumption` table; generate migration SQL; apply via webdev_execute_sql
+- [x] `shared/preconditionLibrary.ts`: typed `PreconditionEntry` type, 10 seeded entries (C1/C2 killers only — H1/H2/H3 held out), `getPreconditionsForInitiative()` and `getPreconditionsForDomain()` helpers
+- [x] `server/routers/assumptions.ts`: new tRPC router with `decomposeInitiative`, `confirmAssumption`, `getAssumptions` procedures; Layer 1 (LLM derivation) + Layer 2 (library lookup); `PRECONDITION_COVERAGE_GAP` flag when library returns empty for preconditions
+- [x] Register `assumptions` router in `server/routers.ts`
+- [x] Vitest: `server/assumptions.test.ts` covering Layer 1 output shape, Layer 2 lookup, no-coverage flag, confirm mutation
+- [x] TypeScript: 0 errors after build
+- [ ] Gate run: paste not-seeded grep, per-case output (C1/C2/H1/H2/H3), PASS-L1 count as own line
