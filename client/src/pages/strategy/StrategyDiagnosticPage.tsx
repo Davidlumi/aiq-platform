@@ -370,6 +370,8 @@ export default function StrategyDiagnosticPage() {
   const [inputs, setInputs] = useState<Record<string, unknown>>({});
   const [capDomains, setCapDomains] = useState<Record<string, DomainRating>>({});
   const [capDerived, setCapDerived] = useState<{ overallScore?: number; maturityLabel?: string }>({});
+  /** B4: tracks whether capability scores are self-declared by the user */
+  const [capabilityBasis, setCapabilityBasis] = useState<"benchmark_default" | "self_declared" | "user_provided">("benchmark_default");
   const [sectionI, setSectionI] = useState<Record<string, unknown>>({});
   const [sectionJ, setSectionJ] = useState<Record<string, unknown>>({});
   const [sectionK, setSectionK] = useState<Record<string, unknown>>({});
@@ -589,6 +591,10 @@ export default function StrategyDiagnosticPage() {
       if ((capData as any).overallScore !== undefined) {
         setCapDerived({ overallScore: (capData as any).overallScore, maturityLabel: (capData as any).maturityLabel });
       }
+      // B4: restore capability basis
+      if ((capData as any).basis) {
+        setCapabilityBasis((capData as any).basis as "benchmark_default" | "self_declared" | "user_provided");
+      }
       setSectionI((inputsQ.data.sectionI as Record<string, unknown>) ?? {});
       setSectionJ((inputsQ.data.sectionJ as Record<string, unknown>) ?? {});
       setSectionK((inputsQ.data.sectionK as Record<string, unknown>) ?? {});
@@ -640,37 +646,37 @@ export default function StrategyDiagnosticPage() {
     setInputs(prev => {
       const key = `section${sectionId}`;
       const updated = { ...prev, [key]: { ...(prev[key] as Record<string, unknown> ?? {}), [field]: value } };
-      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ, sectionK });
+      scheduleInputSave({ sections: updated, capabilityAssessment: { ...capDomains, ...capDerived, basis: capabilityBasis }, sectionI, sectionJ, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, capDomains, capDerived, sectionI, sectionJ, sectionK]);  // eslint-disable-line
+  }, [scheduleInputSave, capDomains, capDerived, capabilityBasis, sectionI, sectionJ, sectionK]);  // eslint-disable-line
 
   const updateSectionI = useCallback((field: string, value: unknown) => {
     setHasUnsavedChanges(true);
     setSectionI(prev => {
       const updated = { ...prev, [field]: value };
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI: updated, sectionJ, sectionK });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived, basis: capabilityBasis }, sectionI: updated, sectionJ, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionJ, sectionK]);
+  }, [scheduleInputSave, inputs, capDomains, capDerived, capabilityBasis, sectionJ, sectionK]);
 
   const updateSectionJ = useCallback((field: string, value: unknown) => {
     setHasUnsavedChanges(true);
     setSectionJ(prev => {
       const updated = { ...prev, [field]: value };
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ: updated, sectionK });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived, basis: capabilityBasis }, sectionI, sectionJ: updated, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionI, sectionK]);
+  }, [scheduleInputSave, inputs, capDomains, capDerived, capabilityBasis, sectionI, sectionK]);
 
   const updateSectionK = useCallback((field: string, value: unknown) => {
     setHasUnsavedChanges(true);
     setSectionK(prev => {
       const updated = { ...prev, [field]: value };
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived }, sectionI, sectionJ, sectionK: updated });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived, basis: capabilityBasis }, sectionI, sectionJ, sectionK: updated });
       return updated;
     });
-  }, [scheduleInputSave, inputs, capDomains, capDerived, sectionI, sectionJ]);
+  }, [scheduleInputSave, inputs, capDomains, capDerived, capabilityBasis, sectionI, sectionJ]);
 
   const updateCapability = useCallback((domainKey: string, field: "score" | "rationaleNotes", value: unknown) => {
     setCapDomains(prev => {
@@ -683,17 +689,17 @@ export default function StrategyDiagnosticPage() {
       const overall = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
       const derived = { overallScore: Math.round(overall * 10) / 10, maturityLabel: getMaturityLabel(overall) };
       setCapDerived(derived);
-      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived }, sectionI, sectionJ, sectionK });
+      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...updated, ...derived, basis: capabilityBasis }, sectionI, sectionJ, sectionK });
       return updated;
     });
-  }, [scheduleInputSave, inputs, sectionI, sectionJ]);
+  }, [scheduleInputSave, inputs, capabilityBasis, sectionI, sectionJ]);
 
   // Explicit Save as Draft handler
   const handleSaveDraft = useCallback(() => {
     setDraftSaveState("saving");
     saveDraftMut.mutate({
       sections: inputs as any,
-      capabilityAssessment: { ...capDomains, ...capDerived } as any,
+      capabilityAssessment: { ...capDomains, ...capDerived, basis: capabilityBasis } as any,
       sectionI: sectionI as any,
       sectionJ: sectionJ as any,
       sectionK: sectionK as any,
@@ -2190,6 +2196,40 @@ export default function StrategyDiagnosticPage() {
           {/* ── Section G ─────────────────────────────────────────────────── */}
           {activeSection === "G" && (
             <div className="space-y-5">
+              {/* B4: Self-declare capability path toggle */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Self-declare capability scores</p>
+                    <p className="text-xs text-muted-foreground">Toggle on if your team has direct knowledge of your HR AI capability level</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {capabilityBasis === "self_declared" && (
+                    <Badge variant="outline" className="text-xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/8">
+                      Self-declared
+                    </Badge>
+                  )}
+                  <button
+                    role="switch"
+                    aria-checked={capabilityBasis === "self_declared"}
+                    onClick={() => {
+                      const next = capabilityBasis === "self_declared" ? "benchmark_default" : "self_declared";
+                      setCapabilityBasis(next);
+                      // Persist immediately
+                      scheduleInputSave({ sections: inputs, capabilityAssessment: { ...capDomains, ...capDerived, basis: next }, sectionI, sectionJ, sectionK });
+                    }}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      capabilityBasis === "self_declared" ? "bg-emerald-500" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                      capabilityBasis === "self_declared" ? "translate-x-4" : "translate-x-0.5"
+                    }`} />
+                  </button>
+                </div>
+              </div>
               <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-xs text-blue-700 dark:text-blue-300">
                 <p className="font-medium mb-1">How to use these ratings</p>
                 <p>This is a self-assessment of your HR function's AI capability — not the platform's adaptive assessment. Score each domain 0–10 using the calibration questions as a guide. Capture your rationale so the strategy draft reflects your honest starting point.</p>

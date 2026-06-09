@@ -46,6 +46,7 @@ import {
   Sparkles,
   Lock,
   Unlock,
+  CheckCircle,
   CheckCircle2,
   Loader2,
   FileDown,
@@ -67,6 +68,8 @@ interface SectionData {
   isAiGenerated?: boolean;
   wordCount?: number;
   lockedAt?: number | null;
+  /** B2b: set when user explicitly accepts the AI draft */
+  confirmedAt?: number | null;
 }
 
 interface SectionsMeta {
@@ -135,6 +138,8 @@ interface SectionEditorProps {
   onGenerate: (sectionId: SectionId) => void;
   onEdit: (sectionId: SectionId, content: string) => void;
   onToggleLock: (sectionId: SectionId, locked: boolean) => void;
+  /** B2b: called when user clicks Accept on an AI-generated section */
+  onAccept: (sectionId: SectionId) => void;
 }
 
 function SectionEditor({
@@ -145,6 +150,7 @@ function SectionEditor({
   onGenerate,
   onEdit,
   onToggleLock,
+  onAccept,
 }: SectionEditorProps) {
   const isLocked = !!data?.lockedAt;
   const status = getSectionStatus(data);
@@ -158,9 +164,14 @@ function SectionEditor({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-semibold text-foreground">{def.title}</h3>
-            {status === "ai_generated" && (
+            {status === "ai_generated" && !data?.confirmedAt && (
               <Badge variant="outline" className="text-xs border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/8">
-                AI-generated — please review
+                AI draft — review &amp; accept
+              </Badge>
+            )}
+            {status === "ai_generated" && !!data?.confirmedAt && (
+              <Badge variant="outline" className="text-xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/8">
+                AI draft accepted
               </Badge>
             )}
             {status === "edited" && (
@@ -178,6 +189,17 @@ function SectionEditor({
           <p className="text-xs text-muted-foreground/60 mt-0.5">Target: {def.targetWords}</p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          {status === "ai_generated" && !data?.confirmedAt && !isLocked && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onAccept(def.id)}
+              className="h-7 px-2 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+              title="Accept this AI draft — removes the review badge"
+            >
+              <CheckCircle className="w-3 h-3 mr-1" />Accept
+            </Button>
+          )}
           {!isLocked && (
             <Button
               variant="ghost"
@@ -357,6 +379,20 @@ export default function BoardReportPage() {
     }));
     toggleLockMutation.mutate({ sectionId, locked });
   }, [toggleLockMutation]);
+
+  // B2b: Accept AI draft — clears isAiGenerated, sets confirmedAt
+  const acceptSectionMutation = trpc.intelligence.acceptBoardReportSection.useMutation({
+    onSuccess: () => { reportQ.refetch(); },
+    onError: () => toast.error("Failed to accept section. Please try again."),
+  });
+  const handleAccept = useCallback((sectionId: SectionId) => {
+    // Optimistic update
+    setSections(prev => ({
+      ...prev,
+      [sectionId]: { ...(prev[sectionId] ?? {} as SectionData), confirmedAt: Date.now() },
+    }));
+    acceptSectionMutation.mutate({ sectionId });
+  }, [acceptSectionMutation]);
 
   // Streaming generation
   const streamSection = useCallback(async (sectionId: SectionId) => {
@@ -737,6 +773,7 @@ export default function BoardReportPage() {
             onGenerate={streamSection}
             onEdit={handleEdit}
             onToggleLock={handleToggleLock}
+            onAccept={handleAccept}
           />
         ))}
 

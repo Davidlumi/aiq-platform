@@ -38,6 +38,9 @@ export interface StructuredInputs {
   };
 }
 
+/** B1: Provenance basis for each input field. */
+export type InputFieldBasis = "benchmark_default" | "self_declared" | "user_provided";
+
 export interface OperationalBaseline {
   headcount?: number;              // total org headcount — used directly in value formulas
   hires_per_year?: number;
@@ -46,7 +49,10 @@ export interface OperationalBaseline {
   voluntary_attrition_rate_pct?: number;
   l_and_d_spend_per_fte_gbp?: number;
   hr_cost_per_fte_gbp?: number;
-  _sector_default_used?: Partial<Record<keyof Omit<OperationalBaseline, "_sector_default_used">, boolean>>;
+  /** Legacy boolean map — kept for backward compat. Use _field_basis for new code. */
+  _sector_default_used?: Partial<Record<keyof Omit<OperationalBaseline, "_sector_default_used" | "_field_basis">, boolean>>;
+  /** B1: Per-field provenance basis. */
+  _field_basis?: Partial<Record<keyof Omit<OperationalBaseline, "_sector_default_used" | "_field_basis">, InputFieldBasis>>;
 }
 
 // ── B1: Stakeholder map ──────────────────────────────────────────────────────
@@ -454,6 +460,15 @@ export function computeSectorDefaultBaseline(sector: string, headcount: number):
       voluntary_attrition_rate_pct: true,
       l_and_d_spend_per_fte_gbp:    true,
       hr_cost_per_fte_gbp:          true,
+    },
+    // B1: Per-field provenance basis
+    _field_basis: {
+      hires_per_year:               "benchmark_default",
+      cost_per_hire_gbp:            "benchmark_default",
+      time_to_fill_days:            "benchmark_default",
+      voluntary_attrition_rate_pct: "benchmark_default",
+      l_and_d_spend_per_fte_gbp:    "benchmark_default",
+      hr_cost_per_fte_gbp:          "benchmark_default",
     },
   };
 }

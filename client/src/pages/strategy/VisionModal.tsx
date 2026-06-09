@@ -223,7 +223,8 @@ function ChipButton({
 interface VisionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaved: (visionText: string) => void;
+  /** B2a: callback receives the vision text and whether it is still the unedited AI draft */
+  onSaved: (visionText: string, isAiGenerated?: boolean) => void;
   initialInputs?: VisionInputs | null;
   initialDraft?: string | null;
   orgDescriptor?: string | null;
@@ -385,7 +386,8 @@ export function VisionModal({
     try {
       await saveInputsMutation.mutateAsync(inputs);
       setSavedInputs(inputs);
-      onSaved(draftText.trim());
+      // B2a: the save path in VisionModal always saves the AI-generated draft
+      onSaved(draftText.trim(), true);
     } catch (err: any) {
       toast.error(err?.message ?? "Save failed. Please try again.");
     } finally {

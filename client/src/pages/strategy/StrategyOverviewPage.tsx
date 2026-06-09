@@ -1916,7 +1916,7 @@ export default function StrategyOverviewPage() {
       <VisionModal
         isOpen={visionModalOpen}
         onClose={() => setVisionModalOpen(false)}
-        onSaved={(visionText) => {
+        onSaved={(visionText, _isAiGenerated) => {
           setVisionModalOpen(false);
           strategyAssessmentQ.refetch();
           (window as any).umami?.track("strategy.overview.vision-modal.saved");

@@ -140,6 +140,15 @@ const SectionGSchema = z.object({
   ai_change_leadership: DomainRatingSchema.optional(),
   overallScore: z.number().min(0).max(10).optional(),
   maturityLabel: z.string().max(50).optional(),
+  /** B4: How the capability scores were determined.
+   *  - "assessed": completed the 6-domain diagnostic (default)
+   *  - "self_declared": CPO entered scores directly without completing the diagnostic
+   */
+  basis: z.enum(["assessed", "self_declared"]).optional(),
+  /** B4: Name of the person who self-declared the scores (for audit trail) */
+  selfDeclaredBy: z.string().max(200).optional(),
+  /** B4: Timestamp when self-declaration was made (Unix ms) */
+  selfDeclaredAt: z.number().optional(),
 });
 
 const SectionHSchema = z.object({
@@ -492,6 +501,10 @@ export const backgroundInputsRouter = router({
     const fitImpactResultsJson = (row as any).fitImpactResultsJson;
     const fitImpactResults = fitImpactResultsJson ? JSON.parse(fitImpactResultsJson) : null;
 
+    // B2c: parse enrichment suggestions (never auto-added to portfolio)
+    const enrichmentSuggestions: Array<{ id?: string; title: string; description: string; rationale?: string; ai_drafted: boolean }> =
+      (row as any).enrichmentSuggestionsJson ? JSON.parse((row as any).enrichmentSuggestionsJson) : [];
+
     return {
       backgroundInputs,
       capabilityAssessment,
@@ -507,6 +520,8 @@ export const backgroundInputsRouter = router({
       isSuperAdmin,
       lastDraftSavedAt: (row as any).lastDraftSavedAt ?? null,
       lastActiveSectionId: (row as any).lastActiveSectionId ?? null,
+      // B2c: enrichment suggestions from LLM — shown as inspiration, never auto-added to portfolio
+      enrichmentSuggestions,
     };
   }),
 
@@ -718,73 +733,63 @@ export const backgroundInputsRouter = router({
     const sectionI = (row as any).sectionIJson ? JSON.parse((row as any).sectionIJson) : {};
     const sectionK = (row as any).sectionKJson ? JSON.parse((row as any).sectionKJson) : {};
 
-    // ── Required field validation (raised threshold per brief §7) ──────────────
+    // ── B3: 3-field mandatory gate (Phase B approved spec) ───────────────────────
+    // Only sector, headcountBand/totalHeadcount, and ambitionTier are hard-required.
+    // All other fields generate field-specific warnings returned to the UI.
     const missing: string[] = [];
-
-    // Section A — Company snapshot
     if (!inputs.sectionA?.sector) missing.push("Industry (Section A)");
     if (!inputs.sectionA?.totalHeadcount && !inputs.sectionA?.headcountBand) missing.push("Organisation size (Section A)");
-    // v4.2 Launch-tier: ukSitesCount required — drives multi-site initiative scoring
-    if (!inputs.sectionA?.ukSitesCount) missing.push("Number of UK sites (Section A)");
-
-    // Section B — HR shape
-    if (inputs.sectionB?.hrTeamSize === undefined || inputs.sectionB?.hrTeamSize === null)
-      missing.push("HR team size (Section B)");
-
-    // Section C — Tech footprint
-    if (!inputs.sectionC?.hrisSystem) missing.push("HRIS system (Section C)");
-    // v4.2 Launch-tier: workforceDigitalAccess required — hard gate for digital-access-dependent initiatives
-    if (!inputs.sectionC?.workforceDigitalAccess) missing.push("Workforce digital access (Section C)");
-    // v4.2 Launch-tier: yearsOfHrisData required — data-dependent initiatives scored on this
-    if (!inputs.sectionC?.yearsOfHrisData) missing.push("Years of HRIS data (Section C)");
-
-    // Section D — Operational baselines
-    if (!inputs.sectionD?.annualHiresLow && inputs.sectionD?.annualHiresLow !== 0)
-      missing.push("Annual hires (Section D)");
-    // v4.2 Launch-tier: annualRevenue required — revenue-band cost cap applied in portfolio curation
-    if (!inputs.sectionD?.annualRevenue) missing.push("Annual revenue (Section D)");
-    // v4.2 Launch-tier: monthlyHrQueryVolume required — drives HR virtual assistant scoring
-    if (!inputs.sectionD?.monthlyHrQueryVolumeLow && inputs.sectionD?.monthlyHrQueryVolumeLow !== 0)
-      missing.push("Monthly HR query volume (Section D)");
-    // v4.2 Launch-tier: annualApplicationVolume required — drives TA bias/governance initiative scoring
-    if (!inputs.sectionD?.annualApplicationVolumeLow && inputs.sectionD?.annualApplicationVolumeLow !== 0)
-      missing.push("Annual application volume (Section D)");
-    // v4.2 Launch-tier: annualLDSpend required — drives L&D initiative scoring
-    if (!inputs.sectionD?.annualLDSpend && inputs.sectionD?.annualLDSpend !== 0)
-      missing.push("Annual L&D spend (Section D)");
-
-    // Section E — Strategic direction
     if (!inputs.sectionE?.ambitionTier) missing.push("Business AI ambition tier (Section E)");
-    if (!inputs.sectionE?.hrPosture) missing.push("HR AI posture (Section E)");
-    if (!inputs.sectionE?.riskAppetite) missing.push("Risk appetite (Section E)");
-
-    // Section G — Capability assessment (at least 3 domains rated)
-    const DOMAINS = ["ai_interaction", "ai_output_evaluation", "ai_workflow_design",
-      "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"];
-    const ratedDomains = DOMAINS.filter(d => capAssessment[d]?.score > 0);
-    if (ratedDomains.length < 3)
-      missing.push("At least 3 capability domain ratings (Section G)");
-
-    // Section I — Business & Workforce Context
-    if (!sectionI.businessDirection) missing.push("Business direction (Section I)");
-    if (!sectionI.peopleChallenges?.length) missing.push("Top people challenges (Section I)");
-    // v4.2 Launch-tier: workforceComposition required — may under-score frontline initiatives if missing
-    if (!sectionI.workforceComposition) missing.push("Workforce composition (Section I)");
-    // v4.2 Launch-tier: skillsFrameworkStatus required — hard gate for skills taxonomy initiatives
-    if (!sectionI.skillsFrameworkStatus) missing.push("Skills framework status (Section I)");
-
-    // Section K — HR Operating Model (stored in sectionKJson, not backgroundInputsJson)
-    // performanceReviewCadence required per v4.2 spec — hard gate for PM initiatives (B-006 revert)
-    if (!sectionK?.performanceReviewCadence) missing.push("Performance review cadence (Section K)");
-    // v4.2 Launch-tier: hiringVolumeProfile required — volume-profile gates applied in TA initiative scoring
-    if (!sectionK?.hiringVolumeProfile?.length) missing.push("Hiring volume profile (Section K)");
-
     if (missing.length > 0) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: `Please complete required fields before finishing: ${missing.join(", ")}`,
       });
     }
+
+    // ── Field-specific warnings (optional — returned to UI, do not block) ───────────
+    const fieldWarnings: Array<{ field: string; section: string; message: string; impact: string }> = [];
+    if (!inputs.sectionA?.ukSitesCount)
+      fieldWarnings.push({ field: "ukSitesCount", section: "A", message: "Number of UK sites not provided", impact: "Multi-site initiative scoring will be reduced" });
+    if (inputs.sectionB?.hrTeamSize === undefined || inputs.sectionB?.hrTeamSize === null)
+      fieldWarnings.push({ field: "hrTeamSize", section: "B", message: "HR team size not provided", impact: "HR capacity scoring will use sector defaults" });
+    if (!inputs.sectionC?.hrisSystem)
+      fieldWarnings.push({ field: "hrisSystem", section: "C", message: "HRIS system not provided", impact: "Chatbot/virtual assistant initiatives will not be scored" });
+    if (!inputs.sectionC?.workforceDigitalAccess)
+      fieldWarnings.push({ field: "workforceDigitalAccess", section: "C", message: "Workforce digital access not provided", impact: "Digital-access-dependent initiatives will not be scored" });
+    if (!inputs.sectionC?.yearsOfHrisData)
+      fieldWarnings.push({ field: "yearsOfHrisData", section: "C", message: "Years of HRIS data not provided", impact: "Attrition prediction initiatives will not be scored" });
+    if (!inputs.sectionD?.annualHiresLow && inputs.sectionD?.annualHiresLow !== 0)
+      fieldWarnings.push({ field: "annualHiresLow", section: "D", message: "Annual hires not provided", impact: "TA initiative scoring will use sector defaults" });
+    if (!inputs.sectionD?.annualRevenue)
+      fieldWarnings.push({ field: "annualRevenue", section: "D", message: "Annual revenue not provided", impact: "Revenue-band cost cap will not be applied" });
+    if (!inputs.sectionD?.monthlyHrQueryVolumeLow && inputs.sectionD?.monthlyHrQueryVolumeLow !== 0)
+      fieldWarnings.push({ field: "monthlyHrQueryVolumeLow", section: "D", message: "Monthly HR query volume not provided", impact: "HR virtual assistant scoring will use sector defaults" });
+    if (!inputs.sectionD?.annualApplicationVolumeLow && inputs.sectionD?.annualApplicationVolumeLow !== 0)
+      fieldWarnings.push({ field: "annualApplicationVolumeLow", section: "D", message: "Annual application volume not provided", impact: "TA bias/governance initiative scoring will use sector defaults" });
+    if (!inputs.sectionD?.annualLDSpend && inputs.sectionD?.annualLDSpend !== 0)
+      fieldWarnings.push({ field: "annualLDSpend", section: "D", message: "Annual L&D spend not provided", impact: "L&D initiative scoring will use sector defaults" });
+    if (!inputs.sectionE?.hrPosture)
+      fieldWarnings.push({ field: "hrPosture", section: "E", message: "HR AI posture not provided", impact: "Posture-aligned initiative filtering will not apply" });
+    if (!inputs.sectionE?.riskAppetite)
+      fieldWarnings.push({ field: "riskAppetite", section: "E", message: "Risk appetite not provided", impact: "Risk-appetite filtering will not apply" });
+    const DOMAINS = ["ai_interaction", "ai_output_evaluation", "ai_workflow_design",
+      "workforce_ai_readiness", "ai_ethics_trust", "ai_change_leadership"];
+    const ratedDomains = DOMAINS.filter(d => capAssessment[d]?.score > 0);
+    if (ratedDomains.length < 3)
+      fieldWarnings.push({ field: "capabilityDomains", section: "G", message: "Fewer than 3 capability domains rated", impact: "Capability-fit scoring will be less precise" });
+    if (!sectionI.businessDirection)
+      fieldWarnings.push({ field: "businessDirection", section: "I", message: "Business direction not provided", impact: "Vision generation will use sector defaults" });
+    if (!sectionI.peopleChallenges?.length)
+      fieldWarnings.push({ field: "peopleChallenges", section: "I", message: "Top people challenges not provided", impact: "Challenge-aligned initiative scoring will not apply" });
+    if (!sectionI.workforceComposition)
+      fieldWarnings.push({ field: "workforceComposition", section: "I", message: "Workforce composition not provided", impact: "Frontline initiative scoring may be under-weighted" });
+    if (!sectionI.skillsFrameworkStatus)
+      fieldWarnings.push({ field: "skillsFrameworkStatus", section: "I", message: "Skills framework status not provided", impact: "Skills taxonomy initiatives will not be gated" });
+    if (!sectionK?.performanceReviewCadence)
+      fieldWarnings.push({ field: "performanceReviewCadence", section: "K", message: "Performance review cadence not provided", impact: "PM initiatives will not be scored" });
+    if (!sectionK?.hiringVolumeProfile?.length)
+      fieldWarnings.push({ field: "hiringVolumeProfile", section: "K", message: "Hiring volume profile not provided", impact: "TA volume-profile gating will not apply" });
 
     // Mark pre-work complete and set state to "generating"
     await db.update(ailOrgContext)
@@ -964,6 +969,14 @@ export const backgroundInputsRouter = router({
           patch.approachLine = al.approachLine ?? null;
         }
         if (drafts.talkingPoints) patch.talkingPointsJson = JSON.stringify(drafts.talkingPoints);
+        // B2c: save enrichment initiative suggestions — never auto-add to portfolio
+        if (drafts.initiatives) {
+          const suggestions = (Array.isArray(drafts.initiatives) ? drafts.initiatives : []).map((s: any) => ({
+            ...s,
+            ai_drafted: true,
+          }));
+          (patch as any).enrichmentSuggestionsJson = JSON.stringify(suggestions);
+        }
 
         await db2.update(ailOrgContext)
           .set(patch as any)
@@ -986,8 +999,51 @@ export const backgroundInputsRouter = router({
       }
     });
 
-    return { ok: true, generating: true };
+    return { ok: true, generating: true, fieldWarnings };
   }),
+
+  /**
+   * B2c: Add a single enrichment suggestion to the initiative portfolio.
+   * The suggestion is appended to selectedInitiativesJson as a custom initiative.
+   * This is the ONLY way enrichment suggestions reach the portfolio — never auto-written.
+   */
+  addEnrichmentSuggestionToPortfolio: protectedProcedure
+    .input(z.object({
+      title: z.string().min(1).max(200),
+      description: z.string().max(2000),
+      rationale: z.string().max(1000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, row } = await getOrCreateOrgContext(ctx.user.tenantId);
+      const existing: string[] = row.selectedInitiativesJson ? JSON.parse(row.selectedInitiativesJson) : [];
+      // Generate a stable ID for the custom initiative
+      const customId = `custom_enrichment_${Date.now()}`;
+      // Custom initiatives are stored as IDs in selectedInitiativesJson;
+      // the full data is stored in a separate customInitiativesJson field if it exists,
+      // or appended to the selected list as a serialised object reference.
+      // For now: add the custom initiative to the selectedInitiativesJson as a prefixed ID
+      // so the portfolio engine can distinguish it from library IDs.
+      if (!existing.includes(customId)) {
+        existing.push(customId);
+      }
+      // Also store the full custom initiative data for display
+      const customInitiatives: Array<{ id: string; title: string; description: string; rationale?: string; source: "enrichment_suggestion" }> =
+        (row as any).customInitiativesJson ? JSON.parse((row as any).customInitiativesJson) : [];
+      customInitiatives.push({
+        id: customId,
+        title: input.title,
+        description: input.description,
+        rationale: input.rationale,
+        source: "enrichment_suggestion",
+      });
+      await db.update(ailOrgContext)
+        .set({
+          selectedInitiativesJson: JSON.stringify(existing),
+          customInitiativesJson: JSON.stringify(customInitiatives),
+        } as any)
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { ok: true, customId };
+    }),
 
   /**
    * Mark session as complete. Only platform_super_admin can call this.

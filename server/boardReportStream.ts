@@ -261,6 +261,8 @@ export function registerBoardReportStreamRoute(app: Express): void {
       editedAt?: number | null;
       isAiGenerated?: boolean;
       wordCount?: number;
+      /** B2b: set when user explicitly accepts the AI draft via acceptBoardReportSection */
+      confirmedAt?: number | null;
     }> = {};
     try {
       sectionsMap = ctx.boardReportSectionsJson
@@ -439,6 +441,8 @@ export function registerBoardReportStreamRoute(app: Express): void {
         lockedAt: existingSection?.lockedAt ?? null,
         isAiGenerated: true,
         wordCount,
+        // B2b: null until user explicitly accepts via acceptBoardReportSection
+        confirmedAt: null,
       };
 
       await db

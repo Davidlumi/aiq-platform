@@ -916,6 +916,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   successMeasuresJson: text("success_measures_json"),                                // JSON: [{number, title, unit, baseline_value, baseline_status, baseline_study_date, target_value, target_date, derived_summary, tests_principle, ai_drafted}] — canonical field (renamed from outcomesJson in T4)
   approachLine: text("approach_line"),                                              // AI-generated posture statement (editable)
   visionAiFirstDraft: text("vision_ai_first_draft"),                                // Original AI draft of vision (preserved for comparison)
+  visionAiDrafted: boolean("vision_ai_drafted").default(false),                      // true while vision is still the unedited AI draft
   visionLastEditedBy: varchar("vision_last_edited_by", { length: 36 }),             // user_id of last editor
   visionLastEditedAt: timestamp("vision_last_edited_at"),                           // when vision was last manually edited
   lastReviewedAt: timestamp("last_reviewed_at"),                                    // when ambition page was last reviewed
@@ -950,6 +951,7 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   visionInspirationSource: varchar("vision_inspiration_source", { length: 100 }), // "own" | "peer_starter_${id}"
   strategyArchetype: varchar("strategy_archetype", { length: 50 }),               // "augmentation" | "transformation" | "differentiation" | "efficiency" | "defensive"
   strategyStatement: text("strategy_statement"),                                   // CPO strategy statement (40-80 words)
+  strategyStatementAiDrafted: boolean("strategy_statement_ai_drafted").default(false), // true while strategy statement is still the unedited AI draft
   strategyConfirmedAt: timestamp("strategy_confirmed_at"),                         // When CPO confirmed Stage 3 strategy
   stage4ConfirmedAt: timestamp("stage4_confirmed_at"),                             // When CPO confirmed Stage 4 principles + won't-do
   // v3 Strategy Flow — Increment 2 (Stages 5-8)
@@ -962,6 +964,8 @@ export const ailOrgContext = mysqlTable("ail_org_context", {
   stage7ConfirmedAt: timestamp("stage7_confirmed_at"),                             // When CPO confirmed Stage 7 business case
   stage8ConfirmedAt: timestamp("stage8_confirmed_at"),                             // When CPO confirmed Stage 8 capability
   businessCaseNarrative: text("business_case_narrative"),                          // AI-generated + CPO-edited business case narrative (400-600 words)
+  businessCaseAiDrafted: boolean("business_case_ai_drafted").default(false),          // true while business case narrative is still the unedited AI draft
+  enrichmentSuggestionsJson: text("enrichment_suggestions_json"),                    // JSON: [{id, title, description, rationale, ai_drafted:true}] — enrichment LLM suggestions (never auto-added to portfolio)
   stage8CapabilityJson: text("stage8_capability_json"),                            // JSON: { skills, capacity, changeReadiness, vendorEcosystem } each { current, needed, tactics[] }, deliveryNarrative
   // v3 Strategy Flow — Increment 3 (Stages 9-10)
   reviewHeldAt: timestamp("review_held_at"),                                         // When CPO marked review as held (Stage 9 gate)

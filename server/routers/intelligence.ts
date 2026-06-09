@@ -682,7 +682,7 @@ Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood"
    * Save the business case narrative (auto-save from Stage 7).
    */
   saveBusinessCaseNarrative: protectedProcedure
-    .input(z.object({ narrative: z.string().max(10000) }))
+    .input(z.object({ narrative: z.string().max(10000), isAiGenerated: z.boolean().optional() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
@@ -690,7 +690,12 @@ Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood"
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await db.update(ailOrgContext)
-        .set({ businessCaseNarrative: input.narrative, updatedAt: new Date() })
+        .set({
+          businessCaseNarrative: input.narrative,
+          // B2a: track whether the saved narrative is still the unedited AI draft
+          businessCaseAiDrafted: input.isAiGenerated === true,
+          updatedAt: new Date(),
+        })
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
       return { ok: true };
     }),
@@ -843,7 +848,7 @@ Return JSON with this exact structure:
    */
   patchStrategyField: protectedProcedure
     .input(z.discriminatedUnion("field", [
-      z.object({ field: z.literal("visionStatement"), value: z.string().max(2000) }),
+      z.object({ field: z.literal("visionStatement"), value: z.string().max(2000), isAiGenerated: z.boolean().optional() }),
       z.object({ field: z.literal("userVisionInput"), value: z.string().max(2000) }),
       z.object({ field: z.literal("wontDo"), value: z.array(z.string()) }),
       z.object({ field: z.literal("commitments"), value: z.array(z.string()) }),
@@ -861,8 +866,15 @@ Return JSON with this exact structure:
         .limit(1);
       if (!existing.length) throw new TRPCError({ code: "NOT_FOUND", message: "No strategy found for this tenant" });
       let patch: Partial<typeof ailOrgContext.$inferInsert> = { updatedAt: new Date() };
-      if (input.field === "visionStatement") patch.visionStatement = input.value;
-      else if (input.field === "userVisionInput") patch.userVisionInput = input.value;
+      if (input.field === "visionStatement") {
+        patch.visionStatement = input.value;
+        // B2a: set visionAiDrafted based on whether the save is from AI generation or user edit
+        patch.visionAiDrafted = input.isAiGenerated === true;
+        if (input.isAiGenerated) {
+          // Preserve the original AI draft for comparison
+          patch.visionAiFirstDraft = input.value;
+        }
+      } else if (input.field === "userVisionInput") patch.userVisionInput = input.value;
       else if (input.field === "wontDo") patch.wontDoJson = JSON.stringify(input.value);
       else if (input.field === "commitments") patch.commitmentsJson = JSON.stringify(input.value);
       else if (input.field === "guidingPrinciples") patch.guidingPrinciplesJson = JSON.stringify(input.value);
@@ -2375,6 +2387,8 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         content,
         generatedAt: Date.now(),
         version: idx >= 0 ? (sections[idx].version ?? 0) + 1 : 1,
+        // B2a: mark as AI draft until user edits the section
+        aiDrafted: true,
       };
       if (idx >= 0) sections[idx] = newSection;
       else sections.push(newSection);
@@ -2416,6 +2430,8 @@ Return format: JSON array of exactly 5 strings, no other text.`;
         generatedAt: existing?.generatedAt ?? Date.now(),
         version: existing?.version ?? 1,
         lockedAt: input.locked ? Date.now() : existing?.lockedAt,
+        // B2a: user saving edits clears the ai_drafted flag (locked = confirmed per Q4 decision)
+        aiDrafted: false,
       };
       if (idx >= 0) sections[idx] = updated;
       else sections.push(updated);
@@ -3077,6 +3093,33 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       sectionsMap[input.sectionId] = {
         ...existing,
         lockedAt: input.locked ? Date.now() : null,
+      };
+      await db.update(ailOrgContext)
+        .set({ boardReportSectionsJson: JSON.stringify(sectionsMap) })
+        .where(eq(ailOrgContext.tenantId, ctx.user.tenantId));
+      return { success: true };
+    }),
+
+  /**
+   * B2b: Accept a board report section — clears isAiGenerated and sets confirmedAt.
+   * Once accepted, the section no longer shows the "AI draft" badge.
+   */
+  acceptBoardReportSection: protectedProcedure
+    .input(z.object({
+      sectionId: z.enum(["context", "strategic_direction", "initiative_portfolio", "investment_case", "capability_readiness", "governance"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { success: false };
+      const [row] = await db.select({ boardReportSectionsJson: ailOrgContext.boardReportSectionsJson })
+        .from(ailOrgContext).where(eq(ailOrgContext.tenantId, ctx.user.tenantId)).limit(1);
+      let sectionsMap: Record<string, unknown> = {};
+      try { sectionsMap = row?.boardReportSectionsJson ? JSON.parse(row.boardReportSectionsJson) : {}; } catch { sectionsMap = {}; }
+      const existing = (sectionsMap[input.sectionId] as Record<string, unknown>) ?? {};
+      sectionsMap[input.sectionId] = {
+        ...existing,
+        isAiGenerated: false,
+        confirmedAt: Date.now(),
       };
       await db.update(ailOrgContext)
         .set({ boardReportSectionsJson: JSON.stringify(sectionsMap) })

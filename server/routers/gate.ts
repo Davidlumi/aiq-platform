@@ -331,6 +331,7 @@ export const gateRouter = router({
     .input(z.object({
       strategyArchetype: z.enum(["augmentation", "transformation", "differentiation", "efficiency", "defensive"]),
       strategyStatement: z.string().min(1),
+      isAiGenerated: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const wordCount = countWords(input.strategyStatement);
@@ -360,6 +361,8 @@ export const gateRouter = router({
         .set({
           strategyArchetype: input.strategyArchetype,
           strategyStatement: input.strategyStatement,
+          // B2a: track whether the strategy statement is still the unedited AI draft
+          strategyStatementAiDrafted: input.isAiGenerated === true,
           strategyConfirmedAt: new Date(),
           stageGateStateJson: JSON.stringify(gateState),
           updatedAt: new Date(),

@@ -1449,9 +1449,10 @@ export default function StrategyAmbitionPage() {
         capabilityScore={null}
         capabilityLabel={null}
         initialInputs={visionInputs}
-        onSaved={async (draft) => {
+        onSaved={async (draft, isAiGenerated) => {
           if (draft) {
-            await patchStrategyM.mutateAsync({ field: "visionStatement", value: draft });
+            // B2a: pass isAiGenerated so server sets visionAiDrafted correctly
+            await patchStrategyM.mutateAsync({ field: "visionStatement", value: draft, isAiGenerated: isAiGenerated ?? false });
           }
           await sectionsQ.refetch();
           await strategyQ.refetch();

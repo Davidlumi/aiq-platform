@@ -44,7 +44,7 @@ import {
   FileText, Quote, ChevronDown, ChevronUp, Pencil, X, PoundSterling,
   AlertCircle, Link2, LayoutGrid, List, Eye, Settings2, Ban,
   Lock, Unlock, Calendar, Share2, UserCheck, Clock, ExternalLink,
-  TrendingDown, Activity,
+  TrendingDown, Activity, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -594,6 +594,8 @@ export default function AIStrategyPage() {
   const ambitionGapQ       = trpc.dashboardV2.leader.ambitionGap.useQuery();
   const companyAssessmentQ = trpc.companyAssessment.getMyAssessmentResults.useQuery();
   const libMetaQ           = trpc.contentLibrary.meta.useQuery();
+  // B2c: enrichment suggestions from background inputs
+  const backgroundInputsQ  = trpc.backgroundInputs.getInputs.useQuery();
 
   const strategyData       = strategyQ.data;
   const strategyAssessment = strategyAssessmentQ.data;
@@ -743,6 +745,15 @@ export default function AIStrategyPage() {
 
   const upsertOrgContextMut = trpc.intelligence.upsertOrgContext.useMutation({
     onSuccess: () => utils.intelligence.orgContext.invalidate(),
+    onError: (e) => toast.error(e.message),
+  });
+  // B2c: add enrichment suggestion to portfolio (user-initiated only)
+  const addEnrichmentSuggestionMut = trpc.backgroundInputs.addEnrichmentSuggestionToPortfolio.useMutation({
+    onSuccess: () => {
+      toast.success("Initiative added to your portfolio.");
+      utils.strategy.listInitiatives.invalidate();
+      backgroundInputsQ.refetch();
+    },
     onError: (e) => toast.error(e.message),
   });
   const saveStrategyMut = trpc.intelligence.saveStrategy.useMutation({
@@ -1960,6 +1971,56 @@ export default function AIStrategyPage() {
           </div>
         )}
       </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          B2c — AI-SUGGESTED INITIATIVES (enrichment suggestions panel)
+      ══════════════════════════════════════════════════════════════════════ */}
+      {(() => {
+        const suggestions = (backgroundInputsQ.data as any)?.enrichmentSuggestions as Array<{
+          title: string; rationale: string; estimatedCost?: string;
+        }> | null | undefined;
+        if (!suggestions?.length) return null;
+        // Filter out suggestions already in the portfolio
+        const portfolioTitles = new Set(allInitiatives.map((i: any) => i.title?.toLowerCase()));
+        const unaddedSuggestions = suggestions.filter(
+          (s) => !portfolioTitles.has(s.title?.toLowerCase())
+        );
+        if (!unaddedSuggestions.length) return null;
+        return (
+          <section id="enrichment-suggestions" className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-violet-500" />
+              <h3 className="text-sm font-semibold text-foreground">AI-Suggested Initiatives</h3>
+              <Badge variant="outline" className="text-xs border-violet-500/40 text-violet-600 dark:text-violet-400 bg-violet-500/8">AI draft</Badge>
+              <span className="text-xs text-muted-foreground ml-1">Based on your background inputs — add any to your portfolio</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {unaddedSuggestions.map((s, i) => (
+                <div key={i} className="rounded-lg border border-violet-500/15 bg-violet-500/4 p-4 flex flex-col gap-2">
+                  <p className="text-sm font-medium text-foreground">{s.title}</p>
+                  <p className="text-xs text-muted-foreground flex-1">{s.rationale}</p>
+                  {s.estimatedCost && (
+                    <p className="text-xs text-muted-foreground/70">Est. cost: {s.estimatedCost}</p>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-1 h-7 text-xs"
+                    disabled={addEnrichmentSuggestionMut.isPending}
+                    onClick={() => addEnrichmentSuggestionMut.mutate({
+                      title: s.title,
+                      description: s.rationale ?? s.title,
+                      rationale: s.rationale,
+                    })}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />Add to portfolio
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECTION 4 — INVESTMENT & RISK (new)
