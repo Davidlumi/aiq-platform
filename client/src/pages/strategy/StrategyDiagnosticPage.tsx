@@ -42,7 +42,7 @@ import {
 import {
   Building2, Users, Cpu, BarChart2, Target, Lightbulb, Star, UserCheck,
   CheckCircle2, ChevronRight, ChevronLeft, StickyNote, X,
-  Plus, Trash2, Info, AlertCircle, Loader2, Check, Circle, Globe, Sliders, Settings,
+  Plus, Trash2, Info, AlertCircle, AlertTriangle, Loader2, Check, Circle, Globe, Sliders, Settings,
   Save, Clock, ArrowRight, Sparkles, Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -377,6 +377,7 @@ export default function StrategyDiagnosticPage() {
   const [sectionK, setSectionK] = useState<Record<string, unknown>>({});
   const [serverFacilitatorNotes, setServerFacilitatorNotes] = useState<Record<string, { content: string; updatedAt?: string }>>({});
   const [completeError, setCompleteError] = useState<string | null>(null);
+  const [fieldWarnings, setFieldWarnings] = useState<Array<{ field: string; section: string; message: string; impact: string }>>([]);
   const [expandedCalibration, setExpandedCalibration] = useState<string | null>(null);
 
   // ── Save as Draft state ──────────────────────────────────────────────────
@@ -433,9 +434,14 @@ export default function StrategyDiagnosticPage() {
   const saveFacilitatorNoteMut = trpc.backgroundInputs.saveFacilitatorNote.useMutation();
 
   const completePreworkMut = trpc.backgroundInputs.completePrework.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.backgroundInputs.getInputs.invalidate();
       setCompleteError(null);
+      if (data.fieldWarnings && data.fieldWarnings.length > 0) {
+        setFieldWarnings(data.fieldWarnings);
+      } else {
+        setFieldWarnings([]);
+      }
     },
     onError: (e) => setCompleteError(e.message),
   });
@@ -3328,6 +3334,53 @@ export default function StrategyDiagnosticPage() {
           })()}
 
           {/* Pre-work complete — prominent success state with navigation CTA */}
+          {/* B3: Post-gate field-specific advisory panel — shown immediately after completePrework succeeds */}
+          {preworkDone && fieldWarnings.length > 0 && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4">
+              <div className="flex items-start gap-2.5 mb-3">
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                    {fieldWarnings.length} optional {fieldWarnings.length === 1 ? "field" : "fields"} not provided — some scoring will use defaults
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                    Your strategy will generate correctly. These fields would improve scoring precision — you can add them at any time.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFieldWarnings([])}
+                  className="shrink-0 text-amber-600/60 hover:text-amber-600 dark:text-amber-400/60 dark:hover:text-amber-400 transition-colors"
+                  aria-label="Dismiss warnings"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                {fieldWarnings.map((w) => (
+                  <div key={w.field} className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-amber-800 dark:text-amber-200">{w.message}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                          Section {w.section}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80 mt-0.5">
+                        Impact: {w.impact}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => jumpToField(w.section as SectionId)}
+                      className="shrink-0 text-[10px] text-amber-600 dark:text-amber-400 hover:underline whitespace-nowrap mt-0.5"
+                    >
+                      Go to field
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {preworkDone && (
             <div className="rounded-xl border border-emerald-200 dark:border-emerald-700 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/20 p-5">
               <div className="flex items-start gap-3">
