@@ -5188,3 +5188,7 @@ test
 - [x] Seed 1 approved + 1 pending signal for screenshot
 - [x] TypeScript: 0 errors
 - [x] Tests: 77/77 still pass
+
+## Nav Alignment Fix (ApprovalSlice_SignedOff_NavAlignment)
+- [x] Gate Signal Approval nav entry on `isPlatformSuperuser` flag (from auth.me) instead of roles array — collapse to one source of truth
+- [x] Verify nav entry is visible for the superuser account (david@lumihr.co.uk) in the rendered sidebar

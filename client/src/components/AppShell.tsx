@@ -69,6 +69,10 @@ type NavItem = {
   path: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   roles?: string[];
+  /** When true, item is visible only to users with isPlatformSuperuser=true.
+   *  This is the narrowest gate — set only via direct SQL, never via any API path.
+   *  Prefer this over roles for any feature that must never be reachable by tenant-side users. */
+  superuserOnly?: boolean;
   section?: string;
 };
 
@@ -183,12 +187,11 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: "Signal Approval",
     path: "/admin/signals",
-    // GATING: platform superuser only — founderApproved is the editorial control of the
-    // living-strategy product. CPO_ROLES includes tenant_admin/hr_leader which can be held
-    // by tenant-side users; a client CPO could otherwise approve signals into the feed.
-    // isPlatformSuperuser is set only via direct SQL, never via any API path.
+    // GATING: superuserOnly — uses isPlatformSuperuser flag from auth.me, not the roles array.
+    // This is the single source of truth for this gate, matching the server procedure and the
+    // page-level redirect. isPlatformSuperuser is set only via direct SQL, never via any API path.
     icon: Radio,
-    roles: ["platform_super_admin"],
+    superuserOnly: true,
     section: "admin",
   },
   {
@@ -490,8 +493,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Reward mode: remap strategy items to reward equivalents
   const REWARD_REMAP_PATHS = new Set(["/strategy/diagnostic", "/strategy/board-report", "/dashboard", "/people"]);
+  const isPlatformSuperuser = !!(user as any)?.isPlatformSuperuser;
+
   const rawVisibleItems = NAV_ITEMS
     .filter((item) => {
+      // superuserOnly items are gated on the isPlatformSuperuser DB flag — single source of truth
+      if (item.superuserOnly) return isPlatformSuperuser;
       if (isRewardMode && REWARD_REMAP_PATHS.has(item.path)) return true;
       return !item.roles || item.roles.some((r) => effectiveRoles.includes(r));
     })
