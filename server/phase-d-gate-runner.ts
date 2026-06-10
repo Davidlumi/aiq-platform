@@ -211,14 +211,27 @@ async function runMatchForSignal(
 
   const systemPrompt = `You are a senior HR strategy analyst performing a signal-to-assumption matching review.
 
-Your task: given an external development (signal) and a list of named assumptions from an organisation's HR AI strategy, identify ONLY the assumptions that are materially threatened or affected by this signal.
+Your task: given an external development (signal) and a list of named assumptions from an organisation's HR AI strategy, identify ONLY the assumptions whose BASIS is directly changed by this signal.
 
-RULES:
+THE DIRECTNESS THRESHOLD — this is the single gate every potential match must pass:
+
+  Fire ONLY when the signal changes the basis of the named assumption — the regulatory obligation, the legal fact, the contractual condition, or the specific input the assumption is actually ABOUT.
+
+  Do NOT fire when you can construct a multi-hop chain: "this signal → could affect X → which could affect Y → which could affect the assumption." Adjacency plus a plausible causal chain is NOT a match. The signal must bear directly on what the assumption is about.
+
+Examples of the threshold applied:
+  PASS: Union-access law strengthened → directly changes the probability landscape of an assumption about union agreement being obtainable. The assumption IS about union agreement.
+  PASS: ICO guidance on automated decision-making → directly changes the regulatory obligation an assumption is about. The assumption IS about that obligation.
+  FAIL: Interest rate hold → "rates → budget pressure → team capacity" chain. The assumption is about team capacity, not about interest rates. The signal does not change what the assumption is about.
+  FAIL: Rail timetable change → "commute disruption → employee resistance" chain. The assumption is about scheduling constraints, not about rail timetables. The signal does not change what the assumption is about.
+  FAIL: LLM failure rate research → "model reliability → data quality assumptions." Model reliability is not data quality. The signal does not change what a data quality assumption is about. (Exception: if the assumption is explicitly about model output reliability, it may pass.)
+
+ADDITIONAL RULES:
 1. JURISDICTION FIRST. The organisation is ${jurisdiction}. Before firing on any regulatory or legal signal, confirm the signal applies to this jurisdiction. If it is EU-only, US-only, or otherwise out of scope, return an empty matches array with a jurisdictionNote explaining why. Do NOT fire a flat threat with no jurisdiction check.
-2. SPECIFICITY. A match must name the specific assumption text and explain the specific mechanism by which this signal threatens it. "GDPR compliance" is not a rationale. "UK GDPR Art. 22 meaningful human review requirement now requires override authority, which threatens the assumption that [specific text]" is a rationale.
-3. FIRED-ONLY. Return only assumptions that are materially affected. If no assumption is threatened, return an empty matches array. Silence is the correct answer for noise-floor signals.
-4. NO TOPICAL OVER-REACH. A signal about union law does not automatically fire against a scheduling initiative unless you can articulate the specific two-step inference: (a) what the law change means, and (b) how it specifically threatens the named assumption text. If you cannot articulate both steps, stay silent.
-5. CONFIDENCE. Assign confidenceLevel: "high" (direct, specific threat), "medium" (reasonably inferred), "low" (plausible but uncertain).
+2. SPECIFICITY. A match must name the specific assumption text and explain the specific mechanism by which this signal changes its basis. "GDPR compliance" is not a rationale. "UK GDPR Art. 22 meaningful human review requirement now requires override authority, which directly changes the basis of the assumption that [specific text]" is a rationale.
+3. FIRED-ONLY. Return only assumptions that pass the directness threshold. If no assumption passes, return an empty matches array. Silence is the correct answer for topically-adjacent but non-direct signals.
+4. CONFIDENCE. Assign confidenceLevel: "high" (signal directly changes the assumption's basis with no inferential steps), "medium" (one clear inferential step, still direct), "low" (two inferential steps — consider whether this passes the threshold at all).
+5. citedSourceUrl: use the signal's source URL if the match is specific to that source. Leave null if not applicable.
 
 Return a JSON object with this exact shape:
 {
