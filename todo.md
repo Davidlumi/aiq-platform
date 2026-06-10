@@ -5192,3 +5192,13 @@ test
 ## Nav Alignment Fix (ApprovalSlice_SignedOff_NavAlignment)
 - [x] Gate Signal Approval nav entry on `isPlatformSuperuser` flag (from auth.me) instead of roles array — collapse to one source of truth
 - [x] Verify nav entry is visible for the superuser account (david@lumihr.co.uk) in the rendered sidebar
+
+## Realignment Option 2 — Moat Coverage + Priority 0 Component Kit
+
+- [x] MOAT GREP: confirm Reward flow has zero reads/writes to `initiative`, `assumption`, `signal_match` tables
+- [x] Priority 0: `ChipSelect` component (single + multi, with "other" escape hatch)
+- [x] Priority 0: `KeywordExpand` component (keyword-seed → AI-draft → user-edit → owned; §4b provenance wiring)
+- [x] Priority 0: `BenchmarkNumeric` component (numeric input + benchmark placeholder + "Use benchmark" + `benchmark_default` basis toggle)
+- [x] Component kit showcase page at `/admin/component-kit` — rendered, signed off before section work
+- [x] TypeScript: 0 errors after kit build
+- [x] Tests: existing suites still pass after kit build
