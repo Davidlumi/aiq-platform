@@ -1227,19 +1227,23 @@ export const backgroundInputsRouter = router({
         businessDirection:
           `Write a clear, first-person paragraph (3–5 sentences, max 250 words) describing where the business is heading in the next 2–3 years. ` +
           `Cover strategic moves, growth plans, transformation programmes, or M&A activity. ` +
-          `Start with "We" or "Our". Be specific and forward-looking. No bullet points.`,
+          `Start with "We" or "Our". Be specific and forward-looking. Use plain, direct language. ` +
+          `Never use hedge words like "may", "might", "could", "perhaps", "potentially". No bullet points.`,
         topBusinessPriority:
           `Write a single, concise business priority statement (1 sentence, max 20 words) for a senior HR leader's context document. ` +
-          `Start with a strong action verb (e.g. "Scale", "Accelerate", "Transform"). Be specific and outcome-focused.`,
+          `Start with a strong action verb (e.g. "Scale", "Accelerate", "Transform"). Be specific and outcome-focused. ` +
+          `Use plain, direct language. Never use hedge words like "may", "might", "could", "perhaps", "potentially".`,
         peopleChallenge:
           `Write a single, honest first-person people/talent challenge statement (1 sentence, max 25 words) for an HR leader. ` +
-          `Start with "We" or "Our". Be specific about the problem. No bullet points, no numbering.`,
+          `Start with "We" or "Our". Be specific about the problem. Use plain, direct language. ` +
+          `Never use hedge words like "may", "might", "could", "perhaps", "potentially". No bullet points, no numbering.`,
         pivotalJobFamily:
           `Name a single pivotal job family (2–5 words) that is critical to business success and at risk from AI disruption. ` +
           `Return ONLY the job family name, nothing else. Examples: "Software engineers", "Customer service agents", "Data analysts".`,
         employeeExperienceState:
           `Write a candid, first-person description (2–3 sentences, max 150 words) of the current employee experience. ` +
-          `Be honest about both strengths and frustrations. Start with "Our employees" or "The employee experience". No bullet points.`,
+          `Be honest about both strengths and frustrations. Start with "Our employees" or "The employee experience". ` +
+          `Use plain, direct language. Never use hedge words like "may", "might", "could", "perhaps", "potentially". No bullet points.`,
       };
 
       const systemPrompt = `You are an expert HR strategy advisor helping a CPO articulate their organisation's context. ` +

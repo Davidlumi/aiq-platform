@@ -5202,3 +5202,28 @@ test
 - [x] Component kit showcase page at `/admin/component-kit` — rendered, signed off before section work
 - [x] TypeScript: 0 errors after kit build
 - [x] Tests: existing suites still pass after kit build
+
+## Grep Finding — Corrected Framing (logged)
+- [x] Moat-coverage gap confirmed: Reward spine has zero reads/writes to initiative/assumption/signal_match
+- [x] Correct framing: separation is total → migration is GREENFIELD (not a feature to preserve). Reward-onto-the-spine workstream proceeds. Brief to follow after section rework is underway.
+- [x] Rejected framing removed: "spines can evolve independently" is Option 3 and must not become operating assumption.
+
+## Component Kit State Screenshots (required before kit sign-off)
+- [ ] KeywordExpand state (a): keywords entered, AI clicked, draft present, visibly marked ai_drafted, Undo visible
+- [ ] KeywordExpand state (b): after user edit, provenance flipped to owned
+- [ ] BenchmarkNumeric state (a): "Use benchmark" clicked → value filled, basis = benchmark_default, source citation visible
+- [ ] BenchmarkNumeric state (b): user types own value → basis flipped to user_provided
+
+## Section I Wiring (Realignment Option 2 — Priority 1)
+
+- [ ] Audit Section I current fields in StrategyDiagnosticPage and backgroundInputs.ts
+- [ ] Wire businessDirection: ChipSelect (single-select, sector-specific options) + KeywordExpand (plain-tone prompt)
+- [ ] Wire peopleChallenges: ChipMultiSelect (chip library) + KeywordExpand (plain-tone prompt)
+- [ ] Wire employeeExperienceState: ChipSelect + KeywordExpand (plain-tone prompt)
+- [ ] Wire geographicDistribution: ChipMultiSelect (multi-select chips)
+- [ ] Keep existing selects (hrMaturity, digitalMaturity, etc.) unchanged
+- [ ] Calibrate all Section I aiDraft prompts to plain, specific, honest tone (no superlatives, no press-release register)
+- [ ] Confirm Regen on owned field flips basis back to ai_drafted (not a provenance lie)
+- [ ] Verify Section I renders on fresh tenant
+- [ ] TypeScript: 0 errors after Section I wiring
+- [ ] Tests: 77/77 still pass after Section I wiring

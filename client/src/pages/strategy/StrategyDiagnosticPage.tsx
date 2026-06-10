@@ -50,6 +50,8 @@ import { cn } from "@/lib/utils";
 import { SECTOR_TAXONOMY, getSubSectors } from "../../../../shared/sectorTaxonomy";
 import StageProgressHeader from "@/components/StageProgressHeader";
 import { useGate } from "@/contexts/GateContext";
+import { KeywordExpand } from "@/components/kit/KeywordExpand";
+import { ChipSelect } from "@/components/kit/ChipSelect";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -2445,82 +2447,41 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2" data-field-id="field-businessDirection">
-                <div className="flex items-center justify-between">
-                  <Label>Where is the business heading in the next 2–3 years? <span className="text-destructive">*</span></Label>
-                  {aiDrafted["I_businessDirection"] && aiPrevValues["I_businessDirection"] !== undefined && (
-                    <button type="button" onClick={() => { updateSectionI("businessDirection", aiPrevValues["I_businessDirection"]); setAiPrevValues(p => { const n={...p}; delete n["I_businessDirection"]; return n; }); setAiDrafted(p => ({...p, "I_businessDirection": false})); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      <Undo2 className="w-3 h-3" /> Undo
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">Type a few keywords, then click ✨ AI to generate. Key strategic moves, growth plans, transformation programmes, M&A activity.</p>
-                <div className="relative">
-                  <Textarea
-                    placeholder="e.g. expanding markets, acquisition integration, platform model shift…"
-                    value={(getFieldI("businessDirection") as string) ?? ""}
-                    onChange={e => { updateSectionI("businessDirection", e.target.value); if (aiDrafted["I_businessDirection"]) setAiDrafted(p => ({...p, "I_businessDirection": false})); }}
-                    maxLength={1000}
-                    className="pr-20 pb-8"
-                    aria-invalid={!!fieldErr("I", !((getFieldI("businessDirection") as string) ?? "").trim())}
-                  />
-                  <button
-                    type="button"
-                    disabled={aiPending["I_businessDirection"]}
-                    onClick={() => runAiDraftI("I_businessDirection", "businessDirection", (getFieldI("businessDirection") as string) ?? "", draft => updateSectionI("businessDirection", draft))}
-                    className={cn("absolute bottom-2 right-2 flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95", aiDrafted["I_businessDirection"] ? "bg-primary/20 text-primary border border-primary/40" : "bg-primary text-primary-foreground")}
-                  >
-                    {aiPending["I_businessDirection"] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                    {aiDrafted["I_businessDirection"] ? "Regen" : "AI"}
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground text-right">{((getFieldI("businessDirection") as string) ?? "").length}/1000</p>
+                <Label>Where is the business heading in the next 2–3 years? <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Key strategic moves, growth plans, transformation programmes, M&A activity.</p>
+                <KeywordExpand
+                  value={(getFieldI("businessDirection") as string) ?? ""}
+                  onChange={v => updateSectionI("businessDirection", v)}
+                  onAiDraft={hint => aiDraftMut.mutateAsync({ fieldType: "businessDirection", hint }).then(r => r.draft)}
+                  keywordPlaceholder="Type a few keywords, then click ✨ AI to generate…"
+                  placeholder="e.g. expanding markets, acquisition integration, platform model shift…"
+                  maxLength={1000}
+                />
                 {fieldErr("I", !((getFieldI("businessDirection") as string) ?? "").trim()) && <p className="text-destructive text-xs mt-1">Please describe where the business is heading</p>}
               </div>
 
               <div className="space-y-3">
                 <Label>Top business priorities (up to 5)</Label>
-                <p className="text-xs text-muted-foreground">Type a few keywords, then click ✨ AI to generate. What is the business most focused on achieving this year?</p>
+                <p className="text-xs text-muted-foreground">What is the business most focused on achieving this year?</p>
                 {[0, 1, 2, 3, 4].map(i => {
-                  const bpKey = `I_topBusinessPriority_${i}`;
                   const bpVal = ((getFieldI("topBusinessPriorities") as string[] ?? []))[i] ?? "";
                   return (
                     <div key={i} className="flex items-start gap-2">
-                      <span className="text-xs text-muted-foreground w-4 mt-2.5">{i + 1}.</span>
-                      <div className="relative flex-1 min-w-0">
-                        <Textarea
-                          placeholder={`e.g. Scale into new markets, reduce cost-per-hire…`}
-                          value={bpVal}
-                          onChange={e => {
-                            const pts = [...((getFieldI("topBusinessPriorities") as string[] ?? ["", "", "", "", ""]))]
-                            pts[i] = e.target.value;
-                            updateSectionI("topBusinessPriorities", pts);
-                            if (aiDrafted[bpKey]) setAiDrafted(p => ({...p, [bpKey]: false}));
-                          }}
-                          maxLength={200}
-                          className="pr-16 min-h-[2.5rem]"
-                        />
-                        <button
-                          type="button"
-                          disabled={aiPending[bpKey]}
-                          onClick={() => runAiDraftI(bpKey, "topBusinessPriority", bpVal, draft => {
-                            const pts = [...((getFieldI("topBusinessPriorities") as string[] ?? ["", "", "", "", ""]))]
-                            pts[i] = draft;
-                            updateSectionI("topBusinessPriorities", pts);
-                          })}
-                          className={cn("absolute bottom-1.5 right-1.5 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold transition-all duration-150 hover:scale-105 active:scale-95", aiDrafted[bpKey] ? "bg-primary/20 text-primary border border-primary/40" : "bg-primary text-primary-foreground")}
-                        >
-                          {aiPending[bpKey] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                          {aiDrafted[bpKey] ? "Regen" : "AI"}
-                        </button>
-                      </div>
-                      {aiDrafted[bpKey] && aiPrevValues[bpKey] !== undefined && (
-                        <button type="button" onClick={() => { const pts = [...((getFieldI("topBusinessPriorities") as string[] ?? ["", "", "", "", ""]))];
-                          pts[i] = aiPrevValues[bpKey]; updateSectionI("topBusinessPriorities", pts);
-                          setAiPrevValues(p => { const n={...p}; delete n[bpKey]; return n; }); setAiDrafted(p => ({...p, [bpKey]: false})); }}
-                          className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0">
-                          <Undo2 className="w-3 h-3" />
-                        </button>
-                      )}
+                      <span className="text-xs text-muted-foreground w-4 mt-2.5 shrink-0">{i + 1}.</span>
+                      <KeywordExpand
+                        value={bpVal}
+                        onChange={v => {
+                          const pts = [...((getFieldI("topBusinessPriorities") as string[] ?? ["", "", "", "", ""]))]
+                          pts[i] = v;
+                          updateSectionI("topBusinessPriorities", pts);
+                        }}
+                        onAiDraft={hint => aiDraftMut.mutateAsync({ fieldType: "topBusinessPriority", hint }).then(r => r.draft)}
+                        keywordPlaceholder="Keywords…"
+                        placeholder="e.g. Scale into new markets, reduce cost-per-hire…"
+                        maxLength={200}
+                        minRows={2}
+                        className="flex-1 min-w-0"
+                      />
                     </div>
                   );
                 })}
@@ -2559,64 +2520,40 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-2">
                 <Label>Geographic distribution</Label>
-                <Select
-                  value={(getFieldI("geographicDistribution") as string) ?? ""}
-                  onValueChange={v => updateSectionI("geographicDistribution", v)}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select geographic distribution" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="single_site">Single site</SelectItem>
-                    <SelectItem value="multi_site_single_country">Multiple sites, single country</SelectItem>
-                    <SelectItem value="multi_country">Multi-country</SelectItem>
-                    <SelectItem value="global">Global (5+ countries)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ChipSelect
+                  options={[
+                    { value: "single_site", label: "Single site" },
+                    { value: "multi_site_single_country", label: "Multiple sites, single country" },
+                    { value: "multi_country", label: "Multi-country" },
+                    { value: "global", label: "Global (5+ countries)" },
+                  ]}
+                  value={(getFieldI("geographicDistribution") as string) ?? null}
+                  onChange={v => updateSectionI("geographicDistribution", v ?? "")}
+                />
               </div>
 
               <div className="space-y-3">
                 <Label>Pivotal job families (up to 5)</Label>
-                <p className="text-xs text-muted-foreground">Type a few keywords, then click ✨ AI to generate. Which job families are most critical to business success — and most at risk from AI disruption?</p>
+                <p className="text-xs text-muted-foreground">Which job families are most critical to business success — and most at risk from AI disruption?</p>
                 {[0, 1, 2, 3, 4].map(i => {
-                  const pjKey = `I_pivotalJobFamily_${i}`;
                   const pjVal = ((getFieldI("pivotalJobFamilies") as string[] ?? []))[i] ?? "";
                   return (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                      <div className="relative flex-1 min-w-0">
-                        <Input
-                          placeholder={`e.g. Software engineers, data analysts…`}
-                          value={pjVal}
-                          onChange={e => {
-                            const pts = [...((getFieldI("pivotalJobFamilies") as string[] ?? ["", "", "", "", ""]))]
-                            pts[i] = e.target.value;
-                            updateSectionI("pivotalJobFamilies", pts);
-                            if (aiDrafted[pjKey]) setAiDrafted(p => ({...p, [pjKey]: false}));
-                          }}
-                          maxLength={100}
-                          className="pr-16"
-                        />
-                        <button
-                          type="button"
-                          disabled={aiPending[pjKey]}
-                          onClick={() => runAiDraftI(pjKey, "pivotalJobFamily", pjVal, draft => {
-                            const pts = [...((getFieldI("pivotalJobFamilies") as string[] ?? ["", "", "", "", ""]))]
-                            pts[i] = draft;
-                            updateSectionI("pivotalJobFamilies", pts);
-                          })}
-                          className={cn("absolute inset-y-0 right-1.5 my-auto h-6 flex items-center gap-1 px-2 rounded text-xs font-semibold transition-all duration-150 hover:scale-105 active:scale-95", aiDrafted[pjKey] ? "bg-primary/20 text-primary border border-primary/40" : "bg-primary text-primary-foreground")}
-                        >
-                          {aiPending[pjKey] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                          {aiDrafted[pjKey] ? "Regen" : "AI"}
-                        </button>
-                      </div>
-                      {aiDrafted[pjKey] && aiPrevValues[pjKey] !== undefined && (
-                        <button type="button" onClick={() => { const pts = [...((getFieldI("pivotalJobFamilies") as string[] ?? ["", "", "", "", ""]))];
-                          pts[i] = aiPrevValues[pjKey]; updateSectionI("pivotalJobFamilies", pts);
-                          setAiPrevValues(p => { const n={...p}; delete n[pjKey]; return n; }); setAiDrafted(p => ({...p, [pjKey]: false})); }}
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0">
-                          <Undo2 className="w-3 h-3" />
-                        </button>
-                      )}
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-xs text-muted-foreground w-4 mt-2.5 shrink-0">{i + 1}.</span>
+                      <KeywordExpand
+                        value={pjVal}
+                        onChange={v => {
+                          const pts = [...((getFieldI("pivotalJobFamilies") as string[] ?? ["", "", "", "", ""]))]
+                          pts[i] = v;
+                          updateSectionI("pivotalJobFamilies", pts);
+                        }}
+                        onAiDraft={hint => aiDraftMut.mutateAsync({ fieldType: "pivotalJobFamily", hint }).then(r => r.draft)}
+                        keywordPlaceholder="Keywords…"
+                        placeholder="e.g. Software Engineers, Sales Leaders, Data Scientists…"
+                        maxLength={200}
+                        minRows={2}
+                        className="flex-1 min-w-0"
+                      />
                     </div>
                   );
                 })}
@@ -2624,49 +2561,26 @@ export default function StrategyDiagnosticPage() {
 
               <div className="space-y-3" data-field-id="field-peopleChallenges">
                 <Label>Top 3 people / talent challenges <span className="text-destructive">*</span></Label>
-                <p className="text-xs text-muted-foreground">Type a few keywords, then click ✨ AI to generate. What are the hardest people problems you're trying to solve?</p>
+                <p className="text-xs text-muted-foreground">What are the hardest people problems you're trying to solve?</p>
                 {[0, 1, 2].map(i => {
-                  const pcKey = `I_peopleChallenge_${i}`;
                   const pcVal = ((getFieldI("peopleChallenges") as string[] ?? []))[i] ?? "";
                   return (
                     <div key={i} className="flex items-start gap-2">
-                      <span className="text-xs text-muted-foreground w-4 mt-2.5">{i + 1}.</span>
-                      <div className="relative flex-1 min-w-0">
-                        <Textarea
-                          placeholder={`e.g. retention crisis, skills gaps, slow hiring…`}
-                          value={pcVal}
-                          onChange={e => {
-                            const pts = [...((getFieldI("peopleChallenges") as string[] ?? ["", "", ""]))]
-                            pts[i] = e.target.value;
-                            updateSectionI("peopleChallenges", pts);
-                            if (aiDrafted[pcKey]) setAiDrafted(p => ({...p, [pcKey]: false}));
-                          }}
-                          maxLength={200}
-                          className="pr-16 min-h-[2.5rem]"
-                          aria-invalid={i === 0 && !!fieldErr("I", ((getFieldI("peopleChallenges") as string[] ?? [])).filter(Boolean).length === 0)}
-                        />
-                        <button
-                          type="button"
-                          disabled={aiPending[pcKey]}
-                          onClick={() => runAiDraftI(pcKey, "peopleChallenge", pcVal, draft => {
-                            const pts = [...((getFieldI("peopleChallenges") as string[] ?? ["", "", ""]))]
-                            pts[i] = draft;
-                            updateSectionI("peopleChallenges", pts);
-                          })}
-                          className={cn("absolute bottom-1.5 right-1.5 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold transition-all duration-150 hover:scale-105 active:scale-95", aiDrafted[pcKey] ? "bg-primary/20 text-primary border border-primary/40" : "bg-primary text-primary-foreground")}
-                        >
-                          {aiPending[pcKey] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                          {aiDrafted[pcKey] ? "Regen" : "AI"}
-                        </button>
-                      </div>
-                      {aiDrafted[pcKey] && aiPrevValues[pcKey] !== undefined && (
-                        <button type="button" onClick={() => { const pts = [...((getFieldI("peopleChallenges") as string[] ?? ["", "", ""]))];
-                          pts[i] = aiPrevValues[pcKey]; updateSectionI("peopleChallenges", pts);
-                          setAiPrevValues(p => { const n={...p}; delete n[pcKey]; return n; }); setAiDrafted(p => ({...p, [pcKey]: false})); }}
-                          className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0">
-                          <Undo2 className="w-3 h-3" />
-                        </button>
-                      )}
+                      <span className="text-xs text-muted-foreground w-4 mt-2.5 shrink-0">{i + 1}.</span>
+                      <KeywordExpand
+                        value={pcVal}
+                        onChange={v => {
+                          const pts = [...((getFieldI("peopleChallenges") as string[] ?? ["", "", ""]))]
+                          pts[i] = v;
+                          updateSectionI("peopleChallenges", pts);
+                        }}
+                        onAiDraft={hint => aiDraftMut.mutateAsync({ fieldType: "peopleChallenge", hint }).then(r => r.draft)}
+                        keywordPlaceholder="Keywords…"
+                        placeholder="e.g. retention crisis, skills gaps, slow hiring…"
+                        maxLength={200}
+                        minRows={2}
+                        className="flex-1 min-w-0"
+                      />
                     </div>
                   );
                 })}
@@ -2674,33 +2588,16 @@ export default function StrategyDiagnosticPage() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Current employee experience</Label>
-                  {aiDrafted["I_employeeExperienceState"] && aiPrevValues["I_employeeExperienceState"] !== undefined && (
-                    <button type="button" onClick={() => { updateSectionI("employeeExperienceState", aiPrevValues["I_employeeExperienceState"]); setAiPrevValues(p => { const n={...p}; delete n["I_employeeExperienceState"]; return n; }); setAiDrafted(p => ({...p, "I_employeeExperienceState": false})); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                      <Undo2 className="w-3 h-3" /> Undo
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">Type a few keywords, then click ✨ AI to generate. How would you honestly describe the employee experience today?</p>
-                <div className="relative">
-                  <Textarea
-                    placeholder="e.g. engaged but frustrated, strong culture, poor tooling…"
-                    value={(getFieldI("employeeExperienceState") as string) ?? ""}
-                    onChange={e => { updateSectionI("employeeExperienceState", e.target.value); if (aiDrafted["I_employeeExperienceState"]) setAiDrafted(p => ({...p, "I_employeeExperienceState": false})); }}
-                    maxLength={500}
-                    className="pb-8"
-                  />
-                  <button
-                    type="button"
-                    disabled={aiPending["I_employeeExperienceState"]}
-                    onClick={() => runAiDraftI("I_employeeExperienceState", "employeeExperienceState", (getFieldI("employeeExperienceState") as string) ?? "", draft => updateSectionI("employeeExperienceState", draft))}
-                    className={cn("absolute bottom-2 right-2 flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95", aiDrafted["I_employeeExperienceState"] ? "bg-primary/20 text-primary border border-primary/40" : "bg-primary text-primary-foreground")}
-                  >
-                    {aiPending["I_employeeExperienceState"] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                    {aiDrafted["I_employeeExperienceState"] ? "Regen" : "AI"}
-                  </button>
-                </div>
+                <Label>Current employee experience</Label>
+                <p className="text-xs text-muted-foreground">How would you honestly describe the employee experience today?</p>
+                <KeywordExpand
+                  value={(getFieldI("employeeExperienceState") as string) ?? ""}
+                  onChange={v => updateSectionI("employeeExperienceState", v)}
+                  onAiDraft={hint => aiDraftMut.mutateAsync({ fieldType: "employeeExperienceState", hint }).then(r => r.draft)}
+                  keywordPlaceholder="Keywords…"
+                  placeholder="e.g. engaged but frustrated, strong culture, poor tooling…"
+                  maxLength={500}
+                />
               </div>
 
               <div className="space-y-2">
