@@ -5165,3 +5165,8 @@ test
 - [x] Vitest: `server/signals.test.ts` covering dedup logic, fired-only persistence, dismiss-prevents-re-raise, text-change allows re-fire
 - [x] TypeScript: 0 errors after build
 - [x] Gate run: 13 signals × 5 initiatives, raw output pasted, founder-judged per signal
+- [x] PROOF 1: dedup-walkthrough.ts — dismiss→suppress→edit→re-fire executed against live DB, all 5 checks pass
+- [x] PROOF 2: founder-approval-gate-proof.ts — founderApproved=0 blocking proof executed, all 4 checks pass
+- [x] Export dedupCheck from signals.ts (was private function, now exported for script use)
+- [x] Phase D gate CLOSED — both proofs delivered, gate closure document at /home/ubuntu/phase-d-gate-closure.md
+- [ ] NEXT SLICE: Minimal approval write path — admin page at /admin/signals listing all signals with Approve button (calls trpc.signals.approveSignal)

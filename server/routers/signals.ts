@@ -213,7 +213,7 @@ ${assumptionList}`;
  *   - Dismissed match, assumption text unchanged → suppress (same class)
  *   - Dismissed match, assumption text changed → allow (materially new situation)
  */
-async function dedupCheck(
+export async function dedupCheck(
   db: Awaited<ReturnType<typeof getDb>>,
   signalId: string,
   assumptionId: string,
