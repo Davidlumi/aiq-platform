@@ -56,6 +56,7 @@ import {
   Scale,
   Heart,
   Users2,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -146,6 +147,13 @@ const NAV_ITEMS: NavItem[] = [
     label: "Board Report",
     path: "/strategy/board-report",
     icon: FileText,
+    roles: CPO_ROLES,
+    section: "aistrategy",
+  },
+  {
+    label: "Signal Watch",
+    path: "/strategy/signal-watch",
+    icon: Radio,
     roles: CPO_ROLES,
     section: "aistrategy",
   },

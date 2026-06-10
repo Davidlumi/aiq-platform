@@ -102,12 +102,14 @@ THE DIRECTNESS THRESHOLD — this is the single gate every potential match must 
 
   Do NOT fire when you can construct a multi-hop chain: "this signal → could affect X → which could affect Y → which could affect the assumption." Adjacency plus a plausible causal chain is NOT a match. The signal must bear directly on what the assumption is about.
 
-Examples of the threshold applied:
-  PASS: Union-access law strengthened → directly changes the probability landscape of an assumption about union agreement being obtainable. The assumption IS about union agreement.
-  PASS: ICO guidance on automated decision-making → directly changes the regulatory obligation an assumption is about. The assumption IS about that obligation.
-  FAIL: Interest rate hold → "rates → budget pressure → team capacity" chain. The assumption is about team capacity, not about interest rates. The signal does not change what the assumption is about.
-  FAIL: Rail timetable change → "commute disruption → employee resistance" chain. The assumption is about scheduling constraints, not about rail timetables. The signal does not change what the assumption is about.
-  FAIL: LLM failure rate research → "model reliability → data quality assumptions." Model reliability is not data quality. The signal does not change what a data quality assumption is about. (Exception: if the assumption is explicitly about model output reliability, it may pass.)
+Examples of the threshold applied (real judged cases — use these as calibration):
+  PASS: Union-access law strengthened → directly changes the probability landscape of an assumption about union agreement being obtainable. The assumption IS about union agreement. [A4]
+  PASS: ICO guidance on automated decision-making → directly changes the regulatory obligation an assumption is about. The assumption IS about that obligation. [A1]
+  PASS: Mandatory public pay-gap disclosure regulation → fires on a litigation-risk assumption. Published gaps are discoverable, citable evidence — one step via a known legal mechanism (discoverable evidence changes litigation exposure). The assumption IS about litigation risk. [A2/pe-a4]
+  FAIL: Interest rate hold → "rates → budget pressure → team capacity" chain. The assumption is about team capacity, not about interest rates. The signal does not change what the assumption is about. [C1]
+  FAIL: Rail timetable change → "commute disruption → employee resistance" chain. The assumption is about scheduling constraints, not about rail timetables. The signal does not change what the assumption is about. [C3]
+  FAIL: General frontier-model failure-rate research → "models in aggregate are unreliable → therefore this vendor's compliance is threatened." Ambient statistical finding about models in general is not a direct change to a vendor-compliance assumption. The signal does not change what the vendor-compliance assumption is about. [B4/vi-a5]
+  Exception: if the assumption is explicitly about model output quality or reliability, an aggregate reliability finding bears directly on it. [B4/fr-a5]
 
 ADDITIONAL RULES:
 1. JURISDICTION FIRST. The organisation is ${tenantJurisdiction}. Before firing on any regulatory or legal signal, confirm the signal applies to this jurisdiction. If it is EU-only, US-only, or otherwise out of scope, return an empty matches array with a jurisdictionNote explaining why. Do NOT fire a flat threat with no jurisdiction check.

@@ -98,15 +98,25 @@ function RefreshSuggestionCard({ suggestion, onUpdate }: { suggestion: any; onUp
     library_version_update: "Library updated",
     milestone_completion: "Milestone completed",
     manual: "Manual trigger",
+    external_signal: "External signal",
   };
 
+  const isExternalSignal = suggestion.triggerType === "external_signal";
+
   return (
-    <Card className="border shadow-none">
+    <Card className={`border shadow-none ${isExternalSignal ? "dark:border-blue-700/40 border-blue-200" : ""}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="text-xs dark:bg-amber-900/30 bg-amber-100/80 dark:text-amber-300 text-amber-700 dark:border-amber-700/40 border-amber-300">
+              <Badge
+                variant="outline"
+                className={`text-xs ${
+                  isExternalSignal
+                    ? "dark:bg-blue-900/30 bg-blue-100/80 dark:text-blue-300 text-blue-700 dark:border-blue-700/40 border-blue-300"
+                    : "dark:bg-amber-900/30 bg-amber-100/80 dark:text-amber-300 text-amber-700 dark:border-amber-700/40 border-amber-300"
+                }`}
+              >
                 {triggerLabels[suggestion.triggerType] ?? suggestion.triggerType}
               </Badge>
             </div>
@@ -118,9 +128,11 @@ function RefreshSuggestionCard({ suggestion, onUpdate }: { suggestion: any; onUp
                 Score: {suggestion.previousScore.toFixed(1)} → {suggestion.currentScore.toFixed(1)}
               </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              Library: {suggestion.currentLibraryVersion}
-            </p>
+            {!isExternalSignal && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Library: {suggestion.currentLibraryVersion}
+              </p>
+            )}
           </div>
           <div className="flex gap-2 shrink-0">
             <Button
@@ -137,9 +149,15 @@ function RefreshSuggestionCard({ suggestion, onUpdate }: { suggestion: any; onUp
               className="h-7 text-xs"
               asChild
             >
-              <Link href="/strategy/diagnostic">
-                Reassess <ArrowRight className="w-3 h-3 ml-1" />
-              </Link>
+              {isExternalSignal ? (
+                <Link href="/strategy/signal-watch">
+                  View signal <ArrowRight className="w-3 h-3 ml-1" />
+                </Link>
+              ) : (
+                <Link href="/strategy/diagnostic">
+                  Reassess <ArrowRight className="w-3 h-3 ml-1" />
+                </Link>
+              )}
             </Button>
           </div>
         </div>

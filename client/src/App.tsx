@@ -100,6 +100,7 @@ import RewardSuccessMeasuresPage from "./pages/strategy/RewardSuccessMeasuresPag
 import RewardCapabilityPage from "./pages/strategy/RewardCapabilityPage";
 import RewardReviewPage from "./pages/strategy/RewardReviewPage";
 import RewardOutputsPage from "./pages/strategy/RewardOutputsPage";
+import SignalWatchPage from "./pages/strategy/SignalWatchPage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
 import HowItWorksPage from "./pages/marketing/HowItWorksPage";
@@ -372,6 +373,9 @@ function Router() {
       </Route>
       <Route path="/strategy/board-report">
         <CpoProtectedRouteWithStrategyNav component={BoardReportPage} />
+      </Route>
+      <Route path="/strategy/signal-watch">
+        <CpoProtectedRouteWithStrategyNav component={SignalWatchPage} />
       </Route>
       {/* T14: Strategy Summary — persistent landing after Stage 11 cleared */}
       <Route path="/strategy/summary">
