@@ -12,7 +12,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { cpoProcedure as protectedProcedure, superUserProcedure, router } from "../_core/trpc";
+import { strategyCompanyProcedure as protectedProcedure, superUserProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   discoveryScans,

@@ -26,6 +26,7 @@ import { appRouter } from "./routers";
 function createPublicContext(): TrpcContext {
   return {
     user: null,
+    entitlements: { strategyCompany: true, strategyReward: true, assessment: true },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };

@@ -5263,3 +5263,30 @@ test
 - [ ] TypeScript: 0 errors after migration
 - [ ] Tests: 112/112 still pass after migration
 - [ ] Capture screenshots of key pages after migration
+
+## Entitlement System Build (Founder-Locked 10 Jun 2026)
+
+- [x] Schema: add entitlement_strategy_company, entitlement_strategy_reward, entitlement_assessment columns to tenants
+- [ ] Schema: add "learner" to aiqRole enum
+- [x] Schema: run migration SQL via webdev_execute_sql
+- [x] Schema: seed tenant defaults per locked table (Lumi HR, Mifflin, Dunder, Test)
+- [x] Context: load tenant entitlements into tRPC ctx (context.ts)
+- [x] auth.me: expose entitlements in return shape
+- [x] Guards: replace cpoProcedure with strategyCompany entitlement check
+- [x] Guards: replace intelligence inline aiqRole checks with entitlement checks
+- [x] Guards: new AssessmentRoute wrapper (requires entitlementAssessment)
+- [x] Guards: Knowledge routes (/modules, /coach) require any strategy entitlement
+- [x] Nav: replace role-based filtering with entitlement-based filtering
+- [x] Nav: add Knowledge section (Modules + Coach)
+- [x] Nav: remove My Development from main nav
+- [x] Nav: remove My Team section + add route-level redirects for /dashboard and /people
+- [x] Nav: remove REWARD_REMAP_PATHS for /dashboard and /people
+- [x] Nav: remove CPO_ROLES constants and getUserRoleKeys from nav filter
+- [x] Nav: ViewAsContext gated behind isPlatformSuperuser
+- [x] CpoProtectedRoute: rewrite as entitlement check (dual-entitlement tenants not redirected)
+- [x] Backoffice: entitlement screen with three toggles (superUserProcedure-gated)
+- [x] Tests: vitest for entitlement guards and nav filtering
+- [ ] Gate evidence: screenshots of (a) company-only nav, (b) reward-only nav, (c) dual nav
+- [ ] Gate evidence: denial proofs (reward route blocked, /people redirected, /assessment blocked)
+- [ ] Gate evidence: backoffice entitlement screen rendered
+- [ ] Gate evidence: mode-reader list compiled

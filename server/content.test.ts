@@ -58,6 +58,7 @@ type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 function publicCtx(): TrpcContext {
   return {
     user: null,
+    entitlements: { strategyCompany: true, strategyReward: true, assessment: true },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
@@ -77,6 +78,7 @@ function userCtx(): TrpcContext {
   };
   return {
     user,
+    entitlements: { strategyCompany: true, strategyReward: true, assessment: true },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };

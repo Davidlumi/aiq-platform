@@ -13,7 +13,7 @@
 
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { cpoProcedure, router } from "../_core/trpc";
+import { strategyCompanyProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { assumption, initiative, ailOrgContext } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
@@ -223,7 +223,7 @@ export const assumptionsRouter = router({
    *
    * Writes all assumptions to the `assumption` table and returns the full set.
    */
-  decomposeInitiative: cpoProcedure
+  decomposeInitiative: strategyCompanyProcedure
     .input(
       z.object({
         initiativeId: z.string().uuid(),   // initiative.id (the DB row UUID)
@@ -365,7 +365,7 @@ export const assumptionsRouter = router({
    * getAssumptions — returns all assumptions for an initiative,
    * ordered by type then confidence ascending (least confident first).
    */
-  getAssumptions: cpoProcedure
+  getAssumptions: strategyCompanyProcedure
     .input(z.object({ initiativeId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
@@ -401,7 +401,7 @@ export const assumptionsRouter = router({
   /**
    * confirmAssumption — sets ownedAt, optionally updates statement, sets basis to user_confirmed.
    */
-  confirmAssumption: cpoProcedure
+  confirmAssumption: strategyCompanyProcedure
     .input(
       z.object({
         assumptionId: z.string().uuid(),
@@ -437,7 +437,7 @@ export const assumptionsRouter = router({
    * including whether a precondition coverage gap exists.
    * Used by the gate test to inspect engine output without running a full decompose.
    */
-  getDecompositionStatus: cpoProcedure
+  getDecompositionStatus: strategyCompanyProcedure
     .input(z.object({ initiativeId: z.string().uuid(), sourceSlug: z.string().optional() }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();

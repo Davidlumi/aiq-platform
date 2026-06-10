@@ -18,17 +18,22 @@ import { applyColdStart } from "../ail/coldStart";
 import { sendPasswordResetEmail } from "../email";
 
 export const authRouter = router({
-  // Get current user with roles
+  // Get current user with roles and entitlements
   me: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.user) return null;
     const roles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    // Fetch tenant mode for mode-aware UI
+    // Fetch tenant mode (transitional) and entitlements from ctx (loaded in context.ts)
     const db = await getDb();
     let tenantMode: "cpo" | "reward" = "cpo";
     if (db) {
       const tenantRow = await db.select({ mode: tenants.mode }).from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
       tenantMode = tenantRow[0]?.mode ?? "cpo";
     }
+    const entitlements = ctx.entitlements ?? {
+      strategyCompany: false,
+      strategyReward: false,
+      assessment: false,
+    };
     return {
       id: ctx.user.id,
       email: ctx.user.email,
@@ -44,6 +49,7 @@ export const authRouter = router({
       aiqRole: ctx.user.aiqRole ?? "cpo",
       tenantMode,
       isPlatformSuperuser: ctx.user.isPlatformSuperuser ?? false,
+      entitlements,
     };
   }),
 

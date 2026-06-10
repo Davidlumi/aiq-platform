@@ -85,7 +85,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // --- Types --------------------------------------------------------------------
-type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "quality_gate" | "session_flags" | "feature_flags";
+type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "quality_gate" | "session_flags" | "feature_flags" | "entitlements";
 
 // --- Beta Applications Tab ----------------------------------------------------
 const APPLICATION_STATUSES = ["pending", "approved", "rejected", "waitlisted"] as const;
@@ -1907,6 +1907,186 @@ function FeatureFlagsTab() {
     </div>
   );
 }
+// --- Entitlements Tab --------------------------------------------------------
+type EntitlementKey = "entitlementStrategyCompany" | "entitlementStrategyReward" | "entitlementAssessment";
+
+const ENTITLEMENT_DEFS: { key: EntitlementKey; label: string; description: string; color: string }[] = [
+  {
+    key: "entitlementStrategyCompany",
+    label: "HR AI Strategy — Company",
+    description: "Unlocks the full CPO-led strategy journey: capability assessment, roadmap, risk register, and intelligence dashboards.",
+    color: "#6366F1",
+  },
+  {
+    key: "entitlementStrategyReward",
+    label: "HR AI Strategy — Reward",
+    description: "Unlocks the reward-leader journey: reward pre-work, reward capability mapping, and reward-specific intelligence.",
+    color: "#D97706",
+  },
+  {
+    key: "entitlementAssessment",
+    label: "Assessment & Learning",
+    description: "Unlocks individual capability assessments, adaptive learning modules, AI coach, and personal development plans.",
+    color: "#16A34A",
+  },
+];
+
+function EntitlementsTab() {
+  const utils = trpc.useUtils();
+  const { data: orgs, isLoading } = trpc.backoffice.listOrgs.useQuery();
+  const [search, setSearch] = useState("");
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const setEntitlements = trpc.backoffice.setEntitlements.useMutation({
+    onSuccess: () => {
+      utils.backoffice.listOrgs.invalidate();
+      setSaving(null);
+      toast.success("Entitlements updated");
+    },
+    onError: (err) => {
+      setSaving(null);
+      toast.error(err.message);
+    },
+  });
+
+  const handleToggle = (org: NonNullable<typeof orgs>[number], key: EntitlementKey) => {
+    setSaving(`${org.id}:${key}`);
+    setEntitlements.mutate({
+      tenantId: org.id,
+      strategyCompany: key === "entitlementStrategyCompany" ? !(org as any).entitlementStrategyCompany : !!(org as any).entitlementStrategyCompany,
+      strategyReward:  key === "entitlementStrategyReward"  ? !(org as any).entitlementStrategyReward  : !!(org as any).entitlementStrategyReward,
+      assessment:      key === "entitlementAssessment"      ? !(org as any).entitlementAssessment      : !!(org as any).entitlementAssessment,
+    });
+  };
+
+  const filtered = (orgs ?? []).filter((o) =>
+    !search ||
+    o.name?.toLowerCase().includes(search.toLowerCase()) ||
+    o.slug?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-foreground">Tenant Entitlements</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Control which product modules each tenant can access. Changes take effect on the user's next page load.
+        </p>
+      </div>
+
+      {/* Info banner */}
+      <div className="flex items-start gap-3 p-3 rounded-xl border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+        <Info className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          Entitlements gate both the navigation sidebar and server-side API procedures. Disabling an entitlement immediately
+          blocks API access — the nav updates on next page load.
+        </p>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search organisations…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9 h-9 text-sm"
+        />
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3">
+        {ENTITLEMENT_DEFS.map((d) => (
+          <div key={d.key} className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+            <span className="text-xs text-muted-foreground">{d.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : !filtered.length ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No organisations found.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Header row */}
+          <div className="hidden md:grid grid-cols-[1fr_repeat(3,140px)] gap-4 px-4 pb-1 border-b border-border">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Organisation</span>
+            {ENTITLEMENT_DEFS.map((d) => (
+              <span key={d.key} className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center" style={{ color: d.color }}>
+                {d.label.split(" — ")[1] ?? d.label}
+              </span>
+            ))}
+          </div>
+
+          {filtered.map((org) => (
+            <div key={org.id} className="border border-border rounded-xl p-4">
+              {/* Mobile: org name */}
+              <div className="flex items-center gap-2 mb-3 md:hidden">
+                <Building2 className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium text-sm text-foreground">{org.name}</span>
+                <span className="text-xs text-muted-foreground">({org.slug})</span>
+              </div>
+
+              {/* Desktop grid row */}
+              <div className="md:grid md:grid-cols-[1fr_repeat(3,140px)] md:gap-4 md:items-center">
+                {/* Org info */}
+                <div className="hidden md:flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground truncate">{org.name}</p>
+                    <p className="text-xs text-muted-foreground">{org.slug}</p>
+                  </div>
+                </div>
+
+                {/* Toggle columns */}
+                {ENTITLEMENT_DEFS.map((def) => {
+                  const isOn = !!(org as any)[def.key];
+                  const isSaving = saving === `${org.id}:${def.key}`;
+                  return (
+                    <div key={def.key} className="flex items-center justify-between md:justify-center gap-2 mb-2 md:mb-0">
+                      {/* Mobile label */}
+                      <span className="md:hidden text-xs text-muted-foreground">{def.label}</span>
+                      <button
+                        onClick={() => handleToggle(org, def.key)}
+                        disabled={isSaving}
+                        title={def.description}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
+                          isOn
+                            ? "border-transparent text-white"
+                            : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                          isSaving && "opacity-50 cursor-not-allowed"
+                        )}
+                        style={isOn ? { backgroundColor: def.color } : {}}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : isOn ? (
+                          <ToggleRight className="w-3.5 h-3.5" />
+                        ) : (
+                          <ToggleLeft className="w-3.5 h-3.5" />
+                        )}
+                        {isOn ? "On" : "Off"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Main Back-Office Page ----------------------------------------------------
 export default function BackOfficePage() {
   const { user, loading: authLoading } = useAuth();
@@ -1938,6 +2118,7 @@ export default function BackOfficePage() {
     { id: "quality_gate",  label: "Quality Gate",         icon: Zap },
     { id: "session_flags", label: "Session Flags",       icon: Flag },
     { id: "feature_flags",  label: "Feature Flags",       icon: ToggleLeft },
+    { id: "entitlements",   label: "Entitlements",         icon: ShieldCheck },
   ];
 
   return (
@@ -1983,6 +2164,7 @@ export default function BackOfficePage() {
       {tab === "quality_gate"     && <QualityGateTab />}
       {tab === "session_flags"   && <SessionFlagsTab />}
       {tab === "feature_flags"   && <FeatureFlagsTab />}
+      {tab === "entitlements"     && <EntitlementsTab />}
     </div>
   );
 }

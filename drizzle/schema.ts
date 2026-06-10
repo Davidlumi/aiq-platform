@@ -30,8 +30,12 @@ export const tenants = mysqlTable("tenants", {
   // readiness: + team dashboards, manager nudges, gap analysis, learning plans
   // enterprise: + org-level analytics, regulatory mapping, API access, custom branding
   plan: mysqlEnum("plan", ["foundation", "readiness", "enterprise"]).notNull().default("foundation"),
-  // Two-mode build: tenant strategy mode — permanent for v1
+  // Two-mode build: tenant strategy mode — transitional, will be removed when all mode readers are migrated to entitlement checks
   mode: mysqlEnum("mode", ["cpo", "reward"]).notNull().default("cpo"),
+  // Entitlements — founder-set, permanent until changed via backoffice
+  entitlementStrategyCompany: boolean("entitlement_strategy_company").notNull().default(false),
+  entitlementStrategyReward: boolean("entitlement_strategy_reward").notNull().default(false),
+  entitlementAssessment: boolean("entitlement_assessment").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -82,7 +86,8 @@ export const users = mysqlTable("users", {
   // v1.4: module personalisation collapse preference
   modulePersonalisationCollapsed: tinyint("module_personalisation_collapsed").notNull().default(0),
   // Two-mode build: AiQ strategy role — determines which mode tenant is created at sign-up
-  aiqRole: mysqlEnum("aiq_role", ["cpo", "reward_leader"]).default("cpo"),
+  // "learner" added for assessment-only users (inert until assessment-only slice)
+  aiqRole: mysqlEnum("aiq_role", ["cpo", "reward_leader", "learner"]).default("cpo"),
   // Platform super-user flag — set only via direct SQL, never via any API path
   isPlatformSuperuser: boolean("is_platform_superuser").notNull().default(false),
 }, (t) => ({

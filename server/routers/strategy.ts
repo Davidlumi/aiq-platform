@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { eq, and, isNull, or } from "drizzle-orm";
 import { getDb } from "../db";
-import { cpoProcedure as protectedProcedure, router } from "../_core/trpc";
+import { strategyCompanyProcedure as protectedProcedure, router } from "../_core/trpc";
 import {
   strategyIndustries,
   strategyHrSegments,

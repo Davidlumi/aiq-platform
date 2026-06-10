@@ -27,6 +27,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
 
   const ctx: TrpcContext = {
     user,
+    entitlements: { strategyCompany: true, strategyReward: true, assessment: true },
     req: {
       protocol: "https",
       headers: {},

@@ -20,7 +20,7 @@
  */
 
 import { z } from "zod";
-import { router, cpoProcedure as protectedProcedure, superUserProcedure } from "../_core/trpc";
+import { router, strategyCompanyProcedure as protectedProcedure, superUserProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { nanoid } from "nanoid";

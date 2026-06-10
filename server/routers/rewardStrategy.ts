@@ -15,7 +15,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { protectedProcedure, router } from "../_core/trpc";
+import { strategyRewardProcedure as protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   rewardPrework,

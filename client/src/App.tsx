@@ -122,8 +122,10 @@ import ConversationPromptsPage from "./pages/manager/ConversationPromptsPage";
 import TeamProgressPage from "./pages/manager/TeamProgressPage";
 
 /**
- * CpoProtectedRoute — blocks reward-mode tenants from CPO-only strategy pages.
- * Redirects to /strategy/reward-prework (hide-not-delete: data is preserved).
+ * StrategyCompanyRoute — blocks tenants without strategyCompany entitlement.
+ * Redirects to /strategy/reward-prework when only strategyReward is set.
+ * Redirects to /dashboard when neither entitlement is set.
+ * Kept as CpoProtectedRouteWithStrategyNav for backwards compat with route declarations.
  */
 function CpoProtectedRouteWithStrategyNav({
   component: Component,
@@ -131,9 +133,8 @@ function CpoProtectedRouteWithStrategyNav({
   component: React.ComponentType;
 }) {
   const { user, loading: authLoading } = useAuth();
-  const gate = useGate();
 
-  if (authLoading || gate.isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -143,9 +144,19 @@ function CpoProtectedRouteWithStrategyNav({
 
   if (!user) return <Redirect to="/login" />;
 
-  // Reward-mode tenants are redirected to their journey entry point
-  if (gate.tenantMode === "reward") {
+  const entitlements = (user as any)?.entitlements as {
+    strategyCompany?: boolean;
+    strategyReward?: boolean;
+    assessment?: boolean;
+  } | undefined;
+
+  // Reward-only tenants are redirected to their reward journey entry point
+  if (!entitlements?.strategyCompany && entitlements?.strategyReward) {
     return <Redirect to="/strategy/reward-prework" />;
+  }
+  // No strategy entitlement at all — send to dashboard
+  if (!entitlements?.strategyCompany) {
+    return <Redirect to="/dashboard" />;
   }
 
   return (
@@ -561,9 +572,13 @@ function RoleDashboard() {
   if (viewAs === "individual") return <IndividualDashboardV2 />;
   if (viewAs === "manager") return <ManagerDashboardV2 />;
   if (viewAs === "cpo") return <LeaderDashboardV2 />;
-  // Reward Leader: send directly to reward journey (avoids CPO dashboard render)
-  const aiqRole = (user as any).aiqRole as string | undefined;
-  if (aiqRole === "reward_leader") {
+  // Reward-only tenant: send directly to reward journey (avoids CPO dashboard render)
+  const entitlements = (user as any)?.entitlements as {
+    strategyCompany?: boolean;
+    strategyReward?: boolean;
+    assessment?: boolean;
+  } | undefined;
+  if (!entitlements?.strategyCompany && entitlements?.strategyReward) {
     return <Redirect to="/strategy/reward-prework" />;
   }
   // Fallback: use real role

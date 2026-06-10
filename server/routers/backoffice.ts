@@ -1241,4 +1241,24 @@ export const backofficeRouter = router({
     }
     return { success: true, totalLinks, groups: Object.keys(groups).length };
   }),
+
+  // ── Entitlements ──────────────────────────────────────────────────────────
+  // Founder-set, permanent until changed via backoffice. Single source of truth for feature access.
+  setEntitlements: superUserProcedure
+    .input(z.object({
+      tenantId: z.string(),
+      strategyCompany: z.boolean(),
+      strategyReward: z.boolean(),
+      assessment: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(tenants).set({
+        entitlementStrategyCompany: input.strategyCompany,
+        entitlementStrategyReward: input.strategyReward,
+        entitlementAssessment: input.assessment,
+      }).where(eq(tenants.id, input.tenantId));
+      return { success: true };
+    }),
 });

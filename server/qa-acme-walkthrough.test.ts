@@ -55,7 +55,7 @@ function makeUser(): AuthenticatedUser {
 }
 
 function makeCtx(): TrpcContext {
-  return { user: makeUser(), req: {} as any, res: {} as any };
+  return { user: makeUser(), req: {} as any, res: {} as any, entitlements: { strategyCompany: true, strategyReward: true, assessment: true } };
 }
 
 // ─── Canonical Acme inputs ────────────────────────────────────────────────────

@@ -3,11 +3,16 @@
  * Uses semantic CSS variables from index.css for all colours.
  * Sidebar: 240px expanded, 56px collapsed.
  *
- * Nav structure:
- * - MY DEVELOPMENT: Skills Check, AiQ Coach (gated), Learning Plan, Modules
- * - MY TEAM: Overview, People (CPO + Manager)
- * - AI STRATEGY: HR AI Strategy (expandable, 7 domain children), Build Strategy, Board Report, Company Assessment, Company Profile
- * - ADMIN: People & Org, Users, Beta Applications
+ * Nav visibility is driven by tenant entitlements (from auth.me) — NOT by tenantMode/aiqRole:
+ *   entitlementAssessment      → MY DEVELOPMENT section (Skills Check, AiQ Coach, Learning Plan, Modules)
+ *   entitlementStrategyCompany → AI STRATEGY section (HR AI Strategy, Build Strategy, Board Report, Signal Watch, Company Profile)
+ *   entitlementStrategyReward  → Reward domain becomes active (Company-wide locked, Reward active)
+ *
+ * Sections:
+ * - MY DEVELOPMENT (assessment entitlement): Skills Check, AiQ Coach (gated), Learning Plan, Modules
+ * - KNOWLEDGE (always visible): Articles, Guides, Glossary
+ * - AI STRATEGY (strategyCompany entitlement, CPO+ roles): HR AI Strategy (expandable), Build Strategy, Board Report, Signal Watch, Company Profile
+ * - ADMIN (CPO+ roles): People & Org, Users, Beta Applications
  */
 import { useState, useEffect, useRef, Fragment } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -55,6 +60,9 @@ import {
   Heart,
   Users2,
   Radio,
+  Newspaper,
+  HelpCircle,
+  Hash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGate } from "@/contexts/GateContext";
@@ -84,11 +92,13 @@ type DomainChild = {
 // ─── Role constants ───────────────────────────────────────────────────────────
 
 const CPO_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];
+// MANAGER_ROLES kept for ViewAs switcher visibility check only
 const MANAGER_ROLES = ["manager"];
 
 // ─── HR AI Strategy domain children ──────────────────────────────────────────
-// Status is resolved dynamically based on tenantMode in the component.
-// Base status here is for CPO mode; reward mode inverts Company-wide ↔ Reward.
+// Status is resolved dynamically based on entitlements in the component.
+// If tenant has strategyReward entitlement: Reward = active, Company-wide = locked.
+// Otherwise: Company-wide = active, Reward = locked.
 const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [
   { label: "Company-wide",        path: "/strategy",                   icon: Building2,    status: "active" },
   { label: "Reward",              path: "/strategy/reward-prework",    icon: Briefcase,    status: "locked" },
@@ -100,43 +110,20 @@ const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [
 ];
 
 const NAV_ITEMS: NavItem[] = [
-  // -- My Development (all roles) ----------------------------------------------
+  // -- My Development (shown when tenant has assessment entitlement) ------------
+  // Entitlement filter applied in component; roles array not used for section visibility.
   { label: "Skills Check",     path: "/assessment",     icon: ClipboardList, section: "mydev" },
   { label: "Learning Plan",    path: "/learning",       icon: BookOpen,      section: "mydev" },
   { label: "Modules",          path: "/modules",        icon: Library,       section: "mydev" },
   { label: "AiQ Coach",        path: "/coach",          icon: MessageSquare, section: "mydev" },
 
-  // -- My Team (CPO + Manager) --------------------------------------------------
-  {
-    label: "Overview",
-    path: "/dashboard",
-    icon: LayoutDashboard,
-    roles: [...CPO_ROLES, ...MANAGER_ROLES],
-    section: "myteam",
-  },
-  {
-    label: "People",
-    path: "/people",
-    icon: UserSearch,
-    roles: [...CPO_ROLES, ...MANAGER_ROLES],
-    section: "myteam",
-  },
-  {
-    label: "Team Progress",
-    path: "/manager/team-progress",
-    icon: BarChart3,
-    roles: MANAGER_ROLES,
-    section: "myteam",
-  },
-  {
-    label: "Conversation Prompts",
-    path: "/manager/conversation-prompts",
-    icon: Bell,
-    roles: MANAGER_ROLES,
-    section: "myteam",
-  },
+  // -- Knowledge (always visible) -----------------------------------------------
+  { label: "Articles",         path: "/knowledge/articles",  icon: Newspaper,    section: "knowledge" },
+  { label: "Guides",           path: "/knowledge/guides",    icon: HelpCircle,   section: "knowledge" },
+  { label: "Glossary",         path: "/knowledge/glossary",  icon: Hash,         section: "knowledge" },
 
-  // -- AI Strategy (CPO only) — HR AI Strategy is rendered as expandable below -
+  // -- AI Strategy (CPO+ roles + strategyCompany entitlement) ------------------
+  // HR AI Strategy expandable is injected before the first item in this section.
   {
     label: "Build Strategy",
     path: "/strategy/diagnostic",
@@ -202,7 +189,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const SECTION_LABELS: Record<string, string> = {
   mydev:       "My Development",
-  myteam:      "My Team",
+  knowledge:   "Knowledge",
   aistrategy:  "AI Strategy",
   admin:       "Admin",
 };
@@ -424,22 +411,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [viewAsOpen, setViewAsOpen] = useState(false);
 
   const gate = useGate();
-  // Derive tenantMode: prefer the loaded gate value; fall back to user.tenantMode while gate is loading.
-  // user.tenantMode comes from auth.me which queries the tenant row directly — it is always correct.
-  const userTenantMode = (user as any)?.tenantMode as string | undefined;
-  const userAiqRole = (user as any)?.aiqRole as string | undefined;
-  // Resolved tenantMode: use gate value once loaded, otherwise use user.tenantMode as fallback
-  const resolvedTenantMode: "cpo" | "reward" =
-    !gate.isLoading
-      ? gate.tenantMode
-      : (userTenantMode === "reward" ? "reward" : "cpo");
-  const isRewardMode = resolvedTenantMode === "reward";
-  const isCpoMode = resolvedTenantMode === "cpo";
+  // Entitlements come from auth.me — single source of truth for feature access.
+  // These are set by the founder via backoffice and never change at runtime.
+  const entitlements = (user as any)?.entitlements as {
+    strategyCompany: boolean;
+    strategyReward: boolean;
+    assessment: boolean;
+  } | undefined;
+  const hasAssessment = entitlements?.assessment ?? false;
+  const hasStrategyCompany = entitlements?.strategyCompany ?? false;
+  const hasStrategyReward = entitlements?.strategyReward ?? false;
+  // isRewardMode: tenant has strategyReward entitlement (Reward domain active, Company-wide locked)
+  const isRewardMode = hasStrategyReward;
 
-  // Coach gating: only show if user has at least one completed assessment session
+  // Coach gating: only show if user has at least one completed assessment session.
+  // If tenant has no assessment entitlement, this query will be skipped.
   const { data: coachGate } = trpc.assessment.hasCompleted.useQuery(undefined, {
     staleTime: 5 * 60 * 1000,
     retry: false,
+    enabled: hasAssessment,
   });
   const coachUnlocked = coachGate?.hasCompleted ?? false;
 
@@ -466,22 +456,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [location]);
 
-  // Resolve domain children status based on tenantMode and pre-work gate.
+  // Resolve domain children status based on entitlements and pre-work gate.
   // Pre-work gate (stage1Cleared) takes precedence:
-  //   - If Background Inputs not yet confirmed, BOTH Company-wide and Reward are "prework" (amber lock, redirects to /strategy/diagnostic)
+  //   - If Background Inputs not yet confirmed, BOTH Company-wide and Reward are "prework"
   //   - Once stage1Cleared:
-  //     CPO mode:    Company-wide = active, Reward = locked
-  //     Reward mode: Reward = active, Company-wide = locked
+  //     strategyReward entitlement: Reward = active, Company-wide = locked
+  //     strategyCompany only:       Company-wide = active, Reward = locked
   const preworkDone = gate.stage1Cleared;
   const resolvedDomains: DomainChild[] = HR_AI_STRATEGY_DOMAINS.map((d) => {
     if (d.label === "Company-wide" || d.label === "Reward") {
       if (!preworkDone) return { ...d, status: "prework" as const };
-      // Pre-work done — apply mode-based active/locked
+      // Pre-work done — apply entitlement-based active/locked
       if (isRewardMode) {
         if (d.label === "Reward") return { ...d, status: "active" as const };
         if (d.label === "Company-wide") return { ...d, status: "locked" as const };
       } else {
-        // CPO mode (default): Company-wide active, Reward locked
+        // strategyCompany only (default): Company-wide active, Reward locked
         if (d.label === "Company-wide") return { ...d, status: "active" as const };
         if (d.label === "Reward") return { ...d, status: "locked" as const };
       }
@@ -489,22 +479,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return d;
   });
 
-  // Reward mode: remap strategy items to reward equivalents
-  const REWARD_REMAP_PATHS = new Set(["/strategy/diagnostic", "/strategy/board-report", "/dashboard", "/people"]);
   const isPlatformSuperuser = !!(user as any)?.isPlatformSuperuser;
 
   const rawVisibleItems = NAV_ITEMS
     .filter((item) => {
       // superuserOnly items are gated on the isPlatformSuperuser DB flag — single source of truth
       if (item.superuserOnly) return isPlatformSuperuser;
-      if (isRewardMode && REWARD_REMAP_PATHS.has(item.path)) return true;
+      // My Development section: gated on assessment entitlement
+      if (item.section === "mydev") return hasAssessment;
+      // Knowledge section: always visible to authenticated users
+      if (item.section === "knowledge") return true;
+      // AI Strategy section: gated on strategyCompany entitlement + CPO role
+      if (item.section === "aistrategy") {
+        return hasStrategyCompany && (!item.roles || item.roles.some((r) => effectiveRoles.includes(r)));
+      }
+      // Admin section: role-gated
       return !item.roles || item.roles.some((r) => effectiveRoles.includes(r));
-    })
-    .map((item) => {
-      if (!isRewardMode) return item;
-      if (item.path === "/strategy/diagnostic") return { ...item, label: "Build Strategy", path: "/strategy/reward-principles" };
-      if (item.path === "/strategy/board-report") return { ...item, label: "Outputs & Report", path: "/strategy/reward-outputs" };
-      return item;
     });
 
   const seenPaths = new Set<string>();
@@ -546,17 +536,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const isCpoUser = userRoles.some(r => CPO_ROLES.includes(r));
-  // Show HR AI Strategy expandable for:
-  //   - CPO users (by role)
-  //   - Reward mode users (reward_leader)
-  //   - Any user whose tenant is in CPO mode (tenantMode === 'cpo')
-  //   - Any user whose aiqRole is 'cpo' or 'reward_leader'
-  const showHrAiStrategy =
-    isCpoUser ||
-    isRewardMode ||
-    isCpoMode ||
-    userAiqRole === "cpo" ||
-    userAiqRole === "reward_leader";
+  // Show HR AI Strategy expandable when:
+  //   - tenant has strategyCompany entitlement AND user has a CPO-level role
+  // isRewardMode (strategyReward entitlement) also shows it (Reward domain active)
+  const showHrAiStrategy = hasStrategyCompany && (isCpoUser || isRewardMode);
 
   const SidebarInner = () => (
     <div className="flex flex-col h-full aiq-sidebar-bg border-r border-sidebar-border">

@@ -71,6 +71,7 @@ function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
 function makeAdminCtx(): TrpcContext {
   return {
     user: makeUser({ role: "admin" }),
+    entitlements: { strategyCompany: true, strategyReward: true, assessment: true },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };

@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, protectedProcedure, strategyCompanyProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 
 import {
@@ -315,7 +315,7 @@ export const intelligenceRouter = router({
    * Get the full AI People Strategy (ambition levels + domain targets + narrative).
    */
   getStrategy: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+    if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -406,7 +406,7 @@ export const intelligenceRouter = router({
    * Returns parsed roadmapJson or null if not yet saved.
    */
   getRoadmap: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+    if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -433,7 +433,7 @@ export const intelligenceRouter = router({
    * Get the saved risk register (Stage 8) for the current tenant.
    */
   getRiskRegister: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+    if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -465,7 +465,7 @@ export const intelligenceRouter = router({
       risksJson: z.string().min(1),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -487,7 +487,7 @@ export const intelligenceRouter = router({
       sector: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const initiativeList = (input.selectedInitiatives ?? []).slice(0, 8).join(", ") || "AI-enabled HR initiatives";
@@ -544,7 +544,7 @@ Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood"
       selectedInitiativeIds: z.array(z.string()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -621,7 +621,7 @@ Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood"
    * Get the strategy assessment (vision, principles, answers).
    */
   getStrategyAssessment: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+    if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -684,7 +684,7 @@ Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood"
   saveBusinessCaseNarrative: protectedProcedure
     .input(z.object({ narrative: z.string().max(10000), isAiGenerated: z.boolean().optional() }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -713,7 +713,7 @@ Return ONLY valid JSON: {"risks": [{"title": "", "description": "", "likelihood"
     }))
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const prompt = `You are an expert HR strategy consultant writing for a CHRO audience. Based on the following inputs, generate:
@@ -803,7 +803,7 @@ Return JSON with this exact structure:
       operationalBaselineJson: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -855,7 +855,7 @@ Return JSON with this exact structure:
       z.object({ field: z.literal("guidingPrinciples"), value: z.array(z.object({ title: z.string(), description: z.string() })) }),
     ]))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -899,7 +899,7 @@ Return JSON with this exact structure:
       hrRoleAnswers: z.record(z.string(), z.string()),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       // Enrich with org context if not provided
@@ -933,7 +933,7 @@ Return JSON with this exact structure:
       governanceLocks: z.array(z.string().max(200)),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -985,7 +985,7 @@ Return JSON with this exact structure:
     }))
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const isReward = input.mode === "reward";
@@ -1178,7 +1178,7 @@ Return JSON with this exact structure:
       z.object({ section: z.literal("markReviewed"), value: z.object({ reviewerName: z.string() }) }),
     ]))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -1216,7 +1216,7 @@ Return JSON with this exact structure:
       mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
@@ -1357,7 +1357,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       hasDataGovernanceInitiative: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const riskInput: RiskEvalInput = {
@@ -1383,7 +1383,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       targetCount: z.number().int().min(1).max(30),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const selectInput: SelectInitiativesInput = {
@@ -1407,7 +1407,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       ambitionTier: z.enum(["cautious", "progressive", "transformative"]),
     }))
     .query(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const resolvedCostIds = resolveInitiativeIds(input.selectedInitiativeIds);
@@ -1429,7 +1429,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       ambitionTier: z.enum(["cautious", "progressive", "transformative"]),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       // Evaluate risk rules first to pass to provenance map
@@ -1546,7 +1546,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
    * Used by the Plan page to show initiative list with inline editing.
    */
   getStrategyInitiatives: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+    if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -1677,7 +1677,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       notes: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -1725,7 +1725,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
    */
   regenerateInitiativeOptions: protectedProcedure
     .mutation(async ({ ctx }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -1899,7 +1899,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
    * Get all active (non-revoked) risk acknowledgements for the tenant.
    */
   getRiskAcknowledgements: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+    if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -1931,7 +1931,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       note: z.string().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -1976,7 +1976,7 @@ Return a JSON array of exactly 4 objects with these exact fields only. No markdo
       itemId: z.string().max(128),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();
@@ -2764,7 +2764,7 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
    * Get the Stage 8 capability assessment for the current tenant.
    */
   getCapabilityAssessment: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+    if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -2784,7 +2784,7 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
   saveCapabilityAssessment: protectedProcedure
     .input(z.object({ capabilityJson: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.aiqRole !== "cpo" && !ctx.user.isPlatformSuperuser) {
+      if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const db = await getDb();

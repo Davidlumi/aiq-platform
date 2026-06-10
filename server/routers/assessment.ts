@@ -47,7 +47,7 @@ import {
   questionFlags,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
-import { protectedProcedure, router } from "../_core/trpc";
+import { assessmentProcedure as protectedProcedure, router } from "../_core/trpc";
 import {
   computeCapabilityScores,
   computeOverallScore,

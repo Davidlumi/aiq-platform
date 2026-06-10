@@ -62,7 +62,7 @@ function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
 }
 
 function makeCtx(user: AuthenticatedUser = makeUser()): TrpcContext {
-  return { user, req: {} as any, res: {} as any };
+  return { user, req: {} as any, res: {} as any, entitlements: { strategyCompany: true, strategyReward: true, assessment: true } };
 }
 
 /**
