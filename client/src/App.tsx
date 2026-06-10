@@ -248,6 +248,110 @@ function ProtectedRouteFullscreen({
   return <Component />;
 }
 
+/**
+ * AssessmentRoute — blocks tenants without assessment entitlement (Decision 4.7).
+ * Redirects to /dashboard if assessment entitlement is absent.
+ */
+function AssessmentRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+  if (!user) return <Redirect to="/login" />;
+  const entitlements = (user as any)?.entitlements as {
+    strategyCompany?: boolean;
+    strategyReward?: boolean;
+    assessment?: boolean;
+  } | undefined;
+  if (!entitlements?.assessment) {
+    return <Redirect to="/dashboard" />;
+  }
+  return (
+    <AppShell>
+      <Component />
+    </AppShell>
+  );
+}
+
+/**
+ * KnowledgeRoute — blocks tenants without any strategy entitlement (Decision 4.7).
+ * Knowledge (modules + coach) requires strategyCompany OR strategyReward.
+ * Redirects to /dashboard if neither is set.
+ */
+function KnowledgeRoute({
+  component: Component,
+  fullscreen = false,
+}: {
+  component: React.ComponentType;
+  fullscreen?: boolean;
+}) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+  if (!user) return <Redirect to="/login" />;
+  const entitlements = (user as any)?.entitlements as {
+    strategyCompany?: boolean;
+    strategyReward?: boolean;
+    assessment?: boolean;
+  } | undefined;
+  const hasKnowledge = entitlements?.strategyCompany || entitlements?.strategyReward;
+  if (!hasKnowledge) {
+    return <Redirect to="/dashboard" />;
+  }
+  if (fullscreen) return <Component />;
+  return (
+    <AppShell>
+      <Component />
+    </AppShell>
+  );
+}
+
+/**
+ * PeopleRoute — blocks tenants without strategyCompany entitlement (Decision 6).
+ * /people is a CPO-tier feature; reward-only and assessment-only tenants are redirected.
+ */
+function PeopleRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+  if (!user) return <Redirect to="/login" />;
+  const entitlements = (user as any)?.entitlements as {
+    strategyCompany?: boolean;
+    strategyReward?: boolean;
+    assessment?: boolean;
+  } | undefined;
+  if (!entitlements?.strategyCompany) {
+    return <Redirect to="/dashboard" />;
+  }
+  return (
+    <AppShell>
+      <Component />
+    </AppShell>
+  );
+}
+
 /** Scroll to top on route change */
 function ScrollToTop() {
   const [location] = useLocation();
@@ -278,13 +382,13 @@ function Router() {
 
       {/* Protected routes */}
       <Route path="/coach">
-        <ProtectedRouteFullscreen component={CoachPage} />
+        <KnowledgeRoute component={CoachPage} fullscreen />
       </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={RoleDashboard} />
       </Route>
       <Route path="/assessment">
-        <ProtectedRoute component={AssessmentPage} />
+        <AssessmentRoute component={AssessmentPage} />
       </Route>
       <Route path="/assessment/results">
         <ProtectedRoute component={AssessmentResultsPage} />
@@ -299,7 +403,7 @@ function Router() {
         <ProtectedRoute component={LearningPlanPage} />
       </Route>
       <Route path="/modules">
-        <ProtectedRoute component={ModulesPage} />
+        <KnowledgeRoute component={ModulesPage} />
       </Route>
       {/* Legacy routes — redirect to unified /modules page */}
       <Route path="/library">
@@ -509,10 +613,10 @@ function Router() {
         <ProtectedRoute component={BackOfficePage} />
       </Route>
       <Route path="/people/:userId">
-        <ProtectedRoute component={MemberReportPage} />
+        <PeopleRoute component={MemberReportPage} />
       </Route>
       <Route path="/people">
-        <ProtectedRoute component={PeopleReportsPage} />
+        <PeopleRoute component={PeopleReportsPage} />
       </Route>
       {/* Marketing pages - public */}
       <Route path="/how-it-works" component={HowItWorksPage} />
