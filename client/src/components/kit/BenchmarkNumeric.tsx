@@ -14,6 +14,8 @@
  *   "benchmark_default" — value is the sector benchmark (pre-filled or accepted)
  *   "self_declared"     — value was typed by the user without benchmark guidance
  *   "user_provided"     — user explicitly overrode the benchmark
+ *
+ * Visual layer: AiQ Design System v1.4 tokens (no hardcoded hex values).
  */
 
 import { cn } from "@/lib/utils";
@@ -74,28 +76,53 @@ export function BenchmarkNumeric({
     onBasisChange?.("benchmark_default");
   };
 
+  // Basis badge using AiQ token-based chip styles
   const basisBadge = () => {
     if (!basis) return null;
     if (basis === "benchmark_default") {
       return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-sky-600 dark:text-sky-400">
-          <TrendingUp className="w-2.5 h-2.5" />
+        <span
+          className="aiq-chip"
+          style={{
+            background: "var(--aiq-basis-benchmark-fill)",
+            borderColor: "var(--aiq-basis-benchmark-border)",
+            color: "var(--aiq-basis-benchmark-text)",
+            fontSize: "11px",
+          }}
+        >
+          <TrendingUp style={{ width: "10px", height: "10px" }} />
           Sector benchmark
         </span>
       );
     }
     if (basis === "user_provided") {
       return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-          <PenLine className="w-2.5 h-2.5" />
+        <span
+          className="aiq-chip"
+          style={{
+            background: "var(--aiq-basis-owned-fill)",
+            borderColor: "var(--aiq-basis-owned-border)",
+            color: "var(--aiq-basis-owned-text)",
+            fontSize: "11px",
+          }}
+        >
+          <PenLine style={{ width: "10px", height: "10px" }} />
           Your figure
         </span>
       );
     }
     if (basis === "self_declared") {
       return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-          <CheckCircle2 className="w-2.5 h-2.5" />
+        <span
+          className="aiq-chip"
+          style={{
+            background: "var(--aiq-basis-drafted-fill)",
+            borderColor: "var(--aiq-basis-drafted-border)",
+            color: "var(--aiq-basis-drafted-text)",
+            fontSize: "11px",
+          }}
+        >
+          <CheckCircle2 style={{ width: "10px", height: "10px" }} />
           Self-declared
         </span>
       );
@@ -103,11 +130,32 @@ export function BenchmarkNumeric({
     return null;
   };
 
+  // Input border/bg override for provenance state
+  const inputStyle: React.CSSProperties = {
+    width: "112px",
+    height: "36px",
+    textAlign: "right",
+    fontVariantNumeric: "tabular-nums",
+    fontFamily: "var(--aiq-font)",
+    ...(basis === "benchmark_default"
+      ? {
+          borderColor: "var(--aiq-basis-benchmark-border)",
+          background: "var(--aiq-basis-benchmark-fill)",
+        }
+      : basis === "user_provided"
+      ? {
+          borderColor: "var(--aiq-basis-owned-border)",
+          background: "var(--aiq-surface)",
+        }
+      : {}),
+    ...(disabled ? { opacity: 0.5, cursor: "not-allowed" } : {}),
+  };
+
   return (
     <div className={cn("space-y-1.5", className)}>
       <div className="flex items-center gap-2">
-        {/* Numeric input */}
-        <div className="relative flex items-center">
+        {/* Numeric input using .aiq-field */}
+        <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
           <input
             type="number"
             value={value ?? ""}
@@ -120,41 +168,52 @@ export function BenchmarkNumeric({
             max={max}
             step={step}
             disabled={disabled}
-            className={cn(
-              "w-28 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm",
-              "text-right font-mono tabular-nums",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-              "transition-colors",
-              basis === "benchmark_default" && "border-sky-400/60 bg-sky-50/40 dark:bg-sky-900/20",
-              basis === "user_provided" && "border-emerald-400/60",
-              disabled && "opacity-50 cursor-not-allowed",
-            )}
+            className="aiq-field"
+            style={inputStyle}
           />
           {unit && (
-            <span className="ml-1.5 text-sm text-muted-foreground whitespace-nowrap">{unit}</span>
+            <span
+              style={{
+                marginLeft: "6px",
+                fontSize: "13px",
+                color: "var(--aiq-text-muted)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {unit}
+            </span>
           )}
         </div>
 
-        {/* Use benchmark button */}
+        {/* Use benchmark button using .aiq-btn */}
         {hasBenchmark && (
           <button
             type="button"
             disabled={disabled || basis === "benchmark_default"}
             onClick={handleUseBenchmark}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border",
-              "transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              basis === "benchmark_default"
-                ? "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-300/60 cursor-default"
-                : "bg-background text-foreground border-border hover:border-sky-400/60 hover:bg-sky-50/40 dark:hover:bg-sky-900/20",
-              (disabled || basis === "benchmark_default") && "opacity-60 hover:scale-100",
-            )}
+            className="aiq-btn"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              fontSize: "12px",
+              ...(basis === "benchmark_default"
+                ? {
+                    background: "var(--aiq-basis-benchmark-fill)",
+                    borderColor: "var(--aiq-basis-benchmark-border)",
+                    color: "var(--aiq-basis-benchmark-text)",
+                    cursor: "default",
+                    opacity: 0.8,
+                  }
+                : {}),
+              ...((disabled || basis === "benchmark_default") ? { opacity: 0.6 } : {}),
+            }}
           >
-            <TrendingUp className="w-3 h-3" />
+            <TrendingUp style={{ width: "12px", height: "12px" }} />
             Use benchmark
             {hasBenchmark && (
-              <span className="font-mono tabular-nums text-[11px] opacity-70">
+              <span style={{ fontVariantNumeric: "tabular-nums", fontSize: "11px", opacity: 0.7 }}>
                 ({benchmark}{unit ? ` ${unit}` : ""})
               </span>
             )}
@@ -166,7 +225,7 @@ export function BenchmarkNumeric({
       <div className="flex items-center justify-between px-0.5">
         <div>{basisBadge()}</div>
         {hasBenchmark && benchmarkSource && (
-          <p className="text-[10px] text-muted-foreground">
+          <p style={{ fontSize: "11px", color: "var(--aiq-text-muted)" }}>
             Benchmark: {benchmarkSource}
           </p>
         )}

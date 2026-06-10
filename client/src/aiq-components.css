@@ -1,0 +1,259 @@
+/* ============================================================
+   AiQ Component Kit · v1.0
+   Coded components built on aiq-tokens.css (v1.3+).
+   IMPORT this — do not re-implement components from the bible.
+   The bible (§9, §12) documents WHEN to use each; this file IS
+   the component. Requires aiq-tokens.css loaded first.
+   Component-internal colour constants (deliberate, documented —
+   not strays): hover tint #F7FAFD, info-notice border #BBD8F5,
+   skeleton greys #ECEEF1/#F5F6F8, toast link #8FC1F5 (8.95:1 on
+   ink, measured). Promote to tokens only if a second component
+   needs them. Wrap the app (or body) in class="aiq".
+   ============================================================ */
+
+/* ---------- Base ---------- */
+.aiq * { box-sizing: border-box; }
+.aiq {
+  font-family: var(--aiq-font);
+  color: var(--aiq-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Link ---------- */
+.aiq-link { color: var(--aiq-accent); text-decoration: none; }
+.aiq-link:hover, .aiq-link:focus-visible { text-decoration: underline; }
+.aiq-link:focus-visible { outline: none; box-shadow: var(--aiq-focus-ring); border-radius: 3px; }
+
+/* ---------- Buttons ---------- */
+.aiq-btn {
+  font-family: inherit; font-size: 14px; font-weight: 500;
+  border-radius: var(--aiq-radius-md); padding: 10px 20px;
+  border: 0.5px solid var(--aiq-border-strong);
+  background: var(--aiq-surface); color: var(--aiq-text);
+  cursor: pointer; transition: background var(--aiq-dur-fast) var(--aiq-ease);
+}
+.aiq-btn:hover { background: var(--aiq-sunken); }
+.aiq-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(29,111,208,0.45); }
+.aiq-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.aiq-btn--primary { background: var(--aiq-accent); border-color: var(--aiq-accent); color: #fff; }
+.aiq-btn--primary:hover { background: var(--aiq-accent-text); }
+.aiq-btn--ghost { background: transparent; border-color: transparent; color: var(--aiq-text-muted); }
+.aiq-btn--ghost:hover { background: var(--aiq-sunken); }
+.aiq-btn--danger { background: var(--aiq-danger-text); border-color: var(--aiq-danger-text); color: #fff; }
+/* Rule: one primary per view. Disabled buttons MUST pair with a
+   visible .aiq-hint explaining why (never a silent dead button). */
+.aiq-hint { font-size: 13px; color: var(--aiq-text-muted); }
+
+/* ---------- Fields ---------- */
+.aiq-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 5px; }
+.aiq-label .req { color: var(--aiq-text-muted); font-weight: 400; }
+.aiq-field {
+  width: 100%; font-family: inherit; font-size: 14px; color: var(--aiq-text);
+  border: 0.5px solid var(--aiq-border-strong); border-radius: var(--aiq-radius-lg);
+  padding: 11px 13px; background: var(--aiq-surface);
+}
+.aiq-field::placeholder { color: var(--aiq-text-faint); }
+.aiq-field:focus, .aiq-field:focus-visible { outline: none; border-color: var(--aiq-accent); box-shadow: var(--aiq-focus-ring); }
+.aiq-field--error { border-color: var(--aiq-danger-border); box-shadow: 0 0 0 3px rgba(226,75,74,0.10); }
+.aiq-field-error { font-size: 12.5px; color: var(--aiq-danger-text); margin-top: 5px; }
+.aiq-field-help { font-size: 12.5px; color: var(--aiq-text-muted); margin-top: 5px; }
+
+/* ---------- Choice tile ---------- */
+.aiq-choice {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  font-family: inherit; font-size: 15px; color: var(--aiq-text); cursor: pointer;
+  border: 0.5px solid var(--aiq-border-strong); border-radius: var(--aiq-radius-lg);
+  padding: 14px 16px; background: var(--aiq-surface);
+  transition: all var(--aiq-dur-fast) var(--aiq-ease);
+}
+.aiq-choice:hover { border-color: var(--aiq-accent); background: #F7FAFD; }
+.aiq-choice:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(29,111,208,0.45); }
+.aiq-choice--selected {
+  border-color: var(--aiq-accent); background: var(--aiq-accent-fill);
+  color: var(--aiq-accent-text); box-shadow: 0 0 0 1px var(--aiq-accent);
+}
+.aiq-choice--multi.aiq-choice--selected::after { content: "\2713"; margin-left: auto; font-weight: 600; }
+
+/* ---------- Chips ---------- */
+.aiq-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; padding: 4px 11px; border-radius: var(--aiq-radius-md);
+  background: var(--aiq-sunken); color: var(--aiq-text-muted);
+  border: 0.5px solid rgba(26,29,33,0.08);
+  /* The hairline makes every chip surface-independent: imperceptible on
+     white, it keeps chips defined on sunken/tinted surfaces where the
+     pale fills otherwise merge with the background (visual-audit fix). */
+}
+.aiq-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+.aiq-chip--ai { background: var(--aiq-ai-fill); color: var(--aiq-ai-text); }
+.aiq-chip--wf { background: var(--aiq-wf-fill); color: var(--aiq-wf-text); }
+.aiq-chip--ch { background: var(--aiq-ch-fill); color: var(--aiq-ch-text); }
+.aiq-chip--oe { background: var(--aiq-oe-fill); color: var(--aiq-oe-text); }
+.aiq-chip--et { background: var(--aiq-et-fill); color: var(--aiq-et-text); }
+.aiq-chip--wd { background: var(--aiq-wd-fill); color: var(--aiq-wd-text); }
+.aiq-chip--warn { background: var(--aiq-warn-fill); color: var(--aiq-warn-text); }
+.aiq-chip--ok { background: var(--aiq-ok-fill); color: var(--aiq-ok-text); }
+.aiq-chip--danger { background: var(--aiq-danger-fill); color: var(--aiq-danger-text); }
+
+/* ---------- Icon & domain tile ---------- */
+.aiq-icon { width: 18px; height: 18px; stroke: currentColor; fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.aiq-icon--sm { width: 15px; height: 15px; }
+.aiq-icon--lg { width: 22px; height: 22px; }
+.aiq-domtile { display: inline-flex; width: 40px; height: 40px; border-radius: 10px;
+  align-items: center; justify-content: center; }
+/* Usage: <span class="aiq-domtile" style="background:var(--aiq-ai-fill);color:var(--aiq-ai-text)">
+   <svg class="aiq-icon aiq-icon--lg"><use href="#i-..."/></svg></span>
+   Reserved icons (lock/sparkles/warning) keep their fixed meanings — see bible §8. */
+
+/* ---------- Notices ---------- */
+.aiq-notice {
+  display: flex; gap: 9px; align-items: flex-start;
+  border-radius: var(--aiq-radius-md); padding: 11px 14px;
+  font-size: 13px; border: 0.5px solid;
+}
+.aiq-notice--warn { background: var(--aiq-warn-fill); border-color: var(--aiq-warn-border); color: var(--aiq-warn-text); }
+.aiq-notice--ok { background: var(--aiq-ok-fill); border-color: var(--aiq-ok-border); color: var(--aiq-ok-text); }
+.aiq-notice--danger { background: var(--aiq-danger-fill); border-color: var(--aiq-danger-border); color: var(--aiq-danger-text); }
+.aiq-notice--info { background: var(--aiq-accent-fill); border-color: #BBD8F5; color: var(--aiq-accent-text); }
+
+/* ---------- Cards & metrics ---------- */
+.aiq-card {
+  background: var(--aiq-surface); border-radius: 16px;
+  box-shadow: var(--aiq-shadow-card); padding: 1.4rem 1.5rem;
+  /* v1.4 elevation direction (approved): cards are softly elevated.
+     Use .aiq-card--flat for print contexts and dense table surrounds. */
+}
+.aiq-card--flat { box-shadow: none; border: 0.5px solid var(--aiq-border); border-radius: var(--aiq-radius-xl); }
+.aiq-metric { background: var(--aiq-sunken); border-radius: var(--aiq-radius-md); padding: 13px 15px; }
+.aiq-metric .label { font-size: 12px; color: var(--aiq-text-muted); margin: 0; }
+.aiq-metric .value { font-size: 24px; font-weight: 600; margin: 3px 0 0; font-variant-numeric: tabular-nums; }
+
+/* ---------- Table ---------- */
+.aiq-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  background: var(--aiq-surface); border: 0.5px solid var(--aiq-border);
+  border-radius: var(--aiq-radius-md); overflow: hidden;
+}
+.aiq-table th {
+  text-align: left; background: var(--aiq-sunken);
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--aiq-text-muted); font-weight: 600;
+  padding: 10px 12px; border-bottom: 0.5px solid var(--aiq-border-strong);
+}
+.aiq-table td { padding: 11px 12px; border-bottom: 0.5px solid var(--aiq-border); }
+.aiq-table tr:last-child td { border-bottom: none; }
+.aiq-table tr:hover td { background: #F7FAFD; }
+.aiq-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Progress & bars ---------- */
+.aiq-progress { display: flex; align-items: center; gap: 12px; }
+.aiq-progress .steplabel { font-size: 12px; font-weight: 600; color: var(--aiq-accent); white-space: nowrap; }
+.aiq-track { flex: 1; height: 6px; background: var(--aiq-track); border-radius: 3px; overflow: hidden; }
+.aiq-track .fill { height: 100%; background: var(--aiq-accent); border-radius: 3px; transition: width var(--aiq-dur-slow) var(--aiq-ease); }
+.aiq-bar-track { height: 8px; background: var(--aiq-track); border-radius: 4px; overflow: hidden; }
+.aiq-bar-fill { height: 100%; border-radius: 4px; transition: width var(--aiq-dur-slow) var(--aiq-ease); }
+
+/* ---------- Skeleton ---------- */
+.aiq-skeleton {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #ECEEF1 25%, #F5F6F8 50%, #ECEEF1 75%);
+  background-size: 200% 100%;
+  animation: aiq-shimmer 1.1s infinite;
+}
+@keyframes aiq-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ---------- Modal ---------- */
+.aiq-scrim {
+  position: fixed; inset: 0; background: var(--aiq-scrim);
+  z-index: var(--aiq-z-modal); display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.aiq-modal {
+  background: var(--aiq-surface); border-radius: var(--aiq-radius-xl);
+  box-shadow: var(--aiq-shadow-overlay); padding: 1.5rem 1.6rem; max-width: 420px; width: 100%;
+}
+.aiq-modal .title { font-size: 16px; font-weight: 600; margin: 0 0 5px; }
+.aiq-modal .body { font-size: 13.5px; color: var(--aiq-text-muted); margin: 0 0 16px; }
+.aiq-modal .actions { display: flex; gap: 8px; justify-content: flex-end; }
+/* Rule: destructive confirmations use verb labels ("Delete risk"), never yes/no. */
+
+/* ---------- Toast ---------- */
+.aiq-toast {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--aiq-text); color: #fff;
+  border-radius: var(--aiq-radius-md); padding: 11px 15px; font-size: 13px;
+  box-shadow: var(--aiq-shadow-overlay); z-index: var(--aiq-z-toast);
+}
+.aiq-toast .aiq-link, .aiq-toast a { color: #8FC1F5; }
+
+/* ---------- Tabs ---------- */
+.aiq-tabs { display: flex; gap: 20px; border-bottom: 0.5px solid var(--aiq-border); }
+.aiq-tab {
+  font-family: inherit; font-size: 13.5px; background: none; border: none; cursor: pointer;
+  padding: 9px 2px; color: var(--aiq-text-muted); border-bottom: 2px solid transparent;
+}
+.aiq-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(29,111,208,0.45); border-radius: 4px; }
+.aiq-tab--active { color: var(--aiq-accent-text); font-weight: 500; border-bottom-color: var(--aiq-accent); }
+
+/* ---------- Pagination ---------- */
+.aiq-pagination { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+.aiq-pagination .count { color: var(--aiq-text-muted); }
+.aiq-page { font-family: inherit; font-size: 13px; padding: 6px 11px; border-radius: var(--aiq-radius-md);
+  border: 0.5px solid var(--aiq-border-strong); background: var(--aiq-surface); cursor: pointer; }
+.aiq-page--current { background: var(--aiq-accent); border-color: var(--aiq-accent); color: #fff; }
+
+/* ---------- Tooltip ---------- */
+.aiq-tip-trigger {
+  display: inline-flex; width: 17px; height: 17px; border-radius: 50%;
+  background: var(--aiq-sunken); color: var(--aiq-text-muted);
+  border: 0.5px solid var(--aiq-border-strong);
+  font-size: 11px; align-items: center; justify-content: center; cursor: help;
+}
+.aiq-tooltip {
+  background: var(--aiq-text); color: #fff; font-size: 12px; line-height: 1.5;
+  padding: 8px 11px; border-radius: 7px; max-width: 260px;
+  box-shadow: var(--aiq-shadow-overlay); z-index: var(--aiq-z-popover);
+}
+
+/* ---------- Menu ---------- */
+.aiq-menu {
+  background: var(--aiq-surface); border: 0.5px solid var(--aiq-border);
+  border-radius: var(--aiq-radius-md); box-shadow: var(--aiq-shadow-overlay);
+  padding: 5px; min-width: 170px; z-index: var(--aiq-z-popover);
+}
+.aiq-menu-item {
+  display: block; width: 100%; text-align: left; font-family: inherit;
+  padding: 8px 11px; font-size: 13px; border: none; background: none;
+  border-radius: 6px; cursor: pointer; color: var(--aiq-text);
+}
+.aiq-menu-item:hover, .aiq-menu-item:focus-visible { background: var(--aiq-sunken); outline: none; }
+.aiq-menu-item--danger { color: var(--aiq-danger-text); }
+.aiq-menu-divider { height: 0.5px; background: var(--aiq-border); margin: 4px 6px; }
+
+/* ---------- Breadcrumbs & avatar ---------- */
+.aiq-crumbs { font-size: 12.5px; color: var(--aiq-text-muted); }
+.aiq-crumbs .sep { color: var(--aiq-text-faint); margin: 0 5px; }
+.aiq-crumbs .current { color: var(--aiq-text); font-weight: 500; }
+.aiq-avatar {
+  display: inline-flex; width: 28px; height: 28px; border-radius: 50%;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+  background: var(--aiq-accent-fill); color: var(--aiq-accent-text);
+}
+
+/* ---------- Divider ---------- */
+.aiq-divider { height: 0.5px; background: var(--aiq-border); border: none; margin: 16px 0; }
+
+/* ---------- Empty state ---------- */
+.aiq-empty { text-align: center; padding: 28px 18px; }
+.aiq-empty .icon { margin: 0 auto 10px; width: 42px; height: 42px; border-radius: 10px;
+  background: var(--aiq-accent-fill); color: var(--aiq-accent-text);
+  display: flex; align-items: center; justify-content: center; }
+.aiq-empty .title { font-size: 14px; font-weight: 500; }
+.aiq-empty .sub { font-size: 12.5px; color: var(--aiq-text-muted); margin: 3px 0 13px; }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .aiq *, .aiq-skeleton, .aiq-track .fill, .aiq-bar-fill { animation: none !important; transition: none !important; }
+}

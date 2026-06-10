@@ -16,11 +16,12 @@
  *
  * The `basis` prop / `onBasisChange` callback surfaces the provenance to the
  * parent so it can be persisted alongside the text value.
+ *
+ * Visual layer: AiQ Design System v1.4 tokens (no hardcoded hex values).
  */
 
 import { useState, useRef } from "react";
 import { Loader2, Sparkles, Undo2, CheckCircle2, PenLine } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 export type KeywordExpandBasis = "empty" | "ai_drafted" | "owned";
@@ -116,19 +117,36 @@ export function KeywordExpand({
     }
   };
 
+  // Basis badge using AiQ token-based chip styles
   const basisBadge = () => {
     if (isDrafted) {
       return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary/80">
-          <Sparkles className="w-2.5 h-2.5" />
+        <span
+          className="aiq-chip"
+          style={{
+            background: "var(--aiq-basis-drafted-fill)",
+            borderColor: "var(--aiq-basis-drafted-border)",
+            color: "var(--aiq-basis-drafted-text)",
+            fontSize: "11px",
+          }}
+        >
+          <Sparkles style={{ width: "10px", height: "10px" }} />
           AI draft — edit to own
         </span>
       );
     }
     if (isOwned) {
       return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 className="w-2.5 h-2.5" />
+        <span
+          className="aiq-chip"
+          style={{
+            background: "var(--aiq-basis-owned-fill)",
+            borderColor: "var(--aiq-basis-owned-border)",
+            color: "var(--aiq-basis-owned-text)",
+            fontSize: "11px",
+          }}
+        >
+          <CheckCircle2 style={{ width: "10px", height: "10px" }} />
           Owned
         </span>
       );
@@ -136,44 +154,69 @@ export function KeywordExpand({
     return null;
   };
 
+  // Textarea border/bg override for provenance state
+  const textareaStyle: React.CSSProperties = isDrafted
+    ? {
+        borderColor: "var(--aiq-basis-drafted-border)",
+        background: "var(--aiq-basis-drafted-fill)",
+      }
+    : isOwned
+    ? {
+        borderColor: "var(--aiq-basis-owned-border)",
+        background: "var(--aiq-surface)",
+      }
+    : {};
+
   return (
     <div className={cn("space-y-1.5", className)}>
       <div className="relative">
-        <Textarea
+        {/* Native textarea styled with .aiq-field */}
+        <textarea
           value={value}
           onChange={e => handleChange(e.target.value)}
           placeholder={isEmpty ? keywordPlaceholder : placeholder}
           maxLength={maxLength}
           rows={minRows}
           disabled={disabled || pending}
-          className={cn(
-            "pr-20 pb-9 resize-none transition-colors",
-            isDrafted && "border-primary/40 bg-primary/5",
-            isOwned && "border-emerald-500/30",
-          )}
+          className="aiq-field"
+          style={{
+            resize: "none",
+            paddingRight: "5.5rem",
+            paddingBottom: "2.25rem",
+            transition: "border-color var(--aiq-dur-fast) var(--aiq-ease), background var(--aiq-dur-fast) var(--aiq-ease)",
+            ...textareaStyle,
+          }}
         />
 
-        {/* AI button — bottom-right */}
+        {/* AI button — bottom-right, uses .aiq-btn */}
         <button
           type="button"
           disabled={disabled || pending}
           onClick={handleAiClick}
-          className={cn(
-            "absolute bottom-2 right-2 flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold",
-            "transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            isDrafted
-              ? "bg-primary/20 text-primary border border-primary/40"
-              : "bg-primary text-primary-foreground",
-            (disabled || pending) && "opacity-50 cursor-not-allowed hover:scale-100",
-          )}
+          className={cn("aiq-btn", isDrafted ? "" : "aiq-btn--primary")}
+          style={{
+            position: "absolute",
+            bottom: "8px",
+            right: "8px",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "4px 10px",
+            fontSize: "12px",
+            fontWeight: 600,
+            ...(isDrafted
+              ? {
+                  background: "var(--aiq-basis-drafted-fill)",
+                  borderColor: "var(--aiq-basis-drafted-border)",
+                  color: "var(--aiq-basis-drafted-text)",
+                }
+              : {}),
+          }}
         >
           {pending ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : isDrafted ? (
-            <Sparkles className="w-3 h-3" />
+            <Loader2 style={{ width: "12px", height: "12px" }} className="animate-spin" />
           ) : (
-            <Sparkles className="w-3 h-3" />
+            <Sparkles style={{ width: "12px", height: "12px" }} />
           )}
           {isDrafted ? regenLabel : aiLabel}
         </button>
@@ -184,16 +227,37 @@ export function KeywordExpand({
             type="button"
             onClick={handleUndo}
             title="Undo AI draft"
-            className="absolute bottom-2 right-[4.5rem] flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="aiq-btn aiq-btn--ghost"
+            style={{
+              position: "absolute",
+              bottom: "8px",
+              right: "72px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 8px",
+              fontSize: "12px",
+            }}
           >
-            <Undo2 className="w-3 h-3" />
+            <Undo2 style={{ width: "12px", height: "12px" }} />
           </button>
         )}
 
         {/* Owned indicator — bottom-left */}
         {isOwned && (
-          <span className="absolute bottom-2 left-2.5 flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
-            <PenLine className="w-2.5 h-2.5" />
+          <span
+            style={{
+              position: "absolute",
+              bottom: "10px",
+              left: "10px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "11px",
+              color: "var(--aiq-basis-owned-text)",
+            }}
+          >
+            <PenLine style={{ width: "10px", height: "10px" }} />
             Owned
           </span>
         )}
@@ -203,13 +267,20 @@ export function KeywordExpand({
       <div className="flex items-center justify-between px-0.5">
         <div>{basisBadge()}</div>
         {maxLength && (
-          <p className={cn("text-xs text-muted-foreground", value.length >= maxLength && "text-destructive")}>
+          <p
+            style={{
+              fontSize: "12px",
+              color: value.length >= maxLength ? "var(--aiq-danger-text)" : "var(--aiq-text-muted)",
+            }}
+          >
             {value.length}/{maxLength}
           </p>
         )}
       </div>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p className="aiq-field-error">{error}</p>
+      )}
     </div>
   );
 }

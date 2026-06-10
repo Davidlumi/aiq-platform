@@ -1,0 +1,146 @@
+/* ============================================================
+   AiQ Design Tokens · v1.4
+   v1.4 (10 Jun 2026, approved DH): typeface decision MADE — IBM Plex Sans
+   (400/500/600; self-host in production, ~90KB total, inside budget).
+   Elevation direction approved: --aiq-shadow-card (resting cards) and
+   --aiq-shadow-lift (hero panels, hover) join the system; cards move from
+   border-only to soft elevation. Hairline borders remain for tables,
+   fields, print, and .aiq-card--flat.
+   v1.3: COLOUR AUDIT — six domain text-safe variants darkened to pass
+   AA on their pale fills as well as white (chips were 3.97–4.18 on
+   fill): ai 4.56/5.13, wf 4.55/5.18, ch 4.53/5.12, oe 4.54/4.91,
+   et 4.55/5.15, wd 4.50/4.95 (on-fill/on-white). Added --aiq-track
+   (replaces stray warm grey #F1EFE8).
+   v1.2: added z-index scale (external audit — layering rules were
+   missing once overlays existed).
+   v1.1: added overlay shadow + scrim (elevation rule amended for
+   overlays), motion durations/easing, breakpoint reference.
+   Single source of truth for the AiQ reskin.
+   Light mode only (by product decision — see notes at end).
+   Every colour pairing verified against WCAG 2.1 AA.
+   RULE: never hardcode a hex value in a component. Reference
+   a token. If a needed value isn't here, add it here first.
+   ============================================================ */
+
+:root {
+  /* ---- Surfaces ---- */
+  --aiq-page:            #F4F5F7;  /* app background            */
+  --aiq-surface:         #FFFFFF;  /* cards, panels             */
+  --aiq-sunken:          #F7F8FA;  /* wells, metric backgrounds */
+
+  /* ---- Text (ratio = contrast on white) ---- */
+  --aiq-text:            #1A1D21;  /* primary        16.9:1     */
+  --aiq-text-muted:      #5B626B;  /* secondary       5.7:1     */
+  --aiq-text-faint:      #8B919A;  /* large/UI only   3.1:1     */
+
+  /* ---- Borders ---- */
+  --aiq-border:          #E4E7EB;  /* default hairline          */
+  --aiq-border-strong:   #D7DCE3;  /* inputs, emphasis          */
+
+  /* ---- Accent (single brand accent) ---- */
+  --aiq-accent:          #1D6FD0;  /* 4.5:1 on white            */
+  --aiq-accent-fill:     #E6F1FB;  /* tinted background         */
+  --aiq-accent-text:     #0C447C;  /* text on accent-fill       */
+
+  /* ---- Semantic — fill / border / text triples (STATUS ONLY) ---- */
+  --aiq-warn-fill:       #FEF6E7;
+  --aiq-warn-border:     #F5C97A;
+  --aiq-warn-text:       #854F0B;   /* 9.3:1 on its fill */
+  --aiq-ok-fill:         #EAF7EE;
+  --aiq-ok-border:       #A6DDB9;
+  --aiq-ok-text:         #176034;   /* 6.9:1 on its fill */
+  --aiq-danger-fill:     #FCEBEB;
+  --aiq-danger-border:   #F09595;
+  --aiq-danger-text:     #A32D2D;   /* 6.4:1 on its fill */
+
+  /* ---- Six-domain palette ----
+     LOCKED = dots, chart fills, large blocks (do not alter).
+     TEXT   = use whenever colour carries a word (AA ≥4.5 on white).
+     FILL   = chip / tag backgrounds.                              */
+  --aiq-ai:        #3B82F6;  --aiq-ai-text:   #316BCB;  --aiq-ai-fill:   #EBF2FE;  /* AI interaction    */
+  --aiq-wf:        #F43F5E;  --aiq-wf-text:   #C8344D;  --aiq-wf-fill:   #FEECEF;  /* Workforce         */
+  --aiq-ch:        #6366F1;  --aiq-ch-text:   #5B5EDE;  --aiq-ch-fill:   #EFF0FE;  /* Change leadership */
+  --aiq-oe:        #F59E0B;  --aiq-oe-text:   #9C6507;  --aiq-oe-fill:   #FEF5E7;  /* Output evaluation */
+  --aiq-et:        #A855F7;  --aiq-et-text:   #9049D3;  --aiq-et-fill:   #F6EEFE;  /* Ethics            */
+  --aiq-wd:        #10B981;  --aiq-wd-text:   #0B8059;  --aiq-wd-fill:   #E7F8F2;  /* Workflow design   */
+
+  /* ---- Chart ramps ---- */
+  /* Series order (categorical, non-domain): use in this sequence, stop at N */
+  /* 1 #3B82F6  2 #F59E0B  3 #10B981  4 #A855F7  5 #F43F5E  6 #6366F1 */
+  --aiq-seq-1: #E6F1FB; --aiq-seq-2: #B5D4F4; --aiq-seq-3: #85B7EB;
+  --aiq-seq-4: #378ADD; --aiq-seq-5: #185FA5; --aiq-seq-6: #0C447C;   /* sequential, low→high */
+  --aiq-div-1: #A32D2D; --aiq-div-2: #E24B4A; --aiq-div-3: #F59E0B;
+  --aiq-div-4: #639922; --aiq-div-5: #176034;                         /* diverging, bad→good  */
+
+  /* ---- Radii ---- */
+  --aiq-radius-md:  8px;
+  --aiq-radius-lg:  12px;
+  --aiq-radius-xl:  16px;   /* cards */
+
+  /* ---- Elevation ---- */
+  /* Flat by default: cards use the hairline border, NOT shadow.    */
+  /* Two exceptions only: the focus ring, and OVERLAYS (modals,     */
+  /* popovers) which need depth to read as above the page.          */
+  --aiq-focus-ring: 0 0 0 4px rgba(29,111,208,0.16);
+  --aiq-shadow-card: 0 1px 2px rgba(16,24,40,0.04), 0 8px 24px -8px rgba(16,24,40,0.08);
+  --aiq-shadow-lift: 0 2px 4px rgba(16,24,40,0.05), 0 16px 32px -12px rgba(16,24,40,0.12);
+  --aiq-shadow-overlay: 0 8px 30px rgba(16,20,26,0.16);
+  --aiq-scrim: rgba(16,20,26,0.45);
+
+  /* ---- Track (bar/progress backgrounds on white) ---- */
+  --aiq-track: #EDEFF2;
+
+  /* ---- Z-index scale (layering) ---- */
+  /* Content 0 · sticky chrome 10 · dropdown/tooltip 50 ·          */
+  /* modal+scrim 100 · toast 200 (toasts outlive modals).          */
+  --aiq-z-sticky: 10;
+  --aiq-z-popover: 50;
+  --aiq-z-modal: 100;
+  --aiq-z-toast: 200;
+
+  /* ---- Motion ---- */
+  --aiq-dur-fast: 120ms;   /* hovers, toggles            */
+  --aiq-dur-base: 200ms;   /* reveals, selection         */
+  --aiq-dur-slow: 400ms;   /* bars filling, panel slides */
+  --aiq-ease: cubic-bezier(0.2, 0, 0, 1);
+  /* Respect prefers-reduced-motion: transitions drop to 0ms.       */
+
+  /* ---- Breakpoints (reference) ---- */
+  /* 560px: option grids collapse to 1-col · 880px: nav collapses   */
+  /* 1180px: max content width                                      */
+
+  /* ---- Type ---- */
+  --aiq-font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Sizes (px): question 26 · heading 20 · body 16 · subtitle 15 · input 24 · label 13 */
+  /* Weights: 400 regular, 500/600 medium. Never heavier. Sentence case everywhere. */
+
+  /* ---- Provenance / basis states (added per build requirement, v1.4+) ----
+     Mapped to existing measured triples — no new hex values.
+     Changelog: 10 Jun 2026 — added by design-pack adoption (build requirement).
+     empty = default muted treatment, no dedicated tokens needed.
+  */
+  --aiq-basis-drafted-fill:     var(--aiq-warn-fill);        /* ai_drafted */
+  --aiq-basis-drafted-border:   var(--aiq-warn-border);
+  --aiq-basis-drafted-text:     var(--aiq-warn-text);
+  --aiq-basis-owned-fill:       var(--aiq-ok-fill);          /* owned, user_provided */
+  --aiq-basis-owned-border:     var(--aiq-ok-border);
+  --aiq-basis-owned-text:       var(--aiq-ok-text);
+  --aiq-basis-benchmark-fill:   var(--aiq-accent-fill);      /* benchmark_default */
+  --aiq-basis-benchmark-border: var(--aiq-border-strong);
+  --aiq-basis-benchmark-text:   var(--aiq-accent-text);
+}
+
+/* ============================================================
+   NOTES (read before changing anything)
+   - LIGHT MODE ONLY. No dark tokens are defined. Re-adding dark
+     mode is NOT a flip: the six text-safe variants above were
+     derived for light surfaces and would need re-deriving.
+   - The six LOCKED hexes are brand-locked. Companions (text/fill)
+     were computed, not guessed — re-run a contrast check before
+     changing any of them. amber & green darken most for text;
+     their raw hex fails on white (2.2:1 / 2.5:1).
+   - PDF / deck pipeline takes literal hex (no CSS vars). Keep that
+     mapping in sync with these values in the same commit.
+   - Greyscale/mono legibility of the six domains is NOT yet
+     verified — do not claim print/colourblind safety.
+   ============================================================ */

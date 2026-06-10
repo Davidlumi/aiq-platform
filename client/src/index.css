@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./aiq-tokens.css";
+@import "./aiq-components.css";
 @import "tw-animate-css";
 
 /* ─────────────────────────────────────────────────────────────────────────────

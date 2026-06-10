@@ -9,11 +9,12 @@
  *
  * Both variants accept an optional `other` prop that renders a free-text escape hatch
  * when the user selects the "Other" chip.
+ *
+ * Visual layer: AiQ Design System v1.4 tokens (no hardcoded hex values).
+ * Uses .aiq-choice / .aiq-choice--selected / .aiq-choice--multi from aiq-components.css.
  */
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 
 export interface ChipOption {
@@ -51,26 +52,31 @@ export function ChipSelect({
 
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
-      {options.map(opt => (
-        <button
-          key={opt.value}
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(value === opt.value ? null : opt.value)}
-          className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-            "hover:scale-[1.03] active:scale-[0.97]",
-            value === opt.value
-              ? "bg-primary text-primary-foreground border-primary shadow-sm"
-              : "bg-background text-foreground border-border hover:border-primary/60 hover:bg-primary/5",
-            disabled && "opacity-50 cursor-not-allowed hover:scale-100",
-          )}
-        >
-          {opt.icon && <span className="shrink-0">{opt.icon}</span>}
-          {opt.label}
-        </button>
-      ))}
+      {options.map(opt => {
+        const selected = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(selected ? null : opt.value)}
+            className={cn(
+              "aiq-choice",
+              selected && "aiq-choice--selected",
+            )}
+            style={{
+              width: "auto",
+              padding: "6px 14px",
+              borderRadius: "var(--aiq-radius-md)",
+              fontSize: "13px",
+              ...(disabled ? { opacity: 0.5, cursor: "not-allowed" } : {}),
+            }}
+          >
+            {opt.icon && <span style={{ flexShrink: 0 }}>{opt.icon}</span>}
+            {opt.label}
+          </button>
+        );
+      })}
 
       {other && (
         <>
@@ -79,24 +85,28 @@ export function ChipSelect({
             disabled={disabled}
             onClick={() => onChange(isOtherSelected ? null : "__other__")}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150",
-              "hover:scale-[1.03] active:scale-[0.97]",
-              isOtherSelected
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-background text-foreground border-border hover:border-primary/60 hover:bg-primary/5",
-              disabled && "opacity-50 cursor-not-allowed hover:scale-100",
+              "aiq-choice",
+              isOtherSelected && "aiq-choice--selected",
             )}
+            style={{
+              width: "auto",
+              padding: "6px 14px",
+              borderRadius: "var(--aiq-radius-md)",
+              fontSize: "13px",
+              ...(disabled ? { opacity: 0.5, cursor: "not-allowed" } : {}),
+            }}
           >
             Other…
           </button>
           {isOtherSelected && (
-            <Input
+            <input
               autoFocus
               placeholder="Describe…"
               value={otherValue}
               onChange={e => onOtherChange?.(e.target.value)}
-              className="h-8 w-48 text-sm"
+              className="aiq-field"
               disabled={disabled}
+              style={{ height: "34px", width: "192px", padding: "6px 11px", fontSize: "13px" }}
             />
           )}
         </>
@@ -157,20 +167,22 @@ export function ChipMultiSelect({
               disabled={disabled || blocked}
               onClick={() => toggle(opt.value)}
               className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                "hover:scale-[1.03] active:scale-[0.97]",
-                selected
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-background text-foreground border-border hover:border-primary/60 hover:bg-primary/5",
-                (disabled || blocked) && "opacity-40 cursor-not-allowed hover:scale-100",
+                "aiq-choice aiq-choice--multi",
+                selected && "aiq-choice--selected",
               )}
+              style={{
+                width: "auto",
+                padding: "6px 14px",
+                borderRadius: "var(--aiq-radius-md)",
+                fontSize: "13px",
+                ...((disabled || blocked) ? { opacity: 0.4, cursor: "not-allowed" } : {}),
+              }}
             >
-              {opt.icon && <span className="shrink-0">{opt.icon}</span>}
+              {opt.icon && <span style={{ flexShrink: 0 }}>{opt.icon}</span>}
               {opt.label}
               {selected && (
                 <X
-                  className="w-3 h-3 ml-0.5 opacity-70"
+                  style={{ width: "12px", height: "12px", marginLeft: "2px", opacity: 0.7 }}
                   onClick={e => { e.stopPropagation(); toggle(opt.value); }}
                 />
               )}
@@ -185,25 +197,31 @@ export function ChipMultiSelect({
               disabled={disabled || (!isOtherSelected && atMax)}
               onClick={() => toggle("__other__")}
               className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150",
-                "hover:scale-[1.03] active:scale-[0.97]",
-                isOtherSelected
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-background text-foreground border-border hover:border-primary/60 hover:bg-primary/5",
-                (disabled || (!isOtherSelected && atMax)) && "opacity-40 cursor-not-allowed hover:scale-100",
+                "aiq-choice aiq-choice--multi",
+                isOtherSelected && "aiq-choice--selected",
               )}
+              style={{
+                width: "auto",
+                padding: "6px 14px",
+                borderRadius: "var(--aiq-radius-md)",
+                fontSize: "13px",
+                ...((disabled || (!isOtherSelected && atMax)) ? { opacity: 0.4, cursor: "not-allowed" } : {}),
+              }}
             >
               Other…
-              {isOtherSelected && <X className="w-3 h-3 ml-0.5 opacity-70" />}
+              {isOtherSelected && (
+                <X style={{ width: "12px", height: "12px", marginLeft: "2px", opacity: 0.7 }} />
+              )}
             </button>
             {isOtherSelected && (
-              <Input
+              <input
                 autoFocus
                 placeholder="Describe…"
                 value={otherValue}
                 onChange={e => onOtherChange?.(e.target.value)}
-                className="h-8 w-48 text-sm"
+                className="aiq-field"
                 disabled={disabled}
+                style={{ height: "34px", width: "192px", padding: "6px 11px", fontSize: "13px" }}
               />
             )}
           </>
@@ -211,9 +229,13 @@ export function ChipMultiSelect({
       </div>
 
       {max !== undefined && (
-        <p className="text-xs text-muted-foreground">
+        <p style={{ fontSize: "12px", color: "var(--aiq-text-muted)" }}>
           {value.length}/{max} selected
-          {atMax && <span className="text-amber-600 dark:text-amber-400 ml-1">— maximum reached</span>}
+          {atMax && (
+            <span style={{ color: "var(--aiq-warn-text)", marginLeft: "4px" }}>
+              — maximum reached
+            </span>
+          )}
         </p>
       )}
     </div>

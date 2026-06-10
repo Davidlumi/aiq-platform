@@ -585,14 +585,16 @@ function RoleDashboard() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark" switchable={true}>
-        <TooltipProvider>
-          <Toaster position="top-center" />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <div className="aiq">
+      <ErrorBoundary>
+        <ThemeProvider defaultTheme="dark" switchable={true}>
+          <TooltipProvider>
+            <Toaster position="top-center" />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </div>
   );
 }
 

@@ -5227,3 +5227,28 @@ test
 - [ ] Verify Section I renders on fresh tenant
 - [ ] TypeScript: 0 errors after Section I wiring
 - [ ] Tests: 77/77 still pass after Section I wiring
+
+## Design Pack Adoption — Visual Layer Only (AiQ v1.4 tokens)
+
+- [x] Copy aiq-tokens.css and aiq-components.css to client/src/
+- [x] Add provenance/basis tokens (--aiq-basis-*) to aiq-tokens.css
+- [x] Import aiq-tokens.css and aiq-components.css in client/src/index.css
+- [x] Add IBM Plex Sans Google Fonts CDN link to client/index.html
+- [x] Add class="aiq" to root wrapper in App.tsx
+- [x] Restyle ChipSelect.tsx to use .aiq-choice / .aiq-choice--selected / .aiq-choice--multi
+- [x] Restyle KeywordExpand.tsx to use .aiq-field / .aiq-btn / .aiq-chip with basis tokens
+- [x] Restyle BenchmarkNumeric.tsx to use .aiq-field / .aiq-btn / .aiq-chip with basis tokens
+- [ ] Re-render /admin/component-kit showcase and capture screenshots in canonical system
+- [ ] Capture Section I screenshots in new AiQ token system
+- [ ] TypeScript: 0 errors after design pack adoption
+- [ ] Tests: Phase B+C+D suites still pass after design pack adoption
+
+## Section E Wiring (Realignment Option 2 — Priority 2)
+
+- [ ] Wire ambitionStatement: KeywordExpand with plain-tone aiDraft prompt
+- [ ] Wire successNarrative: KeywordExpand with plain-tone aiDraft prompt
+- [ ] Wire posture: ChipSelect (posture options) + KeywordExpand
+- [ ] Wire keyThemes: ChipMultiSelect + KeywordExpand
+- [ ] Calibrate Section E aiDraft prompts to plain, specific, honest tone
+- [ ] TypeScript: 0 errors after Section E wiring
+- [ ] Tests: Phase B+C+D suites still pass after Section E wiring
