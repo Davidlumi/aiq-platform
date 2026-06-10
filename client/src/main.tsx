@@ -9,7 +9,19 @@ import { ViewAsProvider } from "@/contexts/ViewAsContext";
 import { GateProvider } from "@/contexts/GateContext";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Retry up to 2 times for network-level errors (e.g. server restart returning HTML).
+      // tRPC UNAUTHORIZED/FORBIDDEN/NOT_FOUND are not retried (they're application errors).
+      retry: (failureCount, error) => {
+        if (error instanceof TRPCClientError) return false; // don't retry tRPC application errors
+        return failureCount < 2;
+      },
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10_000),
+    },
+  },
+});
 
 // ─── Error classification ──────────────────────────────────────────────────────
 //
@@ -100,17 +112,29 @@ queryClient.getMutationCache().subscribe(event => {
 
 // ─── tRPC client ───────────────────────────────────────────────────────────────
 
+// ─── Resilient fetch wrapper ───────────────────────────────────────────────────
+// Detects HTML responses (server degraded / Vite fallback) and throws a
+// cleaner error instead of a confusing JSON parse error.
+async function resilientFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const response = await globalThis.fetch(input, {
+    ...(init ?? {}),
+    credentials: "include",
+  });
+  // If the server returned HTML (e.g. Vite fallback during a restart), throw
+  // a network-level error so tRPC retries rather than trying to parse HTML as JSON.
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!response.ok && contentType.includes("text/html")) {
+    throw new Error(`Server returned HTML (status ${response.status}) — likely a transient restart. Please retry.`);
+  }
+  return response;
+}
+
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-        });
-      },
+      fetch: resilientFetch,
     }),
   ],
 });
