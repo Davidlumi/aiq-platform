@@ -181,6 +181,13 @@ const NAV_ITEMS: NavItem[] = [
     section: "admin",
   },
   {
+    label: "Signal Approval",
+    path: "/admin/signals",
+    icon: Radio,
+    roles: CPO_ROLES,
+    section: "admin",
+  },
+  {
     label: "Beta Applications",
     path: "/beta-applications",
     icon: FlaskConical,

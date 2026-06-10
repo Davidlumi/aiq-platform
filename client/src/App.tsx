@@ -101,6 +101,7 @@ import RewardCapabilityPage from "./pages/strategy/RewardCapabilityPage";
 import RewardReviewPage from "./pages/strategy/RewardReviewPage";
 import RewardOutputsPage from "./pages/strategy/RewardOutputsPage";
 import SignalWatchPage from "./pages/strategy/SignalWatchPage";
+import SignalsAdminPage from "./pages/admin/SignalsAdminPage";
 // Marketing pages (public)
 import MarketingPage from "./pages/marketing/MarketingPage";
 import HowItWorksPage from "./pages/marketing/HowItWorksPage";
@@ -422,6 +423,9 @@ function Router() {
       </Route>
       <Route path="/admin/users">
         <ProtectedRoute component={UsersPage} />
+      </Route>
+      <Route path="/admin/signals">
+        <ProtectedRoute component={SignalsAdminPage} />
       </Route>
       <Route path="/beta-applications">
         <ProtectedRoute component={BetaApplicationsPage} />

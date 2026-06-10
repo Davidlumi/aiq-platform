@@ -5169,4 +5169,13 @@ test
 - [x] PROOF 2: founder-approval-gate-proof.ts — founderApproved=0 blocking proof executed, all 4 checks pass
 - [x] Export dedupCheck from signals.ts (was private function, now exported for script use)
 - [x] Phase D gate CLOSED — both proofs delivered, gate closure document at /home/ubuntu/phase-d-gate-closure.md
-- [ ] NEXT SLICE: Minimal approval write path — admin page at /admin/signals listing all signals with Approve button (calls trpc.signals.approveSignal)
+- [x] NEXT SLICE: Minimal approval write path — admin page at /admin/signals listing all signals with Approve button (calls trpc.signals.approveSignal)
+
+## Approval Admin Slice (Immediate Next Slice — Phase D follow-on)
+
+- [x] Add `listSignals` to router export (already exists in signalsRouter — verify it is accessible)
+- [x] Create `client/src/pages/admin/SignalsAdminPage.tsx` — list all signals, founderApproved badge, per-row Approve button
+- [x] Register route `/admin/signals` in App.tsx (admin-protected)
+- [x] Add nav entry under admin section in AppShell.tsx
+- [x] TypeScript: 0 errors
+- [x] Tests: 77/77 still pass
