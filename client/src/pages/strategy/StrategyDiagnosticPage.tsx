@@ -463,6 +463,18 @@ export default function StrategyDiagnosticPage() {
   const [aiDrafted, setAiDrafted] = useState<Record<string, boolean>>({});
   // Track which keys are currently generating
   const [aiPending, setAiPending] = useState<Record<string, boolean>>({});
+  // §4b provenance basis for each Section E KeywordExpand field
+  const [sectionEBasis, setSectionEBasis] = useState<Record<string, import("@/components/kit/KeywordExpand").KeywordExpandBasis>>({
+    successNarrative: "empty",
+    painPoint_0: "empty",
+    painPoint_1: "empty",
+    painPoint_2: "empty",
+    strategicPriority_0: "empty",
+    strategicPriority_1: "empty",
+    strategicPriority_2: "empty",
+    strategicPriority_3: "empty",
+    strategicPriority_4: "empty",
+  });
   // Store the previous value before each AI generation so the user can undo
   const [aiPrevValues, setAiPrevValues] = useState<Record<string, string>>({});
   // Tag chip animation state — tracks which chip keys are entering or exiting
@@ -1819,100 +1831,47 @@ export default function StrategyDiagnosticPage() {
                 <p className="text-xs text-muted-foreground italic">
                   "Imagine it's {getField("E", "timeHorizonMonths") ? `${getField("E", "timeHorizonMonths")} months` : "[horizon]"} from now and someone asks how your strategy went — what do you want to be able to say?"
                 </p>
-                <div className="relative">
-                  <Textarea
-                    placeholder="Type a few keywords… then click ✨ AI to generate a full narrative"
-                    value={getField("E", "successNarrative") ?? ""}
-                    onChange={e => {
-                      updateSection("E", "successNarrative", e.target.value);
-                      setAiDrafted(prev => ({ ...prev, successNarrative: false }));
-                    }}
-                    maxLength={1000}
-                    className="min-h-[7rem] pr-24"
-                  />
-                  <div className="absolute bottom-2 right-2 flex items-center gap-1">
-                    {aiPrevValues["successNarrative"] !== undefined && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-105 active:scale-95"
-                        onClick={() => undoAiDraft("successNarrative", "successNarrative")}
-                        type="button"
-                        title="Undo AI generation"
-                      >
-                        <Undo2 className="w-3 h-3" />
-                        Undo
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant={aiDrafted["successNarrative"] ? "outline" : "default"}
-                      className="h-7 px-2.5 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
-                      disabled={aiPending["successNarrative"]}
-                      onClick={() => runAiDraft("successNarrative", "successNarrative")}
-                      type="button"
-                    >
-                      {aiPending["successNarrative"]
-                        ? <Loader2 className="w-3 h-3 animate-spin" />
-                        : <Sparkles className="w-3 h-3" />}
-                      {aiDrafted["successNarrative"] ? "Regen" : "AI"}
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground text-right">
-                  {(getField("E", "successNarrative") as string ?? "").length}/1000
-                </p>
+                <KeywordExpand
+                  value={(getField("E", "successNarrative") as string) ?? ""}
+                  onChange={v => updateSection("E", "successNarrative", v)}
+                  basis={sectionEBasis.successNarrative}
+                  onBasisChange={b => setSectionEBasis(prev => ({ ...prev, successNarrative: b }))}
+                  onAiDraft={async hint => {
+                    const result = await aiDraftMut.mutateAsync({ fieldType: "successNarrative", hint });
+                    return result.draft;
+                  }}
+                  keywordPlaceholder="Type a few keywords… e.g. 'skills, AI adoption, 2026'"
+                  maxLength={1000}
+                  minRows={5}
+                />
               </div>
 
               <div className="space-y-3">
                 <Label>Top 3 pain points</Label>
                 <p className="text-xs text-muted-foreground">What's slowing HR down most right now? Type a few words into each field, then click the <span className="inline-flex items-center gap-0.5 font-medium text-primary">✨ AI</span> button to generate a full sentence.</p>
                 {[0, 1, 2].map(i => {
-                  const ppKey = `painPoint_${i}`;
+                  const ppKey = `painPoint_${i}` as const;
                   return (
                     <div key={i} className="flex items-start gap-2">
                       <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
-                      <div className="relative flex-1 min-w-0">
-                        <Textarea
-                          placeholder={`Type a few words… e.g. "manual admin, no time for strategy"`}
+                      <div className="flex-1 min-w-0">
+                        <KeywordExpand
                           value={((getField("E", "topPainPoints") ?? []) as string[])[i] ?? ""}
-                          onChange={e => {
+                          onChange={v => {
                             const pts = [...((getField("E", "topPainPoints") ?? ["", "", ""]) as string[])];
-                            pts[i] = e.target.value;
+                            pts[i] = v;
                             updateSection("E", "topPainPoints", pts);
-                            setAiDrafted(prev => ({ ...prev, [ppKey]: false }));
                           }}
+                          basis={sectionEBasis[ppKey]}
+                          onBasisChange={b => setSectionEBasis(prev => ({ ...prev, [ppKey]: b }))}
+                          onAiDraft={async hint => {
+                            const result = await aiDraftMut.mutateAsync({ fieldType: "painPoint", hint, index: i });
+                            return result.draft;
+                          }}
+                          keywordPlaceholder={`e.g. "manual admin, no time for strategy"`}
                           maxLength={200}
-                          className="text-sm leading-snug min-h-[2.5rem] pr-20"
+                          minRows={2}
                         />
-                        <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1">
-                          {aiPrevValues[ppKey] !== undefined && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-1.5 text-xs gap-1 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-105 active:scale-95"
-                              onClick={() => undoAiDraft(ppKey, "painPoint", i)}
-                              type="button"
-                              title="Undo AI generation"
-                            >
-                              <Undo2 className="w-3 h-3" />
-                              Undo
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant={aiDrafted[ppKey] ? "outline" : "default"}
-                            className="h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
-                            disabled={aiPending[ppKey]}
-                            onClick={() => runAiDraft(ppKey, "painPoint", i)}
-                            type="button"
-                          >
-                            {aiPending[ppKey]
-                              ? <Loader2 className="w-3 h-3 animate-spin" />
-                              : <Sparkles className="w-3 h-3" />}
-                            {aiDrafted[ppKey] ? "Regen" : "AI"}
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   );
@@ -1923,53 +1882,30 @@ export default function StrategyDiagnosticPage() {
                 <Label>Strategic priorities</Label>
                 <p className="text-xs text-muted-foreground">Up to 5 strategic priorities for HR AI (optional). Type a few words into each field, then click the <span className="inline-flex items-center gap-0.5 font-medium text-primary">✨ AI</span> button to generate a full sentence.</p>
                 {[0, 1, 2, 3, 4].map(i => {
-                  const spKey = `strategicPriority_${i}`;
+                  const spKey = `strategicPriority_${i}` as const;
                   const spArr = ((getField("E", "strategicPriorities") ?? []) as string[]);
                   const spArrFull = [0,1,2,3,4].map(j => spArr[j] ?? "");
                   return (
                     <div key={i} className="flex items-start gap-2">
                       <span className="text-xs text-muted-foreground w-4 pt-2 flex-shrink-0">{i + 1}.</span>
-                      <div className="relative flex-1 min-w-0">
-                        <Textarea
-                          placeholder={`Type a few words… e.g. "automate screening, reduce time-to-hire"`}
+                      <div className="flex-1 min-w-0">
+                        <KeywordExpand
                           value={spArrFull[i]}
-                          onChange={e => {
+                          onChange={v => {
                             const pts = [...spArrFull];
-                            pts[i] = e.target.value;
+                            pts[i] = v;
                             updateSection("E", "strategicPriorities", pts.filter(Boolean));
-                            setAiDrafted(prev => ({ ...prev, [spKey]: false }));
                           }}
+                          basis={sectionEBasis[spKey]}
+                          onBasisChange={b => setSectionEBasis(prev => ({ ...prev, [spKey]: b }))}
+                          onAiDraft={async hint => {
+                            const result = await aiDraftMut.mutateAsync({ fieldType: "strategicPriority", hint, index: i });
+                            return result.draft;
+                          }}
+                          keywordPlaceholder={`e.g. "automate screening, reduce time-to-hire"`}
                           maxLength={200}
-                          className="text-sm leading-snug min-h-[2.5rem] pr-20"
+                          minRows={2}
                         />
-                        <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1">
-                          {aiPrevValues[spKey] !== undefined && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-1.5 text-xs gap-1 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-105 active:scale-95"
-                              onClick={() => undoAiDraft(spKey, "strategicPriority", i)}
-                              type="button"
-                              title="Undo AI generation"
-                            >
-                              <Undo2 className="w-3 h-3" />
-                              Undo
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant={aiDrafted[spKey] ? "outline" : "default"}
-                            className="h-6 px-2 text-xs gap-1 transition-all duration-150 hover:scale-105 hover:brightness-110 active:scale-95"
-                            disabled={aiPending[spKey]}
-                            onClick={() => runAiDraft(spKey, "strategicPriority", i)}
-                            type="button"
-                          >
-                            {aiPending[spKey]
-                              ? <Loader2 className="w-3 h-3 animate-spin" />
-                              : <Sparkles className="w-3 h-3" />}
-                            {aiDrafted[spKey] ? "Regen" : "AI"}
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   );

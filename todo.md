@@ -5238,17 +5238,16 @@ test
 - [x] Restyle ChipSelect.tsx to use .aiq-choice / .aiq-choice--selected / .aiq-choice--multi
 - [x] Restyle KeywordExpand.tsx to use .aiq-field / .aiq-btn / .aiq-chip with basis tokens
 - [x] Restyle BenchmarkNumeric.tsx to use .aiq-field / .aiq-btn / .aiq-chip with basis tokens
-- [ ] Re-render /admin/component-kit showcase and capture screenshots in canonical system
-- [ ] Capture Section I screenshots in new AiQ token system
-- [ ] TypeScript: 0 errors after design pack adoption
-- [ ] Tests: Phase B+C+D suites still pass after design pack adoption
+- [x] Re-render /admin/component-kit showcase and capture screenshots in canonical system
+- [x] Capture Section I screenshots in new AiQ token system
+- [x] TypeScript: 0 errors after design pack adoption
+- [x] Tests: Phase B+C+D suites still pass after design pack adoption
 
 ## Section E Wiring (Realignment Option 2 — Priority 2)
 
-- [ ] Wire ambitionStatement: KeywordExpand with plain-tone aiDraft prompt
-- [ ] Wire successNarrative: KeywordExpand with plain-tone aiDraft prompt
-- [ ] Wire posture: ChipSelect (posture options) + KeywordExpand
-- [ ] Wire keyThemes: ChipMultiSelect + KeywordExpand
-- [ ] Calibrate Section E aiDraft prompts to plain, specific, honest tone
-- [ ] TypeScript: 0 errors after Section E wiring
-- [ ] Tests: Phase B+C+D suites still pass after Section E wiring
+- [x] Wire successNarrative: KeywordExpand (max 1000, minRows 5) with successNarrative aiDraft prompt
+- [x] Wire topPainPoints[0..2]: 3 KeywordExpand rows (max 200, minRows 2) with painPoint aiDraft prompt
+- [x] Wire strategicPriorities[0..4]: 5 KeywordExpand rows (max 200, minRows 2) with strategicPriority aiDraft prompt
+- [x] Add sectionEBasis state (9 keys) with KeywordExpandBasis type
+- [x] TypeScript: 0 errors after Section E wiring
+- [x] Tests: 112/112 still pass after Section E wiring
