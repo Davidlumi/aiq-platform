@@ -7,6 +7,8 @@
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Redirect } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -41,10 +43,21 @@ const CATEGORY_COLOURS: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SignalsAdminPage() {
+  const { user } = useAuth();
   const utils = trpc.useUtils();
-  const { data: signals, isLoading, error } = trpc.signals.listSignals.useQuery();
+  const { data: signals, isLoading, error } = trpc.signals.listSignals.useQuery(
+    undefined,
+    // Only fetch if the user is a platform superuser — the procedure will throw FORBIDDEN otherwise
+    { enabled: !!(user as any)?.isPlatformSuperuser }
+  );
 
   const [approvingId, setApprovingId] = useState<string | null>(null);
+
+  // Hard gate: redirect non-superusers immediately.
+  // The nav entry is already hidden for non-superusers, but direct URL access must also be blocked.
+  if (user && !(user as any).isPlatformSuperuser) {
+    return <Redirect to="/dashboard" />;
+  }
 
   const approve = trpc.signals.approveSignal.useMutation({
     onMutate: ({ signalId }) => {

@@ -183,8 +183,12 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: "Signal Approval",
     path: "/admin/signals",
+    // GATING: platform superuser only — founderApproved is the editorial control of the
+    // living-strategy product. CPO_ROLES includes tenant_admin/hr_leader which can be held
+    // by tenant-side users; a client CPO could otherwise approve signals into the feed.
+    // isPlatformSuperuser is set only via direct SQL, never via any API path.
     icon: Radio,
-    roles: CPO_ROLES,
+    roles: ["platform_super_admin"],
     section: "admin",
   },
   {

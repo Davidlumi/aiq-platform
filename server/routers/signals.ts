@@ -20,7 +20,7 @@
  */
 
 import { z } from "zod";
-import { router, cpoProcedure as protectedProcedure } from "../_core/trpc";
+import { router, cpoProcedure as protectedProcedure, superUserProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { nanoid } from "nanoid";
@@ -262,8 +262,10 @@ export const signalsRouter = router({
   /**
    * createSignal — founder ingests an external development.
    * founderApproved defaults to false; must be explicitly approved before client surfacing.
+   *
+   * GATING: superUserProcedure only — signal creation is also a founder-only editorial act.
    */
-  createSignal: protectedProcedure
+  createSignal: superUserProcedure
     .input(
       z.object({
         title: z.string().min(1).max(500),
@@ -296,8 +298,15 @@ export const signalsRouter = router({
   /**
    * approveSignal — founder approves a signal for client surfacing.
    * This is the founderApproved gate: no tenant sees a signal until this is called.
+   *
+   * GATING: superUserProcedure only (isPlatformSuperuser === true, set via direct SQL only).
+   * Rationale: founderApproved is the editorial control of the living-strategy product.
+   * CPO_ROLES includes tenant_admin and hr_leader which CAN be held by tenant-side users;
+   * a client CPO at a tenant could otherwise approve signals into the feed, converting
+   * "founder-curated" into "any senior user can publish". superUserProcedure is the
+   * narrowest gate that exists: it is set only via direct SQL, never via any API path.
    */
-  approveSignal: protectedProcedure
+  approveSignal: superUserProcedure
     .input(z.object({ signalId: z.string() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -314,8 +323,10 @@ export const signalsRouter = router({
   /**
    * listSignals — founder-side list of all signals (approved and unapproved).
    * Clients only see approved signals via listActiveMatches.
+   *
+   * GATING: superUserProcedure only — same rationale as approveSignal.
    */
-  listSignals: protectedProcedure
+  listSignals: superUserProcedure
     .query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });

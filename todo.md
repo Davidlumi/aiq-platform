@@ -5179,3 +5179,12 @@ test
 - [x] Add nav entry under admin section in AppShell.tsx
 - [x] TypeScript: 0 errors
 - [x] Tests: 77/77 still pass
+
+## Role Re-gating (ApprovalSlice_ShowPage_RoleQuestion)
+- [x] Re-gate `approveSignal`, `listSignals`, `createSignal` to `superUserProcedure` (narrowest gate — set only via direct SQL)
+- [x] Update AppShell nav entry for Signal Approval to `roles: ["platform_super_admin"]`
+- [x] Add hard redirect in SignalsAdminPage for non-superusers (direct URL access blocked)
+- [x] Add `enabled: isPlatformSuperuser` guard on listSignals query in SignalsAdminPage
+- [x] Seed 1 approved + 1 pending signal for screenshot
+- [x] TypeScript: 0 errors
+- [x] Tests: 77/77 still pass
