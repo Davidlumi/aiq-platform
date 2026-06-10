@@ -652,7 +652,7 @@ export default function AssessmentResultsPage() {
           {historyOpen && completedSessions.length > 1 && (
             <div
               role="listbox"
-              className="absolute top-full left-0 mt-1 z-50 min-w-[200px] bg-[#1a2332] border border-border rounded-xl shadow-xl overflow-hidden"
+              className="absolute top-full left-0 mt-1 z-50 min-w-[200px] bg-card border border-border rounded-xl shadow-xl overflow-hidden"
             >
               {completedSessions.map((s: any) => {
                 const d = s.completedAt

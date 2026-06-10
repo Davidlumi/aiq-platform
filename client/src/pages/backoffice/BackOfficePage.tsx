@@ -295,7 +295,7 @@ function BetaApplicationsTab() {
                             size="sm"
                             onClick={() => handleSaveNotes(app.id)}
                             disabled={updateMutation.isPending}
-                            className="bg-primary hover:bg-[#2d3fd9] text-white h-8 text-xs"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs"
                           >
                             {updateMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save notes"}
                           </Button>
@@ -326,7 +326,7 @@ function BetaApplicationsTab() {
                           "h-7 text-xs border",
                           s === "approved"   && "border-primary/30 text-primary hover:bg-primary/8",
                           s === "rejected"   && "border-[#DC2626]/30 text-[#CC3344] hover:bg-[#DC2626]/8",
-                          s === "waitlisted" && "dark:border-blue-700/40 border-blue-300 dark:text-blue-300 text-blue-700 hover:dark:bg-blue-900/20 bg-blue-100/60",
+                          s === "waitlisted" && "border-blue-300 text-blue-700 hover:bg-blue-100/60",
                           s === "pending"    && "border-[#D97706]/30 text-[#99882A] hover:bg-[#D97706]/8",
                         )}
                       >

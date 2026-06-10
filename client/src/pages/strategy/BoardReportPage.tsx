@@ -613,7 +613,7 @@ export default function BoardReportPage() {
       <SectionPageLayout sectionNumber="11"
       isDeepDive={isDeepDive}
       confirmedAt={gate.gateState?.stage11.completedAt}
-      sectionLabel={reportTitle} title={reportTitle} accentColor="#0f172a" icon={<FileText className="w-4 h-4 text-white" />}>
+      sectionLabel={reportTitle} title={reportTitle} accentColor="#1D6FD0" icon={<FileText className="w-4 h-4 text-white" />}>
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
@@ -628,7 +628,7 @@ export default function BoardReportPage() {
       confirmedAt={gate.gateState?.stage11.completedAt}
       sectionLabel={reportTitle}
       title={reportTitle}
-      accentColor="#0f172a"
+      accentColor="#1D6FD0"
       icon={<FileText className="w-4 h-4 text-white" />}
       stageProgress={!isDeepDive ? {
         stageNumber: 11,

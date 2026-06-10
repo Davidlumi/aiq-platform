@@ -207,7 +207,7 @@ export function DeltaIndicator({ value, suffix = "pts" }: { value: number | null
   if (value === null || value === 0) return <span className="text-xs text-muted-foreground inline-flex items-center gap-0.5"><Minus className="w-3 h-3" /> No change</span>;
   const positive = value > 0;
   return (
-    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-primary" : "dark:text-red-400 text-red-600")}>
+    <span className={cn("text-xs font-medium inline-flex items-center gap-0.5", positive ? "text-primary" : "text-red-600")}>  
       {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {positive ? "+" : ""}{value} {suffix}
     </span>
@@ -232,7 +232,7 @@ export function DashboardCard({
   noPadding?: boolean;
 }) {
   return (
-    <div className={cn("bg-card rounded-xl border border-border shadow-md", className)}>
+    <div className={cn("bg-card rounded-xl border border-border", className)} style={{ boxShadow: "var(--card-shadow)" }}>  
       {(title || action) && (
         <div className="flex items-center justify-between px-6 pt-5 pb-0">
           <div>
@@ -312,8 +312,8 @@ export function HeatmapCell({
       <TooltipContent side="top" className="text-xs space-y-0.5">
         <p className="font-semibold">{formatPeakonScore(score)} / 10.0</p>
         {headcount != null && <p>{headcount} assessed</p>}
-        {gap != null && gap > 0 && <p className="dark:text-red-400 text-red-600">{gap} pts below target</p>}
-        {gap != null && gap <= 0 && <p className="text-green-600">At or above target</p>}
+        {gap != null && gap > 0 && <p className="text-red-600">{gap} pts below target</p>}
+        {gap != null && gap <= 0 && <p style={{ color: 'var(--color-safe-text)' }}>At or above target</p>}
         <p className="text-muted-foreground">{scoreToReadinessLabel(score)}</p>
       </TooltipContent>
     </Tooltip>

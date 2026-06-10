@@ -317,7 +317,7 @@ export function TrendArrow({ delta, suffix = "pts", className }: { delta: number
   }
   const positive = delta > 0;
   return (
-    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-primary" : "dark:text-red-400 text-red-600", className)}>
+    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", positive ? "text-primary" : "text-red-600", className)}>
       {positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
       {positive ? "+" : ""}{(delta / 10).toFixed(1)} {suffix}
     </span>

@@ -220,7 +220,8 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
       aria-label="AiQ logo"
       role="img"
     >
-      <circle cx="100" cy="100" r="90" className="fill-sidebar" />
+      {/* AiQ blue circle — primary brand colour */}
+      <circle cx="100" cy="100" r="90" fill="#1D6FD0" />
       <text
         x="100"
         y="122"
@@ -231,11 +232,11 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
         textAnchor="middle"
         letterSpacing="-3"
       >
-        A<tspan className="fill-primary">i</tspan>Q
+        A<tspan fill="#93C5FD">i</tspan>Q
       </text>
       <path
         d="M 58 140 Q 100 158 142 140"
-        className="stroke-primary"
+        stroke="#93C5FD"
         strokeWidth="6"
         strokeLinecap="round"
         fill="none"
@@ -286,13 +287,13 @@ function DomainChildRow({
           )}
           title={collapsed ? `${domain.label} — Coming Soon` : undefined}
         >
-          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-sidebar-foreground/25">
+          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-muted-foreground/60">
             <Icon className="w-[15px] h-[15px]" />
           </span>
           {!collapsed && (
             <>
-              <span className="flex-1 text-left text-sidebar-foreground/30">{domain.label}</span>
-              <span className="text-[9px] font-semibold tracking-wide uppercase text-sidebar-foreground/25 bg-sidebar-foreground/8 border border-sidebar-foreground/10 rounded px-1.5 py-0.5">
+              <span className="flex-1 text-left text-muted-foreground/70">{domain.label}</span>
+              <span className="text-[9px] font-semibold tracking-wide uppercase text-muted-foreground/60 bg-muted border border-border rounded px-1.5 py-0.5">
                 Soon
               </span>
             </>
@@ -316,13 +317,13 @@ function DomainChildRow({
           )}
           title={collapsed ? `${domain.label} — Complete Background Inputs first` : undefined}
         >
-          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-sidebar-foreground/35">
+          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-muted-foreground/60">
             <Icon className="w-[15px] h-[15px]" />
           </span>
           {!collapsed && (
             <>
-              <span className="flex-1 text-left text-sidebar-foreground/40">{domain.label}</span>
-              <Lock className="w-3 h-3 text-amber-400/70 shrink-0" />
+              <span className="flex-1 text-left text-muted-foreground/70">{domain.label}</span>
+              <Lock className="w-3 h-3 text-amber-600 shrink-0" />
             </>
           )}
         </button>
@@ -341,13 +342,13 @@ function DomainChildRow({
           )}
           title={collapsed ? `${domain.label} — Locked` : undefined}
         >
-          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-sidebar-foreground/35">
+          <span className="shrink-0 w-[15px] h-[15px] flex items-center justify-center text-muted-foreground/60">
             <Icon className="w-[15px] h-[15px]" />
           </span>
           {!collapsed && (
             <>
-              <span className="flex-1 text-left text-sidebar-foreground/40">{domain.label}</span>
-              <Lock className="w-3 h-3 text-sidebar-foreground/25 shrink-0" />
+              <span className="flex-1 text-left text-muted-foreground/70">{domain.label}</span>
+              <Lock className="w-3 h-3 text-muted-foreground/50 shrink-0" />
             </>
           )}
         </button>
@@ -365,8 +366,8 @@ function DomainChildRow({
             "flex items-center gap-2.5 py-2 rounded-lg text-xs transition-all duration-150 cursor-pointer select-none",
             collapsed ? "justify-center px-2" : "px-3 pl-7",
             isActive
-              ? "bg-primary/14 text-primary font-semibold"
-              : "text-sidebar-foreground/55 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/80"
+              ? "bg-accent text-primary font-semibold"
+              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
           )}
           title={collapsed ? domain.label : undefined}
           aria-current={isActive ? "page" : undefined}

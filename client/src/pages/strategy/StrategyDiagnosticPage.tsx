@@ -2665,7 +2665,7 @@ export default function StrategyDiagnosticPage() {
           {/* ── Section J ─────────────────────────────────────────────────── */}
           {activeSection === "J" && (
             <div className="space-y-5">
-              <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground">
                 These constraints and preferences shape which initiatives get prioritised and how the strategy is framed. Be honest — a strategy that ignores your real constraints isn't useful.
               </div>
 
