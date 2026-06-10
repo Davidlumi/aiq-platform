@@ -131,9 +131,9 @@ export default function MemberReportPage() {
     return (
       <div className="max-w-4xl mx-auto">
         <Link href="/people"><Button variant="ghost" size="sm" className="gap-1.5 mb-4"><ArrowLeft className="w-3.5 h-3.5" />Back</Button></Link>
-        <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: "oklch(60% 0.040 27 / 0.1)", border: "0.5px solid oklch(50% 0.090 27 / 0.3)" }}>
-          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#F87171" }} />
-          <p className="text-sm" style={{ color: "#FCA5A5" }}>
+        <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: "#fee2e2", border: "0.5px solid #fca5a5" }}>
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#b91c1c" }} />
+          <p className="text-sm" style={{ color: "#b91c1c" }}>
             {isForbidden ? "You can only view reports for your direct reports." : (error?.message ?? "Member not found.")}
           </p>
         </div>
@@ -235,13 +235,13 @@ export default function MemberReportPage() {
 
       {/* Governance flags */}
       {latest?.governanceFlag && (
-        <div className="rounded-xl p-4" style={{ background: "oklch(60% 0.040 27 / 0.1)", border: "0.5px solid oklch(50% 0.090 27 / 0.3)" }}>
-          <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#F87171" }}>Governance flag</p>
-          <p className="text-sm" style={{ color: "#FCA5A5" }}>This assessment has been flagged for governance review.</p>
+        <div className="rounded-xl p-4" style={{ background: "#fee2e2", border: "0.5px solid #fca5a5" }}>
+          <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: "#b91c1c" }}>Governance flag</p>
+          <p className="text-sm" style={{ color: "#b91c1c" }}>This assessment has been flagged for governance review.</p>
           {latest.failureModes?.length > 0 && (
             <ul className="mt-2 space-y-0.5">
               {latest.failureModes.map((mode: string, i: number) => (
-                <li key={i} className="text-xs" style={{ color: "#FCA5A5" }}>• {mode}</li>
+                <li key={i} className="text-xs" style={{ color: "#b91c1c" }}>• {mode}</li>
               ))}
             </ul>
           )}

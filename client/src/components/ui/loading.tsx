@@ -160,9 +160,9 @@ export function ChartSkeleton({
               className="aiq-line-draw"
             />
             {/* Axis lines */}
-            <line x1="0" y1="59" x2="200" y2="59" stroke="oklch(40% 0.020 240 / 0.4)" strokeWidth="0.5" />
+            <line x1="0" y1="59" x2="200" y2="59" stroke="oklch(70% 0.010 240 / 0.4)" strokeWidth="0.5" />
             {[0, 50, 100, 150, 200].map(x => (
-              <line key={x} x1={x} y1="55" x2={x} y2="60" stroke="oklch(40% 0.020 240 / 0.4)" strokeWidth="0.5" />
+              <line key={x} x1={x} y1="55" x2={x} y2="60" stroke="oklch(70% 0.010 240 / 0.4)" strokeWidth="0.5" />
             ))}
           </svg>
         </div>
@@ -180,7 +180,7 @@ export function ChartSkeleton({
                   return `${60 + r * Math.cos(angle)},${60 + r * Math.sin(angle)}`;
                 }).join(" ")}
                 fill="none"
-                stroke="oklch(30% 0.020 240)"
+                stroke="oklch(80% 0.010 240)"
                 strokeWidth="0.8"
               />
             ))}
@@ -193,7 +193,7 @@ export function ChartSkeleton({
                   x1="60" y1="60"
                   x2={60 + 50 * Math.cos(angle)}
                   y2={60 + 50 * Math.sin(angle)}
-                  stroke="oklch(30% 0.020 240)"
+                  stroke="oklch(80% 0.010 240)"
                   strokeWidth="0.8"
                 />
               );
@@ -217,7 +217,7 @@ export function ChartSkeleton({
               const y = 60 + 56 * Math.sin(angle);
               return (
                 <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-                  fontSize="5" fill="oklch(60% 0.020 240)">{label}</text>
+                  fontSize="5" fill="oklch(50% 0.010 240)">{label}</text>
               );
             })}
           </svg>
@@ -229,7 +229,7 @@ export function ChartSkeleton({
           <div className="relative" style={{ width: height * 0.7, height: height * 0.7 }}>
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
               {/* Track */}
-              <circle cx="50" cy="50" r="38" fill="none" stroke="oklch(20% 0.020 240)" strokeWidth="12" />
+              <circle cx="50" cy="50" r="38" fill="none" stroke="oklch(88% 0.010 240)" strokeWidth="12" />
               {/* Animated segments */}
               {[
                 { pct: 35, color: "oklch(72.3% 0.220 142 / 0.7)", delay: 0 },
@@ -292,7 +292,7 @@ export function ChartSkeleton({
         <div className="flex items-center justify-center" style={{ height }}>
           <div className="relative" style={{ width: height * 0.75, height: height * 0.75 }}>
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(20% 0.020 240)" strokeWidth="10" />
+              <circle cx="50" cy="50" r="40" fill="none" stroke="oklch(88% 0.010 240)" strokeWidth="10" />
               <circle
                 cx="50" cy="50" r="40"
                 fill="none"

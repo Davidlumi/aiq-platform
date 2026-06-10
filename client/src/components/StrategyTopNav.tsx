@@ -196,8 +196,8 @@ function StageStep({
         state === "locked"     && "cursor-not-allowed text-muted-foreground/30 opacity-50",
         state === "accessible" && "cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/50",
         state === "current"    && "cursor-pointer text-primary font-semibold bg-primary/12 ring-1 ring-primary/40 shadow-sm",
-        state === "cleared"    && "cursor-pointer text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10",
-        state === "edited"     && "cursor-pointer text-amber-400 hover:text-amber-300 hover:bg-amber-500/10",
+        state === "cleared"    && "cursor-pointer text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50",
+        state === "edited"     && "cursor-pointer text-amber-700 hover:text-amber-800 hover:bg-amber-50",
       )}
     >
       {/* Number / icon badge */}
@@ -207,8 +207,8 @@ function StageStep({
           state === "locked"     && "bg-muted-foreground/12 text-muted-foreground/30",
           state === "accessible" && "bg-muted-foreground/18 text-muted-foreground",
           state === "current"    && "bg-primary text-primary-foreground shadow-sm",
-          state === "cleared"    && "bg-emerald-500/20 text-emerald-400",
-          state === "edited"     && "bg-amber-500/20 text-amber-400",
+          state === "cleared"    && "bg-emerald-100 text-emerald-700",
+          state === "edited"     && "bg-amber-100 text-amber-700",
         )}
       >
         {state === "cleared" ? (
@@ -235,8 +235,8 @@ function StageStep({
         <TooltipContent side="bottom" className="max-w-[200px] text-center text-xs">
           <p className="font-semibold mb-0.5">Stage {stage.number}: {stage.label}</p>
           <p className="text-muted-foreground">{stage.what}</p>
-          {state === "locked" && <p className="text-amber-400 mt-1">Complete previous stages first</p>}
-          {state === "edited" && <p className="text-amber-400 mt-1">Re-confirm needed — you edited this stage</p>}
+          {state === "locked" && <p className="text-amber-700 mt-1">Complete previous stages first</p>}
+          {state === "edited" && <p className="text-amber-700 mt-1">Re-confirm needed — you edited this stage</p>}
         </TooltipContent>
       </Tooltip>
 
@@ -386,9 +386,9 @@ export default function StrategyTopNav() {
         aria-label="Strategy stages"
         className={cn(
           "sticky top-0 z-30",
-          "border-b border-border/60",
-          "bg-background/85 backdrop-blur-md",
-          "shadow-sm shadow-black/10",
+          "border-b border-border",
+          "bg-background",
+          "shadow-sm",
         )}
       >
         <div className="flex items-center gap-1 px-4 md:px-6 h-12">

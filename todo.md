@@ -5251,3 +5251,15 @@ test
 - [x] Add sectionEBasis state (9 keys) with KeywordExpandBasis type
 - [x] TypeScript: 0 errors after Section E wiring
 - [x] Tests: 112/112 still pass after Section E wiring
+
+## Full App AiQ Light Design Migration
+
+- [ ] Remap :root and .dark CSS variables in index.css to AiQ v1.4 light values
+- [ ] Force ThemeProvider defaultTheme="light" and disable dark switching for authenticated app
+- [ ] Restyle AppShell sidebar and header to AiQ light tokens (remove dark navy classes)
+- [ ] Restyle StrategyTopNav to AiQ light tokens
+- [ ] Update SectionPageLayout dark-mode remnants
+- [ ] Update DashboardLayout to AiQ light tokens
+- [ ] TypeScript: 0 errors after migration
+- [ ] Tests: 112/112 still pass after migration
+- [ ] Capture screenshots of key pages after migration

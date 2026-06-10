@@ -61,12 +61,12 @@ export function ExplanationDrawer({
             ? "translate-x-full"
             : "translate-y-full"
         )}
-        style={{ borderLeft: side === "right" ? "1px solid oklch(22% 0.030 240)" : undefined }}
+        style={{ borderLeft: side === "right" ? "1px solid var(--border)" : undefined }}
       >
         {/* Header */}
         <div
           className="flex items-start justify-between p-5 shrink-0"
-          style={{ borderBottom: "1px solid oklch(22% 0.030 240)" }}
+          style={{ borderBottom: "1px solid var(--border)" }}
         >
           <div className="flex items-start gap-3">
             <div
@@ -93,7 +93,7 @@ export function ExplanationDrawer({
             onClick={() => setOpen(false)}
             className="p-1.5 rounded-lg transition-colors shrink-0"
             style={{ color: "#9CA3AF" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "oklch(22% 0.030 240)")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--muted)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             aria-label="Close"
           >
@@ -137,16 +137,16 @@ export function ScoreBreakdown({
   const peakonColor = scoreToColor(overallScore);
 
   const confidenceColors = {
-    high:   { bg: "oklch(18% 0.040 142)", text: "#4ADE80" },
-    medium: { bg: "oklch(18% 0.040 68)",  text: "#FCD34D" },
-    low:    { bg: "oklch(18% 0.040 27)",  text: "#F87171" },
+    high:   { bg: "#d1fae5", text: "#047857" },
+    medium: { bg: "#fef3c7", text: "#92400e" },
+    low:    { bg: "#fee2e2", text: "#b91c1c" },
   };
   const conf = confidenceColors[confidenceLevel];
 
   return (
     <div className="space-y-4">
       {/* Overall score */}
-      <div className="p-4 rounded-xl" style={{ background: "var(--card)", border: "1px solid oklch(22% 0.030 240)" }}>
+      <div className="p-4 rounded-xl" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold text-muted-foreground">
             Overall AI Readiness Score
@@ -188,7 +188,7 @@ export function ScoreBreakdown({
         </h4>
         <div className="space-y-3">
           {factors.map((factor, idx) => (
-            <div key={idx} className="p-3.5 rounded-xl border" style={{ borderColor: "oklch(22% 0.030 240)" }}>
+            <div key={idx} className="p-3.5 rounded-xl border" style={{ borderColor: "var(--border)" }}>
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -329,10 +329,10 @@ export function VisibilityBoundaries({ items }: VisibilityBoundariesProps) {
       <p className="text-sm" style={{ color: "#6B7280" }}>
         This table shows exactly who can see each piece of your data.
       </p>
-      <div className="rounded-xl overflow-hidden border" style={{ borderColor: "oklch(22% 0.030 240)" }}>
+      <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--border)" }}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "var(--card)", borderBottom: "1px solid oklch(22% 0.030 240)" }}>
+            <tr style={{ background: "var(--card)", borderBottom: "1px solid var(--border)" }}>
               <th className="text-left px-3 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>Data</th>
               <th className="text-center px-2 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>You</th>
               <th className="text-center px-2 py-2.5 text-xs font-semibold" style={{ color: "#6B7280" }}>Manager</th>
@@ -341,7 +341,7 @@ export function VisibilityBoundaries({ items }: VisibilityBoundariesProps) {
           </thead>
           <tbody>
             {items.map((item, idx) => (
-              <tr key={idx} style={{ borderBottom: idx < items.length - 1 ? "1px solid oklch(22% 0.030 240)" : undefined }}>
+              <tr key={idx} style={{ borderBottom: idx < items.length - 1 ? "1px solid var(--border)" : undefined }}>
                 <td className="px-3 py-2.5 text-foreground">
                   <div>{item.label}</div>
                   {item.value && <div className="text-xs" style={{ color: "#9CA3AF" }}>{item.value}</div>}

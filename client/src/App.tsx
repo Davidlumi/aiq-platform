@@ -587,7 +587,7 @@ function App() {
   return (
     <div className="aiq">
       <ErrorBoundary>
-        <ThemeProvider defaultTheme="dark" switchable={true}>
+        <ThemeProvider defaultTheme="light">
           <TooltipProvider>
             <Toaster position="top-center" />
             <Router />

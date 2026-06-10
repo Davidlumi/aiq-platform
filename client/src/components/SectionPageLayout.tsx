@@ -97,7 +97,7 @@ export default function SectionPageLayout({
           <span className="text-muted-foreground text-xs" aria-hidden="true">/</span>
           <span className="text-xs font-medium text-foreground">Deep dive — {sectionLabel}</span>
           {confirmedLabel && (
-            <span className="ml-auto text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+            <span className="ml-auto text-[10px] text-emerald-700 font-medium">
               Confirmed {confirmedLabel}
             </span>
           )}
@@ -125,9 +125,9 @@ export default function SectionPageLayout({
 
       {/* Deep-dive mode banner */}
       {isDeepDive && (
-        <div className="flex items-center gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 px-4 py-2.5 mb-6">
-          <BookOpen className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" aria-hidden="true" />
-          <p className="text-xs text-violet-400">
+          <div className="flex items-center gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 mb-6">
+          <BookOpen className="w-3.5 h-3.5 text-violet-600 flex-shrink-0" aria-hidden="true" />
+          <p className="text-xs text-violet-700">
             <span className="font-semibold">Deep dive mode</span> — you can review and edit this section. Changes will trigger cascade banners on downstream stages.
           </p>
         </div>
@@ -135,10 +135,10 @@ export default function SectionPageLayout({
 
       {/* Locked gate banner */}
       {isLocked && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 mb-6">
-          <Lock className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 mb-6">
+          <Lock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
           <div>
-            <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+            <p className="text-sm font-semibold text-amber-700">
               This section is locked
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -150,10 +150,10 @@ export default function SectionPageLayout({
 
       {/* Edited-after-clearing cascade banner */}
       {!isLocked && editedAfterClearing && (
-        <div className="flex items-start gap-3 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3 mb-6">
-          <AlertTriangle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+        <div className="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 mb-6">
+          <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
           <div>
-            <p className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+            <p className="text-sm font-semibold text-orange-700">
               {upstreamStageLabel
                 ? `${upstreamStageLabel} has been updated`
                 : "An earlier stage has been updated"}

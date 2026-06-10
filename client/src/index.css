@@ -214,21 +214,21 @@
   --input:                   oklch(24.0% 0.052 264);
   --ring:                    oklch(72.3% 0.220 142);
 
-  /* ── CHART COLOURS (dark-mode friendly) ── */
-  --color-chart-1: oklch(72.3% 0.220 142);   /* green */
-  --color-chart-2: oklch(65.0% 0.200 250);   /* blue */
-  --color-chart-3: oklch(74.8% 0.155 68);    /* amber */
-  --color-chart-4: oklch(70.0% 0.180 295);   /* purple */
-  --color-chart-5: oklch(65.0% 0.200 27);    /* red */
-  --color-chart-6: oklch(70.0% 0.155 195);   /* teal */
-  --chart-1: oklch(72.3% 0.220 142);
-  --chart-2: oklch(65.0% 0.200 250);
-  --chart-3: oklch(74.8% 0.155 68);
-  --chart-4: oklch(70.0% 0.180 295);
-  --chart-5: oklch(65.0% 0.200 27);
-  --chart-6: oklch(70.0% 0.155 195);
+  /* ── CHART COLOURS — AiQ v1.4 domain palette ── */
+  --color-chart-1: #3B82F6;   /* --aiq-ai */
+  --color-chart-2: #F59E0B;   /* --aiq-oe */
+  --color-chart-3: #10B981;   /* --aiq-wd */
+  --color-chart-4: #A855F7;   /* --aiq-et */
+  --color-chart-5: #F43F5E;   /* --aiq-wf */
+  --color-chart-6: #6366F1;   /* --aiq-ch */
+  --chart-1: #3B82F6;
+  --chart-2: #F59E0B;
+  --chart-3: #10B981;
+  --chart-4: #A855F7;
+  --chart-5: #F43F5E;
+  --chart-6: #6366F1;
 
-  /* ── SIDEBAR TOKENS — dynamic via CSS var() ── */
+  /* ── SIDEBAR TOKENS — AiQ v1.4 light ── */
   --color-sidebar:                  var(--sidebar);
   --color-sidebar-foreground:       var(--sidebar-foreground);
   --color-sidebar-primary:          var(--sidebar-primary);
@@ -237,105 +237,105 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border:           var(--sidebar-border);
   --color-sidebar-ring:             var(--sidebar-ring);
-  --sidebar:                  oklch(13.5% 0.042 264);
-  --sidebar-foreground:       oklch(80.0% 0.012 264);
-  --sidebar-primary:          oklch(72.3% 0.220 142);
-  --sidebar-primary-foreground: oklch(10.0% 0.010 142);
-  --sidebar-accent:           oklch(20.0% 0.050 264);
-  --sidebar-accent-foreground: oklch(95.0% 0.006 240);
-  --sidebar-border:           oklch(22.0% 0.045 264);
-  --sidebar-ring:             oklch(72.3% 0.220 142);
+  --sidebar:                  #FFFFFF;
+  --sidebar-foreground:       #1A1D21;
+  --sidebar-primary:          #1D6FD0;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:           #E6F1FB;
+  --sidebar-accent-foreground: #0C447C;
+  --sidebar-border:           #E4E7EB;
+  --sidebar-ring:             #1D6FD0;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   RUNTIME CSS CUSTOM PROPERTIES — required for shadcn/ui components
-   These must be in :root so components can read them at runtime.
+   RUNTIME CSS CUSTOM PROPERTIES — AiQ v1.4 Light Mode
+   Remapped to AiQ design tokens. Dark mode disabled by product decision.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --background:              oklch(16.5% 0.048 264);
-  --foreground:              oklch(95.0% 0.006 240);
-  --card:                    oklch(22.5% 0.055 264);
-  --card-foreground:         oklch(95.0% 0.006 240);
-  --popover:                 oklch(24.0% 0.058 264);
-  --popover-foreground:      oklch(95.0% 0.006 240);
-  --primary:                 oklch(72.3% 0.220 142);
-  --primary-foreground:      oklch(10.0% 0.010 142);
-  --secondary:               oklch(26.0% 0.052 264);
-  --secondary-foreground:    oklch(88.0% 0.010 240);
-  --muted:                   oklch(24.0% 0.050 264);
-  --muted-foreground:        oklch(62.0% 0.022 264);
-  --accent:                  oklch(22.0% 0.040 142);
-  --accent-foreground:       oklch(72.3% 0.220 142);
-  --destructive:             oklch(55.0% 0.200 27);
-  --destructive-foreground:  oklch(100% 0 0);
-  --border:                  oklch(30.0% 0.050 264);
-  --input:                   oklch(24.0% 0.052 264);
-  --ring:                    oklch(72.3% 0.220 142);
-  --radius:                  0.5rem;
-  --chart-1:                 oklch(72.3% 0.220 142);
-  --chart-2:                 oklch(65.0% 0.200 250);
-  --chart-3:                 oklch(74.8% 0.155 68);
-  --chart-4:                 oklch(70.0% 0.180 295);
-  --chart-5:                 oklch(65.0% 0.200 27);
-  --sidebar:                 oklch(13.5% 0.042 264);
-  --sidebar-foreground:      oklch(80.0% 0.012 264);
-  --sidebar-primary:         oklch(72.3% 0.220 142);
-  --sidebar-primary-foreground: oklch(10.0% 0.010 142);
-  --sidebar-accent:          oklch(20.0% 0.050 264);
-  --sidebar-accent-foreground: oklch(95.0% 0.006 240);
-  --sidebar-border:          oklch(22.0% 0.045 264);
-  --sidebar-ring:            oklch(72.3% 0.220 142);
+  --background:              #F4F5F7;
+  --foreground:              #1A1D21;
+  --card:                    #FFFFFF;
+  --card-foreground:         #1A1D21;
+  --popover:                 #FFFFFF;
+  --popover-foreground:      #1A1D21;
+  --primary:                 #1D6FD0;
+  --primary-foreground:      #FFFFFF;
+  --secondary:               #F7F8FA;
+  --secondary-foreground:    #1A1D21;
+  --muted:                   #F7F8FA;
+  --muted-foreground:        #5B626B;
+  --accent:                  #E6F1FB;
+  --accent-foreground:       #0C447C;
+  --destructive:             #A32D2D;
+  --destructive-foreground:  #FFFFFF;
+  --border:                  #E4E7EB;
+  --input:                   #E4E7EB;
+  --ring:                    #1D6FD0;
+  --radius:                  8px;
+  --chart-1:                 #3B82F6;
+  --chart-2:                 #F59E0B;
+  --chart-3:                 #10B981;
+  --chart-4:                 #A855F7;
+  --chart-5:                 #F43F5E;
+  --sidebar:                 #FFFFFF;
+  --sidebar-foreground:      #1A1D21;
+  --sidebar-primary:         #1D6FD0;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:          #E6F1FB;
+  --sidebar-accent-foreground: #0C447C;
+  --sidebar-border:          #E4E7EB;
+  --sidebar-ring:            #1D6FD0;
 }
 
-/* Score level badge colors — shared defaults (dark) */
+/* Score level badge colors — AiQ light mode */
 :root {
-  --score-ai-ready-bg:       #14532d;
-  --score-ai-ready-text:     #86efac;
-  --score-strong-bg:         #166534;
-  --score-strong-text:       #bbf7d0;
-  --score-capable-bg:        #713f12;
-  --score-capable-text:      #fde68a;
-  --score-developing-bg:     #7c2d12;
-  --score-developing-text:   #fdba74;
-  --score-gap-bg:            #450a0a;
-  --score-gap-text:          #fca5a5;
+  --score-ai-ready-bg:       #d1fae5;
+  --score-ai-ready-text:     #047857;
+  --score-strong-bg:         #dcfce7;
+  --score-strong-text:       #15803d;
+  --score-capable-bg:        #fef3c7;
+  --score-capable-text:      #92400e;
+  --score-developing-bg:     #ffedd5;
+  --score-developing-text:   #9a3412;
+  --score-gap-bg:            #fee2e2;
+  --score-gap-text:          #b91c1c;
 }
 
-/* Dark mode — indigo navy theme */
+/* Dark mode — maps to AiQ light (dark mode disabled by product decision) */
 .dark {
-  --background:              oklch(16.5% 0.048 264);
-  --foreground:              oklch(95.0% 0.006 240);
-  --card:                    oklch(22.5% 0.055 264);
-  --card-foreground:         oklch(95.0% 0.006 240);
-  --popover:                 oklch(24.0% 0.058 264);
-  --popover-foreground:      oklch(95.0% 0.006 240);
-  --primary:                 oklch(72.3% 0.220 142);
-  --primary-foreground:      oklch(10.0% 0.010 142);
-  --secondary:               oklch(26.0% 0.052 264);
-  --secondary-foreground:    oklch(88.0% 0.010 240);
-  --muted:                   oklch(24.0% 0.050 264);
-  --muted-foreground:        oklch(62.0% 0.022 264);
-  --accent:                  oklch(22.0% 0.040 142);
-  --accent-foreground:       oklch(72.3% 0.220 142);
-  --destructive:             oklch(55.0% 0.200 27);
-  --destructive-foreground:  oklch(100% 0 0);
-  --border:                  oklch(30.0% 0.050 264);
-  --input:                   oklch(24.0% 0.052 264);
-  --ring:                    oklch(72.3% 0.220 142);
-  --chart-1:                 oklch(72.3% 0.220 142);
-  --chart-2:                 oklch(65.0% 0.200 250);
-  --chart-3:                 oklch(74.8% 0.155 68);
-  --chart-4:                 oklch(70.0% 0.180 295);
-  --chart-5:                 oklch(65.0% 0.200 27);
-  --sidebar:                 oklch(13.5% 0.042 264);
-  --sidebar-foreground:      oklch(80.0% 0.012 264);
-  --sidebar-primary:         oklch(72.3% 0.220 142);
-  --sidebar-primary-foreground: oklch(10.0% 0.010 142);
-  --sidebar-accent:          oklch(20.0% 0.050 264);
-  --sidebar-accent-foreground: oklch(95.0% 0.006 240);
-  --sidebar-border:          oklch(22.0% 0.045 264);
-  --sidebar-ring:            oklch(72.3% 0.220 142);
+  --background:              #F4F5F7;
+  --foreground:              #1A1D21;
+  --card:                    #FFFFFF;
+  --card-foreground:         #1A1D21;
+  --popover:                 #FFFFFF;
+  --popover-foreground:      #1A1D21;
+  --primary:                 #1D6FD0;
+  --primary-foreground:      #FFFFFF;
+  --secondary:               #F7F8FA;
+  --secondary-foreground:    #1A1D21;
+  --muted:                   #F7F8FA;
+  --muted-foreground:        #5B626B;
+  --accent:                  #E6F1FB;
+  --accent-foreground:       #0C447C;
+  --destructive:             #A32D2D;
+  --destructive-foreground:  #FFFFFF;
+  --border:                  #E4E7EB;
+  --input:                   #E4E7EB;
+  --ring:                    #1D6FD0;
+  --chart-1:                 #3B82F6;
+  --chart-2:                 #F59E0B;
+  --chart-3:                 #10B981;
+  --chart-4:                 #A855F7;
+  --chart-5:                 #F43F5E;
+  --sidebar:                 #FFFFFF;
+  --sidebar-foreground:      #1A1D21;
+  --sidebar-primary:         #1D6FD0;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:          #E6F1FB;
+  --sidebar-accent-foreground: #0C447C;
+  --sidebar-border:          #E4E7EB;
+  --sidebar-ring:            #1D6FD0;
 }
 
 /* Light mode — premium white-first palette (Vercel/Notion/Linear inspired) */
@@ -570,17 +570,20 @@
     border-radius: 0 2px 2px 0;
   }
 
-  /* Light mode nav item overrides */
-  .light .nav-item {
-    color: oklch(38% 0.018 264);   /* slate-700 equivalent — readable nav text */
+  /* Nav item — AiQ light tokens */
+  .nav-item {
+    color: #5B626B;   /* --aiq-text-muted */
   }
-  .light .nav-item:hover {
-    background-color: oklch(95.0% 0.015 175);  /* subtle teal tint */
-    color: oklch(28% 0.018 264);   /* darker on hover */
+  .nav-item:hover {
+    background-color: #E6F1FB;   /* --aiq-accent-fill */
+    color: #1A1D21;   /* --aiq-text */
   }
-  .light .nav-item-active {
-    background-color: oklch(93.0% 0.025 175);  /* teal tint active */
-    color: oklch(52.0% 0.185 175); /* deep teal text */
+  .nav-item-active {
+    background-color: #E6F1FB;
+    color: #1D6FD0;   /* --aiq-accent */
+  }
+  .nav-item-active::before {
+    background-color: #1D6FD0;
   }
 
   .nav-section-label {
@@ -707,74 +710,35 @@
   );
 }
 
-/* Main content area — multi-layer radial gradient for depth */
+/* Main content area — AiQ light page background */
 .aiq-main-bg {
-  background:
-    /* Top-right green ambient glow */
-    radial-gradient(ellipse 70% 50% at 85% 0%, oklch(22% 0.040 142 / 0.18) 0%, transparent 65%),
-    /* Bottom-left indigo depth */
-    radial-gradient(ellipse 70% 60% at 0% 100%, oklch(14% 0.060 280 / 0.60) 0%, transparent 65%),
-    /* Centre-right blue accent */
-    radial-gradient(ellipse 50% 40% at 100% 50%, oklch(18% 0.055 270 / 0.25) 0%, transparent 60%),
-    /* Base indigo background */
-    oklch(16.5% 0.048 264);
-}
-.light .aiq-main-bg {
-  /* Pure white with barely-visible warm teal glow at top-right — premium and clean */
-  background:
-    radial-gradient(ellipse 60% 40% at 90% 0%, oklch(88% 0.030 175 / 0.12) 0%, transparent 60%),
-    oklch(100% 0 0);
+  background: #F4F5F7;   /* --aiq-page */
 }
 
-/* Sidebar — deeper indigo with a subtle right-edge glow separator */
+/* Sidebar — AiQ light: white with right border */
 .aiq-sidebar-bg {
-  background:
-    /* Subtle top glow */
-    radial-gradient(ellipse 100% 25% at 50% 0%, oklch(18% 0.050 264 / 0.50) 0%, transparent 70%),
-    oklch(13.5% 0.042 264);
-  box-shadow: inset -1px 0 0 oklch(28% 0.048 264), 1px 0 12px oklch(0% 0 0 / 0.30);
-}
-.light .aiq-sidebar-bg {
-  /* Clean white sidebar with subtle right border — Vercel/Notion style */
-  background: oklch(99.5% 0.002 240);
-  box-shadow: inset -1px 0 0 oklch(88.5% 0.008 240);
+  background: #FFFFFF;
+  border-right: 1px solid #E4E7EB;
 }
 
-/* Header bar — frosted glass effect */
+/* Header bar — AiQ light: white with bottom border */
 .aiq-header-glass {
-  background: oklch(16.5% 0.048 264 / 0.92);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  border-bottom: 1px solid oklch(30% 0.050 264 / 0.70);
-  box-shadow: 0 1px 0 oklch(72.3% 0.220 142 / 0.05), 0 2px 8px oklch(0% 0 0 / 0.25);
-}
-.light .aiq-header-glass {
-  /* Pure white header with clean bottom border — no blur needed on white */
-  background: oklch(100% 0 0);
-  border-bottom: 1px solid oklch(88.5% 0.008 240);
-  box-shadow: 0 1px 0 oklch(52% 0.185 175 / 0.04), 0 1px 4px rgba(0,0,0,0.04);
+  background: #FFFFFF;
+  border-bottom: 1px solid #E4E7EB;
+  box-shadow: 0 1px 4px rgba(16,24,40,0.04);
 }
 
-/* Card — elevated surface with inner shadow depth */
+/* Card — AiQ light: white surface with soft shadow */
 .aiq-card-elevated {
-  background: oklch(22.5% 0.055 264);
-  border: 1px solid oklch(30% 0.050 264);
-  box-shadow: var(--card-shadow);
-}
-.light .aiq-card-elevated {
-  background: oklch(100% 0 0);
-  border: 1px solid oklch(88.5% 0.008 240);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  background: #FFFFFF;
+  border: 1px solid #E4E7EB;
+  box-shadow: var(--aiq-shadow-card);
 }
 
-/* Global shadcn Card override — apply elevation to all .card elements */
+/* Global shadcn Card override — AiQ light elevation */
 .card {
-  box-shadow: var(--card-shadow) !important;
-}
-/* In light mode, cards get a clean drop shadow instead of inset dark shadow */
-.light .card {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) !important;
-  border-color: oklch(88.5% 0.008 240) !important;
+  box-shadow: var(--aiq-shadow-card) !important;
+  border-color: #E4E7EB !important;
 }
 
 /* Ambient glow blob — decorative background element */
@@ -875,7 +839,7 @@ html {
 
 /* Better focus rings for accessibility */
 :focus-visible {
-  outline: 2px solid oklch(72.3% 0.220 142);
+  outline: 2px solid #1D6FD0;
   outline-offset: 2px;
 }
 
@@ -891,16 +855,13 @@ tr {
   transition: background-color 150ms ease;
 }
 
-/* Card hover lift effect */
+/* Card hover lift effect — AiQ light */
 .aiq-card {
   transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
 }
 .aiq-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.40);
-}
-.light .aiq-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
-  border-color: oklch(80% 0.012 240) !important;
+  box-shadow: var(--aiq-shadow-lift);
+  border-color: #D7DCE3 !important;
   transform: translateY(-1px);
 }
 
@@ -996,39 +957,23 @@ tr {
 .aiq-shimmer {
   background: linear-gradient(
     90deg,
-    oklch(16% 0.025 240) 0%,
-    oklch(20% 0.030 240) 40%,
-    oklch(16% 0.025 240) 80%
+    #EDEFF2 0%,
+    #F7F8FA 40%,
+    #EDEFF2 80%
   );
   background-size: 200% 100%;
   animation: aiq-shimmer 1.8s ease-in-out infinite;
-}
-.light .aiq-shimmer {
-  background: linear-gradient(
-    90deg,
-    oklch(93% 0.006 240) 0%,
-    oklch(97% 0.004 240) 40%,
-    oklch(93% 0.006 240) 80%
-  );
 }
 
 .aiq-shimmer-brand {
   background: linear-gradient(
     90deg,
-    oklch(16% 0.025 240) 0%,
-    oklch(20% 0.040 142 / 0.3) 40%,
-    oklch(16% 0.025 240) 80%
+    #EDEFF2 0%,
+    #E6F1FB 40%,
+    #EDEFF2 80%
   );
   background-size: 200% 100%;
   animation: aiq-shimmer 1.8s ease-in-out infinite;
-}
-.light .aiq-shimmer-brand {
-  background: linear-gradient(
-    90deg,
-    oklch(93% 0.006 240) 0%,
-    oklch(93% 0.040 142 / 0.4) 40%,
-    oklch(93% 0.006 240) 80%
-  );
 }
 
 .aiq-fade-in {
@@ -1068,9 +1013,7 @@ tr {
   border-radius: 4px;
 }
 
-.dark :focus-visible {
-  outline-color: oklch(75% 0.12 200);
-}
+/* dark :focus-visible removed — dark mode disabled */
 
 /* Skip-to-content link (screen readers + keyboard users) */
 .skip-to-content {

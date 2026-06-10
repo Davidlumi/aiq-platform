@@ -295,17 +295,17 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 className="flex items-center gap-3 p-3 rounded-lg text-left transition-all hover:bg-secondary/50"
                 style={{
                   background: isWeakest
-                    ? "oklch(18% 0.040 68 / 0.4)"
+                    ? "#fef9c3"
                     : "var(--card)",
                   border: isWeakest
-                    ? "0.5px solid oklch(30% 0.090 68)"
+                    ? "0.5px solid #fde68a"
                     : "0.5px solid var(--border)",
                 }}
               >
                 <LevelChip level={domainLevel} size="sm" />
                 <div style={{ flex: 1 }}>
                   <p className="text-sm font-medium text-foreground">{d.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: isWeakest ? "#FCD34D" : "#9CA3AF" }}>
+                  <p className="text-xs mt-0.5" style={{ color: isWeakest ? "#92400e" : "#6B7280" }}>
                     Level {preciseLevel ?? "-"}
                     {isStrongest && " · Strongest"}
                     {isWeakest && " · Active development"}
@@ -390,10 +390,10 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{data.narrativeExplanation}</p>
               {data.gapStatement && (
-                <div className="p-3 rounded-lg" style={{ background: "oklch(60% 0.040 68 / 0.1)", border: "1px solid oklch(60% 0.090 68 / 0.3)" }}>
+                <div className="p-3 rounded-lg" style={{ background: "#fef9c3", border: "1px solid #fde68a" }}>
                   <div className="flex items-start gap-2">
-                    <Target className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#FCD34D" }} />
-                    <p className="text-xs" style={{ color: "#FCD34D" }}>{data.gapStatement}</p>
+                    <Target className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#92400e" }} />
+                    <p className="text-xs" style={{ color: "#92400e" }}>{data.gapStatement}</p>
                   </div>
                 </div>
               )}
@@ -436,7 +436,7 @@ function DomainDrillDown({ open, onClose, domainKey, userId }: {
                           <span className="text-xs font-medium text-foreground">{m.title}</span>
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "completed" ? "text-primary" : "text-muted-foreground"}`}
-                          style={{ background: m.status === "completed" ? "oklch(60% 0.040 142 / 0.15)" : "var(--muted)" }}>
+                          style={{ background: m.status === "completed" ? "#d1fae5" : "var(--muted)" }}>
                           {m.status}
                         </span>
                       </div>

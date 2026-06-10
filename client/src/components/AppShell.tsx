@@ -47,8 +47,6 @@ import {
   FlaskConical,
   Sparkles,
   MessageSquare,
-  Sun,
-  Moon,
   Lock,
   Clock,
   Briefcase,
@@ -59,7 +57,6 @@ import {
   Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useGate } from "@/contexts/GateContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -424,7 +421,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { viewAs, setViewAs, effectiveRoles } = useViewAs();
   const userRoles = ((user as any)?.roles as string[]) ?? [];
   const [viewAsOpen, setViewAsOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+
   const gate = useGate();
   // Derive tenantMode: prefer the loaded gate value; fall back to user.tenantMode while gate is loading.
   // user.tenantMode comes from auth.me which queries the tenant row directly — it is always correct.
@@ -602,8 +599,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {sections.map((section) => (
           <div key={section.key} className="mb-1">
             {section.label && !collapsed && (
-              <div
-                className="px-4 pt-3 pb-1 text-[10px] font-medium tracking-[0.07em] uppercase text-sidebar-foreground/25"
+                    <div className="px-4 pt-3 pb-1 text-[10px] font-medium tracking-[0.07em] uppercase text-muted-foreground"
                 aria-hidden="true"
               >
                 {section.label}
@@ -631,8 +627,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             "w-full flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
                             collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
                             isDomainActive
-                              ? "bg-primary/14 text-primary font-semibold border-l-primary"
-                              : "text-sidebar-foreground/45 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/75 border-l-transparent"
+                              ? "bg-accent text-primary font-semibold border-l-primary"
+                              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground border-l-transparent"
                           )}
                           title={collapsed ? "HR AI Strategy" : undefined}
                           aria-expanded={hrAiStrategyOpen}
@@ -686,7 +682,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                           className={cn(
                             "w-full flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
                             collapsed ? "justify-center px-2" : "px-3 border-l-[3px] border-l-transparent",
-                            "text-sidebar-foreground/25 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/40"
+                            "text-muted-foreground/40 hover:bg-accent/30 hover:text-muted-foreground"
                           )}
                           title={collapsed ? "AiQ Coach (complete Skills Check to unlock)" : undefined}
                           aria-label="AiQ Coach — complete Skills Check to unlock"
@@ -697,7 +693,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                           {!collapsed && (
                             <>
                               <span className="flex-1 text-left">{item.label}</span>
-                              <Lock className="w-3 h-3 text-sidebar-foreground/20 shrink-0" />
+                              <Lock className="w-3 h-3 text-muted-foreground/30 shrink-0" />
                             </>
                           )}
                         </button>
@@ -709,8 +705,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                               "flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
                               collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
                               active
-                                ? "bg-primary/14 text-primary font-semibold border-l-primary"
-                                : "text-sidebar-foreground/45 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/75 border-l-transparent",
+                                ? "bg-accent text-primary font-semibold border-l-primary"
+                                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground border-l-transparent",
                             )}
                             title={collapsed ? item.label : undefined}
                             aria-current={active ? "page" : undefined}
@@ -738,7 +734,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative">
             <button
               onClick={() => setViewAsOpen((v) => !v)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-sidebar-border/60 bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 transition-colors text-sidebar-foreground/70"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-border bg-muted hover:bg-accent/50 transition-colors text-muted-foreground"
             >
               <Eye className="w-3.5 h-3.5 shrink-0 text-primary" />
               <span className="flex-1 text-left">View as: <span className="text-primary font-semibold">{VIEW_AS_LABELS[viewAs]}</span></span>
@@ -752,8 +748,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     onClick={() => { setViewAs(role); setViewAsOpen(false); }}
                     className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors ${
                       viewAs === role
-                        ? 'bg-primary/15 text-primary font-semibold'
-                        : 'text-sidebar-foreground/70 hover:bg-sidebar-foreground/10'
+                        ? 'bg-accent text-primary font-semibold'
+                        : 'text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -774,20 +770,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <DropdownMenuTrigger asChild>
             <button
               className={cn(
-                "w-full flex items-center gap-3 p-2 rounded transition-colors text-sidebar-foreground/40 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/60",
+                "w-full flex items-center gap-3 p-2 rounded transition-colors text-muted-foreground hover:bg-muted hover:text-foreground",
                 collapsed && "justify-center"
               )}
               aria-label="Account menu"
             >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-sidebar-foreground/10 text-sidebar-foreground/50">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-primary/10 text-primary">
                 {initials}
               </div>
               {!collapsed && (
                 <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-medium truncate text-sidebar-foreground/60">
+                  <p className="text-sm font-medium truncate text-foreground">
                     {displayName}
                   </p>
-                  <p className="text-xs truncate text-sidebar-foreground/30">
+                  <p className="text-xs truncate text-muted-foreground">
                     {roleLabel}
                   </p>
                 </div>
@@ -810,10 +806,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={toggleTheme}>
-              {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-              <span>{theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}</span>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
@@ -887,14 +879,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1" />
 
           <div className="flex items-center gap-1">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
+
             <button
               className="p-2 rounded transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Notifications"
@@ -937,11 +922,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={toggleTheme}>
-                  {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-                  <span>{theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   onClick={logout}
                   className="text-destructive focus:text-destructive focus:bg-destructive/5"
@@ -956,27 +937,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Page content */}
         <main id="main-content" className="flex-1 min-h-0 overflow-y-auto relative" tabIndex={-1}>
-          {/* Ambient glow blobs */}
-          <div
-            className="aiq-glow-blob"
-            style={{
-              width: '700px',
-              height: '500px',
-              top: '-120px',
-              right: '-150px',
-              background: 'oklch(22% 0.045 142 / 0.10)',
-            }}
-          />
-          <div
-            className="aiq-glow-blob"
-            style={{
-              width: '600px',
-              height: '500px',
-              bottom: '-100px',
-              left: '-100px',
-              background: 'oklch(13% 0.035 220 / 0.16)',
-            }}
-          />
+
           <div className="relative z-10 px-6 md:px-10 py-6">
             {isTransitioning ? (
               <PageTransitionSkeleton />

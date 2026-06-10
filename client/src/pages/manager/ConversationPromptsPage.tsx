@@ -13,9 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getLevelFromScore, getLevelChipStyle } from "@/lib/level-utils";
 
 const PRIORITY_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  high:   { label: "High priority",   bg: "oklch(var(--is-light, 95%) 0.040 27 / var(--is-light, 0.25, 0.15))",  text: "#DC2626" },
-  medium: { label: "Medium priority", bg: "var(--priority-medium-bg, oklch(18% 0.040 68 / 0.15))",  text: "var(--priority-medium-text, #D97706)" },
-  low:    { label: "Low priority",    bg: "var(--priority-low-bg, oklch(18% 0.040 142 / 0.15))", text: "var(--priority-low-text, #047857)" },
+  high:   { label: "High priority",   bg: "#fee2e2",  text: "#b91c1c" },
+  medium: { label: "Medium priority", bg: "#fef3c7",  text: "#92400e" },
+  low:    { label: "Low priority",    bg: "#d1fae5", text: "#047857" },
 };
 
 function PromptCard({ prompt }: {
