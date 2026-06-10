@@ -385,7 +385,7 @@ function Router() {
         <KnowledgeRoute component={CoachPage} fullscreen />
       </Route>
       <Route path="/dashboard">
-        <ProtectedRoute component={RoleDashboard} />
+        <PeopleRoute component={RoleDashboard} />
       </Route>
       <Route path="/assessment">
         <AssessmentRoute component={AssessmentPage} />
