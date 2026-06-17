@@ -359,8 +359,8 @@ describe("pdf.ts — board_report type handler", () => {
   });
 });
 
-// ─── 6. Acme E2E Stage 9 ─────────────────────────────────────────────────────
-describe("Acme E2E — Stage 9 (Review Session)", () => {
+// ─── 6. Acme E2E Stage 10 ────────────────────────────────────────────────────
+describe("Acme E2E — Stage 10 (Review Session)", () => {
   function makeAcmeDbWithStage8(overrides: Record<string, any> = {}) {
     const row = { ...ACME_ORG_CONTEXT, ...overrides };
     return {
@@ -421,12 +421,15 @@ describe("Acme E2E — Stage 9 (Review Session)", () => {
     );
   });
 
-  it("completeStage9 clears the stage 9 gate for Acme", async () => {
+  it("completeStage10 clears the stage 10 gate for Acme", async () => {
     const mockDb = makeAcmeDbWithStage8();
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
+<<<<<<< Updated upstream
     // completeStage10 is the review soft gate (renamed from completeStage9 in v4)
+=======
+>>>>>>> Stashed changes
     const result = await caller.gate.completeStage10({});
 
     // completeStage10 returns { ok: true, gateState }
@@ -438,13 +441,16 @@ describe("Acme E2E — Stage 9 (Review Session)", () => {
     );
   });
 
-  it("completeStage9 with reviewHeldAt records the review date", async () => {
+  it("completeStage10 with reviewHeldAt records the review date", async () => {
     const reviewDate = Date.now() - 2 * 24 * 60 * 60 * 1000;
     const mockDb = makeAcmeDbWithStage8();
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
+<<<<<<< Updated upstream
     // completeStage10 is the review soft gate (renamed from completeStage9 in v4)
+=======
+>>>>>>> Stashed changes
     const result = await caller.gate.completeStage10({ reviewHeldAt: reviewDate });
 
     // completeStage10 returns { ok: true, gateState }
@@ -468,8 +474,8 @@ describe("Acme E2E — Stage 9 (Review Session)", () => {
   });
 });
 
-// ─── 7. Acme E2E Stage 10 ────────────────────────────────────────────────────
-describe("Acme E2E — Stage 10 (Board Report)", () => {
+// ─── 7. Acme E2E Stage 11 ────────────────────────────────────────────────────
+describe("Acme E2E — Stage 11 (Board Report)", () => {
   // Generate board report sections with realistic word counts
   function generateSection(wordCount: number): string {
     const word = "strategy ";
@@ -524,12 +530,15 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     expect(TOTAL_WORDS).toBeLessThanOrEqual(4000);
   });
 
-  it("completeStage10 succeeds with all 6 sections and word count in range", async () => {
+  it("completeStage11 succeeds with all 6 sections and word count in range", async () => {
     const mockDb = makeAcmeDbWithStage9();
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
+<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+=======
+>>>>>>> Stashed changes
     const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(ACME_BOARD_SECTIONS),
     });
@@ -538,12 +547,15 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     expect(result).toHaveProperty("ok", true);
   });
 
-  it("completeStage10 sets stage10.completedAt in stageGateStateJson", async () => {
+  it("completeStage11 sets stage11.completedAt in stageGateStateJson", async () => {
     const mockDb = makeAcmeDbWithStage9();
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
+<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+=======
+>>>>>>> Stashed changes
     await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(ACME_BOARD_SECTIONS),
     });
@@ -555,7 +567,7 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     expect(gateState.stage11.completedAt).toBeGreaterThan(0);
   });
 
-  it("completeStage10 rejects when a section is missing", async () => {
+  it("completeStage11 rejects when a section is missing", async () => {
     const mockDb = makeAcmeDbWithStage9();
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
@@ -571,7 +583,7 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     ).rejects.toThrow();
   });
 
-  it("completeStage10 rejects when word count is below 1200", async () => {
+  it("completeStage11 rejects when word count is below 1200", async () => {
     const mockDb = makeAcmeDbWithStage9();
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
@@ -686,7 +698,10 @@ describe("gate.completeStage11 — word count boundaries", () => {
     };
 
     const caller = appRouter.createCaller(makeCtx());
+<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+=======
+>>>>>>> Stashed changes
     const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });
@@ -710,7 +725,10 @@ describe("gate.completeStage11 — word count boundaries", () => {
     // Total = 4000
 
     const caller = appRouter.createCaller(makeCtx());
+<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+=======
+>>>>>>> Stashed changes
     const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });

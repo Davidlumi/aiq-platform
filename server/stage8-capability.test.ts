@@ -117,6 +117,18 @@ const VALID_CAP_JSON = JSON.stringify({
     "Together these actions give us a credible path to execution.",
 });
 
+const VALID_RISK_JSON = JSON.stringify({
+  risks: [
+    {
+      id: "risk-1",
+      title: "AI model bias in candidate screening",
+      mitigation: "Run quarterly bias audits and review outputs with HR before deployment.",
+      status: "accepted",
+      aiSuggested: true,
+    },
+  ],
+});
+
 // ─── gate.completeStage8 ──────────────────────────────────────────────────────
 describe("gate.completeStage8", () => {
   it("rejects when capability JSON has no filled dimensions", async () => {

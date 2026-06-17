@@ -4,11 +4,19 @@
  * - Gate completion timestamps
  * - Stage 4 engine re-fire results
  * - Stage 5 initiative selection (10 initiatives + violator)
+<<<<<<< Updated upstream
  * - Stage 6 roadmap (horizons + assignments)
  * - Stage 7 success measures (outcomes with primary_measure)
  * - Stage 8 capability scores + risk register
  * - Stage 9 business case narrative
  * - Stage 10 review gate
+=======
+ * - Stage 6 roadmap with horizons and assignments
+ * - Stage 7 outcomes with baseline/target
+ * - Stage 8 capability scores + risk register
+ * - Stage 9 business case narrative
+ * - Stage 10 review session gate
+>>>>>>> Stashed changes
  * - Stage 11 board report (all 6 sections)
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -105,6 +113,7 @@ const ACME_SELECTED_INITIATIVES = [
   "ee_workforce_ai_comms", "ee_recognition_rewards", "gv_ai_governance",
   "ta_video_interview_assessment", // 11th — violator (shortlist cuts without HR review)
 ];
+<<<<<<< Updated upstream
 const ACME_ROADMAP = {
   horizons: [
     { id: "h1", label: "0-6 months", startDate: "2026-01-01", endDate: "2026-06-30", order: 1 },
@@ -117,6 +126,31 @@ const ACME_ROADMAP = {
   dependencies: [
     { fromId: "ta_ai_screening", toId: "ta_candidate_chatbot", reason: "Shared talent acquisition workflow" },
     { fromId: "fw_frontline_communication", toId: "fw_shift_scheduling_ai", reason: "Communication rollout supports scheduling adoption" },
+=======
+// Roadmap for Stage 6: 3 horizons, all 11 selected initiatives assigned
+const ACME_ROADMAP = {
+  horizons: [
+    { id: "h1", label: "Phase 1 (0-12 months)", order: 1 },
+    { id: "h2", label: "Phase 2 (12-24 months)", order: 2 },
+    { id: "h3", label: "Phase 3 (24-36 months)", order: 3 },
+  ],
+  assignments: ACME_SELECTED_INITIATIVES.map((id, i) => ({
+    initiativeId: id,
+    horizonId: i < 5 ? "h1" : i < 9 ? "h2" : "h3",
+  })),
+  dependencies: [],
+};
+// Risk register for Stage 8: one accepted risk with a mitigation
+const ACME_RISK_REGISTER = {
+  risks: [
+    {
+      id: "r1",
+      title: "Change management complexity across 812 stores",
+      mitigation: "Dedicated change management workstream with store-level AI champions appointed before rollout.",
+      status: "accepted",
+      aiSuggested: false,
+    },
+>>>>>>> Stashed changes
   ],
 };
 const ACME_BOARD_SECTIONS = {
@@ -128,6 +162,7 @@ const ACME_BOARD_SECTIONS = {
   governance: { content: "The governance framework for Acme Retail's HR AI programme establishes clear accountability, oversight, and escalation paths for all AI deployments within the HR function. Governance structure: an HR AI Steering Committee, comprising the Chief People Officer, Chief Technology Officer, General Counsel, and a non-executive Operations Board representative, will meet quarterly to review programme progress, approve new AI deployments, and assess emerging risks. The CPO holds executive accountability for all HR AI decisions. Data privacy and security: all employee data used in AI model training will be anonymised and pseudonymised in accordance with UK GDPR and ICO guidance. A Data Protection Impact Assessment will be completed before each new AI deployment. An independent third-party data security audit will be conducted annually, with the first audit scheduled for Q4 of Year 1. Ethical AI and bias monitoring: an AI Ethics Charter, approved by the Steering Committee before Phase 1 launch, will govern the design, deployment, and ongoing operation of all HR AI tools. Bias monitoring protocols will be implemented for all recruitment AI tools, with monthly reporting to the Steering Committee on demographic disparities in candidate progression rates. No AI tool in this programme will make autonomous shortlist cuts without HR review — this is a hard constraint in all vendor contracts. Performance monitoring and KPIs: monthly KPI reporting to the Steering Committee in Year 1 covering time-to-hire, frontline attrition rate, manager AI tool adoption rate, and scheduling overtime costs. Reporting cadence moves to quarterly from Year 2 as the programme reaches steady state. Regulatory compliance: a legal compliance review will be conducted before each new AI feature or model is deployed to production. Employee communication and transparency: a structured communication programme will inform all 20,000 employees about the purpose, scope, and safeguards of each AI tool before it goes live in their store or function. Employees will have a named point of contact — their store AI Champion or HR Business Partner — for questions and concerns.", wordCount: 295 },
 };
 
+<<<<<<< Updated upstream
 // Helper: build a standard 11-stage gate state JSON with all stages before `openAt` completed
 function gateStateJson(openAt: string): string {
   const now = Date.now();
@@ -159,6 +194,19 @@ function makeMockDb(selectRow: Record<string, unknown>) {
       }),
     }),
     insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
+=======
+// ─── Mock DB builder helpers ──────────────────────────────────────────────────
+/** Build a mock DB where the single select().from().where().limit() call resolves to `rows`. */
+function makeMockDb(rows: object[]) {
+  return {
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue(rows),
+        }),
+      }),
+    }),
+>>>>>>> Stashed changes
     update: vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
@@ -167,6 +215,52 @@ function makeMockDb(selectRow: Record<string, unknown>) {
   };
 }
 
+<<<<<<< Updated upstream
+=======
+/**
+ * Build a mock DB for Stage 5 where TWO sequential select calls are made:
+ * 1. gate.completeStage5 → .select().from().where().limit(1) for the tenant row
+ * 2. upsertInitiativeRows → .select().from().where() (no .limit()) for existing rows
+ */
+function makeMockDbForStage5(tenantRow: object) {
+  return {
+    select: vi.fn()
+      // First call: gate reads tenant row (uses .limit())
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([tenantRow]),
+          }),
+        }),
+      })
+      // Second call: upsertInitiativeRows reads existing rows (no .limit() — awaits .where() directly)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
+    }),
+    insert: vi.fn().mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        onDuplicateKeyUpdate: vi.fn().mockResolvedValue(undefined),
+      }),
+    }),
+  };
+}
+
+function gateStateJson(completedStages: number[]): string {
+  const state: Record<string, { completedAt: number | null }> = {};
+  for (let i = 1; i <= 11; i++) {
+    state[`stage${i}`] = { completedAt: completedStages.includes(i) ? Date.now() - (11 - i) * 86400000 : null };
+  }
+  return JSON.stringify(state);
+}
+
+>>>>>>> Stashed changes
 // ─── Stage 4 engine re-fire ───────────────────────────────────────────────────
 describe("QA: Stage 4 engine re-fire", () => {
   const ACME_INPUTS = {
@@ -216,6 +310,7 @@ describe("QA: Stage 4 engine re-fire", () => {
 // ─── Stage 5: Initiative selection ───────────────────────────────────────────
 describe("QA: Stage 5 — initiative selection (10 + violator)", () => {
   it("completeStage5 accepts 10 initiatives including the violator with acceptance reason", async () => {
+<<<<<<< Updated upstream
     // completeStage5 makes two DB queries:
     //   1. select stageGateStateJson from ailOrgContext (uses .limit())
     //   2. upsertInitiativeRows: select id, sourceSlug from initiative (no .limit())
@@ -244,7 +339,13 @@ describe("QA: Stage 5 — initiative selection (10 + violator)", () => {
           where: vi.fn().mockResolvedValue(undefined),
         }),
       }),
+=======
+    const tenantRow = {
+      stageGateStateJson: gateStateJson([1, 2, 3, 4]),
+      selectedInitiativesJson: null,
+>>>>>>> Stashed changes
     };
+    const mockDb = makeMockDbForStage5(tenantRow);
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
@@ -259,6 +360,7 @@ describe("QA: Stage 5 — initiative selection (10 + violator)", () => {
   });
 });
 
+<<<<<<< Updated upstream
 // ─── Stage 6: Roadmap ────────────────────────────────────────────────────────
 describe("QA: Stage 6 — roadmap confirmation", () => {
   it("completeStage6 accepts a roadmap with horizons and assignments for all selected initiatives", async () => {
@@ -266,6 +368,15 @@ describe("QA: Stage 6 — roadmap confirmation", () => {
       stageGateStateJson: gateStateJson("stage6"),
       selectedInitiativesJson: JSON.stringify(ACME_SELECTED_INITIATIVES),
     });
+=======
+// ─── Stage 6: Roadmap ─────────────────────────────────────────────────────────
+describe("QA: Stage 6 — roadmap with horizons and assignments", () => {
+  it("completeStage6 accepts a roadmap assigning all 11 selected initiatives to 3 horizons", async () => {
+    const mockDb = makeMockDb([{
+      stageGateStateJson: gateStateJson([1, 2, 3, 4, 5]),
+      selectedInitiativesJson: JSON.stringify(ACME_SELECTED_INITIATIVES),
+    }]);
+>>>>>>> Stashed changes
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
@@ -274,6 +385,7 @@ describe("QA: Stage 6 — roadmap confirmation", () => {
     });
 
     expect(result.ok).toBe(true);
+<<<<<<< Updated upstream
     console.log("Stage 6 completed. Roadmap horizons:");
     ACME_ROADMAP.horizons.forEach(h => {
       console.log(`  - ${h.label} (${h.startDate} → ${h.endDate})`);
@@ -286,6 +398,22 @@ describe("QA: Stage 6 — roadmap confirmation", () => {
 describe("QA: Stage 7 — success measures", () => {
   it("completeStage7 accepts outcomes with primary measures", async () => {
     const mockDb = makeMockDb({ stageGateStateJson: gateStateJson("stage7") });
+=======
+    console.log(`Stage 6 completed. Roadmap: ${ACME_ROADMAP.horizons.length} horizons, ${ACME_ROADMAP.assignments.length} assignments`);
+    ACME_ROADMAP.horizons.forEach(h => {
+      const assigned = ACME_ROADMAP.assignments.filter(a => a.horizonId === h.id).map(a => a.initiativeId);
+      console.log(`  ${h.label}: ${assigned.join(", ")}`);
+    });
+  });
+});
+
+// ─── Stage 7: Outcomes ────────────────────────────────────────────────────────
+describe("QA: Stage 7 — outcomes with baseline/target", () => {
+  it("completeStage7 accepts 3 outcomes with baseline and target values", async () => {
+    const mockDb = makeMockDb([{
+      stageGateStateJson: gateStateJson([1, 2, 3, 4, 5, 6]),
+    }]);
+>>>>>>> Stashed changes
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
@@ -294,7 +422,11 @@ describe("QA: Stage 7 — success measures", () => {
     });
 
     expect(result.ok).toBe(true);
+<<<<<<< Updated upstream
     console.log("Stage 7 completed. Success measures:");
+=======
+    console.log("Stage 7 completed. Outcomes:");
+>>>>>>> Stashed changes
     ACME_OUTCOMES.forEach(o => {
       console.log(`  - ${o.title}`);
       console.log(`    Baseline: ${o.baseline} → Target: ${o.target}`);
@@ -305,14 +437,25 @@ describe("QA: Stage 7 — success measures", () => {
 
 // ─── Stage 8: Capability scores ───────────────────────────────────────────────
 describe("QA: Stage 8 — capability scores", () => {
+<<<<<<< Updated upstream
   it("completeStage8 accepts capability scores 3→4 / 2→4 / 3→4 / 2→3", async () => {
     const mockDb = makeMockDb({ stageGateStateJson: gateStateJson("stage8") });
+=======
+  it("completeStage8 accepts capability scores 3→4 / 2→4 / 3→4 / 2→3 with risk register", async () => {
+    const mockDb = makeMockDb([{
+      stageGateStateJson: gateStateJson([1, 2, 3, 4, 5, 6, 7]),
+    }]);
+>>>>>>> Stashed changes
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
     const result = await caller.gate.completeStage8({
       stage8CapabilityJson: JSON.stringify(ACME_CAPABILITY),
+<<<<<<< Updated upstream
       riskRegisterJson: ACME_RISK_JSON,
+=======
+      riskRegisterJson: JSON.stringify(ACME_RISK_REGISTER),
+>>>>>>> Stashed changes
     });
 
     expect(result.ok).toBe(true);
@@ -324,7 +467,11 @@ describe("QA: Stage 8 — capability scores", () => {
   });
 });
 
+<<<<<<< Updated upstream
 // ─── Stage 9: Business case ────────────────────────────────────────────────────
+=======
+// ─── Stage 9: Business case narrative ────────────────────────────────────────
+>>>>>>> Stashed changes
 describe("QA: Stage 9 — business case narrative", () => {
   it("generateReviewTensions returns 5 tensions with Acme context", async () => {
     const mockTensions = [
@@ -356,8 +503,15 @@ describe("QA: Stage 9 — business case narrative", () => {
     });
   });
 
+<<<<<<< Updated upstream
   it("completeStage9 accepts the business case narrative and clears Stage 9 gate", async () => {
     const mockDb = makeMockDb({ stageGateStateJson: gateStateJson("stage9") });
+=======
+  it("completeStage9 accepts business case narrative and clears Stage 9 gate", async () => {
+    const mockDb = makeMockDb([{
+      stageGateStateJson: gateStateJson([1, 2, 3, 4, 5, 6, 7, 8]),
+    }]);
+>>>>>>> Stashed changes
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
@@ -365,7 +519,12 @@ describe("QA: Stage 9 — business case narrative", () => {
 
     expect(result.ok).toBe(true);
     expect(result.gateState.stage9.completedAt).toBeTruthy();
+<<<<<<< Updated upstream
     console.log("\nStage 9 gate cleared. Business case approved.");
+=======
+    const wordCount = ACME_BUSINESS_CASE.split(/\s+/).filter(Boolean).length;
+    console.log(`\nStage 9 gate cleared. Business case: ${wordCount} words`);
+>>>>>>> Stashed changes
     console.log(`stage9.completedAt: ${new Date(result.gateState.stage9.completedAt!).toISOString()}`);
     const wordCount = ACME_BUSINESS_CASE.split(/\s+/).filter(Boolean).length;
     console.log(`Business case narrative: ${wordCount} words`);
@@ -373,6 +532,7 @@ describe("QA: Stage 9 — business case narrative", () => {
   });
 });
 
+<<<<<<< Updated upstream
 // ─── Stage 10: Review gate ────────────────────────────────────────────────────
 describe("QA: Stage 10 — review gate", () => {
   it("completeStage10 accepts reviewHeldAt and clears Stage 10 gate", async () => {
@@ -397,6 +557,36 @@ describe("QA: Stage 11 — board report and gate completion", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
+=======
+// ─── Stage 10: Review session ─────────────────────────────────────────────────
+describe("QA: Stage 10 — review session gate", () => {
+  it("completeStage10 clears the review session gate", async () => {
+    const reviewHeldAt = Date.now() - 2 * 86400000; // 2 days ago
+    const mockDb = makeMockDb([{
+      stageGateStateJson: gateStateJson([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+    }]);
+    vi.mocked(getDb).mockResolvedValue(mockDb as any);
+
+    const caller = appRouter.createCaller(makeCtx());
+    const result = await caller.gate.completeStage10({ reviewHeldAt });
+
+    expect(result.ok).toBe(true);
+    expect(result.gateState.stage10.completedAt).toBeTruthy();
+    console.log(`\nStage 10 gate cleared. reviewHeldAt: ${new Date(reviewHeldAt).toISOString()}`);
+    console.log(`stage10.completedAt: ${new Date(result.gateState.stage10.completedAt!).toISOString()}`);
+  });
+});
+
+// ─── Stage 11: Board report ───────────────────────────────────────────────────
+describe("QA: Stage 11 — board report and gate completion", () => {
+  it("completeStage11 accepts 6 sections with total word count in 1200-4000 range", async () => {
+    const mockDb = makeMockDb([{
+      stageGateStateJson: gateStateJson([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+    }]);
+    vi.mocked(getDb).mockResolvedValue(mockDb as any);
+
+    const caller = appRouter.createCaller(makeCtx());
+>>>>>>> Stashed changes
     const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(ACME_BOARD_SECTIONS),
       boardReportIncludeNotes: true,
@@ -413,14 +603,20 @@ describe("QA: Stage 11 — board report and gate completion", () => {
     console.log("\nBoard report sections:");
     Object.entries(ACME_BOARD_SECTIONS).forEach(([id, section]) => {
       console.log(`\n  === ${id.toUpperCase()} (${section.wordCount} words) ===`);
-      console.log(`  ${section.content}`);
+      console.log(`  ${section.content.substring(0, 100)}...`);
     });
   });
 
   it("completeStage11 rejects if any section is missing", async () => {
+<<<<<<< Updated upstream
     const mockDb = makeMockDb({
       stageGateStateJson: JSON.stringify({ stage10: { completedAt: Date.now() - 86400000 }, stage11: { completedAt: null } }),
     });
+=======
+    const mockDb = makeMockDb([{
+      stageGateStateJson: gateStateJson([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+    }]);
+>>>>>>> Stashed changes
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const incompleteSections = { ...ACME_BOARD_SECTIONS };
@@ -446,8 +642,13 @@ describe("QA: Gate timestamps summary", () => {
       stage6: now - 10 * 86400000,
       stage7: now - 8 * 86400000,
       stage8: now - 5 * 86400000,
+<<<<<<< Updated upstream
       stage9: now - 2 * 86400000,
       stage10: now - 1 * 86400000,
+=======
+      stage9: now - 3 * 86400000,
+      stage10: now - 2 * 86400000,
+>>>>>>> Stashed changes
       stage11: now,
     };
 

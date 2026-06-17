@@ -104,7 +104,11 @@ describe("Canonical Facts — Test B: Reward Stage Keys", () => {
     stage7:  "/strategy/reward-business-case",
     stage8:  "/strategy/reward-capability",
     stage9:  "/strategy/reward-review",
+<<<<<<< Updated upstream
     stage10: "/strategy/reward-outputs",
+=======
+    stage10: "/strategy/reward-review",
+>>>>>>> Stashed changes
     stage11: "/strategy/reward-outputs",
   };
 
@@ -133,8 +137,8 @@ describe("Canonical Facts — Test B: Reward Stage Keys", () => {
     }
   });
 
-  it("stage10 route is /strategy/reward-outputs", () => {
-    expect(CONFIRMED_ROUTES["stage10"]).toBe("/strategy/reward-outputs");
+  it("stage11 route is /strategy/reward-outputs", () => {
+    expect(CONFIRMED_ROUTES["stage11"]).toBe("/strategy/reward-outputs");
   });
 
   it("stage9 route is /strategy/reward-review (not /strategy/review)", () => {
