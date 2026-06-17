@@ -73,8 +73,8 @@ describe("Canonical Facts — Test A: Assessment Domain Keys", () => {
 describe("Canonical Facts — Test B: Reward Stage Keys", () => {
   /**
    * Confirmed from facts-dump.ts stdout (Section B):
-   *   DEFAULT_GATE_STATE keys (10): stage1, stage2, ..., stage10
-   *   Routes confirmed from App.tsx lines 373–401.
+   *   DEFAULT_GATE_STATE keys (11): stage1, stage2, ..., stage11
+   *   Routes confirmed from App.tsx.
    */
   const CONFIRMED_STAGES = [
     "stage1",
@@ -87,6 +87,7 @@ describe("Canonical Facts — Test B: Reward Stage Keys", () => {
     "stage8",
     "stage9",
     "stage10",
+    "stage11",
   ] as const;
 
   /**
@@ -104,10 +105,11 @@ describe("Canonical Facts — Test B: Reward Stage Keys", () => {
     stage8:  "/strategy/reward-capability",
     stage9:  "/strategy/reward-review",
     stage10: "/strategy/reward-outputs",
+    stage11: "/strategy/reward-outputs",
   };
 
-  it("DEFAULT_GATE_STATE has exactly 10 stage keys", () => {
-    expect(Object.keys(DEFAULT_GATE_STATE).length).toBe(10);
+  it("DEFAULT_GATE_STATE has exactly 11 stage keys", () => {
+    expect(Object.keys(DEFAULT_GATE_STATE).length).toBe(11);
   });
 
   it("DEFAULT_GATE_STATE contains exactly the confirmed stage keys", () => {

@@ -426,13 +426,14 @@ describe("Acme E2E — Stage 9 (Review Session)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-    const result = await caller.gate.completeStage9({});
+    // completeStage10 is the review soft gate (renamed from completeStage9 in v4)
+    const result = await caller.gate.completeStage10({});
 
-    // completeStage9 returns { ok: true, gateState }
+    // completeStage10 returns { ok: true, gateState }
     expect(result).toHaveProperty("ok", true);
     expect(mockDb.set).toHaveBeenCalledWith(
       expect.objectContaining({
-        stageGateStateJson: expect.stringContaining("stage9"),
+        stageGateStateJson: expect.stringContaining("stage10"),
       })
     );
   });
@@ -443,9 +444,10 @@ describe("Acme E2E — Stage 9 (Review Session)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-    const result = await caller.gate.completeStage9({ reviewHeldAt: reviewDate });
+    // completeStage10 is the review soft gate (renamed from completeStage9 in v4)
+    const result = await caller.gate.completeStage10({ reviewHeldAt: reviewDate });
 
-    // completeStage9 returns { ok: true, gateState }
+    // completeStage10 returns { ok: true, gateState }
     expect(result).toHaveProperty("ok", true);
   });
 
@@ -527,11 +529,12 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-    const result = await caller.gate.completeStage10({
+    // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+    const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(ACME_BOARD_SECTIONS),
     });
 
-    // completeStage10 returns { ok: true, gateState, totalWords }
+    // completeStage11 returns { ok: true, gateState, totalWords }
     expect(result).toHaveProperty("ok", true);
   });
 
@@ -540,15 +543,16 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-    await caller.gate.completeStage10({
+    // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+    await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(ACME_BOARD_SECTIONS),
     });
 
     const setCall = mockDb.set.mock.calls[0][0];
     expect(setCall).toHaveProperty("stageGateStateJson");
     const gateState = JSON.parse(setCall.stageGateStateJson);
-    expect(gateState.stage10).toBeDefined();
-    expect(gateState.stage10.completedAt).toBeGreaterThan(0);
+    expect(gateState.stage11).toBeDefined();
+    expect(gateState.stage11.completedAt).toBeGreaterThan(0);
   });
 
   it("completeStage10 rejects when a section is missing", async () => {
@@ -559,8 +563,9 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     delete (incompleteSections as any).governance;
 
     const caller = appRouter.createCaller(makeCtx());
+    // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
     await expect(
-      caller.gate.completeStage10({
+      caller.gate.completeStage11({
         boardReportSectionsJson: JSON.stringify(incompleteSections),
       })
     ).rejects.toThrow();
@@ -580,8 +585,9 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
     };
 
     const caller = appRouter.createCaller(makeCtx());
+    // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
     await expect(
-      caller.gate.completeStage10({
+      caller.gate.completeStage11({
         boardReportSectionsJson: JSON.stringify(shortSections),
       })
     ).rejects.toThrow();
@@ -641,7 +647,7 @@ describe("Acme E2E — Stage 10 (Board Report)", () => {
 });
 
 // ─── 8. Word count boundary tests ────────────────────────────────────────────
-describe("gate.completeStage10 — word count boundaries", () => {
+describe("gate.completeStage11 — word count boundaries", () => {
   function makeDbWithStage9() {
     const row = {
       ...ACME_ORG_CONTEXT,
@@ -680,10 +686,11 @@ describe("gate.completeStage10 — word count boundaries", () => {
     };
 
     const caller = appRouter.createCaller(makeCtx());
-    const result = await caller.gate.completeStage10({
+    // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+    const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });
-    // completeStage10 returns { ok: true, gateState, totalWords }
+    // completeStage11 returns { ok: true, gateState, totalWords }
     expect(result).toHaveProperty("ok", true);
   });
 
@@ -703,10 +710,11 @@ describe("gate.completeStage10 — word count boundaries", () => {
     // Total = 4000
 
     const caller = appRouter.createCaller(makeCtx());
-    const result = await caller.gate.completeStage10({
+    // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
+    const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });
-    // completeStage10 returns { ok: true, gateState, totalWords }
+    // completeStage11 returns { ok: true, gateState, totalWords }
     expect(result).toHaveProperty("ok", true);
   });
 
@@ -727,7 +735,7 @@ describe("gate.completeStage10 — word count boundaries", () => {
 
     const caller = appRouter.createCaller(makeCtx());
     await expect(
-      caller.gate.completeStage10({ boardReportSectionsJson: JSON.stringify(sections) })
+      caller.gate.completeStage11({ boardReportSectionsJson: JSON.stringify(sections) })
     ).rejects.toThrow();
   });
 
@@ -747,7 +755,7 @@ describe("gate.completeStage10 — word count boundaries", () => {
 
     const caller = appRouter.createCaller(makeCtx());
     await expect(
-      caller.gate.completeStage10({ boardReportSectionsJson: JSON.stringify(sections) })
+      caller.gate.completeStage11({ boardReportSectionsJson: JSON.stringify(sections) })
     ).rejects.toThrow();
   });
 });

@@ -89,6 +89,18 @@ function setOrgCtxRow(overrides: Record<string, any> = {}) {
   }];
 }
 
+const VALID_RISK_JSON = JSON.stringify({
+  risks: [
+    {
+      id: "risk-1",
+      title: "AI model bias in scheduling",
+      mitigation: "Run quarterly bias audits and review outputs with HR before deployment.",
+      status: "accepted",
+      aiSuggested: true,
+    },
+  ],
+});
+
 const VALID_CAP_JSON = JSON.stringify({
   skills: { current: 3, needed: 4, tactics: ["Train the team on AI tools"] },
   capacity: { current: 2, needed: 4, tactics: ["Hire AI-fluent HR specialists", "Automate admin tasks"] },
@@ -126,7 +138,7 @@ describe("gate.completeStage8", () => {
   it("accepts valid capability JSON with at least one dimension", async () => {
     setOrgCtxRow();
     const caller = appRouter.createCaller(makeAdminCtx());
-    const result = await caller.gate.completeStage8({ stage8CapabilityJson: VALID_CAP_JSON });
+    const result = await caller.gate.completeStage8({ stage8CapabilityJson: VALID_CAP_JSON, riskRegisterJson: VALID_RISK_JSON });
     expect(result.ok).toBe(true);
     expect(result.gateState.stage8.completedAt).toBeTypeOf("number");
     expect(result.gateState.stage8.lastEditedAt).toBeNull();
@@ -138,7 +150,7 @@ describe("gate.completeStage8", () => {
     const minimalCap = JSON.stringify({
       skills: { current: 3, needed: 4, tactics: ["Train the team"] },
     });
-    const result = await caller.gate.completeStage8({ stage8CapabilityJson: minimalCap });
+    const result = await caller.gate.completeStage8({ stage8CapabilityJson: minimalCap, riskRegisterJson: VALID_RISK_JSON });
     expect(result.ok).toBe(true);
   });
 
@@ -146,7 +158,7 @@ describe("gate.completeStage8", () => {
     mockOrgCtxRows = [];
     const caller = appRouter.createCaller(makeAdminCtx());
     await expect(
-      caller.gate.completeStage8({ stage8CapabilityJson: VALID_CAP_JSON })
+      caller.gate.completeStage8({ stage8CapabilityJson: VALID_CAP_JSON, riskRegisterJson: VALID_RISK_JSON })
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });

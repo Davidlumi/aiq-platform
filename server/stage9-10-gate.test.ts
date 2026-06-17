@@ -2,8 +2,12 @@
  * Stage 9 & 10 Gate Tests — Increment 3
  *
  * Tests the gate procedures for:
- *   - completeStage9: soft gate (self-attestation, no content validation)
- *   - completeStage10: hard gate (6 sections present, 1200–4000 words)
+ *   - completeStage10: soft gate (review held-at, no content validation)
+ *   - completeStage11: hard gate (6 sections present, 1200–4000 words)
+ *
+ * NOTE: The procedures were renumbered in v4:
+ *   - Old completeStage9  → now completeStage10 (review soft gate)
+ *   - Old completeStage10 → now completeStage11 (board report hard gate)
  */
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -112,13 +116,13 @@ function makeSections(wordCountPerSection = 250): Record<string, { content: stri
   );
 }
 
-// ─── completeStage9 ───────────────────────────────────────────────────────────
+// ─── completeStage10 (review soft gate — was completeStage9 in v3) ────────────
 describe("gate.completeStage9", () => {
   it("succeeds as a soft gate with no content validation", async () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
-    const result = await caller.gate.completeStage9({ reviewHeldAt: Date.now() });
+    const result = await caller.gate.completeStage10({ reviewHeldAt: Date.now() });
     expect(result.ok).toBe(true);
   });
 
@@ -126,7 +130,7 @@ describe("gate.completeStage9", () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
-    const result = await caller.gate.completeStage9({});
+    const result = await caller.gate.completeStage10({});
     expect(result.ok).toBe(true);
   });
 
@@ -134,11 +138,11 @@ describe("gate.completeStage9", () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
-    await caller.gate.completeStage9({ reviewHeldAt: 1700000009000 });
+    await caller.gate.completeStage10({ reviewHeldAt: 1700000009000 });
     const setCall = (db as any)._setCall;
     const updatedState = JSON.parse(setCall.stageGateStateJson);
-    expect(updatedState.stage9.completedAt).toBeTypeOf("number");
-    expect(updatedState.stage9.completedAt).toBeGreaterThan(0);
+    expect(updatedState.stage10.completedAt).toBeTypeOf("number");
+    expect(updatedState.stage10.completedAt).toBeGreaterThan(0);
   });
 
   it("throws NOT_FOUND when no org context row exists", async () => {
@@ -153,18 +157,18 @@ describe("gate.completeStage9", () => {
     };
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
-    await expect(caller.gate.completeStage9({})).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.gate.completeStage10({})).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });
 
-// ─── completeStage10 ──────────────────────────────────────────────────────────
+// ─── completeStage11 (board report hard gate — was completeStage10 in v3) ─────
 describe("gate.completeStage10", () => {
   it("succeeds when all 6 sections are present and word count is in range", async () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     const sections = makeSections(250); // 6 × 250 = 1500 words
-    const result = await caller.gate.completeStage10({
+    const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });
     expect(result.ok).toBe(true);
@@ -178,7 +182,7 @@ describe("gate.completeStage10", () => {
     const sections = makeSections(250);
     delete (sections as any).governance;
     await expect(
-      caller.gate.completeStage10({ boardReportSectionsJson: JSON.stringify(sections) })
+      caller.gate.completeStage11({ boardReportSectionsJson: JSON.stringify(sections) })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
@@ -188,7 +192,7 @@ describe("gate.completeStage10", () => {
     const caller = appRouter.createCaller(makeCtx());
     const sections = makeSections(100); // 6 × 100 = 600 words — below threshold
     await expect(
-      caller.gate.completeStage10({ boardReportSectionsJson: JSON.stringify(sections) })
+      caller.gate.completeStage11({ boardReportSectionsJson: JSON.stringify(sections) })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
@@ -198,7 +202,7 @@ describe("gate.completeStage10", () => {
     const caller = appRouter.createCaller(makeCtx());
     const sections = makeSections(800); // 6 × 800 = 4800 words — above threshold
     await expect(
-      caller.gate.completeStage10({ boardReportSectionsJson: JSON.stringify(sections) })
+      caller.gate.completeStage11({ boardReportSectionsJson: JSON.stringify(sections) })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
@@ -207,19 +211,19 @@ describe("gate.completeStage10", () => {
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     await expect(
-      caller.gate.completeStage10({ boardReportSectionsJson: "not-valid-json" })
+      caller.gate.completeStage11({ boardReportSectionsJson: "not-valid-json" })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  it("sets stage10.completedAt in stageGateStateJson", async () => {
+  it("sets stage11.completedAt in stageGateStateJson", async () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     const sections = makeSections(250);
-    await caller.gate.completeStage10({ boardReportSectionsJson: JSON.stringify(sections) });
+    await caller.gate.completeStage11({ boardReportSectionsJson: JSON.stringify(sections) });
     const setCall = (db as any)._setCall;
     const updatedState = JSON.parse(setCall.stageGateStateJson);
-    expect(updatedState.stage10.completedAt).toBeTypeOf("number");
+    expect(updatedState.stage11.completedAt).toBeTypeOf("number");
   });
 
   it("persists boardReportIncludeNotes when provided", async () => {
@@ -227,7 +231,7 @@ describe("gate.completeStage10", () => {
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     const sections = makeSections(250);
-    await caller.gate.completeStage10({
+    await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
       boardReportIncludeNotes: true,
     });
@@ -240,7 +244,7 @@ describe("gate.completeStage10", () => {
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     const sections = makeSections(200); // 6 × 200 = 1200 words — exactly at boundary
-    const result = await caller.gate.completeStage10({
+    const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });
     expect(result.ok).toBe(true);
@@ -262,7 +266,7 @@ describe("gate.completeStage10", () => {
       content: Array(500).fill(word).join(" "),
       wordCount: 500,
     };
-    const result = await caller.gate.completeStage10({
+    const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });
     expect(result.ok).toBe(true);
