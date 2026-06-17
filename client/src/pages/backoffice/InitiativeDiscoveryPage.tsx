@@ -751,12 +751,13 @@ function AddToLibraryModal({
 }) {
   const utils = trpc.useUtils();
   const { tenantMode } = useGate();
+  const isReward = tenantMode === "reward";
   const [formData, setFormData] = useState({
     initiativeId: "",
     label: candidate.name || "",
     description: candidate.description || "",
     category: candidate.suggestedCategory || "talent_acquisition",
-    functionScope: candidate.suggestedScope || tenantMode || "cpo",
+    functionScope: candidate.suggestedScope || (isReward ? "reward" : "cpo"),
     phase: 1,
     timeToValueMonths: { min: 3, max: 6 },
     y1CostRange: { low: 50, high: 200 },

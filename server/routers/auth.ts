@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
-import { getDb, getUserByEmail, getUserById, getUserRoleKeys } from "../db";
+import { getDb, getUserByEmail, getUserRoleKeys } from "../db";
 import {
   hashPassword,
   verifyPassword,
@@ -10,9 +10,8 @@ import {
   clearSessionCookie,
   generateResetToken,
 } from "../auth";
-import { COOKIE_NAME } from "../../shared/const";
 import { users, tenants } from "../../drizzle/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { applyColdStart } from "../ail/coldStart";
 import { sendPasswordResetEmail } from "../email";
@@ -22,18 +21,14 @@ export const authRouter = router({
   me: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.user) return null;
     const roles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    // Fetch tenant mode (transitional) and entitlements from ctx (loaded in context.ts)
-    const db = await getDb();
-    let tenantMode: "cpo" | "reward" = "cpo";
-    if (db) {
-      const tenantRow = await db.select({ mode: tenants.mode }).from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
-      tenantMode = tenantRow[0]?.mode ?? "cpo";
-    }
+    // Entitlements are loaded per-request in context.ts — no DB query needed
     const entitlements = ctx.entitlements ?? {
       strategyCompany: false,
       strategyReward: false,
       assessment: false,
     };
+    // Derive tenantMode from entitlements: reward wins only when strategyReward=true AND strategyCompany=false
+    const tenantMode: "cpo" | "reward" = (entitlements.strategyReward && !entitlements.strategyCompany) ? "reward" : "cpo";
     return {
       id: ctx.user.id,
       email: ctx.user.email,

@@ -421,7 +421,7 @@ export default function ReviewSessionPage() {
   const [, navigate] = useLocation();
   const gate = useGate();
   const { isDeepDive } = useDeepDive();
-  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
+  const modeLabels = getModeLabels(gate.tenantMode);
   const reportTitle = modeLabels.stage10Label;
 
   // Mode-guard redirect
@@ -582,7 +582,6 @@ export default function ReviewSessionPage() {
       strategyArchetype: data.strategyArchetype ?? undefined,
       selectedInitiatives,
       businessCaseNarrative: data.businessCaseNarrative ?? undefined,
-      mode: gate.tenantMode === "reward" ? "reward" : "cpo",
     });
   };
 

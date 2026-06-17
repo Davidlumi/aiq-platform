@@ -452,14 +452,13 @@ function CreateOrgDialog({ open, onClose, onCreated }: { open: boolean; onClose:
   const [slug, setSlug] = useState("");
   const [domain, setDomain] = useState("");
   const [status, setStatus] = useState<"active" | "trial">("trial");
-  const [mode, setMode] = useState<"cpo" | "reward">("cpo");
 
   const createMutation = trpc.backoffice.createOrg.useMutation({
     onSuccess: () => {
       toast.success("Organisation created");
       onCreated();
       onClose();
-      setName(""); setSlug(""); setDomain(""); setStatus("trial"); setMode("cpo");
+      setName(""); setSlug(""); setDomain(""); setStatus("trial");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -499,22 +498,12 @@ function CreateOrgDialog({ open, onClose, onCreated }: { open: boolean; onClose:
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label>Platform Mode</Label>
-            <Select value={mode} onValueChange={(v) => setMode(v as "cpo" | "reward")}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cpo">CPO Mode — AI Strategy Builder</SelectItem>
-                <SelectItem value="reward">Reward Mode — Total Reward Strategy</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Determines which initiative library and workflow this org uses.</p>
-          </div>
+
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => createMutation.mutate({ name, slug, primaryDomain: domain || undefined, status, mode })}
+            onClick={() => createMutation.mutate({ name, slug, primaryDomain: domain || undefined, status })}
             disabled={!name || !slug || createMutation.isPending}
             className="bg-primary hover:bg-primary/90 text-white"
           >

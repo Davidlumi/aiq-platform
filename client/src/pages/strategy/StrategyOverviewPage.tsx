@@ -858,7 +858,7 @@ function TalkingPointsBlock({ strategyHash, hasStrategy, hasInitiatives }: Talki
 function GateFlowStrip() {
   const gate = useGate();
   const [, navigate] = useLocation();
-  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
+  const modeLabels = getModeLabels(gate.tenantMode);
   const isReward = gate.tenantMode === "reward";
 
   type StageInfo = { num: number; label: string; href: string; isAccessible: boolean; isCleared: boolean };
@@ -954,7 +954,7 @@ export default function StrategyOverviewPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const gate = useGate();
-  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
+  const modeLabels = getModeLabels(gate.tenantMode);
 
   // ── Data queries ──────────────────────────────────────────────────────────
   const strategyQ           = trpc.intelligence.getStrategy.useQuery();

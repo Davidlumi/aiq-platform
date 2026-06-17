@@ -12,7 +12,7 @@
  * Usage:
  *   const { isStage10Accessible, stage10Cleared } = useGate();
  */
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -130,8 +130,15 @@ const DEFAULT_CONTEXT: GateContextValue = {
 const GateContext = createContext<GateContextValue>(DEFAULT_CONTEXT);
 
 export function GateProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const utils = trpc.useUtils();
+
+  // Derive tenantMode from entitlements: reward wins only when strategyReward=true AND strategyCompany=false
+  const entitlements = (user as any)?.entitlements as { strategyCompany?: boolean; strategyReward?: boolean } | undefined;
+  const tenantMode: "cpo" | "reward" = useMemo(
+    () => (entitlements?.strategyReward === true && entitlements?.strategyCompany !== true) ? "reward" : "cpo",
+    [entitlements?.strategyReward, entitlements?.strategyCompany]
+  );
 
   const { data, isLoading, refetch } = trpc.gate.getState.useQuery(undefined, {
     staleTime: 30_000,
@@ -189,7 +196,7 @@ export function GateProvider({ children }: { children: React.ReactNode }) {
     visionInspirationSource: data?.visionInspirationSource ?? null,
     strategyArchetype: data?.strategyArchetype ?? null,
     strategyStatement: data?.strategyStatement ?? null,
-    tenantMode: (data?.tenantMode as "cpo" | "reward") ?? "cpo",
+    tenantMode,
     refetch: () => { void refetch(); },
     markEdited,
   };

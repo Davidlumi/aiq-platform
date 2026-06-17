@@ -981,14 +981,13 @@ Return JSON with this exact structure:
       capabilityScore: z.number().nullable().optional(),
       capabilityLabel: z.string().nullable().optional(),
        capabilityCount: z.number().nullable().optional(),
-      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
       if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const isReward = input.mode === "reward";
+      const isReward = ctx.entitlements?.strategyReward === true && ctx.entitlements?.strategyCompany !== true;
       // Map enums to human-readable labels
       const OUTCOME_LABELS: Record<string, string> = {
         cost: "cost reduction", growth: "business growth", talent_supply: "talent supply",
@@ -1213,14 +1212,13 @@ Return JSON with this exact structure:
       hrDeliveryTier: z.number().int().min(1).max(4).nullable().optional(),
       visionStatement: z.string().nullable().optional(),
       existingPrinciples: z.array(z.object({ title: z.string(), description: z.string() })).optional(),
-      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       if (!ctx.entitlements?.strategyCompany && !ctx.user.isPlatformSuperuser) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
-      const isReward = input.mode === "reward";
+      const isReward = ctx.entitlements?.strategyReward === true && ctx.entitlements?.strategyCompany !== true;
       const BUSINESS_TIER_LABELS: Record<number, string> = { 1: "Foundational", 2: "Measured", 3: "Bold", 4: "Transformative" };
       const HR_TIER_LABELS: Record<number, string> = { 1: "AI-aware", 2: "AI-using", 3: "AI-enabled", 4: "Innovator" };
       const bLabel = input.businessAmbitionTier ? BUSINESS_TIER_LABELS[input.businessAmbitionTier] ?? "" : "";
@@ -2468,7 +2466,6 @@ Return format: JSON array of exactly 5 strings, no other text.`;
       totalValueHigh: z.number().optional(),
       topRisks: z.array(z.string()).optional(),
       keyDependencies: z.array(z.string()).optional(),
-      mode: z.enum(["cpo", "reward"]).optional(),
       // CPO-mode: structured engine inputs for never-invents-numbers guardrail
       cpoEngineInputs: z.object({
         totalHeadcount: z.number(),
@@ -2485,8 +2482,8 @@ Return format: JSON array of exactly 5 strings, no other text.`;
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
       const fmt = (n: number | undefined) => n ? `£${(n / 1000).toFixed(1)}M` : "N/A";
-      const isReward = input.mode === "reward";
-      const isCpo = input.mode === "cpo" || (!input.mode && !isReward);
+      const isReward = ctx.entitlements?.strategyReward === true && ctx.entitlements?.strategyCompany !== true;
+      const isCpo = !isReward;
 
       // ── T6: Fetch Stage 8 capability data + Stage 6 roadmap horizons to enrich the Business Case narrative ──
       // This wires Stage 9 (Business Case) to consume Stage 8 (Capability) and Stage 6 (Roadmap) output.
@@ -2653,7 +2650,7 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       }
 
       // ── Legacy path (Reward mode or CPO without engine inputs) ─────────────────
-      const isRewardMode = input.mode === "reward";
+      const isRewardMode = ctx.entitlements?.strategyReward === true && ctx.entitlements?.strategyCompany !== true;
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const systemPrompt = [
         isRewardMode
@@ -2857,11 +2854,10 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       sector: z.string().optional(),
       ambitionTier: z.enum(["cautious", "progressive", "transformative"]).optional(),
       selectedInitiatives: z.array(z.string()).optional(),
-      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
-      const isReward = input.mode === "reward";
+      const isReward = ctx.entitlements?.strategyReward === true && ctx.entitlements?.strategyCompany !== true;
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const SCALE_LABELS: Record<number, string> = { 1: "significant gap", 2: "below requirement", 3: "adequate", 4: "strong", 5: "exceptional" };
       const dims = [
@@ -2911,11 +2907,10 @@ Each value is a string containing 2–4 paragraphs of plain text (no markdown, n
       outcomesJson: z.string().optional(),
       businessCaseNarrative: z.string().optional(),
       capabilityJson: z.string().optional(),
-      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
-      const isReward = input.mode === "reward";
+      const isReward = ctx.entitlements?.strategyReward === true && ctx.entitlements?.strategyCompany !== true;
       // VOCAB_BLACKLIST imported from shared/vocabBlacklist.ts
       const ctxParts = [
         input.strategyStatement ? `Strategy statement: ${input.strategyStatement}` : "",

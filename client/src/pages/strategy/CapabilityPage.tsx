@@ -499,7 +499,6 @@ export default function CapabilityPage() {
       sector: assessmentQ.data?.sector ?? undefined,
       ambitionTier,
       selectedInitiatives: selectedInitiativeNames,
-      mode: isRewardMode ? "reward" : "cpo",
     });
   };
 

@@ -111,7 +111,7 @@ function ChallengeCallout({ text, onDismiss }: { text: string; onDismiss: () => 
 
 // ── Peer vision starters section ───────────────────────────────────────────────
 function PeerVisionSection({ onAdopt }: { onAdopt: (text: string) => void }) {
-  const { data: peers, isLoading } = trpc.gate.getPeerVisionStarters.useQuery({ mode: "reward" });
+  const { data: peers, isLoading } = trpc.gate.getPeerVisionStarters.useQuery({});
 
   if (isLoading) {
     return (

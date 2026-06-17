@@ -28,7 +28,7 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { ailOrgContext, tenants, companyProfile, rewardPrework } from "../../drizzle/schema";
+import { ailOrgContext, companyProfile, rewardPrework } from "../../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import { evaluateAllInitiatives, evaluateAllInitiativesWithSemanticAlignment, type FitImpactEngineInputs } from "../services/fitImpactEngine";
 import { computeAlignmentCacheKey } from "../services/semanticPrincipleAlignment";
@@ -147,9 +147,8 @@ export const gateRouter = router({
         .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
         .limit(1);
 
-      // Fetch tenant mode for mode-aware UI
-      const tenantRow = await db.select({ mode: tenants.mode }).from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
-      const tenantMode: "cpo" | "reward" = tenantRow[0]?.mode ?? "cpo";
+      // Derive tenantMode from entitlements (no DB query needed)
+      const tenantMode: "cpo" | "reward" = (ctx.entitlements?.strategyReward && !ctx.entitlements?.strategyCompany) ? "reward" : "cpo";
 
       const orgCtx = row[0];
       if (!orgCtx) {
@@ -406,9 +405,8 @@ export const gateRouter = router({
       const orgCtx = row[0];
       if (!orgCtx) throw new TRPCError({ code: "NOT_FOUND" });
 
-      // Fetch tenant mode for engine filtering
-      const tenantModeRow = await db.select({ mode: tenants.mode }).from(tenants).where(eq(tenants.id, ctx.user.tenantId)).limit(1);
-      const tenantMode: "cpo" | "reward" = tenantModeRow[0]?.mode ?? "cpo";
+      // Derive tenantMode from entitlements (no DB query needed)
+      const tenantMode: "cpo" | "reward" = (ctx.entitlements?.strategyReward && !ctx.entitlements?.strategyCompany) ? "reward" : "cpo";
 
       // Parse and validate principles
       let principles: Array<{ title: string; description: string }> = [];
@@ -660,10 +658,10 @@ export const gateRouter = router({
       sector: z.string().optional(),
       sizeBand: z.enum(["lt500", "500_5k", "5k_25k", "25k_plus"]).optional(),
       workforceComposition: z.string().optional(),
-      mode: z.enum(["cpo", "reward"]).optional(),
     }))
-    .query(async ({ input }) => {
-      const { sector, sizeBand, workforceComposition, mode } = input;
+    .query(async ({ ctx, input }) => {
+      const { sector, sizeBand, workforceComposition } = input;
+      const mode: "cpo" | "reward" = (ctx.entitlements?.strategyReward && !ctx.entitlements?.strategyCompany) ? "reward" : "cpo";
       let filtered = PEER_VISION_LIBRARY;
 
       // Filter by mode if provided (entries without mode are available to both)
@@ -1088,11 +1086,10 @@ export const gateRouter = router({
     .input(z.object({
       archetype: z.enum(["augmentation", "transformation", "differentiation", "efficiency", "defensive"]),
       visionStatement: z.string().optional(),
-      mode: z.enum(["cpo", "reward"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       assertLLMRateLimit(ctx.user.id); // PROD-2.1
-      const isReward = input.mode === "reward";
+      const isReward = ctx.entitlements?.strategyReward === true && ctx.entitlements?.strategyCompany !== true;
       const archetypeDescriptions: Record<string, string> = isReward ? {
         augmentation: "AI enhances Reward professionals' judgement — compensation analysts use AI to make better pay decisions but remain accountable for equity and fairness outcomes",
         transformation: "AI fundamentally reshapes reward processes, pay cycles, and compensation operating models — the Reward function leads AI-driven total reward innovation",

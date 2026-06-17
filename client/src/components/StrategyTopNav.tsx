@@ -253,6 +253,7 @@ export default function StrategyTopNav() {
   const [location, setLocation] = useLocation();
   const navigate = setLocation;
   const { tenantMode } = useGate();
+  const isReward = tenantMode === "reward";
   const modeLabels = getModeLabels(tenantMode as "cpo" | "reward" | null | undefined);
   // Apply mode-aware labels and routes to stages 1-5, 9, and 10
   const activeStages = STAGES.map(s => {

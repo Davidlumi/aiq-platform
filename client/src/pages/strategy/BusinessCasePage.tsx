@@ -451,7 +451,6 @@ export default function BusinessCasePage() {
       totalValueHigh: ve?.net_value_gbp?.high ?? undefined,
       topRisks,
       keyDependencies: keyDeps,
-      mode: isRewardMode ? "reward" : "cpo",
       cpoEngineInputs: cpoEngineInputs as any,
       cpoRecommendedScenario: "central",
     });

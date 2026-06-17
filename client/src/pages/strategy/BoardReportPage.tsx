@@ -261,7 +261,7 @@ export default function BoardReportPage() {
   const gate = useGate();
   const { isDeepDive } = useDeepDive();
   // Mode labels — declared before early returns so they are always in scope
-  const modeLabels = getModeLabels(gate.tenantMode as "cpo" | "reward" | null | undefined);
+  const modeLabels = getModeLabels(gate.tenantMode);
   const reportTitle = modeLabels.stage10Label;
 
   // Mode-guard redirect: Reward tenants must not land on the CPO BoardReportPage

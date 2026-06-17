@@ -30,8 +30,6 @@ export const tenants = mysqlTable("tenants", {
   // readiness: + team dashboards, manager nudges, gap analysis, learning plans
   // enterprise: + org-level analytics, regulatory mapping, API access, custom branding
   plan: mysqlEnum("plan", ["foundation", "readiness", "enterprise"]).notNull().default("foundation"),
-  // Two-mode build: tenant strategy mode — transitional, will be removed when all mode readers are migrated to entitlement checks
-  mode: mysqlEnum("mode", ["cpo", "reward"]).notNull().default("cpo"),
   // Entitlements — founder-set, permanent until changed via backoffice
   entitlementStrategyCompany: boolean("entitlement_strategy_company").notNull().default(false),
   entitlementStrategyReward: boolean("entitlement_strategy_reward").notNull().default(false),
