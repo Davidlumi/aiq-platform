@@ -426,10 +426,7 @@ describe("Acme E2E — Stage 10 (Review Session)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
     // completeStage10 is the review soft gate (renamed from completeStage9 in v4)
-=======
->>>>>>> Stashed changes
     const result = await caller.gate.completeStage10({});
 
     // completeStage10 returns { ok: true, gateState }
@@ -447,10 +444,7 @@ describe("Acme E2E — Stage 10 (Review Session)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
     // completeStage10 is the review soft gate (renamed from completeStage9 in v4)
-=======
->>>>>>> Stashed changes
     const result = await caller.gate.completeStage10({ reviewHeldAt: reviewDate });
 
     // completeStage10 returns { ok: true, gateState }
@@ -535,10 +529,7 @@ describe("Acme E2E — Stage 11 (Board Report)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
-=======
->>>>>>> Stashed changes
     const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(ACME_BOARD_SECTIONS),
     });
@@ -552,10 +543,7 @@ describe("Acme E2E — Stage 11 (Board Report)", () => {
     vi.mocked(getDb).mockResolvedValue(mockDb as any);
 
     const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
-=======
->>>>>>> Stashed changes
     await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(ACME_BOARD_SECTIONS),
     });
@@ -698,10 +686,7 @@ describe("gate.completeStage11 — word count boundaries", () => {
     };
 
     const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
-=======
->>>>>>> Stashed changes
     const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });
@@ -725,10 +710,7 @@ describe("gate.completeStage11 — word count boundaries", () => {
     // Total = 4000
 
     const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
     // completeStage11 is the board report hard gate (renamed from completeStage10 in v4)
-=======
->>>>>>> Stashed changes
     const result = await caller.gate.completeStage11({
       boardReportSectionsJson: JSON.stringify(sections),
     });

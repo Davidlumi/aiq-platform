@@ -104,11 +104,7 @@ describe("Canonical Facts — Test B: Reward Stage Keys", () => {
     stage7:  "/strategy/reward-business-case",
     stage8:  "/strategy/reward-capability",
     stage9:  "/strategy/reward-review",
-<<<<<<< Updated upstream
     stage10: "/strategy/reward-outputs",
-=======
-    stage10: "/strategy/reward-review",
->>>>>>> Stashed changes
     stage11: "/strategy/reward-outputs",
   };
 

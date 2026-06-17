@@ -2,18 +2,12 @@
  * Stage 9, 10 & 11 Gate Tests — Increment 3
  *
  * Tests the gate procedures for:
-<<<<<<< Updated upstream
  *   - completeStage10: soft gate (review held-at, no content validation)
  *   - completeStage11: hard gate (6 sections present, 1200–4000 words)
  *
  * NOTE: The procedures were renumbered in v4:
  *   - Old completeStage9  → now completeStage10 (review soft gate)
  *   - Old completeStage10 → now completeStage11 (board report hard gate)
-=======
- *   - completeStage9:  hard gate — business case narrative (≥50 words)
- *   - completeStage10: soft gate — review session (self-attestation, no content validation)
- *   - completeStage11: hard gate — board report (6 sections present, 1200–4000 words)
->>>>>>> Stashed changes
  */
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
@@ -122,101 +116,19 @@ function makeSections(wordCountPerSection = 250): Record<string, { content: stri
   );
 }
 
-<<<<<<< Updated upstream
 // ─── completeStage10 (review soft gate — was completeStage9 in v3) ────────────
-=======
-const VALID_NARRATIVE =
-  "Our business case for this reward strategy is grounded in three pillars: " +
-  "market competitiveness, internal equity, and future capability investment. " +
-  "We have benchmarked our total reward package against sector peers and identified " +
-  "a gap of approximately 8% at the senior professional band. Closing this gap will " +
-  "reduce voluntary attrition by an estimated 15% and improve offer acceptance rates. " +
-  "The investment is fully funded within existing headcount budget through a reallocation " +
-  "of the discretionary bonus pool, which has historically been underspent by 12%.";
-
-// ─── completeStage9 (business case narrative hard gate) ───────────────────────
->>>>>>> Stashed changes
-describe("gate.completeStage9", () => {
-  it("accepts a narrative of 50+ words", async () => {
-    const db = makeDb();
-    vi.mocked(getDb).mockResolvedValue(db as any);
-    const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
-    const result = await caller.gate.completeStage10({ reviewHeldAt: Date.now() });
-=======
-    const result = await caller.gate.completeStage9({ businessCaseNarrative: VALID_NARRATIVE });
->>>>>>> Stashed changes
-    expect(result.ok).toBe(true);
-    expect(result.gateState.stage9.completedAt).toBeTypeOf("number");
-    expect(result.gateState.stage9.lastEditedAt).toBeNull();
-  });
-
-  it("rejects a narrative shorter than 50 words", async () => {
-    const db = makeDb();
-    vi.mocked(getDb).mockResolvedValue(db as any);
-    const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
-    const result = await caller.gate.completeStage10({});
-    expect(result.ok).toBe(true);
-=======
-    await expect(
-      caller.gate.completeStage9({ businessCaseNarrative: "Too short." })
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
->>>>>>> Stashed changes
-  });
-
-  it("sets stage9.completedAt in stageGateStateJson", async () => {
-    const db = makeDb();
-    vi.mocked(getDb).mockResolvedValue(db as any);
-    const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
-    await caller.gate.completeStage10({ reviewHeldAt: 1700000009000 });
-=======
-    await caller.gate.completeStage9({ businessCaseNarrative: VALID_NARRATIVE });
->>>>>>> Stashed changes
-    const setCall = (db as any)._setCall;
-    const updatedState = JSON.parse(setCall.stageGateStateJson);
-    expect(updatedState.stage10.completedAt).toBeTypeOf("number");
-    expect(updatedState.stage10.completedAt).toBeGreaterThan(0);
-  });
-
-  it("throws NOT_FOUND when no org context row exists", async () => {
-    const db = {
-      select: vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]),
-          }),
-        }),
-      }),
-    };
-    vi.mocked(getDb).mockResolvedValue(db as any);
-    const caller = appRouter.createCaller(makeCtx());
-<<<<<<< Updated upstream
-    await expect(caller.gate.completeStage10({})).rejects.toMatchObject({ code: "NOT_FOUND" });
-  });
-});
-
-// ─── completeStage11 (board report hard gate — was completeStage10 in v3) ─────
-=======
-    await expect(
-      caller.gate.completeStage9({ businessCaseNarrative: VALID_NARRATIVE })
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
-  });
-});
-
-// ─── completeStage10 (review session soft gate) ───────────────────────────────
->>>>>>> Stashed changes
-describe("gate.completeStage10", () => {
-  it("succeeds as a soft gate with no content validation", async () => {
+describe("gate.completeStage10 (review soft gate)", () => {
+  it("accepts with reviewHeldAt provided", async () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
     const result = await caller.gate.completeStage10({ reviewHeldAt: Date.now() });
     expect(result.ok).toBe(true);
+    expect(result.gateState.stage10.completedAt).toBeTypeOf("number");
+    expect(result.gateState.stage10.lastEditedAt).toBeNull();
   });
 
-  it("succeeds even without reviewHeldAt (optional field)", async () => {
+  it("accepts without reviewHeldAt (optional field)", async () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
@@ -228,7 +140,7 @@ describe("gate.completeStage10", () => {
     const db = makeDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(makeCtx());
-    await caller.gate.completeStage10({ reviewHeldAt: 1700000010000 });
+    await caller.gate.completeStage10({ reviewHeldAt: 1700000009000 });
     const setCall = (db as any)._setCall;
     const updatedState = JSON.parse(setCall.stageGateStateJson);
     expect(updatedState.stage10.completedAt).toBeTypeOf("number");
