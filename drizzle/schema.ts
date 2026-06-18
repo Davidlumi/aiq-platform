@@ -34,6 +34,19 @@ export const tenants = mysqlTable("tenants", {
   entitlementStrategyCompany: boolean("entitlement_strategy_company").notNull().default(false),
   entitlementStrategyReward: boolean("entitlement_strategy_reward").notNull().default(false),
   entitlementAssessment: boolean("entitlement_assessment").notNull().default(false),
+  // Paid assessment tier — flipped by Stripe webhook on verified payment (never on redirect).
+  // entitlementAssessment = true + entitlementAssessmentPaid = false → free tier
+  // entitlementAssessment = true + entitlementAssessmentPaid = true  → paid tier
+  entitlementAssessmentPaid: boolean("entitlement_assessment_paid").notNull().default(false),
+  // Stripe identifiers — populated by webhook, never on redirect
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  stripeSubscriptionStatus: varchar("stripe_subscription_status", { length: 50 }),
+  stripePriceKey: varchar("stripe_price_key", { length: 50 }), // e.g. 'individualMonthly'
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
+  stripeCancelAtPeriodEnd: boolean("stripe_cancel_at_period_end").default(false),
+  // Grace period: access is maintained until this timestamp after failed renewal
+  paidAccessGraceUntil: timestamp("paid_access_grace_until"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -86,6 +99,9 @@ export const users = mysqlTable("users", {
   // Two-mode build: AiQ strategy role — determines which mode tenant is created at sign-up
   // "learner" added for assessment-only users (inert until assessment-only slice)
   aiqRole: mysqlEnum("aiq_role", ["cpo", "reward_leader", "learner"]).default("cpo"),
+  // Email verification — used for self-serve sign-up
+  emailVerificationToken: varchar("email_verification_token", { length: 255 }),
+  emailVerifiedAt: timestamp("email_verified_at"),
   // Platform super-user flag — set only via direct SQL, never via any API path
   isPlatformSuperuser: boolean("is_platform_superuser").notNull().default(false),
 }, (t) => ({

@@ -47,7 +47,7 @@ import {
   questionFlags,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
-import { assessmentProcedure as protectedProcedure, router } from "../_core/trpc";
+import { assessmentProcedure as protectedProcedure, assessmentPaidProcedure, router } from "../_core/trpc";
 import {
   computeCapabilityScores,
   computeOverallScore,
@@ -709,6 +709,35 @@ export const assessmentRouter = router({
         )
         .limit(1);
       if (existing[0]) return { sessionId: existing[0].id, resumed: true };
+
+      // ── Free-tier retake cooldown (30 days) ───────────────────────────────────────
+      // Paid users may retake at any time. Free users are limited to one assessment
+      // per 30-day rolling window. Enforce at the server so the client cannot bypass.
+      const isPaidUser = ctx.entitlements?.assessmentPaid === true;
+      if (!isPaidUser) {
+        const lastCompleted = await db
+          .select({ completedAt: assessmentSessions.completedAt })
+          .from(assessmentSessions)
+          .where(
+            and(
+              eq(assessmentSessions.userId, ctx.user.id),
+              eq(assessmentSessions.state, "completed")
+            )
+          )
+          .orderBy(desc(assessmentSessions.completedAt))
+          .limit(1);
+        if (lastCompleted[0]?.completedAt) {
+          const msSinceLast = Date.now() - new Date(lastCompleted[0].completedAt).getTime();
+          const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+          if (msSinceLast < THIRTY_DAYS_MS) {
+            const nextRetakeAt = new Date(new Date(lastCompleted[0].completedAt).getTime() + THIRTY_DAYS_MS);
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: `Free tier allows one assessment per 30 days. Your next retake is available on ${nextRetakeAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}. Upgrade to Individual to retake at any time.`,
+            });
+          }
+        }
+      }
 
       // Validate blueprint exists
       const blueprint = await db
@@ -2361,6 +2390,45 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         );
       } catch {}
 
+      // ── Free-tier redaction ─────────────────────────────────────────────────────
+      // Paid users receive the full result shape.
+      // Free users receive: overallScore, weakDomainNames (names only, no per-domain
+      // scores), and a redacted percentileData headline. All other fields are stripped.
+      const isPaid = ctx.entitlements?.assessmentPaid === true;
+
+      if (!isPaid) {
+        // Identify weak domains (score < 55) sorted by score ascending
+        const weakDomains = Object.entries(enrichedCapScores)
+          .filter(([, v]) => v.score < 55)
+          .sort(([, a], [, b]) => a.score - b.score)
+          .map(([, v]) => v.displayName);
+
+        return {
+          session: session[0],
+          score: {
+            id: score[0].id,
+            sessionId: score[0].sessionId,
+            overallScore: parseFloat(String(score[0].overallScore)),
+            // Redacted: no per-domain scores, no breakdown detail
+            breakdown: null,
+          },
+          // Free tier: weak domain names only, no scores
+          weakDomainNames: weakDomains,
+          signalScores: null,
+          longitudinalData: [],
+          scenarioCallbacks: [],
+          confidenceCalibration: null,
+          competenceConfidenceMatrix: null,
+          blindSpots: null,
+          llmNarrative: null,
+          domainResponsePatterns: null,
+          // Headline percentile only (overall rank, no per-domain)
+          percentileData: percentileData ? { overall: (percentileData as any).overall ?? null } : null,
+          // Signal to the client that this is a redacted free-tier result
+          isFreeTierResult: true,
+        };
+      }
+
       return {
         session: session[0],
         score: {
@@ -2380,6 +2448,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
         llmNarrative: llmNarrativeFromBreakdown,
         domainResponsePatterns,
         percentileData,
+        isFreeTierResult: false,
       };
     }),
   // ── Get user's assessment history ──────────────────────────────────────────
@@ -2828,7 +2897,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
     }),
 
   // ── AI-generated 2-sentence assessment summary ──────────────────────────────────────
-  generateSummary: protectedProcedure
+  generateSummary: assessmentPaidProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
@@ -2890,7 +2959,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
     }),
 
   // ── AI-generated 3-part development narrative ─────────────────────────────────
-  generateNarrative: protectedProcedure
+  generateNarrative: assessmentPaidProcedure
     .input(z.object({
       sessionId: z.string(),
       domainScores: z.array(z.object({ name: z.string(), score: z.number() })).optional(),
@@ -2987,7 +3056,7 @@ Return ONLY a JSON object with keys: "strengths", "gaps", "priorities" — each 
 
   // ── AI-generated capability profile: cross-cutting + per-domain narratives ──
   // Used by the redesigned individual assessment dashboard (brief v1)
-  generateCapabilityProfile: protectedProcedure
+  generateCapabilityProfile: assessmentPaidProcedure
     .input(z.object({
       sessionId: z.string(),
       domainScores: z.array(z.object({
@@ -3213,7 +3282,7 @@ Domain scores (sorted highest to lowest):\n${domainLines}\n\nGenerate:\n1. 2-3 c
     }),
 
   // ── AI-generated domain deep dive ───────────────────────────────────────────
-  generateDomainDeepDive: protectedProcedure
+  generateDomainDeepDive: assessmentPaidProcedure
     .input(z.object({
       sessionId: z.string(),
       domainKey: z.string(),

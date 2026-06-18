@@ -20,6 +20,7 @@ import { debriefModeHandler } from "../coach/modes/debrief";
 import { learningModeHandler } from "../coach/modes/learning";
 import { applyModeHandler } from "../coach/modes/apply";
 import { strategyCoachModeHandler } from "../coach/modes/strategy";
+import { handleStripeWebhook } from "../stripe/webhook";
 
 // Register all AiQ Coach mode handlers at startup
 coachEngine.registerMode(diagnosticModeHandler);
@@ -52,6 +53,9 @@ async function startServer() {
   const server = createServer(app);
   // TD-1: Trust the platform gateway's X-Forwarded-For header for accurate IP identification
   app.set("trust proxy", 1);
+  // Stripe webhook — MUST be registered before express.json() to preserve raw body for signature verification
+  app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -67,6 +71,20 @@ async function startServer() {
     skip: () => process.env.NODE_ENV === "test",
   });
   app.use("/api/oauth", authLimiter);
+
+  // Self-serve sign-up rate limit — 5 registrations per hour per IP
+  // Prevents bulk account creation and disposable-email abuse.
+  const signupLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many sign-up attempts. Please try again in an hour." },
+    skip: () => process.env.NODE_ENV === "test",
+  });
+  // tRPC batches as POST to /api/trpc — we match on the procedure name in the body
+  // via a lightweight middleware that only activates for selfRegister calls.
+  app.use("/api/trpc/auth.selfRegister", signupLimiter);
 
   // General API rate limit — 300 requests per 5 minutes per IP
   const apiLimiter = rateLimit({

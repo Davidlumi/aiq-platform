@@ -97,6 +97,35 @@ const requireAssessment = t.middleware(async opts => {
 export const assessmentProcedure = t.procedure.use(requireAssessment);
 
 /**
+ * assessmentPaidProcedure — guards paid-tier assessment features.
+ * Requires BOTH entitlementAssessment = true AND entitlementAssessmentPaid = true.
+ * Free-tier users (assessmentPaid = false) are refused at the server — not just hidden in UI.
+ * This flag is flipped by the Stripe webhook on verified payment only.
+ */
+const requireAssessmentPaid = t.middleware(async opts => {
+  const { ctx, next } = opts;
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+  }
+  const ent = ctx.entitlements;
+  if (!ent?.assessment) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Assessment is not enabled for your organisation. Contact your AiQ administrator.",
+    });
+  }
+  if (!ent?.assessmentPaid) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "This feature requires a paid AiQ subscription. Upgrade to unlock the full learning programme.",
+    });
+  }
+  return next({ ctx: { ...ctx, user: ctx.user } });
+});
+
+export const assessmentPaidProcedure = t.procedure.use(requireAssessmentPaid);
+
+/**
  * cpoProcedure — DEPRECATED. Kept as alias for strategyCompanyProcedure during transition.
  * All new code should use strategyCompanyProcedure directly.
  * @deprecated Use strategyCompanyProcedure instead.

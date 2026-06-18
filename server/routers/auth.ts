@@ -14,7 +14,7 @@ import { users, tenants } from "../../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { applyColdStart } from "../ail/coldStart";
-import { sendPasswordResetEmail } from "../email";
+import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "../email";
 
 export const authRouter = router({
   // Get current user with roles and entitlements
@@ -26,6 +26,7 @@ export const authRouter = router({
       strategyCompany: false,
       strategyReward: false,
       assessment: false,
+      assessmentPaid: false,
     };
     // Derive tenantMode from entitlements: reward wins only when strategyReward=true AND strategyCompany=false
     const tenantMode: "cpo" | "reward" = (entitlements.strategyReward && !entitlements.strategyCompany) ? "reward" : "cpo";
@@ -338,10 +339,182 @@ export const authRouter = router({
       }
 
       const passwordHash = await hashPassword(input.newPassword);
-      await db
+            await db
         .update(users)
         .set({ passwordHash })
         .where(eq(users.id, ctx.user.id));
+      return { success: true };
+    }),
+
+  // ── Self-serve sign-up (public, no org code required) ─────────────────────────────────
+  // Creates a personal tenant + user in one transaction.
+  // Account is created with status="pending" and entitlementAssessment=true (free tier).
+  // A verification email is sent; the account becomes "active" on verifyEmail.
+  selfRegister: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+      password: z.string().min(8),
+      firstName: z.string().min(1).max(100),
+      lastName: z.string().min(1).max(100),
+      acceptedTerms: z.literal(true, { message: "You must accept the terms and conditions" }),
+      origin: z.string().url().optional(), // frontend passes window.location.origin for verify URL
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const normalisedEmail = input.email.toLowerCase().trim();
+
+      // Check if email is already registered across all tenants
+      const existing = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, normalisedEmail))
+        .limit(1);
+      if (existing[0]) {
+        // Return success to avoid email enumeration — the verification email will not arrive
+        return { success: true, requiresVerification: true };
+      }
+
+      // Derive a unique personal tenant slug from the email local-part
+      const emailLocal = normalisedEmail.split("@")[0].replace(/[^a-z0-9]/g, "-").slice(0, 40);
+      let slug = `personal-${emailLocal}`;
+      const slugExists = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.slug, slug)).limit(1);
+      if (slugExists[0]) slug = `${slug}-${nanoid(6)}`;
+
+      const tenantId = `tenant-${nanoid(12)}`;
+      const userId = nanoid();
+      const verificationToken = generateResetToken(); // reuse same secure random helper
+
+      // Create personal tenant with free-tier entitlements
+      await db.insert(tenants).values({
+        id: tenantId,
+        name: `${input.firstName} ${input.lastName}`,
+        slug,
+        status: "active",
+        entitlementAssessment: true,
+        entitlementAssessmentPaid: false,
+        entitlementStrategyCompany: false,
+        entitlementStrategyReward: false,
+      });
+
+      const passwordHash = await hashPassword(input.password);
+
+      // Create user with pending status (activated on email verification)
+      await db.insert(users).values({
+        id: userId,
+        tenantId,
+        email: normalisedEmail,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        passwordHash,
+        status: "pending",
+        aiqRole: "learner",
+        emailVerificationToken: verificationToken,
+      });
+
+      // Assign learner role
+      const { userRoles, roles } = await import("../../drizzle/schema");
+      const learnerRole = await db.select().from(roles).where(eq(roles.key, "learner")).limit(1);
+      if (learnerRole[0]) {
+        await db.insert(userRoles).values({
+          id: nanoid(),
+          tenantId,
+          userId,
+          roleId: learnerRole[0].id,
+        });
+      }
+
+      // Send verification email (non-blocking)
+      const origin = input.origin ?? "https://hraiq.co.uk";
+      const verifyUrl = `${origin}/verify-email?token=${verificationToken}`;
+      await sendVerificationEmail({
+        to: normalisedEmail,
+        firstName: input.firstName,
+        verifyUrl,
+      }).catch(() => { /* non-blocking */ });
+
+      return { success: true, requiresVerification: true };
+    }),
+
+  // ── Verify email address ────────────────────────────────────────────────────────────────────────
+  // Activates the user account and clears the verification token.
+  verifyEmail: publicProcedure
+    .input(z.object({
+      token: z.string(),
+      origin: z.string().url().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.emailVerificationToken, input.token))
+        .limit(1);
+
+      const user = result[0];
+      if (!user) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid or expired verification link. Please request a new one." });
+      }
+
+      // Activate account
+      await db
+        .update(users)
+        .set({
+          status: "active",
+          emailVerificationToken: null,
+          emailVerifiedAt: new Date(),
+        })
+        .where(eq(users.id, user.id));
+
+      // Send welcome email (non-blocking)
+      const origin = input.origin ?? "https://hraiq.co.uk";
+      await sendWelcomeEmail({
+        to: user.email,
+        firstName: user.firstName,
+        dashboardUrl: `${origin}/dashboard`,
+      }).catch(() => { /* non-blocking */ });
+
+      return { success: true, email: user.email };
+    }),
+
+  // ── Resend verification email ─────────────────────────────────────────────────────────────
+  resendVerification: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+      origin: z.string().url().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const normalisedEmail = input.email.toLowerCase().trim();
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, normalisedEmail))
+        .limit(1);
+
+      // Always return success to avoid email enumeration
+      const user = result[0];
+      if (!user || user.status !== "pending") return { success: true };
+
+      // Regenerate token
+      const newToken = generateResetToken();
+      await db
+        .update(users)
+        .set({ emailVerificationToken: newToken })
+        .where(eq(users.id, user.id));
+
+      const origin = input.origin ?? "https://hraiq.co.uk";
+      const verifyUrl = `${origin}/verify-email?token=${newToken}`;
+      await sendVerificationEmail({
+        to: normalisedEmail,
+        firstName: user.firstName,
+        verifyUrl,
+      }).catch(() => { /* non-blocking */ });
 
       return { success: true };
     }),

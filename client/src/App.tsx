@@ -10,9 +10,13 @@ import { useViewAs } from "@/contexts/ViewAsContext";
 import { useGate } from "./contexts/GateContext";
 import { Loader2 } from "lucide-react";
 
+// Billing
+import BillingPage from "./pages/billing/BillingPage";
+
 // Auth pages
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
@@ -369,6 +373,7 @@ function Router() {
       {/* Public auth routes */}
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
+      <Route path="/verify-email" component={VerifyEmailPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/accept-invitation" component={AcceptInvitationPage} />
@@ -401,6 +406,9 @@ function Router() {
       </Route>
       <Route path="/learning">
         <ProtectedRoute component={LearningPlanPage} />
+      </Route>
+      <Route path="/billing">
+        <ProtectedRoute component={BillingPage} />
       </Route>
       <Route path="/modules">
         <KnowledgeRoute component={ModulesPage} />
@@ -442,76 +450,76 @@ function Router() {
       <Route path="/reports">
         <ProtectedRoute component={ReportsPage} />
       </Route>
+      {/* STRATEGY HIDDEN (Phase 1) — all /strategy/* routes redirect to /dashboard.
+          Seam D fix: these were previously ProtectedRoute (auth-only) which showed page shell
+          before tRPC calls failed. Now they redirect immediately at the route level.
+          Reversibility: restore CpoProtectedRouteWithStrategyNav components above.
+      */}
       <Route path="/strategy">
-        <CpoProtectedRouteWithStrategyNav component={StrategyOverviewPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/diagnostic">
-        <CpoProtectedRouteWithStrategyNav component={StrategyDiagnosticPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/principles">
-        <CpoProtectedRouteWithStrategyNav component={StrategyAmbitionPage} />
+        <Redirect to="/dashboard" />
       </Route>
-      {/* T2: legacy redirect — /strategy/ambition → /strategy/principles */}
       <Route path="/strategy/ambition">
-        <Redirect to="/strategy/principles" />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/plan">
-        <CpoProtectedRouteWithStrategyNav component={StrategyPlanPage} />
+        <Redirect to="/dashboard" />
       </Route>
-      {/* T13: deep-dive moved to /strategy/roadmap/detail */}
       <Route path="/strategy/roadmap/detail">
-        <CpoProtectedRouteWithStrategyNav component={StrategyRoadmapPage} />
+        <Redirect to="/dashboard" />
       </Route>
-      {/* T7: Stage 6 Roadmap — new 11-stage flow */}
       <Route path="/strategy/roadmap">
-        <CpoProtectedRouteWithStrategyNav component={StrategyRoadmapStagePage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/investment-risk">
-        <CpoProtectedRouteWithStrategyNav component={StrategyInvestmentRiskPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/value">
-        <CpoProtectedRouteWithStrategyNav component={StrategyValuePage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/business-case">
-        <CpoProtectedRouteWithStrategyNav component={BusinessCasePage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/capability">
-        <CpoProtectedRouteWithStrategyNav component={CapabilityPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/measures">
-        <CpoProtectedRouteWithStrategyNav component={StrategyMeasurementPage} />
+        <Redirect to="/dashboard" />
       </Route>
-      {/* T3: legacy redirect — /strategy/measurement → /strategy/measures */}
       <Route path="/strategy/measurement">
-        <Redirect to="/strategy/measures" />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/review">
-        <CpoProtectedRouteWithStrategyNav component={ReviewSessionPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/board-report">
-        <CpoProtectedRouteWithStrategyNav component={BoardReportPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/signal-watch">
-        <CpoProtectedRouteWithStrategyNav component={SignalWatchPage} />
+        <Redirect to="/dashboard" />
       </Route>
-      {/* T14: Strategy Summary — persistent landing after Stage 11 cleared */}
       <Route path="/strategy/summary">
-        <CpoProtectedRouteWithStrategyNav component={StrategySummaryPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/draft">
-        <CpoProtectedRouteWithStrategyNav component={StrategyDraftPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/vision">
-        <CpoProtectedRouteWithStrategyNav component={StrategyVisionPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/strategy">
-        <CpoProtectedRouteWithStrategyNav component={StrategyStrategyPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/ai-strategy">
-        <Redirect to="/strategy" />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/ai-strategy/assessment">
-        <Redirect to="/strategy/principles" />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/implementation-tracker">
         <ProtectedRoute component={ImplementationTrackerPage} />
@@ -573,38 +581,40 @@ function Router() {
       <Route path="/admin/content-review">
         <ProtectedRoute component={ContentReviewPage} />
       </Route>
+      {/* COMPANY PROFILE HIDDEN (Phase 1) — strategy-only feature */}
       <Route path="/company-profile">
-        <ProtectedRoute component={CompanyProfilePage} />
+        <Redirect to="/dashboard" />
       </Route>
+      {/* REWARD ROUTES HIDDEN (Phase 1) — Seam D fix: redirect immediately */}
       <Route path="/strategy/reward-prework">
-        <ProtectedRoute component={RewardPreworkPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-vision">
-        <ProtectedRoute component={RewardVisionPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-strategy">
-        <ProtectedRoute component={RewardStrategyPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-principles">
-        <ProtectedRoute component={RewardPrinciplesPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-initiatives">
-        <ProtectedRoute component={RewardInitiativesPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-success-measures">
-        <ProtectedRoute component={RewardSuccessMeasuresPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-business-case">
-        <ProtectedRoute component={RewardBusinessCasePage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-capability">
-        <ProtectedRoute component={RewardCapabilityPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-review">
-        <ProtectedRoute component={RewardReviewPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/strategy/reward-outputs">
-        <ProtectedRouteWithStrategyNav component={RewardOutputsPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/backoffice/initiative-discovery">
         <ProtectedRoute component={InitiativeDiscoveryPage} />
@@ -630,21 +640,21 @@ function Router() {
       <Route path="/case-studies" component={CaseStudiesPage} />
       <Route path="/roi-calculator" component={ROICalculatorPage} />
       <Route path="/compare" component={ComparePage} />
-      {/* Company HR AI Assessment routes */}
+      {/* COMPANY ASSESSMENT HIDDEN (Phase 1) — strategy-only feature */}
       <Route path="/company-assessment">
-        <ProtectedRoute component={CompanyAssessmentHomePage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/company-assessment/session">
-        <ProtectedRoute component={CompanyAssessmentLandingPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/company-assessment/new">
-        <ProtectedRoute component={CompanyOnboardingPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/company-assessment/:assessmentId/results">
-        <ProtectedRoute component={CompanyAssessmentResultsPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/company-assessment/:assessmentId">
-        <ProtectedRoute component={CompanyAssessmentSessionPage} />
+        <Redirect to="/dashboard" />
       </Route>
       {/* 404 */}
       <Route component={NotFound} />

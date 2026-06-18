@@ -71,7 +71,7 @@ function makeCtx(): TrpcContext {
     updatedAt: new Date(),
     lastSignedIn: new Date(),
   } as any;
-  return { user, req: {} as any, res: {} as any, entitlements: { strategyCompany: true, strategyReward: true, assessment: true } };
+  return { user, req: {} as any, res: {} as any, entitlements: { strategyCompany: true, strategyReward: true, assessment: true, assessmentPaid: true } };
 }
 
 interface SampleResult {

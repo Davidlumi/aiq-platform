@@ -42,7 +42,7 @@ function makeUser(): AuthenticatedUser {
   };
 }
 function makeCtx(): TrpcContext {
-  return { user: makeUser(), req: {} as any, res: {} as any, entitlements: { strategyCompany: true, strategyReward: true, assessment: true } };
+  return { user: makeUser(), req: {} as any, res: {} as any, entitlements: { strategyCompany: true, strategyReward: true, assessment: true, assessmentPaid: true } };
 }
 
 // Helper: build a gate state with only stages up to N cleared

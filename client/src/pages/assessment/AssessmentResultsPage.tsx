@@ -579,6 +579,8 @@ export default function AssessmentResultsPage() {
   }, [planQuery.data]);
 
   const isLoading = resultsQuery.isLoading || historyQuery.isLoading;
+  const isFreeTier = !!(resultsQuery.data as any)?.isFreeTierResult;
+  const weakDomainNames: string[] = (resultsQuery.data as any)?.weakDomainNames ?? [];
 
   // ── No completed assessment ───────────────────────────────────────────────
   if (!historyQuery.isLoading && completedSessions.length === 0) {
@@ -765,7 +767,71 @@ export default function AssessmentResultsPage() {
         </section>
       )}
 
-      {/* ── 3. CROSS-CUTTING PATTERNS ────────────────────────────────────── */}
+      {/* ── FREE TIER LOCKED STATE ────────────────────────────────────── */}
+      {!isLoading && isFreeTier && (
+        <section aria-labelledby="free-tier-heading" className="space-y-6">
+          {/* Weak domains teaser */}
+          {weakDomainNames.length > 0 && (
+            <div className="bg-card border border-border rounded-xl p-5">
+              <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-muted-foreground mb-3">
+                Areas to develop
+              </p>
+              <ul className="space-y-2">
+                {weakDomainNames.map((name, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-foreground/70">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                    {name}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted-foreground mt-3">
+                Upgrade to see your score in each domain, cross-cutting patterns, and a personalised development plan.
+              </p>
+            </div>
+          )}
+
+          {/* Upgrade CTA card */}
+          <div className="bg-card border-2 border-primary/30 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className="flex-1 min-w-0">
+              <h2 id="free-tier-heading" className="text-base font-semibold text-foreground mb-1">
+                Unlock your full capability profile
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                The Individual plan gives you per-domain scores, AI-generated diagnostic narratives, a personalised learning programme, and unlimited reassessments.
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {[
+                  "Scores for all 6 capability domains",
+                  "AI-generated diagnostic narrative",
+                  "Personalised 30-module learning plan",
+                  "Reassess at any time (free tier: once per 30 days)",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-foreground/70">
+                    <span className="text-primary">✓</span> {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="shrink-0 flex flex-col items-center gap-2">
+              <div className="text-center mb-1">
+                <span className="text-2xl font-bold text-foreground">£50</span>
+                <span className="text-sm text-muted-foreground">/month</span>
+              </div>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
+                onClick={() => navigate("/pricing")}
+              >
+                Upgrade to Individual
+              </Button>
+              <p className="text-[10px] text-muted-foreground">or £480/year · save 20%</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 3. CROSS-CUTTING PATTERNS (paid only) ────────────────────────── */}
+      {!isFreeTier && (
+      <>{/* ── 3. CROSS-CUTTING PATTERNS ────────────────────────────────────── */}
       <section ref={crossCuttingRef} aria-labelledby="cross-cutting-heading">
         <SectionHeading
           label="The patterns we see across your responses"
@@ -1026,6 +1092,8 @@ export default function AssessmentResultsPage() {
           )
         )}
       </section>
+      </> /* end paid-only sections */
+      )}
 
     </div>
   );

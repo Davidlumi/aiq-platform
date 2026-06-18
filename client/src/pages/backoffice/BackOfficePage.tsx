@@ -81,11 +81,108 @@ import {
   TrendingDown,
   Zap,
   CheckCircle,
+  CreditCard,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // --- Types --------------------------------------------------------------------
-type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "quality_gate" | "session_flags" | "feature_flags" | "entitlements";
+type Tab = "dashboard" | "orgs" | "users" | "beta" | "reasoning" | "gaming" | "llm_queue" | "quality_gate" | "session_flags" | "feature_flags" | "entitlements" | "commerce";
+
+// --- Commerce Tab ------------------------------------------------------------
+function CommerceTab() {
+  const { data, isLoading } = trpc.backoffice.getCommerceMetrics.useQuery();
+
+  if (isLoading) return <div className="flex items-center justify-center min-h-[200px]"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (!data) return null;
+
+  const metrics = [
+    { label: "Total tenants", value: data.total, icon: Building2, color: "text-blue-500" },
+    { label: "Free tier", value: data.freeTier, icon: Users, color: "text-muted-foreground" },
+    { label: "Paid subscribers", value: data.paidSubscribers, icon: CreditCard, color: "text-green-500" },
+    { label: "Active subscriptions", value: data.activeSubscriptions, icon: CheckCircle2, color: "text-green-500" },
+    { label: "Pending cancellations", value: data.pendingCancellations, icon: AlertTriangle, color: "text-amber-500" },
+    { label: "In grace period", value: data.inGracePeriod, icon: Clock, color: "text-red-500" },
+    { label: "Monthly plan", value: data.monthlyPlan, icon: TrendingUp, color: "text-blue-400" },
+    { label: "Annual plan", value: data.annualPlan, icon: BarChart3, color: "text-purple-500" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* MRR banner */}
+      <div className="bg-primary/10 border border-primary/20 rounded-xl p-5 flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Estimated MRR</p>
+          <p className="text-3xl font-bold text-foreground mt-1">£{data.estimatedMrr.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-1">{data.monthlyPlan} monthly × £50 + {data.annualPlan} annual × £40 effective</p>
+        </div>
+        <DollarSign className="w-12 h-12 text-primary/30" />
+      </div>
+
+      {/* Metrics grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {metrics.map((m) => {
+          const Icon = m.icon;
+          return (
+            <div key={m.label} className="bg-card border border-border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Icon className={`w-4 h-4 ${m.color}`} />
+                <span className="text-xs text-muted-foreground">{m.label}</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">{m.value}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Recent paid subscribers */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Recent paid subscribers (last 30 days)</h3>
+        {data.recentPaid.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No paid subscribers in the last 30 days.</p>
+        ) : (
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Tenant</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Plan</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Period end</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recentPaid.map((r) => (
+                  <tr key={r.id} className="border-t border-border hover:bg-muted/30">
+                    <td className="px-4 py-2.5 text-foreground font-medium">{r.name ?? r.id}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {r.stripePriceKey === "individualAnnual" ? "Annual" : "Monthly"}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className={`text-xs font-medium ${
+                        r.stripeSubscriptionStatus === "active" ? "text-green-500" :
+                        r.stripeSubscriptionStatus === "past_due" ? "text-amber-500" :
+                        "text-muted-foreground"
+                      }`}>{r.stripeSubscriptionStatus ?? "—"}</span>
+                      {r.stripeCancelAtPeriodEnd && <span className="ml-1.5 text-[10px] text-amber-500">(cancels)</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground text-xs">
+                      {r.stripeCurrentPeriodEnd ? new Date(r.stripeCurrentPeriodEnd).toLocaleDateString("en-GB") : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground text-xs">
+                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-GB") : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // --- Beta Applications Tab ----------------------------------------------------
 const APPLICATION_STATUSES = ["pending", "approved", "rejected", "waitlisted"] as const;
@@ -2108,6 +2205,7 @@ export default function BackOfficePage() {
     { id: "session_flags", label: "Session Flags",       icon: Flag },
     { id: "feature_flags",  label: "Feature Flags",       icon: ToggleLeft },
     { id: "entitlements",   label: "Entitlements",         icon: ShieldCheck },
+    { id: "commerce",        label: "Commerce",              icon: CreditCard },
   ];
 
   return (
@@ -2154,6 +2252,7 @@ export default function BackOfficePage() {
       {tab === "session_flags"   && <SessionFlagsTab />}
       {tab === "feature_flags"   && <FeatureFlagsTab />}
       {tab === "entitlements"     && <EntitlementsTab />}
+      {tab === "commerce"           && <CommerceTab />}
     </div>
   );
 }

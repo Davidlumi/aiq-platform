@@ -5,14 +5,14 @@
  *
  * Nav visibility is driven by tenant entitlements (from auth.me) — NOT by tenantMode/aiqRole:
  *   entitlementAssessment      → MY DEVELOPMENT section (Skills Check, AiQ Coach, Learning Plan, Modules)
- *   entitlementStrategyCompany → AI STRATEGY section (HR AI Strategy, Build Strategy, Board Report, Signal Watch, Company Profile)
- *   entitlementStrategyReward  → Reward domain becomes active (Company-wide locked, Reward active)
  *
  * Sections:
  * - MY DEVELOPMENT (assessment entitlement): Skills Check, AiQ Coach (gated), Learning Plan, Modules
  * - KNOWLEDGE (always visible): Articles, Guides, Glossary
- * - AI STRATEGY (strategyCompany entitlement, CPO+ roles): HR AI Strategy (expandable), Build Strategy, Board Report, Signal Watch, Company Profile
  * - ADMIN (CPO+ roles): People & Org, Users, Beta Applications
+ *
+ * STRATEGY HIDDEN (Phase 1): AI Strategy, Reward, Company Assessment sections are dormant.
+ * Reversibility: re-enable entitlementStrategyCompany/strategyReward + restore nav items.
  */
 import { useState, useEffect, useRef, Fragment } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -63,6 +63,7 @@ import {
   Newspaper,
   HelpCircle,
   Hash,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGate } from "@/contexts/GateContext";
@@ -96,18 +97,9 @@ const CPO_ROLES = ["platform_super_admin", "tenant_admin", "hr_leader"];
 const MANAGER_ROLES = ["manager"];
 
 // ─── HR AI Strategy domain children ──────────────────────────────────────────
-// Status is resolved dynamically based on entitlements in the component.
-// If tenant has strategyReward entitlement: Reward = active, Company-wide = locked.
-// Otherwise: Company-wide = active, Reward = locked.
-const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [
-  { label: "Company-wide",        path: "/strategy",                   icon: Building2,    status: "active" },
-  { label: "Reward",              path: "/strategy/reward-prework",    icon: Briefcase,    status: "locked" },
-  { label: "Talent",              path: "/strategy/talent",            icon: UserSearch,   status: "soon"   },
-  { label: "L&D",                 path: "/strategy/ld",                icon: GraduationCap, status: "soon"  },
-  { label: "Employee Relations",  path: "/strategy/er",                icon: Scale,        status: "soon"   },
-  { label: "Employee Experience", path: "/strategy/ex",                icon: Heart,        status: "soon"   },
-  { label: "D&I",                 path: "/strategy/di",                icon: Users2,       status: "soon"   },
-];
+// STRATEGY HIDDEN (Phase 1): HR_AI_STRATEGY_DOMAINS dormant.
+// Restore by re-enabling entitlements and restoring nav items below.
+const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [];
 
 const NAV_ITEMS: NavItem[] = [
   // -- My Development (shown when tenant has assessment entitlement) ------------
@@ -122,37 +114,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Guides",           path: "/knowledge/guides",    icon: HelpCircle,   section: "knowledge" },
   { label: "Glossary",         path: "/knowledge/glossary",  icon: Hash,         section: "knowledge" },
 
-  // -- AI Strategy (CPO+ roles + strategyCompany entitlement) ------------------
-  // HR AI Strategy expandable is injected before the first item in this section.
-  {
-    label: "Build Strategy",
-    path: "/strategy/diagnostic",
-    icon: Sparkles,
-    roles: CPO_ROLES,
-    section: "aistrategy",
-  },
-  {
-    label: "Board Report",
-    path: "/strategy/board-report",
-    icon: FileText,
-    roles: CPO_ROLES,
-    section: "aistrategy",
-  },
-  {
-    label: "Signal Watch",
-    path: "/strategy/signal-watch",
-    icon: Radio,
-    roles: CPO_ROLES,
-    section: "aistrategy",
-  },
-  {
-    label: "Company Profile",
-    path: "/company-profile",
-    icon: Building2,
-    roles: CPO_ROLES,
-    section: "aistrategy",
-  },
-
+    // -- AI Strategy items HIDDEN (Phase 1) — dormant, not deleted.
   // -- Admin (CPO only) ---------------------------------------------------------
   {
     label: "People & Org",
@@ -789,7 +751,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <span>Profile and settings</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/billing">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
@@ -903,6 +870,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <Link href="/profile">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile and settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/billing">
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Billing</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

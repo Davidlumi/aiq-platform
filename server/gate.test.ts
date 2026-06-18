@@ -69,7 +69,7 @@ function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser
 function makeCtx(user: AuthenticatedUser = makeUser()): TrpcContext {
   return {
     user,
-    entitlements: { strategyCompany: true, strategyReward: true, assessment: true },
+    entitlements: { strategyCompany: true, strategyReward: true, assessment: true, assessmentPaid: true },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };

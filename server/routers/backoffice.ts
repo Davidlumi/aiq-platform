@@ -19,7 +19,7 @@ import {
   tenantSettings,
   managerTeamMembers,
 } from "../../drizzle/schema";
-import { eq, and, like, or, desc, asc, ne, isNotNull, inArray } from "drizzle-orm";
+import { eq, and, like, or, desc, asc, ne, isNotNull, inArray, count, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { hashPassword, generateResetToken } from "../auth";
 import {
@@ -1248,15 +1248,110 @@ export const backofficeRouter = router({
       strategyCompany: z.boolean(),
       strategyReward: z.boolean(),
       assessment: z.boolean(),
+      // assessmentPaid is normally flipped by Stripe webhook; this allows manual override for backoffice
+      assessmentPaid: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.update(tenants).set({
+      const updatePayload: Record<string, unknown> = {
         entitlementStrategyCompany: input.strategyCompany,
         entitlementStrategyReward: input.strategyReward,
         entitlementAssessment: input.assessment,
-      }).where(eq(tenants.id, input.tenantId));
+      };
+      if (input.assessmentPaid !== undefined) {
+        updatePayload.entitlementAssessmentPaid = input.assessmentPaid;
+      }
+      await db.update(tenants).set(updatePayload).where(eq(tenants.id, input.tenantId));
       return { success: true };
     }),
+
+  // ── Commerce instrumentation ─────────────────────────────────────────────
+  getCommerceMetrics: superUserProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const [totalRow] = await db.select({ n: count() }).from(tenants);
+    const total = totalRow?.n ?? 0;
+
+    const [freeRow] = await db
+      .select({ n: count() })
+      .from(tenants)
+      .where(and(eq(tenants.entitlementAssessment, true), eq(tenants.entitlementAssessmentPaid, false)));
+    const freeTier = freeRow?.n ?? 0;
+
+    const [paidRow] = await db
+      .select({ n: count() })
+      .from(tenants)
+      .where(eq(tenants.entitlementAssessmentPaid, true));
+    const paidSubscribers = paidRow?.n ?? 0;
+
+    const [activeRow] = await db
+      .select({ n: count() })
+      .from(tenants)
+      .where(and(
+        eq(tenants.entitlementAssessmentPaid, true),
+        sql`${tenants.stripeSubscriptionStatus} IN ('active', 'trialing')`
+      ));
+    const activeSubscriptions = activeRow?.n ?? 0;
+
+    const [cancelRow] = await db
+      .select({ n: count() })
+      .from(tenants)
+      .where(and(eq(tenants.entitlementAssessmentPaid, true), eq(tenants.stripeCancelAtPeriodEnd, true)));
+    const pendingCancellations = cancelRow?.n ?? 0;
+
+    const [graceRow] = await db
+      .select({ n: count() })
+      .from(tenants)
+      .where(and(
+        eq(tenants.entitlementAssessmentPaid, false),
+        sql`${tenants.paidAccessGraceUntil} IS NOT NULL AND ${tenants.paidAccessGraceUntil} > NOW()`
+      ));
+    const inGracePeriod = graceRow?.n ?? 0;
+
+    const [monthlyRow] = await db
+      .select({ n: count() })
+      .from(tenants)
+      .where(and(eq(tenants.entitlementAssessmentPaid, true), eq(tenants.stripePriceKey, "individualMonthly")));
+    const monthlyPlan = monthlyRow?.n ?? 0;
+
+    const [annualRow] = await db
+      .select({ n: count() })
+      .from(tenants)
+      .where(and(eq(tenants.entitlementAssessmentPaid, true), eq(tenants.stripePriceKey, "individualAnnual")));
+    const annualPlan = annualRow?.n ?? 0;
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentPaid = await db
+      .select({
+        id: tenants.id,
+        name: tenants.name,
+        stripeSubscriptionStatus: tenants.stripeSubscriptionStatus,
+        stripePriceKey: tenants.stripePriceKey,
+        stripeCurrentPeriodEnd: tenants.stripeCurrentPeriodEnd,
+        stripeCancelAtPeriodEnd: tenants.stripeCancelAtPeriodEnd,
+        createdAt: tenants.createdAt,
+      })
+      .from(tenants)
+      .where(and(
+        eq(tenants.entitlementAssessmentPaid, true),
+        sql`${tenants.createdAt} >= ${thirtyDaysAgo}`
+      ))
+      .orderBy(desc(tenants.createdAt))
+      .limit(20);
+
+    return {
+      total,
+      freeTier,
+      paidSubscribers,
+      activeSubscriptions,
+      pendingCancellations,
+      inGracePeriod,
+      monthlyPlan,
+      annualPlan,
+      recentPaid,
+      estimatedMrr: (monthlyPlan * 50) + (annualPlan * 40),
+    };
+  }),
 });

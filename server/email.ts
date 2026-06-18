@@ -318,3 +318,71 @@ export async function sendInvitationEmail(opts: {
     html:    emailLayout(body),
   });
 }
+
+/**
+ * Sends an email verification link to a newly self-registered user.
+ * Silently skips if RESEND_API_KEY is not configured.
+ */
+export async function sendVerificationEmail(opts: {
+  to: string;
+  firstName: string;
+  verifyUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return; // silently skip if key not configured
+
+  const subject = "Verify your AiQ email address";
+  const body = `
+    ${greenBadge("One step to go")}
+    <br/><br/>
+    ${h1(`Hi ${opts.firstName}, please verify your email`)}
+    ${p("Thanks for signing up to AiQ. Click the button below to verify your email address and activate your free account.")}
+    ${ctaButton("Verify email address", opts.verifyUrl)}
+    ${divider()}
+    ${p("This link expires in 24 hours. If you did not create an AiQ account, you can safely ignore this email.")}
+  `;
+
+  await resend.emails.send({
+    from:    FROM_ADDRESS,
+    to:      opts.to,
+    subject,
+    html:    emailLayout(body),
+  });
+}
+
+/**
+ * Sends a welcome email after a user has verified their email address.
+ * Silently skips if RESEND_API_KEY is not configured.
+ */
+export async function sendWelcomeEmail(opts: {
+  to: string;
+  firstName: string;
+  dashboardUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) return;
+
+  const subject = "Welcome to AiQ — your free account is ready";
+  const body = `
+    ${greenBadge("Account verified")}
+    <br/><br/>
+    ${h1(`Welcome to AiQ, ${opts.firstName}`)}
+    ${p("Your email has been verified. Your free AiQ account is now active.")}
+    ${p("Take your first AI capability assessment — it takes around 20 minutes and gives you a headline score plus the domains where you have the most to gain.")}
+    ${ctaButton("Start your assessment", opts.dashboardUrl)}
+    ${divider()}
+    <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:${WHITE};">What you get free</p>
+    <table cellpadding="0" cellspacing="0" width="100%">
+      ${stepRow("01", "AI capability score", "A headline score across all six domains.")}
+      ${stepRow("02", "Development areas", "The domains where you have the most to gain — named, not scored.")}
+      ${stepRow("03", "Upgrade path", "Unlock per-domain scores, AI narratives, and a 30-module learning plan.")}
+    </table>
+  `;
+
+  await resend.emails.send({
+    from:    FROM_ADDRESS,
+    to:      opts.to,
+    subject,
+    html:    emailLayout(body),
+  });
+}

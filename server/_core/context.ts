@@ -10,6 +10,8 @@ export type TenantEntitlements = {
   strategyCompany: boolean;
   strategyReward: boolean;
   assessment: boolean;
+  // Paid assessment tier — flipped by Stripe webhook only, never by redirect
+  assessmentPaid: boolean;
 };
 
 export type TrpcContext = {
@@ -39,6 +41,7 @@ export async function createContext(
               strategyCompany: tenant.entitlementStrategyCompany,
               strategyReward: tenant.entitlementStrategyReward,
               assessment: tenant.entitlementAssessment,
+              assessmentPaid: tenant.entitlementAssessmentPaid,
             };
           }
         }

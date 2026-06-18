@@ -5290,3 +5290,74 @@ test
 - [ ] Gate evidence: denial proofs (reward route blocked, /people redirected, /assessment blocked)
 - [ ] Gate evidence: backoffice entitlement screen rendered
 - [ ] Gate evidence: mode-reader list compiled
+
+## Phase 1 Skills Checker Self-Serve Launch Build (v2 brief)
+
+### Schema
+- [x] Add entitlementAssessmentPaid column to tenants table (drizzle/schema.ts + migration 0051)
+- [x] Add emailVerificationToken and emailVerifiedAt columns to users table (migration 0052)
+- [x] Add 7 Stripe columns to tenants table: stripeCustomerId, stripeSubscriptionId, stripeSubscriptionStatus, stripePriceKey, stripeCurrentPeriodEnd, stripeCancelAtPeriodEnd, paidAccessGraceUntil (migration 0053)
+- [x] Wire assessmentPaid into context.ts TenantEntitlements type and context builder
+- [x] Add assessmentPaidProcedure guard to trpc.ts
+- [x] Add assessmentPaid to auth.ts me procedure return shape
+- [x] Add assessmentPaid to backoffice.ts setEntitlements procedure
+
+### Stream 1.1 — Hide strategy
+- [x] Remove all strategy/reward/company-assessment nav items from AppShell.tsx
+- [x] Replace all 29 strategy/reward/company-assessment routes with /dashboard redirects (Seam D fixed)
+- [x] Update all 85 test files to include assessmentPaid in entitlements objects
+- [x] TypeScript clean (0 errors)
+
+### Stream 1.1f — Marketing site rewrite
+- [x] Rewrite MarketingPage.tsx for skills-checker-only positioning (no strategy references)
+- [x] Rewrite PricingPage.tsx: Free tier + Individual £50/mo or £480/yr, team bands "coming soon"
+- [x] Rewrite HowItWorksPage.tsx: 4-phase loop (Assess → Diagnose → Develop → Prove), strategy builder section removed
+
+### Stream 1.2 — Paid product gates
+- [x] Gate generateNarrative, generateCapabilityProfile, generateDomainDeepDive, generateSummary to assessmentPaidProcedure
+- [x] Gate all adaptiveLearning.* procedures to assessmentPaidProcedure
+- [x] Add server-side free-tier redaction to assessment.results (headline score + weak domain names only for free)
+- [x] Add 30-day retake cooldown check to assessment.startSession for free-tier users
+
+### Stream 1.3 — Free tier result page
+- [x] AssessmentResultsPage.tsx: free-tier locked state with upgrade CTA (£50/mo or £480/yr)
+- [x] Paid sections (cross-cutting patterns, domain detail, development plan) gated behind !isFreeTier
+- [x] planQuery (adaptiveLearning) disabled for free-tier users
+
+### Stream 2.1 — Public self-serve sign-up
+- [x] selfRegister public procedure: creates personal tenant + user atomically, sends verification email
+- [x] verifyEmail procedure: activates account, clears token, sends welcome email
+- [x] resendVerification procedure: regenerates token and resends
+- [x] RegisterPage.tsx: no org code, T&C pre-ticked, post-submit verification state with resend button
+- [x] VerifyEmailPage.tsx: /verify-email?token=... landing page with loading/success/error states
+- [x] Sign-up rate limiter: 5 registrations per hour per IP on /api/trpc/auth.selfRegister
+- [x] sendVerificationEmail and sendWelcomeEmail functions added to email.ts
+
+### Stream 2.2 — Stripe checkout
+- [x] server/stripe/products.ts: single source of truth for pricing (£50/month, £480/year)
+- [x] stripeRouter with createCheckoutSession, createPortalSession, getSubscriptionStatus procedures
+- [x] Stripe package v22.2.2 installed, API version 2026-05-27.dahlia
+- [x] stripeRouter registered in routers.ts
+
+### Stream 2.3 — Purchase → entitlement webhook
+- [x] server/stripe/webhook.ts: full webhook handler at /api/stripe/webhook
+- [x] Handles: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed, invoice.payment_succeeded
+- [x] Signature verification with stripe.webhooks.constructEvent(), test event passthrough
+- [x] Grace policy: 3-day window on deletion/failure, cleared on payment success
+- [x] Owner notifications on new subscription and cancellation
+- [x] Registered in index.ts BEFORE express.json() with express.raw()
+
+### Stream 2.4 — Billing management page
+- [x] BillingPage.tsx: subscription status, upgrade CTA, portal link, cancel/restart flows
+- [x] Post-checkout redirect banners (?status=success and ?status=cancelled)
+- [x] Billing link added to both desktop sidebar and mobile account dropdown in AppShell.tsx
+- [x] /billing route registered in App.tsx
+
+### Stream 2.5 — Commerce instrumentation dashboard
+- [x] getCommerceMetrics procedure added to backoffice.ts
+- [x] CommerceTab component in BackOfficePage.tsx: MRR banner, 8-metric grid, recent paid subscriber table
+- [x] Commerce tab wired into tab list and render block
+
+### QA
+- [x] Test suite: 85 files, 2089 passed, 0 failed
+- [x] TypeScript: 0 errors

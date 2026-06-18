@@ -1,157 +1,200 @@
 /**
- * RegisterPage - AiQ Platform
- * Two-column: dark slate brand panel (left) + form (right)
+ * RegisterPage — Self-serve sign-up (Phase 1 Skills Checker Launch)
+ *
+ * Changes from enterprise register:
+ * - No organisation code field — creates a personal tenant automatically
+ * - T&C checkbox pre-ticked (per platform design decision)
+ * - Post-submit "check your email" state with resend option
+ * - Calls trpc.auth.selfRegister instead of trpc.auth.register
  */
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { trpc } from "@/lib/trpc";
+import { Link } from "wouter";
+import { Eye, EyeOff, AlertCircle, Mail, CheckCircle2, Brain, BookOpen, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, AlertCircle, Brain, BookOpen, Shield } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 const schema = z
   .object({
-    tenantSlug: z.string().min(1, "Organisation code is required"),
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
+    firstName: z.string().min(1, "First name is required").max(100),
+    lastName: z.string().min(1, "Last name is required").max(100),
     email: z.string().email("Enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
+    acceptedTerms: z.boolean().refine((v) => v === true, {
+      message: "You must accept the terms and conditions",
+    }),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
-type FormData = z.infer<typeof schema>;
-
-function AiQLogoMark({ size = 36, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
-  const accent = variant === "hero" ? "var(--primary)" : "var(--primary)";
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AiQ logo" role="img">
-      <circle cx="100" cy="100" r="90" fill="var(--muted)" />
-      <text x="100" y="122" fontFamily="system-ui, -apple-system, sans-serif" fontSize="72" fontWeight="700" fill="white" textAnchor="middle" letterSpacing="-3">
-        A<tspan fill={accent}>i</tspan>Q
-      </text>
-      <path d="M 58 140 Q 100 158 142 140" stroke={accent} strokeWidth="6" strokeLinecap="round" fill="none" />
-    </svg>
-  );
-}
+type FormValues = z.infer<typeof schema>;
 
 const FEATURES = [
-  { label: "Scenario-based assessment", desc: "Realistic work situations under time pressure", icon: Brain },
-  { label: "Verified capability profile", desc: "Credibility-weighted scores across 6 domains", icon: Shield },
-  { label: "Personalised learning plan", desc: "Modality-matched content for your gaps", icon: BookOpen },
+  { label: "Adaptive AI capability assessment", desc: "20-minute scenario-based test across 6 domains", icon: Brain },
+  { label: "Verified capability score", desc: "Headline score with your strongest and weakest areas", icon: Shield },
+  { label: "Personalised learning plan", desc: "Unlock a 30-module programme matched to your gaps", icon: BookOpen },
 ];
 
 export default function RegisterPage() {
-  const [, navigate] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const utils = trpc.useUtils();
+  const [submitted, setSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { tenantSlug: "" },
+    defaultValues: { acceptedTerms: true },
   });
 
-  const registerMutation = trpc.auth.register.useMutation({
-    onSuccess: async () => {
-      await utils.auth.me.fetch();
-      navigate("/dashboard");
+  const selfRegisterMutation = trpc.auth.selfRegister.useMutation({
+    onSuccess: (_data, variables) => {
+      setSubmittedEmail(variables.email);
+      setSubmitted(true);
     },
     onError: (err) => {
-      setServerError(err.message);
+      setServerError(err.message ?? "Something went wrong. Please try again.");
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const resendMutation = trpc.auth.resendVerification.useMutation();
+
+  const onSubmit = (values: FormValues) => {
     setServerError(null);
-    registerMutation.mutate({
-      tenantSlug: data.tenantSlug,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      password: data.password,
+    selfRegisterMutation.mutate({
+      email: values.email,
+      password: values.password,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      acceptedTerms: true,
+      origin: window.location.origin,
     });
   };
 
+  // ── Post-submit: check your email state ──────────────────────────────────
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-[440px] text-center space-y-6">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Mail className="w-7 h-7 text-primary" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground mb-2">Check your email</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              We sent a verification link to{" "}
+              <span className="font-medium text-foreground">{submittedEmail}</span>.
+              Click the link to activate your account.
+            </p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-5 text-left space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Didn't receive it? Check your spam folder, or resend the link.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              disabled={resendMutation.isPending || resendMutation.isSuccess}
+              onClick={() =>
+                resendMutation.mutate({
+                  email: submittedEmail,
+                  origin: window.location.origin,
+                })
+              }
+            >
+              {resendMutation.isSuccess ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-green-500" />
+                  Sent
+                </>
+              ) : resendMutation.isPending ? (
+                "Sending…"
+              ) : (
+                "Resend verification email"
+              )}
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Already verified?{" "}
+            <Link href="/login">
+              <span className="font-medium text-primary cursor-pointer hover:underline">Sign in</span>
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Sign-up form ──────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex" style={{ background: "#F7F8FA" }}>
-      {/* -- Left brand panel -- */}
+    <div className="min-h-screen flex" style={{ background: "var(--background)" }}>
+      {/* Left brand panel */}
       <div
         className="hidden lg:flex flex-col justify-between w-[400px] shrink-0 p-10"
-        style={{
-          background: "linear-gradient(160deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)",
-        }}
+        style={{ background: "linear-gradient(160deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)" }}
       >
-        <div className="flex items-center gap-3">
-          <AiQLogoMark size={36} variant="hero" />
-          <div className="flex flex-col leading-none">
-            <span style={{ fontSize: "10px", fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", lineHeight: 1, marginBottom: "3px" }}>HR</span>
-            <span style={{ fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1, color: "#F8FAFC" }}>
-              Ai<span style={{ color: "var(--primary)" }}>Q</span>
-            </span>
-          </div>
-        </div>
-
         <div>
-          <h2 style={{ fontSize: "26px", fontWeight: 600, color: "#F8FAFC", lineHeight: 1.35, marginBottom: "14px" }}>
-            Join the HR capability standard
+          <span className="text-2xl font-bold tracking-tight text-white">
+            A<span className="text-primary">i</span>Q
+          </span>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold text-white leading-snug mb-3">
+            Know exactly where you stand on AI
           </h2>
-          <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "14px", lineHeight: 1.7 }}>
-            Create your account to access adaptive assessments, verified capability profiles, and AI-powered learning plans tailored to your role.
+          <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+            A free, adaptive capability assessment that gives you a verified score across the six domains that matter most for HR professionals.
           </p>
-
           <div className="mt-10 space-y-6">
             {FEATURES.map((f) => {
               const Icon = f.icon;
               return (
                 <div key={f.label} className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(94,232,176,0.12)" }}>
-                    <Icon className="w-4 h-4" style={{ color: "var(--primary)" }} />
+                    <Icon className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#F8FAFC", marginBottom: "3px" }}>{f.label}</p>
-                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>{f.desc}</p>
+                    <p className="text-sm font-semibold text-white mb-0.5">{f.label}</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>{f.desc}</p>
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
-
-        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
-          &copy; {new Date().getFullYear()} AiQ. Enterprise Capability Intelligence Platform.
+        <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+          &copy; {new Date().getFullYear()} AiQ. HR Capability Intelligence.
         </p>
       </div>
 
-      {/* -- Right form panel -- */}
+      {/* Right form panel */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
         {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-3 mb-8">
-          <AiQLogoMark size={36} />
-          <span style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)" }}>
-            Ai<span className="text-primary">Q</span>
+        <div className="lg:hidden mb-8">
+          <span className="text-2xl font-bold tracking-tight text-foreground">
+            A<span className="text-primary">i</span>Q
           </span>
         </div>
 
         <div className="w-full max-w-[440px]">
-          <div className="mb-8">
-            <h1 style={{ fontSize: "24px", fontWeight: 600, color: "var(--foreground)", marginBottom: "6px" }}>
-              Create your account
-            </h1>
-            <p style={{ fontSize: "14px", color: "#64748B" }}>
-              Register with your organisation code to get started
+          <div className="mb-6">
+            <h1 className="text-xl font-semibold text-foreground mb-1">Create your free account</h1>
+            <p className="text-sm text-muted-foreground">
+              Get your AI capability score in 20 minutes — no credit card required.
             </p>
           </div>
 
@@ -163,47 +206,40 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="tenantSlug" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Organisation code</Label>
-              <Input id="tenantSlug" placeholder="e.g. acme" className="h-11" autoComplete="organization" {...register("tenantSlug")} />
-              {errors.tenantSlug && <p className="text-xs text-destructive">{errors.tenantSlug.message}</p>}
-            </div>
-
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="firstName" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>First name</Label>
-                <Input id="firstName" placeholder="Jane" className="h-11" autoComplete="given-name" {...register("firstName")} />
+                <Label htmlFor="firstName" className="text-xs font-medium">First name</Label>
+                <Input id="firstName" placeholder="Jane" className="h-10" autoComplete="given-name" {...register("firstName")} />
                 {errors.firstName && <p className="text-xs text-destructive">{errors.firstName.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Last name</Label>
-                <Input id="lastName" placeholder="Smith" className="h-11" autoComplete="family-name" {...register("lastName")} />
+                <Label htmlFor="lastName" className="text-xs font-medium">Last name</Label>
+                <Input id="lastName" placeholder="Smith" className="h-10" autoComplete="family-name" {...register("lastName")} />
                 {errors.lastName && <p className="text-xs text-destructive">{errors.lastName.message}</p>}
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Work email</Label>
-              <Input id="email" type="email" placeholder="you@company.com" className="h-11" autoComplete="email" {...register("email")} />
+              <Label htmlFor="email" className="text-xs font-medium">Email address</Label>
+              <Input id="email" type="email" placeholder="you@example.com" className="h-10" autoComplete="email" {...register("email")} />
               {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Password</Label>
+              <Label htmlFor="password" className="text-xs font-medium">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="At least 8 characters"
                   autoComplete="new-password"
-                  className="h-11 pr-10"
+                  className="h-10 pr-10"
                   {...register("password")}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: "#9CA3AF" }}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -213,33 +249,41 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>Confirm password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Re-enter password"
-                autoComplete="new-password"
-                className="h-11"
-                {...register("confirmPassword")}
-              />
+              <Label htmlFor="confirmPassword" className="text-xs font-medium">Confirm password</Label>
+              <Input id="confirmPassword" type="password" placeholder="Re-enter password" autoComplete="new-password" className="h-10" {...register("confirmPassword")} />
               {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
             </div>
 
+            {/* T&C checkbox — pre-ticked per platform design decision */}
+            <div className="flex items-start gap-2.5 pt-1">
+              <input
+                id="acceptedTerms"
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                {...register("acceptedTerms")}
+              />
+              <label htmlFor="acceptedTerms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                I agree to the{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">Terms of Service</a>
+                {" "}and{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">Privacy Policy</a>
+              </label>
+            </div>
+            {errors.acceptedTerms && <p className="text-xs text-destructive -mt-2">{errors.acceptedTerms.message}</p>}
+
             <Button
               type="submit"
-              className="w-full h-11 font-semibold text-sm mt-2"
-              disabled={registerMutation.isPending}
+              className="w-full h-10 font-semibold text-sm mt-1"
+              disabled={selfRegisterMutation.isPending}
             >
-              {registerMutation.isPending ? "Creating account…" : "Create account"}
+              {selfRegisterMutation.isPending ? "Creating account…" : "Create free account"}
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm" style={{ color: "#64748B" }}>
+          <p className="mt-5 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login">
-              <span className="font-medium cursor-pointer hover:underline text-primary">
-                Sign in
-              </span>
+              <span className="font-medium text-primary cursor-pointer hover:underline">Sign in</span>
             </Link>
           </p>
         </div>

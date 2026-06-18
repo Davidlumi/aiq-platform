@@ -60,7 +60,7 @@ describe("strategyCompanyProcedure", () => {
 
   it("throws FORBIDDEN when strategyCompany entitlement is false", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: false, strategyReward: true, assessment: true })
+      makeCtx({ strategyCompany: false, strategyReward: true, assessment: true, assessmentPaid: false })
     );
     await expect(caller.strategy.listIndustries()).rejects.toMatchObject({
       code: "FORBIDDEN",
@@ -69,7 +69,7 @@ describe("strategyCompanyProcedure", () => {
 
   it("passes through when strategyCompany entitlement is true", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: true, strategyReward: false, assessment: false })
+      makeCtx({ strategyCompany: true, strategyReward: false, assessment: false, assessmentPaid: false })
     );
     // listIndustries is a pure-data query — no DB call needed for this test
     // It should resolve (or throw a DB error, not FORBIDDEN)
@@ -95,7 +95,7 @@ describe("strategyRewardProcedure", () => {
 
   it("throws FORBIDDEN when strategyReward entitlement is false", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: true, strategyReward: false, assessment: true })
+      makeCtx({ strategyCompany: true, strategyReward: false, assessment: true, assessmentPaid: false })
     );
     await expect(caller.rewardStrategy.get()).rejects.toMatchObject({
       code: "FORBIDDEN",
@@ -104,7 +104,7 @@ describe("strategyRewardProcedure", () => {
 
   it("passes through when strategyReward entitlement is true", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: false, strategyReward: true, assessment: false })
+      makeCtx({ strategyCompany: false, strategyReward: true, assessment: false, assessmentPaid: false })
     );
     const result = await caller.rewardStrategy.get().catch((e: any) => e);
     if (result && typeof result === "object" && "code" in result) {
@@ -128,7 +128,7 @@ describe("assessmentProcedure", () => {
 
   it("throws FORBIDDEN when assessment entitlement is false", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: true, strategyReward: true, assessment: false })
+      makeCtx({ strategyCompany: true, strategyReward: true, assessment: false, assessmentPaid: false })
     );
     await expect(caller.assessment.blueprints()).rejects.toMatchObject({
       code: "FORBIDDEN",
@@ -137,7 +137,7 @@ describe("assessmentProcedure", () => {
 
   it("passes through when assessment entitlement is true", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: false, strategyReward: false, assessment: true })
+      makeCtx({ strategyCompany: false, strategyReward: false, assessment: true, assessmentPaid: false })
     );
     const result = await caller.assessment.blueprints().catch((e: any) => e);
     if (result && typeof result === "object" && "code" in result) {
@@ -154,7 +154,7 @@ describe("assessmentProcedure", () => {
 describe("entitlement isolation", () => {
   it("strategyCompany=true does NOT unlock strategyReward routes", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: true, strategyReward: false, assessment: false })
+      makeCtx({ strategyCompany: true, strategyReward: false, assessment: false, assessmentPaid: false })
     );
     await expect(caller.rewardStrategy.get()).rejects.toMatchObject({
       code: "FORBIDDEN",
@@ -163,7 +163,7 @@ describe("entitlement isolation", () => {
 
   it("strategyReward=true does NOT unlock strategyCompany routes", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: false, strategyReward: true, assessment: false })
+      makeCtx({ strategyCompany: false, strategyReward: true, assessment: false, assessmentPaid: false })
     );
     await expect(caller.strategy.listIndustries()).rejects.toMatchObject({
       code: "FORBIDDEN",
@@ -172,7 +172,7 @@ describe("entitlement isolation", () => {
 
   it("assessment=true does NOT unlock strategyCompany routes", async () => {
     const caller = appRouter.createCaller(
-      makeCtx({ strategyCompany: false, strategyReward: false, assessment: true })
+      makeCtx({ strategyCompany: false, strategyReward: false, assessment: true, assessmentPaid: false })
     );
     await expect(caller.strategy.listIndustries()).rejects.toMatchObject({
       code: "FORBIDDEN",

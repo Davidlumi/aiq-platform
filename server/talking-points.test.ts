@@ -13,7 +13,7 @@ function makeCtx(overrides: Partial<TrpcContext> = {}): TrpcContext {
   const clearedCookies: { name: string; opts: Record<string, unknown> }[] = [];
   return {
     user: null,
-    entitlements: { strategyCompany: true, strategyReward: true, assessment: true },
+    entitlements: { strategyCompany: true, strategyReward: true, assessment: true, assessmentPaid: true },
     req: {
       protocol: "https",
       get: (h: string) => (h === "host" ? "localhost:3000" : undefined),

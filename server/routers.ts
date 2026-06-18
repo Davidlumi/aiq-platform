@@ -43,6 +43,7 @@ import { initiativeDiscoveryRouter } from "./routers/initiativeDiscovery";
 import { leadsRouter } from "./routers/leads";
 import { assumptionsRouter } from "./routers/assumptions";
 import { signalsRouter } from "./routers/signals";
+import { stripeRouter } from "./stripe/checkout";
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter,
@@ -88,6 +89,7 @@ export const appRouter = router({
   leads: leadsRouter,
   assumptions: assumptionsRouter,
   signals: signalsRouter,
+  stripe: stripeRouter,
 });
 
 export type AppRouter = typeof appRouter;

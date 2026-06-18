@@ -13,7 +13,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { assessmentProcedure as protectedProcedure, router } from "../_core/trpc";
+import { assessmentPaidProcedure as protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   gapAnalyses,
