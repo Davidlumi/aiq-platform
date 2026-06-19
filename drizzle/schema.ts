@@ -3201,3 +3201,16 @@ export const signalMatch = mysqlTable("signal_match", {
 }));
 export type SignalMatch = typeof signalMatch.$inferSelect;
 export type SignalMatchInsert = typeof signalMatch.$inferInsert;
+
+// --- Stripe Webhook Deduplication --------------------------------------------
+// Records every Stripe event ID that has been successfully processed.
+// The webhook handler inserts here before processing; a duplicate insert
+// (unique constraint violation) short-circuits the handler, preventing
+// double-provisioning and double-notification on replay.
+
+export const processedWebhookEvents = mysqlTable("processed_webhook_events", {
+  eventId: varchar("event_id", { length: 255 }).primaryKey(), // Stripe event.id — globally unique
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  processedAt: timestamp("processed_at").defaultNow().notNull(),
+});
+export type ProcessedWebhookEvent = typeof processedWebhookEvents.$inferSelect;

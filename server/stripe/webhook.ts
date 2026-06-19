@@ -18,7 +18,7 @@
 import type { Request, Response } from "express";
 import Stripe from "stripe";
 import { getDb } from "../db";
-import { tenants, users } from "../../drizzle/schema";
+import { tenants, users, processedWebhookEvents } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { notifyOwner } from "../_core/notification";
 import { STRIPE_PRODUCTS, type StripePriceKey } from "./products";
@@ -140,6 +140,32 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
   }
 
   console.log(`[Webhook] Processing event: ${event.type} (${event.id})`);
+
+  // ── Event-ID deduplication (C-2) ──────────────────────────────────────────
+  // Insert the event ID before processing. If the INSERT fails due to a PRIMARY
+  // KEY conflict, this event has already been processed — short-circuit.
+  // This covers ALL side effects (DB writes AND notifyOwner calls) on replay.
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.insert(processedWebhookEvents).values({
+        eventId: event.id,
+        eventType: event.type,
+      });
+    } catch (dupErr: unknown) {
+      // MySQL error 1062 = Duplicate entry (PRIMARY KEY conflict)
+      const isDuplicate =
+        dupErr instanceof Error &&
+        (dupErr.message.includes("Duplicate entry") || dupErr.message.includes("1062"));
+      if (isDuplicate) {
+        console.log(`[Webhook] Duplicate event ${event.id} — already processed. Skipping.`);
+        res.json({ received: true, duplicate: true });
+        return;
+      }
+      // Non-duplicate DB error: log and continue (don't block processing)
+      console.error(`[Webhook] Could not record event ID ${event.id}:`, dupErr);
+    }
+  }
 
   try {
     switch (event.type) {

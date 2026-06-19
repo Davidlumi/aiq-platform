@@ -364,8 +364,18 @@ export const authRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      // C-3: Verify Cloudflare Turnstile token before any DB work
+      // C-3: Verify Cloudflare Turnstile token before any DB work.
+      // IMPORTANT: The skip is gated on NODE_ENV !== 'production', NOT on key absence.
+      // A missing key in production is a misconfiguration and MUST hard-fail — never fail-open.
       const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+      const isProduction = process.env.NODE_ENV === "production";
+      if (!turnstileSecret && isProduction) {
+        // Hard-fail: bot protection is required in production. Missing key = misconfiguration.
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Bot protection is not configured. Registration is temporarily unavailable.",
+        });
+      }
       if (turnstileSecret) {
         const cfBody = new URLSearchParams();
         cfBody.append("secret", turnstileSecret);
@@ -382,6 +392,7 @@ export const authRouter = router({
           });
         }
       }
+      // If NODE_ENV !== 'production' and no key is set: skip verification (local dev only).
 
       const normalisedEmail = input.email.toLowerCase().trim();
 
