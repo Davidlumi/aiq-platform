@@ -5386,3 +5386,15 @@ test
 - [x] LearningPlanPage — plan visible but module clicks show upgrade modal
 - [x] DownloadPdfButton — shows lock icon and upgrade modal for free users
 - [x] Free assessment (first full assessment) always accessible
+
+## QA Pass — June 2026
+
+- [x] Fix broken /knowledge/articles, /knowledge/guides, /knowledge/glossary routes (404 bug)
+- [x] Fix /knowledge-base legacy redirect to point to /knowledge
+- [x] Add URL-based tab pre-selection in KnowledgeBasePage (/knowledge/articles → Articles filter)
+- [x] Fix NaN roleTarget in dashboardV2 when no items have targetScore
+- [x] Fix /learning/plan dead links in ProSuccessPage (route does not exist — should be /learning)
+- [x] Add PRO-aware upgrade nudge on IndividualDashboardV2 learning plan CTA for free users
+- [x] Redesign ProGatePage with richer on-brand dark-header card (consistent with platform theme)
+- [x] Add PRO lock badge to Knowledge nav items in AppShell sidebar for free users
+- [x] Add isProUser to AppShell for knowledge section lock indicators

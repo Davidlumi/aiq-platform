@@ -67,6 +67,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGate } from "@/contexts/GateContext";
+import { useIsPro } from "@/hooks/useIsPro";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -388,6 +389,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const hasStrategyReward = entitlements?.strategyReward ?? false;
   // isRewardMode: tenant has strategyReward entitlement (Reward domain active, Company-wide locked)
   const isRewardMode = hasStrategyReward;
+  // PRO subscription status — drives lock badges on knowledge nav items
+  const isProUser = useIsPro();
 
   // Coach gating: only show if user has at least one completed assessment session.
   // If tenant has no assessment entitlement, this query will be skipped.
@@ -562,6 +565,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 const active = isActive(item.path);
                 const Icon = item.icon;
                 const isCoach = item.path === "/coach";
+                const isKnowledge = item.section === "knowledge";
 
                 // HR AI Strategy expandable parent — inject before aistrategy items
                 const isFirstAiStrategyItem = section.key === "aistrategy" && item === section.items[0];
@@ -666,7 +670,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             <span className="shrink-0 w-[18px] h-[18px] flex items-center justify-center">
                               <Icon className="w-[18px] h-[18px]" />
                             </span>
-                            {!collapsed && <span>{item.label}</span>}
+                            {!collapsed && (
+                              <>
+                                <span className="flex-1">{item.label}</span>
+                                {isKnowledge && !isProUser && (
+                                  <Lock className="w-3 h-3 text-[#10B981]/60 shrink-0" />
+                                )}
+                              </>
+                            )}
                           </span>
                         </Link>
                       )}

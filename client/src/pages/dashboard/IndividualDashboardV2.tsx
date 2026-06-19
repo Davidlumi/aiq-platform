@@ -11,6 +11,8 @@
  * proper card shadows, solid colours (no opacity hacks).
  */
 import { useMemo, useState } from "react";
+import { useIsPro } from "@/hooks/useIsPro";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import {
   Dialog,
   DialogContent,
@@ -810,6 +812,8 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [selectedDomain, setSelectedDomain] = useState<{ key: string; score: number } | null>(null);
+  const isPro = useIsPro();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const { data, isLoading } = trpc.dashboardV2.individual.main.useQuery(
     userId ? { userId } : undefined,
@@ -1166,9 +1170,19 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             ))}
           </div>
           {data.planSummary.completionPercentage === 0 && (
-            <p className="text-xs text-gray-400 mt-3 text-center">
-              Start your first module to begin tracking progress
-            </p>
+            !isPro ? (
+              <button
+                onClick={() => setUpgradeOpen(true)}
+                className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-[#10B981] hover:text-[#0d9e6e] transition-colors"
+              >
+                <Lock className="w-3 h-3" />
+                Upgrade to PRO to start your first module
+              </button>
+            ) : (
+              <p className="text-xs text-gray-400 mt-3 text-center">
+                Start your first module to begin tracking progress
+              </p>
+            )
           )}
         </div>
       )}
@@ -1178,6 +1192,12 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         domainKey={selectedDomain?.key ?? null}
         domainScore={selectedDomain?.score ?? 0}
         onClose={() => setSelectedDomain(null)}
+      />
+      {/* PRO upgrade modal */}
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        featureName="Learning Modules"
       />
     </div>
   );

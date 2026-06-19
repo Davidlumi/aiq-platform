@@ -418,12 +418,25 @@ function Router() {
       <Route path="/modules">
         <KnowledgeRoute component={ModulesPage} />
       </Route>
+      {/* Knowledge routes — articles, guides, glossary (PRO-gated inside KnowledgeBasePage) */}
+      <Route path="/knowledge/articles">
+        <ProtectedRoute component={KnowledgeBasePage} />
+      </Route>
+      <Route path="/knowledge/guides">
+        <ProtectedRoute component={KnowledgeBasePage} />
+      </Route>
+      <Route path="/knowledge/glossary">
+        <ProtectedRoute component={KnowledgeBasePage} />
+      </Route>
+      <Route path="/knowledge">
+        <ProtectedRoute component={KnowledgeBasePage} />
+      </Route>
       {/* Legacy routes — redirect to unified /modules page */}
       <Route path="/library">
         <Redirect to="/modules" />
       </Route>
       <Route path="/knowledge-base">
-        <Redirect to="/modules" />
+        <Redirect to="/knowledge" />
       </Route>
       <Route path="/learning/module/:moduleId">
         <ProtectedRoute component={ModulePlayerPage} />

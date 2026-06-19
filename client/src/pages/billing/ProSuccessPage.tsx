@@ -266,7 +266,7 @@ export default function ProSuccessPage() {
               ) : (
                 /* Fallback if plan not yet loaded */
                 <button
-                  onClick={() => navigate("/learning/plan")}
+                  onClick={() => navigate("/learning")}
                   className="w-full group rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 hover:bg-[#10B981]/10 hover:border-[#10B981]/50 transition-all duration-200 p-4 text-left"
                 >
                   <div className="flex items-center gap-3">
@@ -288,7 +288,7 @@ export default function ProSuccessPage() {
                   variant="outline"
                   size="sm"
                   className="h-9 text-xs border-white/10 text-white/70 hover:text-white hover:border-white/20 bg-transparent"
-                  onClick={() => navigate("/learning/plan")}
+                  onClick={() => navigate("/learning")}
                 >
                   <BookOpen className="w-3.5 h-3.5 mr-1.5" />
                   Full Plan

@@ -420,9 +420,12 @@ const individualRouter = router({
         gapHeatmap: fullGapHeatmap,
         planSummary,
         // For target line on score progress chart
-        roleTarget: fullGapHeatmap.length > 0 ? Math.round(
-          fullGapHeatmap.reduce((sum, r) => sum + (r.targetScore ?? 0), 0) / fullGapHeatmap.filter(r => r.targetScore !== null).length
-        ) : null,
+        roleTarget: (() => {
+          const withTarget = fullGapHeatmap.filter(r => r.targetScore !== null && r.targetScore !== undefined);
+          if (withTarget.length === 0) return null;
+          const avg = withTarget.reduce((sum, r) => sum + (r.targetScore ?? 0), 0) / withTarget.length;
+          return isFinite(avg) ? Math.round(avg) : null;
+        })(),
         businessContext: null, // Will be populated when AI roadmap is implemented
       };
     }),

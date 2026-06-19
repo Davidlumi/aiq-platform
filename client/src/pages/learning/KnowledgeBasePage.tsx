@@ -2,7 +2,8 @@
  * Knowledge Base — Curated AI-in-HR resources with search, filtering, and domain linking.
  * Replaces the "coming soon" stub with real content drawn from the platform's domain model.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useIsPro } from "@/hooks/useIsPro";
 import { ProGatePage } from "@/components/ProGate";
@@ -102,9 +103,18 @@ const TYPE_LABELS: Record<ResourceType, string> = {
 
 export default function KnowledgeBasePage() {
   const isPro = useIsPro();
+  const [location] = useLocation();
   const [search, setSearch] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<DomainKey | "all">("all");
   const [selectedType, setSelectedType] = useState<ResourceType | "all">("all");
+
+  // Pre-select filter based on URL path
+  useEffect(() => {
+    if (location === "/knowledge/articles") setSelectedType("article");
+    else if (location === "/knowledge/guides") setSelectedType("guide");
+    else if (location === "/knowledge/glossary") setSelectedType("framework");
+    else setSelectedType("all");
+  }, [location]);
 
   if (!isPro) {
     return (
