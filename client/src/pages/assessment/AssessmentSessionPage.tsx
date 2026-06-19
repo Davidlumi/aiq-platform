@@ -652,14 +652,45 @@ function GeneratingState({ answeredCount, totalItems }: { answeredCount: number;
   return (
     <div className="p-6 space-y-5 max-w-2xl mx-auto">
       {/* Progress header */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">
-            Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+            Question <span style={{ color: "var(--primary)" }}>{answeredCount + 1}</span>
+            <span className="text-muted-foreground font-normal"> of {totalItems}</span>
           </span>
-          <span className="text-xs text-muted-foreground">{progress}% complete</span>
+          <span className="text-xs font-medium tabular-nums" style={{ color: "var(--primary)" }}>{progress}%</span>
         </div>
-        <Progress value={progress} className="h-1.5" />
+        {totalItems <= 30 ? (
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalItems }).map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-full transition-all duration-300"
+                style={{
+                  height: "6px",
+                  background: i < answeredCount
+                    ? "var(--primary)"
+                    : i === answeredCount
+                    ? `linear-gradient(90deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 40%, transparent) 100%)`
+                    : "var(--muted)",
+                  opacity: i > answeredCount ? 0.5 : 1,
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="relative h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+            <div
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{
+                width: `${progress}%`,
+                background: "linear-gradient(90deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, #34D399) 100%)",
+                transition: "width 0.4s ease-out",
+                boxShadow: progress > 0 ? "0 0 8px color-mix(in srgb, var(--primary) 60%, transparent)" : "none",
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* AI Fact card */}
@@ -1291,21 +1322,45 @@ export default function AssessmentSessionPage() {
   if (rationaleLoading && !rationaleData) {
     return (
       <div className="p-6 space-y-5 max-w-2xl mx-auto animate-in fade-in duration-200">
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">
-              Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
+              Question <span style={{ color: "var(--primary)" }}>{answeredCount + 1}</span>
+              <span className="text-muted-foreground font-normal"> of {totalItems}</span>
             </span>
-            <button
-              onClick={() => { toast.success("Progress saved - resume any time from the Assessment page."); navigate("/assessment"); }}
-              className="flex items-center gap-1.5 text-xs font-medium rounded-md px-2.5 py-1 transition-colors border"
-              style={{ color: "var(--primary)", borderColor: "#D1FAE5", background: "#F8FAFC" }}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Save &amp; Exit
-            </button>
+            <span className="text-xs font-medium tabular-nums" style={{ color: "var(--primary)" }}>{progress}%</span>
           </div>
-          <Progress value={progress} className="h-1.5" />
+          {totalItems <= 30 ? (
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalItems }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-full transition-all duration-300"
+                  style={{
+                    height: "6px",
+                    background: i < answeredCount
+                      ? "var(--primary)"
+                      : i === answeredCount
+                      ? `linear-gradient(90deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 40%, transparent) 100%)`
+                      : "var(--muted)",
+                    opacity: i > answeredCount ? 0.5 : 1,
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="relative h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+              <div
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{
+                  width: `${progress}%`,
+                  background: "linear-gradient(90deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, #34D399) 100%)",
+                  transition: "width 0.4s ease-out",
+                  boxShadow: progress > 0 ? "0 0 8px color-mix(in srgb, var(--primary) 60%, transparent)" : "none",
+                }}
+              />
+            </div>
+          )}
         </div>
         <Card className="border-border shadow-sm">
           <CardContent className="p-6 space-y-5">
@@ -1684,14 +1739,48 @@ export default function AssessmentSessionPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Question counter + progress bar */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-foreground">
-            Question {answeredCount + 1} <span className="text-muted-foreground font-normal">of {totalItems}</span>
-          </span>
-          <span className="text-xs text-muted-foreground">{progress}% complete</span>
+        {/* Question counter + visual progress bar */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-foreground">
+              Question <span style={{ color: "var(--primary)" }}>{answeredCount + 1}</span>
+              <span className="text-muted-foreground font-normal"> of {totalItems}</span>
+            </span>
+            <span className="text-xs font-medium tabular-nums" style={{ color: "var(--primary)" }}>{progress}%</span>
+          </div>
+          {/* Segmented step dots for small counts; smooth bar for larger */}
+          {totalItems <= 30 ? (
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalItems }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-full transition-all duration-300"
+                  style={{
+                    height: "6px",
+                    background: i < answeredCount
+                      ? "var(--primary)"
+                      : i === answeredCount
+                      ? `linear-gradient(90deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 40%, transparent) 100%)`
+                      : "var(--muted)",
+                    opacity: i > answeredCount ? 0.5 : 1,
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="relative h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+              <div
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{
+                  width: `${progress}%`,
+                  background: "linear-gradient(90deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, #34D399) 100%)",
+                  transition: "width 0.4s ease-out",
+                  boxShadow: progress > 0 ? "0 0 8px color-mix(in srgb, var(--primary) 60%, transparent)" : "none",
+                }}
+              />
+            </div>
+          )}
         </div>
-        <Progress value={progress} className="h-1.5" />
       </div>
 
       {/* NW-1: Persistent narrative context wrapper */}
