@@ -5361,3 +5361,28 @@ test
 ### QA
 - [x] Test suite: 85 files, 2089 passed, 0 failed
 - [x] TypeScript: 0 errors
+
+## Freemium Model Implementation
+- [ ] Add isPro utility hook (based on entitlementAssessmentPaid)
+- [ ] Create ProGate component — locked overlay with upgrade CTA
+- [ ] Create UpgradeModal — full-screen upgrade prompt with pricing
+- [ ] Gate LearningPlanPage module clicks (show ProGate, not navigate)
+- [ ] Gate ModulePlayerPage (redirect free users to /billing with upgrade prompt)
+- [ ] Gate CoachPage (redirect free users to upgrade)
+- [ ] Gate ModulesPage (redirect free users to upgrade)
+- [ ] Gate KnowledgeBasePage articles/guides/glossary (redirect free users)
+- [ ] Gate DownloadPdfButton (show upgrade prompt for free users)
+- [ ] Update KnowledgeRoute to allow assessment users but gate on isPro for content
+- [ ] Update AppShell to show lock icon on PRO-only nav items for free users
+
+## Freemium Model (implemented)
+- [x] useIsPro hook reads entitlements.assessmentPaid from auth.me
+- [x] ProGate + ProGatePage components for inline/full-page gating
+- [x] UpgradeModal with Stripe checkout (monthly £50, annual £480)
+- [x] CoachPage — full page gated for free users
+- [x] ModulesPage — full page gated for free users
+- [x] KnowledgeBasePage — full page gated for free users
+- [x] ModulePlayerPage — full page gated for free users
+- [x] LearningPlanPage — plan visible but module clicks show upgrade modal
+- [x] DownloadPdfButton — shows lock icon and upgrade modal for free users
+- [x] Free assessment (first full assessment) always accessible

@@ -13,6 +13,8 @@
 import { useState, useMemo } from "react";
 import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useIsPro } from "@/hooks/useIsPro";
+import { ProGatePage } from "@/components/ProGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -451,8 +453,18 @@ function KnowledgeBaseTab() {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ModulesPage() {
+  const isPro = useIsPro();
   // Allow deep-linking to a specific tab via ?tab=knowledge-base
   const search = useSearch();
+
+  if (!isPro) {
+    return (
+      <ProGatePage
+        featureName="Modules Library"
+        description="Access 80+ micro-lessons, scenarios, simulations, and videos across all AI capability domains. Available on AiQ PRO."
+      />
+    );
+  }
   const params = new URLSearchParams(search);
   const defaultTab = params.get("tab") === "knowledge-base" ? "knowledge-base" : "modules";
   const [activeTab, setActiveTab] = useState(defaultTab);

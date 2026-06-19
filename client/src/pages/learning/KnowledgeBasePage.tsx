@@ -4,6 +4,8 @@
  */
 import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useIsPro } from "@/hooks/useIsPro";
+import { ProGatePage } from "@/components/ProGate";
 import {
   BookMarked, Search, FileText, Video, Link2, Lightbulb,
   GraduationCap, Shield, Cpu, BarChart3, Users, Briefcase, ChevronRight,
@@ -99,9 +101,21 @@ const TYPE_LABELS: Record<ResourceType, string> = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function KnowledgeBasePage() {
+  const isPro = useIsPro();
   const [search, setSearch] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<DomainKey | "all">("all");
   const [selectedType, setSelectedType] = useState<ResourceType | "all">("all");
+
+  if (!isPro) {
+    return (
+      <DashboardLayout>
+        <ProGatePage
+          featureName="Knowledge Base"
+          description="Access curated articles, guides, frameworks, and case studies on AI in HR. Available on AiQ PRO."
+        />
+      </DashboardLayout>
+    );
+  }
 
   const filtered = useMemo(() => {
     return KB_ARTICLES.filter(a => {

@@ -13,6 +13,8 @@ import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { formatScore } from "@/lib/peakon-colors";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useIsPro } from "@/hooks/useIsPro";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import {
   MessageSquare, Eye, Workflow, Users, Scale, Compass,
   BookOpen, Video, FileText, HelpCircle, Brain, Target, Layers,
@@ -128,10 +130,10 @@ function hexToRgb(hex: string): string {
 
 // ─── Modal module row ─────────────────────────────────────────────────────────
 function ModalModuleRow({
-  item, isNext, domainColour, onStart, onReview,
+  item, isNext, domainColour, onStart, onReview, isProUser,
 }: {
   item: any; isNext: boolean; domainColour: string;
-  onStart: () => void; onReview: () => void;
+  onStart: () => void; onReview: () => void; isProUser: boolean;
 }) {
   const mod = item.module ?? {};
   const isCompleted = item.status === "completed";
@@ -183,7 +185,12 @@ function ModalModuleRow({
         </p>
       </div>
       {/* CTA */}
-      {isCompleted ? (
+      {!isProUser ? (
+        <div className="flex items-center gap-1 flex-shrink-0 mt-0.5 px-2 py-0.5 rounded-md bg-[#10B981]/10 border border-[#10B981]/20" onClick={onStart}>
+          <Lock className="h-2.5 w-2.5 text-[#10B981]" />
+          <span className="text-[10px] font-bold text-[#10B981] uppercase tracking-wide">PRO</span>
+        </div>
+      ) : isCompleted ? (
         <button
           onClick={onReview}
           className="text-[12px] font-medium text-foreground/70 hover:text-foreground underline underline-offset-2 flex-shrink-0 mt-0.5"
@@ -213,11 +220,11 @@ function ModalModuleRow({
 // ─── Domain drill-in modal ────────────────────────────────────────────────────
 function DomainModal({
   domainKey, items, nextItemId, domainScore, targetScore, levelLabel, growthArea,
-  onClose, onStart,
+  onClose, onStart, isProUser,
 }: {
   domainKey: string; items: any[]; nextItemId: string | null;
   domainScore: number | null; targetScore: number | null; levelLabel: string | null; growthArea: string | null;
-  onClose: () => void; onStart: (item: any) => void;
+  onClose: () => void; onStart: (item: any) => void; isProUser: boolean;
 }) {
   const [, setLocation] = useLocation();
   const label = DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey;
@@ -340,6 +347,7 @@ function DomainModal({
                     domainColour={colour}
                     onStart={() => { onClose(); onStart(item); }}
                     onReview={() => { onClose(); onStart(item); }}
+                    isProUser={isProUser}
                   />
                 ))}
               </div>
@@ -672,6 +680,8 @@ function PageSkeleton() {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function LearningPlanPage() {
+  const isPro = useIsPro();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [, setLocation] = useLocation();
   const [modalDomain, setModalDomain] = useState<string | null>(null);
 
@@ -805,16 +815,18 @@ export default function LearningPlanPage() {
 
   const handleHeroAction = useCallback(() => {
     console.debug("[telemetry] learning.hero.clicked", { state: planState, moduleId: nextItem?.moduleId });
+    if (!isPro) { setUpgradeOpen(true); return; }
     if (planState === "complete") {
       setLocation("/assessment");
     } else if (nextItem) {
       setLocation(`/learning/module/${nextItem.moduleId}?planItemId=${nextItem.id}`);
     }
-  }, [planState, nextItem, setLocation]);
+  }, [planState, nextItem, setLocation, isPro]);
 
   const handleModuleStart = useCallback((item: any) => {
+    if (!isPro) { setUpgradeOpen(true); return; }
     setLocation(`/learning/module/${item.moduleId}?planItemId=${item.id}`);
-  }, [setLocation]);
+  }, [setLocation, isPro]);
 
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) return <PageSkeleton />;
@@ -997,8 +1009,15 @@ export default function LearningPlanPage() {
           growthArea={null}
           onClose={handleModalClose}
           onStart={handleModuleStart}
+          isProUser={isPro}
         />
       )}
+      {/* PRO upgrade modal */}
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        featureName="Learning Modules"
+      />
     </>
   );
 }

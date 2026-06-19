@@ -15,6 +15,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useIsPro } from "@/hooks/useIsPro";
+import { ProGatePage } from "@/components/ProGate";
 import ModulePersonalisationPanel from "@/components/learning/ModulePersonalisationPanel";
 import ModulePathwayBreadcrumb from "@/components/learning/ModulePathwayBreadcrumb";
 import ModuleCoachPanel from "@/components/learning/ModuleCoachPanel";
@@ -2482,10 +2484,20 @@ function ModuleActionOverflow({ moduleId, moduleTitle }: { moduleId: string; mod
 // --- Main Page ----------------------------------------------------------------
 
 export default function ModulePlayerPage() {
+  const isPro = useIsPro();
   const params = useParams<{ moduleId: string }>();
   const [, setLocation] = useLocation();
   const [completed, setCompleted] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
+
+  if (!isPro) {
+    return (
+      <ProGatePage
+        featureName="Learning Modules"
+        description="Access the full library of micro-lessons, scenarios, simulations, and videos. Available on AiQ PRO."
+      />
+    );
+  }
 
   const planItemId = (() => {
     if (typeof window === "undefined") return undefined;

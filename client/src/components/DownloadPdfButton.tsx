@@ -9,9 +9,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useIsPro } from "@/hooks/useIsPro";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 export type PdfType =
   | "assessment_report"
@@ -49,9 +51,12 @@ export function DownloadPdfButton({
   size = "sm",
   className,
 }: DownloadPdfButtonProps) {
+  const isPro = useIsPro();
   const [loading, setLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const handleDownload = async () => {
+    if (!isPro) { setUpgradeOpen(true); return; }
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -86,19 +91,25 @@ export function DownloadPdfButton({
   };
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handleDownload}
-      disabled={loading}
-      className={cn("gap-2", className)}
-    >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Download className="h-4 w-4" />
-      )}
-      {loading ? "Generating…" : (label ?? DEFAULT_LABELS[type])}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        onClick={handleDownload}
+        disabled={loading}
+        className={cn("gap-2", className)}
+        title={!isPro ? "Upgrade to PRO to download" : undefined}
+      >
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : !isPro ? (
+          <Lock className="h-4 w-4 text-[#10B981]" />
+        ) : (
+          <Download className="h-4 w-4" />
+        )}
+        {loading ? "Generating…" : (label ?? DEFAULT_LABELS[type])}
+      </Button>
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} featureName="Downloads" />
+    </>
   );
 }

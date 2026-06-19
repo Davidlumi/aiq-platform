@@ -14,6 +14,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
+import { ProGatePage } from "@/components/ProGate";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -307,7 +309,17 @@ function HelpDialog({
 
 export default function CoachPage() {
   const { user } = useAuth();
+  const isPro = useIsPro();
   const [, navigate] = useLocation();
+
+  if (!isPro) {
+    return (
+      <ProGatePage
+        featureName="AiQ Coach"
+        description="The AiQ Coach is an AI-powered coaching companion that guides you through capability development using personalised conversations tailored to your assessment results. Available on AiQ PRO."
+      />
+    );
+  }
 
   // Session state
   const [sessionId, setSessionId] = useState<string | null>(null);
