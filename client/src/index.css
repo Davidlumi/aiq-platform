@@ -942,6 +942,15 @@ tr {
   animation: tag-chip-exit 0.15s ease-in forwards;
 }
 
+/* PRO upgrade button pulse */
+@keyframes pro-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+  50%       { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+.btn-pro-pulse {
+  animation: pro-pulse 2.2s ease-in-out infinite;
+}
+
 /* SVG path animation helper */
 .aiq-line-draw {
   stroke-dasharray: 1000;

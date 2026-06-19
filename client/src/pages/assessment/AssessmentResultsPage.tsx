@@ -1049,7 +1049,7 @@ export default function AssessmentResultsPage() {
                 </div>
                 <button
                   onClick={() => setUpgradeOpen(true)}
-                  className="inline-flex items-center gap-1.5 bg-[#10B981] hover:bg-[#0d9e6e] text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+                  className="btn-pro-pulse inline-flex items-center gap-1.5 bg-[#10B981] hover:bg-[#0d9e6e] text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Target className="w-4 h-4" />
                   Upgrade to PRO
