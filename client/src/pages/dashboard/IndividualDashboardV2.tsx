@@ -1,21 +1,21 @@
 /**
- * IndividualDashboardV2 — Lumi-inspired layout
+ * IndividualDashboardV2 — Lumi-inspired layout (polished)
  *
  * Layout:
  *   [CTA banner — only when no assessment data]
  *   [Where you stand gauge] [Signals — top 3]
  *   [6 domain cards row]
- *   [Score history sparkline] [Next steps / recommendations]
+ *   [Development plan summary]
  *
- * New users (no assessment) see locked/greyed states throughout.
+ * Design: white cards on light grey background, clean section headers,
+ * proper card shadows, solid colours (no opacity hacks).
  */
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
 import { IndividualDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Lock,
   ArrowRight,
@@ -31,10 +31,16 @@ import {
   ChevronRight,
   ClipboardList,
   BookOpen,
+  RotateCcw,
 } from "lucide-react";
-import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_SHORT_LABELS, DOMAIN_COLOURS, DOMAIN_DESCRIPTIONS, DOMAIN_ICON_NAMES } from "@/lib/domains";
-import { formatScore, scoreToColor } from "@/lib/peakon-colors";
-import { cn } from "@/lib/utils";
+import {
+  DOMAIN_KEYS,
+  DOMAIN_LABELS,
+  DOMAIN_SHORT_LABELS,
+  DOMAIN_COLOURS,
+  DOMAIN_ICON_NAMES,
+} from "@/lib/domains";
+import { formatScore } from "@/lib/peakon-colors";
 
 // ─── Domain icon map ──────────────────────────────────────────────────────────
 const DOMAIN_ICONS: Record<string, React.ElementType> = {
@@ -66,112 +72,21 @@ function getLevelLabel(level: number): string {
 
 function getLevelColour(level: number): { bg: string; text: string; accent: string } {
   const map: Record<number, { bg: string; text: string; accent: string }> = {
-    1: { bg: "rgba(239,68,68,0.12)", text: "#FCA5A5", accent: "#EF4444" },
-    2: { bg: "rgba(245,158,11,0.12)", text: "#FCD34D", accent: "#F59E0B" },
-    3: { bg: "rgba(34,197,94,0.12)", text: "#86EFAC", accent: "#22C55E" },
-    4: { bg: "rgba(16,185,129,0.12)", text: "#6EE7B7", accent: "#10B981" },
-    5: { bg: "rgba(22,163,74,0.12)", text: "#4ADE80", accent: "#16A34A" },
+    1: { bg: "#FEE2E2", text: "#991B1B", accent: "#EF4444" },
+    2: { bg: "#FEF3C7", text: "#92400E", accent: "#F59E0B" },
+    3: { bg: "#DCFCE7", text: "#166534", accent: "#22C55E" },
+    4: { bg: "#D1FAE5", text: "#065F46", accent: "#10B981" },
+    5: { bg: "#BBFBDA", text: "#14532D", accent: "#16A34A" },
   };
   return map[level] ?? map[2];
 }
 
-// ─── Gauge SVG ────────────────────────────────────────────────────────────────
-function CapabilityGauge({
-  score,
-  empty = false,
-}: {
-  score: number;
-  empty?: boolean;
-}) {
-  const level = getLevelFromScore(score);
-  const levelLabel = getLevelLabel(level);
-  const colours = getLevelColour(level);
-
-  // Semi-circle: 180° arc from left to right
-  const cx = 120;
-  const cy = 115;
-  const r = 85;
-  const strokeWidth = 18;
-
-  // Track arc (grey)
-  const trackD = describeArc(cx, cy, r, -180, 0);
-  // Fill arc based on score (0–100 → -180° to 0°)
-  const fillAngle = empty ? -180 : -180 + (score / 100) * 180;
-  const fillD = describeArc(cx, cy, r, -180, fillAngle);
-
-  // Needle
-  const needleAngle = empty ? -90 : -180 + (score / 100) * 180;
-  const needleRad = (needleAngle * Math.PI) / 180;
-  const needleLen = r - 4;
-  const nx = cx + needleLen * Math.cos(needleRad);
-  const ny = cy + needleLen * Math.sin(needleRad);
-
-  // Colour stops: red → amber → green
-  const gradientId = `gauge-grad-${Math.round(score)}`;
-
-  return (
-    <div className="flex flex-col items-center">
-      <svg width={240} height={140} viewBox="0 0 240 140" className="overflow-visible">
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#EF4444" />
-            <stop offset="40%" stopColor="#F59E0B" />
-            <stop offset="75%" stopColor="#22C55E" />
-            <stop offset="100%" stopColor="#16A34A" />
-          </linearGradient>
-        </defs>
-        {/* Track */}
-        <path
-          d={trackD}
-          fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        {/* Fill */}
-        {!empty && (
-          <path
-            d={fillD}
-            fill="none"
-            stroke={`url(#${gradientId})`}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-          />
-        )}
-        {/* Needle */}
-        <line
-          x1={cx}
-          y1={cy}
-          x2={nx}
-          y2={ny}
-          stroke={empty ? "rgba(255,255,255,0.2)" : "white"}
-          strokeWidth={2.5}
-          strokeLinecap="round"
-        />
-        <circle cx={cx} cy={cy} r={5} fill={empty ? "rgba(255,255,255,0.2)" : "white"} />
-      </svg>
-
-      {/* Label below gauge */}
-      {empty ? (
-        <div className="text-center -mt-4">
-          <p className="text-sm font-medium text-muted-foreground">Not enough data yet</p>
-          <p className="text-xs text-muted-foreground/60 mt-0.5">Complete your assessment to see your position</p>
-        </div>
-      ) : (
-        <div className="text-center -mt-4">
-          <p className="text-2xl font-bold" style={{ color: colours.accent }}>
-            {getLevelLabel(level)}
-          </p>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Level {formatScore(score)} · {Math.round(score)}/100
-          </p>
-        </div>
-      )}
-    </div>
-  );
+// ─── SVG arc helper ───────────────────────────────────────────────────────────
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-// SVG arc helper
 function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
   const start = polarToCartesian(cx, cy, r, endAngle);
   const end = polarToCartesian(cx, cy, r, startAngle);
@@ -179,9 +94,76 @@ function describeArc(cx: number, cy: number, r: number, startAngle: number, endA
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
 }
 
-function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+// ─── Gauge ────────────────────────────────────────────────────────────────────
+function CapabilityGauge({ score, empty = false }: { score: number; empty?: boolean }) {
+  const level = getLevelFromScore(score);
+  const levelLabel = getLevelLabel(level);
+  const colours = getLevelColour(level);
+
+  const cx = 130, cy = 120, r = 90, sw = 16;
+  const gradId = "gauge-fill-grad";
+
+  // Needle: -180° (left) to 0° (right), mapped to score 0–100
+  const needleAngle = empty ? -90 : -180 + (score / 100) * 180;
+  const needleRad = (needleAngle * Math.PI) / 180;
+  const needleLen = r - 8;
+  const nx = cx + needleLen * Math.cos(needleRad);
+  const ny = cy + needleLen * Math.sin(needleRad);
+
+  const fillAngle = empty ? -180 : -180 + (score / 100) * 180;
+  const fillD = describeArc(cx, cy, r, -180, fillAngle);
+  const trackD = describeArc(cx, cy, r, -180, 0);
+
+  return (
+    <div className="flex flex-col items-center w-full">
+      <svg width={260} height={148} viewBox="0 0 260 148" className="overflow-visible w-full max-w-[260px]">
+        <defs>
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor="#EF4444" />
+            <stop offset="35%"  stopColor="#F59E0B" />
+            <stop offset="70%"  stopColor="#22C55E" />
+            <stop offset="100%" stopColor="#16A34A" />
+          </linearGradient>
+        </defs>
+
+        {/* Track */}
+        <path d={trackD} fill="none" stroke="#E5E7EB" strokeWidth={sw} strokeLinecap="round" />
+
+        {/* Fill */}
+        {!empty && (
+          <path d={fillD} fill="none" stroke={`url(#${gradId})`} strokeWidth={sw} strokeLinecap="round" />
+        )}
+
+        {/* Needle */}
+        <line
+          x1={cx} y1={cy} x2={nx} y2={ny}
+          stroke={empty ? "#D1D5DB" : "#374151"}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+        />
+        <circle cx={cx} cy={cy} r={5}
+          fill={empty ? "#D1D5DB" : "#374151"}
+        />
+      </svg>
+
+      {/* Label */}
+      <div className="text-center -mt-2">
+        {empty ? (
+          <>
+            <p className="text-base font-semibold text-gray-400">Not enough data yet</p>
+            <p className="text-xs text-gray-400 mt-0.5">Complete your assessment to see your position</p>
+          </>
+        ) : (
+          <>
+            <p className="text-2xl font-bold" style={{ color: colours.accent }}>{levelLabel}</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Score {Math.round(score)}/100
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── Signal row ───────────────────────────────────────────────────────────────
@@ -195,9 +177,9 @@ interface Signal {
 
 function SignalRow({ signal }: { signal: Signal }) {
   const config: Record<SignalDirection, { label: string; bg: string; text: string; border: string }> = {
-    above:     { label: "Above target", bg: "rgba(16,185,129,0.08)", text: "#6EE7B7", border: "rgba(16,185,129,0.2)" },
-    below:     { label: "Below target", bg: "rgba(239,68,68,0.08)", text: "#FCA5A5", border: "rgba(239,68,68,0.2)" },
-    on_target: { label: "On target",    bg: "rgba(34,197,94,0.08)",  text: "#86EFAC", border: "rgba(34,197,94,0.2)" },
+    above:     { label: "Above target", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
+    below:     { label: "Below target", bg: "#FEF2F2", text: "#991B1B", border: "#FECACA" },
+    on_target: { label: "On target",    bg: "#EFF6FF", text: "#1E40AF", border: "#BFDBFE" },
   };
   const c = config[signal.direction];
   return (
@@ -206,12 +188,12 @@ function SignalRow({ signal }: { signal: Signal }) {
       style={{ backgroundColor: c.bg, borderColor: c.border }}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{signal.label}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 truncate">{signal.description}</p>
+        <p className="text-sm font-semibold text-gray-800 truncate">{signal.label}</p>
+        <p className="text-xs text-gray-500 mt-0.5 truncate">{signal.description}</p>
       </div>
       <span
-        className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
-        style={{ color: c.text, backgroundColor: c.bg, border: `1px solid ${c.border}` }}
+        className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0 border"
+        style={{ color: c.text, backgroundColor: c.bg, borderColor: c.border }}
       >
         {c.label}
       </span>
@@ -235,37 +217,36 @@ function DomainCard({
 }) {
   const Icon = getDomainIcon(domainKey);
   const colour = DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "#3B82F6";
-  const level = score !== null ? getLevelFromScore(score) : null;
+  const level = score !== null && score > 0 ? getLevelFromScore(score) : null;
   const levelLabel = level !== null ? getLevelLabel(level) : null;
   const levelColour = level !== null ? getLevelColour(level) : null;
-
-  // Progress bar fill: score 0–100
-  const fillPct = score !== null ? Math.round(score) : 0;
+  const fillPct = score !== null && score > 0 ? Math.round(score) : 0;
 
   return (
     <button
       onClick={onClick}
-      className="flex flex-col gap-3 p-4 rounded-xl border border-border/40 bg-card/50 hover:bg-card/80 hover:border-border/70 transition-all text-left group min-w-0"
+      className="flex flex-col gap-3 p-4 rounded-xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all text-left group min-w-0"
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
     >
-      {/* Header */}
+      {/* Icon + name */}
       <div className="flex items-start gap-2.5">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: `${colour}22` }}
+          style={{ backgroundColor: `${colour}18` }}
         >
           <Icon className="w-4 h-4" style={{ color: colour }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-foreground/90 leading-tight truncate">{name}</p>
+          <p className="text-xs font-semibold text-gray-700 leading-tight truncate">{name}</p>
           {levelLabel && levelColour ? (
             <span
-              className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5"
+              className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5"
               style={{ backgroundColor: levelColour.bg, color: levelColour.text }}
             >
               {levelLabel}
             </span>
           ) : (
-            <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 bg-muted/40 text-muted-foreground">
+            <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 bg-gray-100 text-gray-400">
               No data
             </span>
           )}
@@ -273,28 +254,26 @@ function DomainCard({
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-1.5 rounded-full bg-muted/40 overflow-hidden">
-        {hasData && score !== null ? (
+      <div className="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
+        {hasData && score !== null && score > 0 ? (
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{ width: `${fillPct}%`, backgroundColor: colour }}
           />
-        ) : (
-          <div className="h-full w-full rounded-full bg-muted/20" />
-        )}
+        ) : null}
       </div>
 
       {/* Score or locked */}
       <div className="flex items-center justify-between">
-        {hasData && score !== null ? (
-          <span className="text-xs text-muted-foreground">{Math.round(score)}/100</span>
+        {hasData && score !== null && score > 0 ? (
+          <span className="text-xs text-gray-400 font-medium">{Math.round(score)}/100</span>
         ) : (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground/50">
+          <span className="flex items-center gap-1 text-xs text-gray-300">
             <Lock className="w-3 h-3" />
-            Complete assessment
+            No data yet
           </span>
         )}
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors" />
+        <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
       </div>
     </button>
   );
@@ -307,40 +286,66 @@ function ScoreSparkline({ history }: { history: Array<{ date: string; overallSco
   const scores = sorted.map(h => h.overallScore);
   const min = Math.min(...scores) - 5;
   const max = Math.max(...scores) + 5;
-  const w = 200;
-  const h = 48;
+  const w = 80, h = 28;
   const points = scores.map((s, i) => {
     const x = (i / (scores.length - 1)) * w;
     const y = h - ((s - min) / (max - min)) * h;
-    return `${x},${y}`;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
   const delta = scores[scores.length - 1] - scores[0];
-  const colour = delta > 0 ? "#10B981" : delta < 0 ? "#EF4444" : "#6B7280";
+  const colour = delta > 0 ? "#10B981" : delta < 0 ? "#EF4444" : "#9CA3AF";
   const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2">
       <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
         <polyline
           points={points.join(" ")}
           fill="none"
           stroke={colour}
-          strokeWidth={2}
+          strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
+          opacity={0.7}
         />
         {scores.map((s, i) => {
           const x = (i / (scores.length - 1)) * w;
           const y = h - ((s - min) / (max - min)) * h;
-          return <circle key={i} cx={x} cy={y} r={3} fill={colour} />;
+          return <circle key={i} cx={x} cy={y} r={2.5} fill={colour} />;
         })}
       </svg>
-      <div className="flex items-center gap-1">
-        <DeltaIcon className="w-4 h-4" style={{ color: colour }} />
-        <span className="text-sm font-medium" style={{ color: colour }}>
+      <div className="flex items-center gap-0.5">
+        <DeltaIcon className="w-3.5 h-3.5" style={{ color: colour }} />
+        <span className="text-xs font-semibold" style={{ color: colour }}>
           {delta > 0 ? "+" : ""}{Math.round(delta)} pts
         </span>
       </div>
+    </div>
+  );
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+  action,
+}: {
+  icon?: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        {icon}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide text-[11px]">{title}</h2>
+          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+        </div>
+      </div>
+      {action}
     </div>
   );
 }
@@ -349,38 +354,44 @@ function ScoreSparkline({ history }: { history: Array<{ date: string; overallSco
 export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const [drillDomain, setDrillDomain] = useState<string | null>(null);
 
   const { data, isLoading } = trpc.dashboardV2.individual.main.useQuery(
     userId ? { userId } : undefined,
   );
 
-  // Derive signals from domain data when available
+  // Derive signals from domain data
   const signals: Signal[] = useMemo(() => {
     if (!data || data.overallScore === null) return [];
-    const sorted = [...data.domains]
+    const withScores = data.domains
       .filter(d => d.score !== null && d.score > 0)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
     const result: Signal[] = [];
-    if (sorted.length > 0) {
-      const top = sorted[0];
+
+    if (withScores.length > 0) {
+      const top = withScores[0];
+      const topScore = top.score ?? 0;
       result.push({
         label: top.name,
-        description: `Your strongest capability area — score ${Math.round(top.score ?? 0)}/100`,
-        direction: (top.score ?? 0) >= 60 ? "above" : "on_target",
+        description: `Your strongest capability area — score ${Math.round(topScore)}/100`,
+        direction: topScore >= 65 ? "above" : topScore >= 50 ? "on_target" : "below",
       });
     }
-    if (sorted.length > 1) {
-      const bottom = sorted[sorted.length - 1];
+
+    if (withScores.length > 1) {
+      const bottom = withScores[withScores.length - 1];
+      const botScore = bottom.score ?? 0;
       result.push({
         label: bottom.name,
-        description: `Biggest development opportunity — score ${Math.round(bottom.score ?? 0)}/100`,
-        direction: (bottom.score ?? 0) < 40 ? "below" : "on_target",
+        description: `Biggest development opportunity — score ${Math.round(botScore)}/100`,
+        direction: botScore < 50 ? "below" : botScore < 65 ? "on_target" : "above",
       });
     }
+
     if (data.assessmentHistory.length >= 2) {
-      const hist = [...data.assessmentHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const hist = [...data.assessmentHistory].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      );
       const delta = hist[hist.length - 1].overallScore - hist[0].overallScore;
       if (Math.abs(delta) >= 3) {
         result.push({
@@ -390,6 +401,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         });
       }
     }
+
     return result.slice(0, 3);
   }, [data]);
 
@@ -399,24 +411,28 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   if (isLoading) return <IndividualDashboardSkeleton />;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-5">
 
       {/* ── Page header ── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">
+          <h1 className="text-xl font-bold text-gray-900">
             {hasData ? `${firstName}'s capability profile` : `Welcome, ${firstName}`}
           </h1>
-          {data?.lastAssessmentDate && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Last assessed {new Date(data.lastAssessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+          {data?.lastAssessmentDate ? (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Last assessed {new Date(data.lastAssessmentDate).toLocaleDateString("en-GB", {
+                day: "numeric", month: "long", year: "numeric",
+              })}
             </p>
+          ) : (
+            <p className="text-xs text-gray-400 mt-0.5">No assessment completed yet</p>
           )}
         </div>
         {hasData && (
           <Link href="/assessment">
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-              <ClipboardList className="w-3.5 h-3.5" />
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs shrink-0">
+              <RotateCcw className="w-3.5 h-3.5" />
               Reassess
             </Button>
           </Link>
@@ -425,18 +441,18 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
 
       {/* ── CTA banner — new users only ── */}
       {!hasData && (
-        <div className="flex items-center gap-5 p-5 rounded-xl border border-primary/30 bg-primary/5">
-          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <ClipboardList className="w-7 h-7 text-primary" />
+        <div className="flex items-center gap-5 p-5 rounded-xl border border-blue-100 bg-blue-50">
+          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <ClipboardList className="w-6 h-6 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">Take your AI capability assessment</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              15 minutes · 6 capability domains · Precise score that tells you exactly where you stand
+            <p className="text-sm font-bold text-gray-900">Take your AI capability assessment</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              15 minutes · 6 capability domains · A precise score that tells you exactly where you stand
             </p>
           </div>
           <Link href="/assessment">
-            <Button size="sm" className="gap-1.5 whitespace-nowrap">
+            <Button size="sm" className="gap-1.5 whitespace-nowrap shrink-0">
               Start assessment
               <ArrowRight className="w-3.5 h-3.5" />
             </Button>
@@ -447,57 +463,68 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       {/* ── Main two-column row: Gauge + Signals ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-        {/* Where you stand — gauge */}
-        <div className="lg:col-span-2 rounded-xl border border-border/40 bg-card/50 p-5 flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-            </div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Where you stand</span>
-          </div>
+        {/* Where you stand */}
+        <div
+          className="lg:col-span-2 rounded-xl bg-white border border-gray-100 p-5 flex flex-col"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+        >
+          <SectionHeader
+            icon={
+              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+              </div>
+            }
+            title="Where you stand"
+          />
 
-          <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center py-2">
             <CapabilityGauge score={data?.overallScore ?? 0} empty={!hasData} />
           </div>
 
           {hasData && data && (
-            <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
-              {/* Score history sparkline */}
-              {data.assessmentHistory.length >= 2 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Progress</span>
-                  <ScoreSparkline history={data.assessmentHistory} />
-                </div>
-              )}
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between text-xs text-gray-400">
                 <span>{data.assessmentHistory.length} assessment{data.assessmentHistory.length !== 1 ? "s" : ""} completed</span>
-                {data.nextReassessmentDate && (
-                  <span>Next: {new Date(data.nextReassessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                {data.assessmentHistory.length >= 2 && (
+                  <ScoreSparkline history={data.assessmentHistory} />
                 )}
               </div>
+              {data.nextReassessmentDate && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Next reassessment: {new Date(data.nextReassessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </p>
+              )}
             </div>
           )}
 
           {!hasData && (
-            <div className="mt-4 pt-4 border-t border-border/30">
-              <p className="text-xs text-muted-foreground text-center">
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-400 text-center">
                 Your position appears once you complete the assessment
               </p>
             </div>
           )}
         </div>
 
-        {/* Signals panel */}
-        <div className="lg:col-span-3 rounded-xl border border-border/40 bg-card/50 p-5 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">🚩</span>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Signals · {hasData ? signals.length : 0}
-              </span>
-            </div>
-            <span className="text-xs text-muted-foreground/60 italic">flags worth a look — we flag, you decide</span>
-          </div>
+        {/* Signals */}
+        <div
+          className="lg:col-span-3 rounded-xl bg-white border border-gray-100 p-5 flex flex-col"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+        >
+          <SectionHeader
+            icon={<span className="text-base leading-none">🚩</span>}
+            title={`Signals · ${hasData ? signals.length : 0}`}
+            subtitle="flags worth a look — we flag, you decide"
+            action={
+              hasData && signals.length > 0 ? (
+                <Link href="/assessment">
+                  <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 font-medium">
+                    Full results <ArrowRight className="w-3 h-3" />
+                  </button>
+                </Link>
+              ) : undefined
+            }
+          />
 
           {hasData && signals.length > 0 ? (
             <div className="flex-1 space-y-2.5">
@@ -506,26 +533,27 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               ))}
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 py-6">
+            <div className="flex-1 flex flex-col gap-2.5">
               {/* Blurred placeholder rows */}
-              <div className="w-full space-y-2.5 pointer-events-none select-none">
-                {[80, 65, 50].map((w, i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border/20 bg-muted/10">
-                    <div className="flex-1 space-y-1.5">
-                      <div className="h-3 rounded bg-muted/30 blur-[2px]" style={{ width: `${w}%` }} />
-                      <div className="h-2.5 rounded bg-muted/20 blur-[2px]" style={{ width: `${w - 15}%` }} />
-                    </div>
-                    <div className="h-5 w-20 rounded-full bg-muted/20 blur-[2px]" />
+              {[{ w: "78%", w2: "55%" }, { w: "62%", w2: "45%" }, { w: "70%", w2: "50%" }].map((row, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-100 bg-gray-50"
+                >
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 rounded bg-gray-200" style={{ width: row.w, filter: "blur(3px)" }} />
+                    <div className="h-2.5 rounded bg-gray-100" style={{ width: row.w2, filter: "blur(3px)" }} />
                   </div>
-                ))}
-              </div>
-              <div className="text-center mt-2">
-                <div className="flex items-center gap-1.5 justify-center text-muted-foreground/60 mb-2">
+                  <div className="h-5 w-20 rounded-full bg-gray-200" style={{ filter: "blur(3px)" }} />
+                </div>
+              ))}
+              <div className="flex flex-col items-center gap-2 pt-2">
+                <div className="flex items-center gap-1.5 text-gray-400">
                   <Lock className="w-3.5 h-3.5" />
                   <span className="text-xs font-medium">Signals unlock with your assessment</span>
                 </div>
                 <Link href="/assessment">
-                  <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                  <Button variant="outline" size="sm" className="text-xs gap-1.5 mt-1">
                     <ClipboardList className="w-3.5 h-3.5" />
                     Take assessment
                   </Button>
@@ -533,31 +561,23 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               </div>
             </div>
           )}
-
-          {hasData && signals.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-border/30 flex justify-end">
-              <Link href="/assessment">
-                <button className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-                  View full results <ArrowRight className="w-3 h-3" />
-                </button>
-              </Link>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* ── 6 Domain cards row ── */}
+      {/* ── 6 Domain cards ── */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Capability domains</h2>
-          {hasData && (
-            <Link href="/assessment">
-              <button className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-                Full breakdown <ArrowRight className="w-3 h-3" />
-              </button>
-            </Link>
-          )}
-        </div>
+        <SectionHeader
+          title="Capability domains"
+          action={
+            hasData ? (
+              <Link href="/assessment">
+                <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 font-medium">
+                  Full breakdown <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            ) : undefined
+          }
+        />
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {DOMAIN_KEYS.map(key => {
             const domain = data?.domains.find(d => d.key === key);
@@ -565,11 +585,14 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               <DomainCard
                 key={key}
                 domainKey={key}
-                name={DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS]}
+                name={
+                  DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ??
+                  DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS]
+                }
                 score={domain?.score ?? null}
                 hasData={hasData && (domain?.score ?? 0) > 0}
                 onClick={() => {
-                  if (hasData) setDrillDomain(key);
+                  if (hasData) navigate("/assessment");
                   else navigate("/assessment");
                 }}
               />
@@ -578,66 +601,74 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         </div>
       </div>
 
-      {/* ── Bottom row: next steps + learning ── */}
+      {/* ── Bottom row: locked panels for new users ── */}
       {!hasData && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-border/40 bg-card/50 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">You lead</span>
-              <Lock className="w-3.5 h-3.5 text-muted-foreground/50 ml-auto" />
+          {[
+            { title: "You lead", icon: <TrendingUp className="w-4 h-4 text-blue-500" /> },
+            { title: "Biggest gaps", icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
+          ].map(({ title, icon }) => (
+            <div
+              key={title}
+              className="rounded-xl bg-white border border-gray-100 p-5"
+              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {icon}
+                  <span className="text-sm font-semibold text-gray-700">{title}</span>
+                </div>
+                <Lock className="w-3.5 h-3.5 text-gray-300" />
+              </div>
+              <div className="space-y-2">
+                {[75, 55, 65].map((w, i) => (
+                  <div key={i} className="h-3 rounded-md bg-gray-100" style={{ width: `${w}%`, filter: "blur(2px)" }} />
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-3">Unlock by completing your assessment</p>
             </div>
-            <div className="space-y-2 pointer-events-none select-none">
-              {[75, 55].map((w, i) => (
-                <div key={i} className="h-3 rounded bg-muted/25 blur-[2px]" style={{ width: `${w}%` }} />
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground/60 mt-3">Unlock by completing your assessment</p>
-          </div>
-          <div className="rounded-xl border border-border/40 bg-card/50 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">Biggest gaps</span>
-              <Lock className="w-3.5 h-3.5 text-muted-foreground/50 ml-auto" />
-            </div>
-            <div className="space-y-2 pointer-events-none select-none">
-              {[80, 60].map((w, i) => (
-                <div key={i} className="h-3 rounded bg-muted/25 blur-[2px]" style={{ width: `${w}%` }} />
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground/60 mt-3">Unlock by completing your assessment</p>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* ── When data exists: show plan summary ── */}
+      {/* ── Development plan — users with data ── */}
       {hasData && data?.planSummary && (
-        <div className="rounded-xl border border-border/40 bg-card/50 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <BookOpen className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-foreground">Your development plan</span>
+        <div
+          className="rounded-xl bg-white border border-gray-100 p-5"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+        >
+          <SectionHeader
+            icon={<BookOpen className="w-4 h-4 text-blue-500" />}
+            title="Your development plan"
+            action={
+              <Link href="/learning">
+                <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 font-medium">
+                  View plan <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            }
+          />
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { value: data.planSummary.moduleCount, label: "Modules recommended" },
+              { value: `${Math.round(data.planSummary.totalEstimatedMinutes / 60)}h`, label: "Estimated learning time" },
+              {
+                value: `${Math.round(data.planSummary.completionPercentage)}%`,
+                label: "Plan completed",
+                highlight: data.planSummary.completionPercentage > 0,
+              },
+            ].map(({ value, label, highlight }) => (
+              <div key={label} className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+                <p className={`text-2xl font-bold ${highlight ? "text-blue-600" : "text-gray-800"}`}>{value}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+              </div>
+            ))}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
-              <p className="text-2xl font-bold text-foreground">{data.planSummary.moduleCount}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Modules recommended</p>
-            </div>
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
-              <p className="text-2xl font-bold text-foreground">{Math.round(data.planSummary.totalEstimatedMinutes / 60)}h</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Estimated learning time</p>
-            </div>
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
-              <p className="text-2xl font-bold text-primary">{Math.round(data.planSummary.completionPercentage)}%</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Plan completed</p>
-            </div>
-          </div>
-          <div className="mt-3 flex justify-end">
-            <Link href="/learning">
-              <button className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-                View full learning plan <ArrowRight className="w-3 h-3" />
-              </button>
-            </Link>
-          </div>
+          {data.planSummary.completionPercentage === 0 && (
+            <p className="text-xs text-gray-400 mt-3 text-center">
+              Start your first module to begin tracking progress
+            </p>
+          )}
         </div>
       )}
     </div>
