@@ -22,6 +22,7 @@ import {
   Sparkles, ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS } from "../../../../shared/brand";
 
 // ─── Domain icon map (Tabler-semantic equivalents in Lucide) ─────────────────
@@ -146,8 +147,9 @@ function ModalModuleRow({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 px-5 py-3.5 transition-colors",
+        "flex items-start gap-3 px-5 py-3.5 transition-colors relative",
         isLocked && "opacity-40",
+        !isProUser && "opacity-75 hover:opacity-90",
       )}
       style={isNext ? { backgroundColor: `rgba(${hexToRgb(domainColour)}, 0.04)` } : undefined}
     >
@@ -186,10 +188,22 @@ function ModalModuleRow({
       </div>
       {/* CTA */}
       {!isProUser ? (
-        <div className="flex items-center gap-1 flex-shrink-0 mt-0.5 px-2 py-0.5 rounded-md bg-[#10B981]/10 border border-[#10B981]/20" onClick={onStart}>
-          <Lock className="h-2.5 w-2.5 text-[#10B981]" />
-          <span className="text-[10px] font-bold text-[#10B981] uppercase tracking-wide">PRO</span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onStart}
+              className="flex items-center gap-1 flex-shrink-0 mt-0.5 px-2 py-0.5 rounded-md bg-[#10B981]/10 border border-[#10B981]/20 hover:bg-[#10B981]/20 transition-colors cursor-pointer"
+              aria-label="PRO feature — upgrade to access this module"
+            >
+              <Lock className="h-2.5 w-2.5 text-[#10B981]" />
+              <span className="text-[10px] font-bold text-[#10B981] uppercase tracking-wide">PRO</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-[200px] text-center">
+            <p className="font-semibold text-xs mb-0.5">PRO feature</p>
+            <p className="text-xs text-muted-foreground">Upgrade to AiQ PRO to start this module and access your full learning programme.</p>
+          </TooltipContent>
+        </Tooltip>
       ) : isCompleted ? (
         <button
           onClick={onReview}
@@ -432,12 +446,13 @@ function DomainModal({
 
 // ─── Domain card ──────────────────────────────────────────────────────────────
 function DomainCard({
-  domainKey, items, nextItemId, domainScore, targetScore, linkedInitiative, onClick,
+  domainKey, items, nextItemId, domainScore, targetScore, linkedInitiative, onClick, isProUser,
 }: {
   domainKey: string; items: any[]; nextItemId: string | null;
   domainScore: number | null; targetScore: number | null;
   linkedInitiative?: { initiativeId: string; name: string } | null;
   onClick: () => void;
+  isProUser?: boolean;
 }) {
   const label = DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey;
   const colour = DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "#4477AA";
@@ -529,9 +544,24 @@ function DomainCard({
       <div className="px-5 pt-2.5 pb-4 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className={`text-[11px] text-muted-foreground${statusItalic ? " italic" : ""}`}>{statusText}</span>
-          <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-0.5">
-            View <ChevronRight className="h-3 w-3" aria-hidden="true" />
-          </span>
+          {!isProUser ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex items-center gap-1 text-[10px] font-bold text-[#10B981] uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-[#10B981]/10 border border-[#10B981]/20 cursor-pointer hover:bg-[#10B981]/20 transition-colors">
+                  <Lock className="h-2.5 w-2.5" />
+                  PRO
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[200px] text-center">
+                <p className="font-semibold text-xs mb-0.5">PRO feature</p>
+                <p className="text-xs text-muted-foreground">Upgrade to AiQ PRO to start modules in this domain.</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-0.5">
+              View <ChevronRight className="h-3 w-3" aria-hidden="true" />
+            </span>
+          )}
         </div>
         {linkedInitiative && (
           <p className="text-[10px] text-muted-foreground/70 truncate">
@@ -547,11 +577,12 @@ function DomainCard({
 // ─── Hero card ────────────────────────────────────────────────────────────────
 function HeroCard({
   planState, nextItem, totalModules, completedModules, lastAssessedAt,
-  onAction,
+  onAction, isProUser,
 }: {
   planState: PlanState; nextItem: any | null; totalModules: number;
   completedModules: number; lastAssessedAt: number | null;
   onAction: () => void;
+  isProUser?: boolean;
 }) {
   const mod = nextItem?.module ?? {};
   const domainKey = mod.capability ?? "";
@@ -560,31 +591,57 @@ function HeroCard({
 
   if (planState === "first-time") {
     return (
-      <button
-        onClick={onAction}
-        className="w-full text-left p-5 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        aria-label="Start your first module"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">
-              START HERE
-            </p>
-            <p className="text-sm font-semibold text-foreground truncate">
-              {mod.title ?? "Begin your learning plan"}
-            </p>
-            {mod.durationMins && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Module 1 of {totalModules} · {mod.durationMins} min
-              </p>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={onAction}
+            className={cn(
+              "w-full text-left p-5 rounded-2xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              isProUser
+                ? "border-primary/30 bg-primary/5 hover:bg-primary/8"
+                : "border-[#10B981]/30 bg-[#10B981]/5 hover:bg-[#10B981]/8",
             )}
-          </div>
-          <ArrowRight className="h-5 w-5 text-primary flex-shrink-0" aria-hidden="true" />
-        </div>
-      </button>
+            aria-label={isProUser ? "Start your first module" : "PRO feature — upgrade to start this module"}
+          >
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                isProUser ? "bg-primary/15" : "bg-[#10B981]/15",
+              )}>
+                {isProUser
+                  ? <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+                  : <Lock className="h-5 w-5 text-[#10B981]" aria-hidden="true" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={cn(
+                  "text-[10px] font-bold uppercase tracking-widest mb-0.5",
+                  isProUser ? "text-primary" : "text-[#10B981]",
+                )}>
+                  {isProUser ? "START HERE" : "UPGRADE TO START"}
+                </p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {mod.title ?? "Begin your learning plan"}
+                </p>
+                {mod.durationMins && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Module 1 of {totalModules} · {mod.durationMins} min
+                  </p>
+                )}
+              </div>
+              <ArrowRight className={cn(
+                "h-5 w-5 flex-shrink-0",
+                isProUser ? "text-primary" : "text-[#10B981]",
+              )} aria-hidden="true" />
+            </div>
+          </button>
+        </TooltipTrigger>
+        {!isProUser && (
+          <TooltipContent side="bottom" className="max-w-[220px] text-center">
+            <p className="font-semibold text-xs mb-0.5">PRO feature</p>
+            <p className="text-xs text-muted-foreground">Upgrade to AiQ PRO to start this module and unlock your full learning programme.</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
     );
   }
 
@@ -904,6 +961,7 @@ export default function LearningPlanPage() {
           completedModules={completedModules}
           lastAssessedAt={(dashboardCtx as any)?.lastAssessedAt ?? null}
           onAction={handleHeroAction}
+          isProUser={isPro}
         />
 
         {/* B2. Strategy linkage — in-flight initiatives */}
@@ -961,6 +1019,7 @@ export default function LearningPlanPage() {
                 targetScore={targetScoreMap[domainKey] ?? null}
                 linkedInitiative={dashboardCtx?.domainInitiativeMap?.[domainKey] ?? null}
                 onClick={() => handleDomainCardClick(domainKey)}
+                isProUser={isPro}
               />
             ))}
           </div>
