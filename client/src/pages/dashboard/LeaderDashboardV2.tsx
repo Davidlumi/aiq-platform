@@ -404,35 +404,11 @@ export default function LeaderDashboardV2() {
   }, [main, ambitionGap]);
 
   // F2 fix: reward-mode tenants redirect to the reward journey.
-  // Placed AFTER all hooks so React's hook count is always consistent.
+  // Reward routes are hidden in Phase 1 — do not redirect reward tenants into hidden routes.
+  // RoleDashboard already renders IndividualDashboardV2 for reward-only users, so this
+  // component should never be reached by them. Guard here as a safety net.
   if (gate.tenantMode === "reward") {
-    const rewardStageRoutes = [
-      "/strategy/reward-outputs",
-      "/strategy/reward-review",
-      "/strategy/reward-capability",
-      "/strategy/reward-business-case",
-      "/strategy/reward-success-measures",
-      "/strategy/reward-initiatives",
-      "/strategy/reward-principles",
-      "/strategy/reward-strategy",
-      "/strategy/reward-vision",
-      "/strategy/reward-prework",
-    ];
-    const stageAccessible = [
-      gate.isStage10Accessible,
-      gate.isStage9Accessible,
-      gate.isStage8Accessible,
-      gate.isStage7Accessible,
-      gate.isStage6Accessible,
-      gate.isStage5Accessible,
-      gate.isStage4Accessible,
-      gate.isStage3Accessible,
-      gate.isStage2Accessible,
-      true, // stage 1 always accessible
-    ];
-    const targetIdx = stageAccessible.findIndex((a) => a);
-    const target = rewardStageRoutes[targetIdx] ?? "/strategy/reward-prework";
-    return <Redirect to={target} />;
+    return null;
   }
 
   if (isLoading) return <LeaderDashboardSkeleton />;

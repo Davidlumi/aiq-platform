@@ -108,13 +108,9 @@ export default function OnboardingWizard() {
 
   const completeOnboarding = trpc.auth.completeOnboarding.useMutation({
     onSuccess: () => {
-      // Reward leaders go directly to the reward journey; everyone else to dashboard
-      const aiqRole = (user as any)?.aiqRole as string | undefined;
-      if (aiqRole === "reward_leader") {
-        navigate("/strategy/reward-prework");
-      } else {
-        navigate("/dashboard");
-      }
+      // Reward routes are hidden in Phase 1 — all users go to /dashboard after onboarding.
+      // RoleDashboard will render the correct experience based on entitlements.
+      navigate("/dashboard");
     },
     onError: (err) => {
       toast.error("Could not save your profile. Please try again.");

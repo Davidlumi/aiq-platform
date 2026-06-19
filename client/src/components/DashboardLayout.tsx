@@ -506,7 +506,12 @@ function DashboardLayoutContent({
                         return (
                           <button
                             key={domain.label}
-                            onClick={() => setLocation(domain.path)}
+                            onClick={() => {
+                              // Reward routes are hidden in Phase 1 — show a coming-soon toast
+                              // instead of navigating to a hidden route that would cause an
+                              // infinite redirect loop.
+                              toast.info("Reward Strategy module is coming soon.");
+                            }}
                             className={cn(
                               "w-full flex items-center gap-2 h-7 rounded-md text-xs px-2 transition-all cursor-pointer relative",
                               isActive
