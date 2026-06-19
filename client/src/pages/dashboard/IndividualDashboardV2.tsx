@@ -406,6 +406,11 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   }, [data]);
 
   const hasData = data !== undefined && data.overallScore !== null;
+
+  const { data: aiSummaryData, isLoading: aiSummaryLoading } = trpc.dashboardV2.individual.aiSummary.useQuery(
+    undefined,
+    { enabled: hasData, staleTime: 10 * 60 * 1000, retry: false },
+  );
   const firstName = (user as any)?.firstName ?? "there";
 
   if (isLoading) return <IndividualDashboardSkeleton />;
@@ -628,6 +633,30 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               <p className="text-xs text-gray-400 mt-3">Unlock by completing your assessment</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── AI capability summary ── */}
+      {hasData && (
+        <div
+          className="rounded-xl bg-white border border-gray-100 p-5"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+        >
+          <SectionHeader
+            icon={<Sparkles className="w-4 h-4 text-violet-500" />}
+            title="Your AI capability profile"
+          />
+          {aiSummaryLoading ? (
+            <div className="space-y-2">
+              <div className="h-3.5 rounded bg-gray-100 animate-pulse" style={{ width: "92%" }} />
+              <div className="h-3.5 rounded bg-gray-100 animate-pulse" style={{ width: "78%" }} />
+              <div className="h-3.5 rounded bg-gray-100 animate-pulse" style={{ width: "85%" }} />
+            </div>
+          ) : aiSummaryData?.summary ? (
+            <p className="text-sm text-gray-600 leading-relaxed">{aiSummaryData.summary}</p>
+          ) : (
+            <p className="text-sm text-gray-400 italic">Profile summary will appear here after your assessment is processed.</p>
+          )}
         </div>
       )}
 

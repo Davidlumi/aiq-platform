@@ -102,6 +102,8 @@ const MANAGER_ROLES = ["manager"];
 const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [];
 
 const NAV_ITEMS: NavItem[] = [
+  // -- Core (always visible) ---------------------------------------------------
+  { label: "Home",             path: "/dashboard",      icon: LayoutDashboard, section: "core" },
   // -- My Development (shown when tenant has assessment entitlement) ------------
   // Entitlement filter applied in component; roles array not used for section visibility.
   { label: "Skills Check",     path: "/assessment",     icon: ClipboardList, section: "mydev" },
@@ -150,6 +152,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const SECTION_LABELS: Record<string, string> = {
+  core:        "",
   mydev:       "My Development",
   knowledge:   "Knowledge",
   aistrategy:  "AI Strategy",
@@ -447,8 +450,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     .filter((item) => {
       // superuserOnly items are gated on the isPlatformSuperuser DB flag — single source of truth
       if (item.superuserOnly) return isPlatformSuperuser;
-      // My Development section: gated on assessment entitlement
-      if (item.section === "mydev") return hasAssessment;
+      // Core section: always visible
+      if (item.section === "core") return true;
+      // My Development section: visible to all authenticated users
+      // (individual pages handle entitlement-based locking internally)
+      if (item.section === "mydev") return true;
       // Knowledge section: always visible to authenticated users
       if (item.section === "knowledge") return true;
       // AI Strategy section: gated on strategyCompany entitlement + CPO role
@@ -820,11 +826,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="lg:hidden flex items-center gap-2">
+          {/* Mobile-only logo — only shown on small screens where the sidebar is hidden */}
+          <div className="lg:hidden flex items-center gap-1.5">
             <AiQLogoMark size={26} />
-            <span className="font-semibold text-[15px] text-foreground">
-              Ai<span className="text-primary">Q</span>
-            </span>
           </div>
 
           <div className="flex-1" />

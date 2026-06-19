@@ -5,6 +5,7 @@
  * Replaces the legacy dashboard router for the three primary surfaces.
  */
 import { z } from "zod";
+import { invokeLLM } from "../_core/llm";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb, getUserRoleKeys, getTenantPlan, planAtLeast } from "../db";
@@ -421,6 +422,53 @@ const individualRouter = router({
         ) : null,
         businessContext: null, // Will be populated when AI roadmap is implemented
       };
+    }),
+
+  /** AI-generated personalised assessment summary paragraph */
+  aiSummary: protectedProcedure
+    .input(z.object({ userId: z.string().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const targetUserId = input?.userId ?? ctx.user.id;
+      const scoreData = await getLatestScoreData(db, targetUserId);
+      if (!scoreData) return { summary: null };
+      const userRow = await db.select().from(users).where(eq(users.id, targetUserId)).limit(1);
+      const u = userRow[0];
+      const domainScores = extractCapabilityScores(scoreData.scoreBreakdownJson);
+      const domainRatings = extractDomainRatings(scoreData.scoreBreakdownJson);
+      const overallScore = Math.round(scoreData.overallScore);
+      const readinessState = extractReadinessState(scoreData.scoreBreakdownJson);
+      const rating = stateToRating(readinessState);
+      const ratingLabel = generateRatingExplanation(rating, domainScores);
+      const domainLines = domainScores
+        ? DOMAIN_KEYS.map(k => `${DOMAIN_LABELS[k]}: ${Math.round(domainScores[k])}/100`).join(", ")
+        : "";
+      const jobFunction = u?.jobFunction ?? "HR professional";
+      const prompt = `You are an expert AI capability coach. Write a single concise paragraph (3-4 sentences, max 80 words) summarising this person's AI capability profile. Be specific, warm, and actionable. Do not use bullet points or headers.
+
+Profile:
+- Name: ${u?.firstName ?? "the user"}
+- Role: ${jobFunction}
+- Overall score: ${overallScore}/100 (${ratingLabel})
+- Domain scores: ${domainLines}
+
+Focus on their strongest area, their biggest development opportunity, and one concrete next step.`;
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a concise, expert AI capability coach. Write only the paragraph, no preamble." },
+            { role: "user", content: prompt },
+          ],
+          maxTokens: 200,
+          thinkingBudget: 0,
+        });
+        const raw = response?.choices?.[0]?.message?.content;
+        const summary = typeof raw === "string" ? raw.trim() : null;
+        return { summary };
+      } catch {
+        return { summary: null };
+      }
     }),
 
   /** Domain drill-down: Light + Medium */
