@@ -697,9 +697,11 @@ function RoleDashboard() {
   if (!entitlements?.strategyCompany && !entitlements?.strategyReward) {
     return <IndividualDashboardV2 />;
   }
-  // Reward-only tenant: send directly to reward journey
+  // Reward-only tenant: reward routes are currently hidden (Phase 1).
+  // Show the individual dashboard as the landing experience to avoid
+  // an infinite redirect loop (/dashboard → /strategy/reward-prework → /dashboard).
   if (!entitlements?.strategyCompany && entitlements?.strategyReward) {
-    return <Redirect to="/strategy/reward-prework" />;
+    return <IndividualDashboardV2 />;
   }
   // Fallback: use real role
   const roles = (user as any).roles as string[] ?? [];
