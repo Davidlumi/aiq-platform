@@ -83,7 +83,7 @@ export const stripeRouter = router({
           customer_email: ctx.user.email,
           customer_name: `${ctx.user.firstName} ${ctx.user.lastName}`,
         },
-        success_url: `${input.origin}/billing?session_id={CHECKOUT_SESSION_ID}&status=success`,
+        success_url: `${input.origin}/pro-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${input.origin}/billing?status=cancelled`,
       });
 

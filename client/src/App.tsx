@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 
 // Billing
 import BillingPage from "./pages/billing/BillingPage";
+import ProSuccessPage from "./pages/billing/ProSuccessPage";
 
 // Auth pages
 import LoginPage from "./pages/auth/LoginPage";
@@ -410,6 +411,9 @@ function Router() {
       </Route>
       <Route path="/billing">
         <ProtectedRoute component={BillingPage} />
+      </Route>
+      <Route path="/pro-success">
+        <ProtectedRouteFullscreen component={ProSuccessPage} />
       </Route>
       <Route path="/modules">
         <KnowledgeRoute component={ModulesPage} />
