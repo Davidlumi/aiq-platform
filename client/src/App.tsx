@@ -390,7 +390,7 @@ function Router() {
         <KnowledgeRoute component={CoachPage} fullscreen />
       </Route>
       <Route path="/dashboard">
-        <PeopleRoute component={RoleDashboard} />
+        <ProtectedRoute component={RoleDashboard} />
       </Route>
       <Route path="/assessment">
         <AssessmentRoute component={AssessmentPage} />
@@ -686,12 +686,18 @@ function RoleDashboard() {
   if (viewAs === "individual") return <IndividualDashboardV2 />;
   if (viewAs === "manager") return <ManagerDashboardV2 />;
   if (viewAs === "cpo") return <LeaderDashboardV2 />;
-  // Reward-only tenant: send directly to reward journey (avoids CPO dashboard render)
+
   const entitlements = (user as any)?.entitlements as {
     strategyCompany?: boolean;
     strategyReward?: boolean;
     assessment?: boolean;
   } | undefined;
+
+  // Assessment-only (self-serve) users: always show individual dashboard
+  if (!entitlements?.strategyCompany && !entitlements?.strategyReward) {
+    return <IndividualDashboardV2 />;
+  }
+  // Reward-only tenant: send directly to reward journey
   if (!entitlements?.strategyCompany && entitlements?.strategyReward) {
     return <Redirect to="/strategy/reward-prework" />;
   }
