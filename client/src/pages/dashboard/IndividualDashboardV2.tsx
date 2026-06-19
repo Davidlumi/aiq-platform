@@ -10,7 +10,16 @@
  * Design: white cards on light grey background, clean section headers,
  * proper card shadows, solid colours (no opacity hacks).
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
@@ -32,6 +41,13 @@ import {
   ClipboardList,
   BookOpen,
   RotateCcw,
+  Lightbulb,
+  GraduationCap,
+  Wrench,
+  FlaskConical,
+  ExternalLink,
+  Star,
+  X,
 } from "lucide-react";
 import {
   DOMAIN_KEYS,
@@ -625,6 +641,145 @@ function ScoreSparkline({ history }: { history: Array<{ date: string; overallSco
 }
 
 // ─── Section header ───────────────────────────────────────────────────────────
+// ─── Domain Detail Modal ─────────────────────────────────────────────────────
+const RESOURCE_TYPE_ICONS: Record<string, React.ElementType> = {
+  course: GraduationCap,
+  book: BookOpen,
+  tool: Wrench,
+  practice: FlaskConical,
+};
+
+function DomainDetailModal({
+  domainKey,
+  domainScore,
+  onClose,
+}: {
+  domainKey: string | null;
+  domainScore: number;
+  onClose: () => void;
+}) {
+  const { data, isLoading } = trpc.dashboardV2.individual.domainInsights.useQuery(
+    { domainKey: domainKey ?? "" },
+    { enabled: !!domainKey, staleTime: 5 * 60 * 1000 },
+  );
+  const domainName = domainKey ? DOMAIN_LABELS[domainKey as keyof typeof DOMAIN_LABELS] ?? domainKey : "";
+  const domainDesc = domainKey ? DOMAIN_DESCRIPTIONS[domainKey as keyof typeof DOMAIN_DESCRIPTIONS] ?? "" : "";
+  const DomainIcon = domainKey ? DOMAIN_ICONS[DOMAIN_ICON_NAMES[domainKey as keyof typeof DOMAIN_ICON_NAMES] ?? ""] ?? Sparkles : Sparkles;
+  const colour = domainKey ? DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "#6366f1" : "#6366f1";
+  const levelLabel = domainScore >= 75 ? "Strong" : domainScore >= 55 ? "Capable" : domainScore >= 40 ? "Developing" : "Foundation";
+  const levelColour = domainScore >= 75 ? "#22c55e" : domainScore >= 55 ? "#3b82f6" : domainScore >= 40 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <Dialog open={!!domainKey} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
+        {/* Header band */}
+        <div className="px-6 pt-6 pb-4" style={{ background: `${colour}12`, borderBottom: `3px solid ${colour}` }}>
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${colour}20` }}>
+                  <DomainIcon className="w-5 h-5" style={{ color: colour }} />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-semibold text-gray-900 leading-tight">{domainName}</DialogTitle>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-snug">{domainDesc}</p>
+                </div>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors mt-0.5 flex-shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </DialogHeader>
+          {/* Score row */}
+          <div className="flex items-center gap-3 mt-4">
+            <div className="flex items-center gap-1.5">
+              <span className="text-2xl font-bold" style={{ color: levelColour }}>{domainScore}</span>
+              <span className="text-sm text-gray-400">/100</span>
+            </div>
+            <Badge variant="outline" className="text-xs font-medium" style={{ color: levelColour, borderColor: `${levelColour}40`, background: `${levelColour}10` }}>
+              {levelLabel}
+            </Badge>
+            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${domainScore}%`, background: levelColour }} />
+            </div>
+          </div>
+        </div>
+
+        <ScrollArea className="max-h-[60vh]">
+          <div className="px-6 py-5 space-y-5">
+            {isLoading ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-semibold text-gray-700">Improvement tips</span>
+                </div>
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : data && data.tips.length > 0 ? (
+              <>
+                {/* Tips */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-4 h-4 text-amber-500" />
+                    <span className="text-sm font-semibold text-gray-700">How to improve</span>
+                  </div>
+                  <ol className="space-y-2.5">
+                    {data.tips.map((tip, i) => (
+                      <li key={i} className="flex gap-3 text-sm text-gray-700 leading-relaxed">
+                        <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5" style={{ background: `${colour}20`, color: colour }}>
+                          {i + 1}
+                        </span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                {data.resources.length > 0 && (
+                  <>
+                    <Separator />
+                    {/* Resources */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Star className="w-4 h-4 text-indigo-500" />
+                        <span className="text-sm font-semibold text-gray-700">Recommended resources</span>
+                      </div>
+                      <div className="space-y-2.5">
+                        {data.resources.map((r, i) => {
+                          const RIcon = RESOURCE_TYPE_ICONS[r.type] ?? BookOpen;
+                          return (
+                            <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${colour}15` }}>
+                                <RIcon className="w-3.5 h-3.5" style={{ color: colour }} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-800 leading-tight">{r.title}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 leading-snug">{r.description}</p>
+                                <Badge variant="outline" className="text-[10px] mt-1.5 capitalize" style={{ color: colour, borderColor: `${colour}40` }}>{r.type}</Badge>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-6 text-gray-400">
+                <Lightbulb className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">Complete an assessment to unlock personalised tips for this domain.</p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SectionHeader({
   icon,
   title,
@@ -654,6 +809,7 @@ function SectionHeader({
 export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const [selectedDomain, setSelectedDomain] = useState<{ key: string; score: number } | null>(null);
 
   const { data, isLoading } = trpc.dashboardV2.individual.main.useQuery(
     userId ? { userId } : undefined,
@@ -905,8 +1061,11 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 score={domain?.score ?? null}
                 hasData={hasData && (domain?.score ?? 0) > 0}
                 onClick={() => {
-                  if (hasData) navigate("/assessment");
-                  else navigate("/assessment");
+                  if (hasData && domain) {
+                    setSelectedDomain({ key: key, score: domain.score ?? 0 });
+                  } else {
+                    navigate("/assessment");
+                  }
                 }}
               />
             );
@@ -1013,6 +1172,13 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           )}
         </div>
       )}
+
+      {/* ── Domain detail modal ── */}
+      <DomainDetailModal
+        domainKey={selectedDomain?.key ?? null}
+        domainScore={selectedDomain?.score ?? 0}
+        onClose={() => setSelectedDomain(null)}
+      />
     </div>
   );
 }

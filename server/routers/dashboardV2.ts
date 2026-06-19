@@ -712,13 +712,73 @@ Focus on their strongest area, their biggest development opportunity, and one co
       return {
         scenarios: scenarios.slice(0, 5),
         available: scenarios.length > 0,
-        message: scenarios.length === 0
+                message: scenarios.length === 0
           ? "Detailed scenario evidence will be available in a future release. For now, see your signal breakdown above."
           : undefined,
       };
     }),
-});
 
+  /** Personalised improvement tips and learning resources for a specific domain */
+  domainInsights: protectedProcedure
+    .input(z.object({ domainKey: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const domainKey = input.domainKey as DomainKey;
+      if (!DOMAIN_KEYS.includes(domainKey)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid domain key" });
+      }
+      const scoreData = await getLatestScoreData(db, ctx.user.id);
+      if (!scoreData) return { tips: [], resources: [] };
+      const domainScores = extractCapabilityScores(scoreData.scoreBreakdownJson);
+      const score = domainScores ? Math.round(domainScores[domainKey] ?? 0) : 0;
+      const userRow = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      const u = userRow[0];
+      const jobFunction = u?.jobFunction ?? "HR professional";
+      const domainName = DOMAIN_LABELS[domainKey];
+      const domainDesc = DOMAIN_DESCRIPTIONS[domainKey];
+      const levelLabel = score >= 75 ? "Strong" : score >= 55 ? "Capable" : score >= 40 ? "Developing" : "Foundation";
+      const prompt = `You are an expert AI capability coach helping an HR professional improve their skills.
+
+Domain: ${domainName}
+Description: ${domainDesc}
+User role: ${jobFunction}
+Current score: ${score}/100 (${levelLabel})
+
+Provide exactly 3 specific, actionable improvement tips tailored to their score level. Each tip should be 1-2 sentences. Also suggest 3 specific learning resources (books, courses, tools, or practices) relevant to this domain.
+
+Respond in JSON with this exact structure:
+{
+  "tips": ["tip1", "tip2", "tip3"],
+  "resources": [
+    {"type": "course|book|tool|practice", "title": "...", "description": "..."},
+    {"type": "...", "title": "...", "description": "..."},
+    {"type": "...", "title": "...", "description": "..."}
+  ]
+}`;
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a concise AI capability coach. Respond only with valid JSON, no markdown fences." },
+            { role: "user", content: prompt },
+          ],
+          maxTokens: 600,
+          thinkingBudget: 0,
+        });
+        const raw = response?.choices?.[0]?.message?.content;
+        const text = typeof raw === "string" ? raw : Array.isArray(raw) ? (raw as any[]).map((c: any) => c.text ?? "").join("") : "";
+        // Strip markdown code fences if present
+        const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+        const parsed = JSON.parse(cleaned);
+        return {
+          tips: Array.isArray(parsed.tips) ? (parsed.tips as string[]).slice(0, 3) : [],
+          resources: Array.isArray(parsed.resources) ? (parsed.resources as Array<{ type: string; title: string; description: string }>).slice(0, 3) : [],
+        };
+      } catch {
+        return { tips: [], resources: [] };
+      }
+    }),
+});
 // ─── Manager Dashboard ───────────────────────────────────────────────────────
 
 const managerRouter = router({
