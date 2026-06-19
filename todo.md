@@ -5398,3 +5398,9 @@ test
 - [x] Redesign ProGatePage with richer on-brand dark-header card (consistent with platform theme)
 - [x] Add PRO lock badge to Knowledge nav items in AppShell sidebar for free users
 - [x] Add isProUser to AppShell for knowledge section lock indicators
+
+## PRO Upsell & Interstitial (Session)
+- [x] PostAssessmentInterstitial component: animated fullscreen screen after first assessment completion for free users
+- [x] AssessmentSessionPage: detect first completion, show interstitial for free users, navigate to results on dismiss
+- [x] AssessmentResultsPage: PRO upsell card (dark gradient, feature list, Stripe CTA) between cross-cutting and dev plan sections
+- [x] UpgradeModal wired from both the interstitial and the results page upsell card

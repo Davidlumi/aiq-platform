@@ -66,6 +66,8 @@ import {
 import { cn } from "@/lib/utils";
 import { scoreToColor, formatPeakonScore } from "@/lib/peakon-colors";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { PostAssessmentInterstitial } from "@/components/PostAssessmentInterstitial";
+import { useIsPro } from "@/hooks/useIsPro";
 
 // --- Capability colours -------------------------------------------------------
 
@@ -1022,6 +1024,12 @@ export default function AssessmentSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  // Post-assessment interstitial: shown after first completion for free users
+  const [showInterstitial, setShowInterstitial] = useState(false);
+  const [interstitialScore, setInterstitialScore] = useState<number | null>(null);
+  const isPro = useIsPro();
+  // Check how many completed sessions exist BEFORE this one completes
+  const { data: historyData } = trpc.assessment.history.useQuery({}, { staleTime: 30_000 });
   // Rationale loading: true from submit click until rationale content is ready to reveal
   const [rationaleLoading, setRationaleLoading] = useState(false);
 
@@ -1117,8 +1125,19 @@ export default function AssessmentSessionPage() {
   });
 
   const completeMutation = trpc.assessment.completeSession.useMutation({
-    onSuccess: () => {
-      navigate(`/assessment/${sessionId}/results`);
+    onSuccess: (data) => {
+      // Show interstitial for free users completing their FIRST assessment
+      const completedBefore = (historyData ?? []).filter(
+        (s: any) => s.state === "completed" && s.id !== sessionId
+      ).length;
+      const isFirstCompletion = completedBefore === 0;
+      if (isFirstCompletion && !isPro) {
+        const score = (data as any)?.overallScore ?? null;
+        setInterstitialScore(score);
+        setShowInterstitial(true);
+      } else {
+        navigate(`/assessment/${sessionId}/results`);
+      }
     },
     onError: err => toast.error(err.message),
   });
@@ -1565,6 +1584,7 @@ export default function AssessmentSessionPage() {
     interactionType === "error_detection" ? "error" : "critique";
 
   return (
+    <>
     <div className="p-6 space-y-5 max-w-2xl mx-auto">
       {/* Back + Progress header */}
       <div className="space-y-3">
@@ -2071,5 +2091,18 @@ export default function AssessmentSessionPage() {
         </CardContent>
       </Card>
     </div>
+
+    {/* Post-assessment PRO interstitial — first completion only, free users */}
+    {showInterstitial && (
+      <PostAssessmentInterstitial
+        sessionId={sessionId!}
+        overallScore={interstitialScore}
+        onContinue={() => {
+          setShowInterstitial(false);
+          navigate(`/assessment/${sessionId}/results`);
+        }}
+      />
+    )}
+    </>
   );
 }

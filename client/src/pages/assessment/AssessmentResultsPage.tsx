@@ -34,6 +34,8 @@ import { ShimmerBlock } from "@/components/ui/loading";
 import { DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS, DOMAIN_KEYS, type DomainKey } from "@shared/brand";
 import { getDomainIcon } from "@/lib/brand-icons";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 // ─── Level thresholds (v2: bar colour = domain colour, passed in) ─────────────
 
@@ -426,6 +428,8 @@ export default function AssessmentResultsPage() {
   const { sessionId: paramSessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const isPro = useIsPro();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   // History for top bar dropdown
   const historyQuery = trpc.assessment.history.useQuery({});
@@ -1006,6 +1010,56 @@ export default function AssessmentResultsPage() {
           </div>
         )}
       </section>
+
+      {/* ── PRO UPSELL CARD (free users only) ──────────────────────────── */}
+      {!isPro && !isLoading && (
+        <section aria-label="Upgrade to PRO">
+          <div className="relative rounded-2xl overflow-hidden border border-[#10B981]/25 bg-gradient-to-br from-[#0E2A1F]/60 via-[#0E1726]/80 to-[#0A1628]/90 p-6">
+            {/* Ambient glow */}
+            <div className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-[#10B981]/8 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-[#3B82F6]/8 blur-3xl" />
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
+              {/* Left: icon + copy */}
+              <div className="flex items-start gap-4 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-[#10B981]/15 border border-[#10B981]/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <TrendingUp className="w-5 h-5 text-[#10B981]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-sm font-bold text-white">Turn your results into action</h3>
+                    <span className="inline-flex items-center gap-1 bg-[#10B981]/15 border border-[#10B981]/25 rounded-full px-2 py-0.5 text-[10px] font-bold text-[#10B981] uppercase tracking-wider">PRO</span>
+                  </div>
+                  <p className="text-xs text-white/55 leading-relaxed">
+                    Upgrade to unlock your personalised learning plan, AiQ Coach, knowledge base, and PDF downloads — all tailored to your capability profile.
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+                    {["30+ learning modules", "AiQ Coach", "Articles & guides", "PDF downloads"].map(f => (
+                      <span key={f} className="flex items-center gap-1 text-[11px] text-white/45">
+                        <span className="text-[#10B981] text-xs">✓</span> {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Right: price + CTA */}
+              <div className="shrink-0 flex flex-col items-center sm:items-end gap-1.5">
+                <div className="text-center sm:text-right">
+                  <span className="text-xl font-bold text-white">£50</span>
+                  <span className="text-xs text-white/40">/month</span>
+                </div>
+                <button
+                  onClick={() => setUpgradeOpen(true)}
+                  className="inline-flex items-center gap-1.5 bg-[#10B981] hover:bg-[#0d9e6e] text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+                >
+                  <Target className="w-4 h-4" />
+                  Upgrade to PRO
+                </button>
+                <p className="text-[10px] text-white/30">or £480/year · save 20%</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── 5. DEVELOPMENT PLAN ──────────────────────────────────────────── */}
       <section aria-labelledby="dev-plan-heading">
