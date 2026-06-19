@@ -55,18 +55,18 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
 
 const FEATURES = [
   {
-    label: "Adaptive Assessment Engine",
-    desc: "Credibility-weighted scoring across 6 capability dimensions with full audit trail",
+    label: "Free capability assessment",
+    desc: "15-minute scenario-based assessment across 6 domains. Full scores and diagnostics included.",
     icon: Brain,
   },
   {
-    label: "Dynamic Learning Plans",
-    desc: "Modality-matched content assigned based on your verified capability profile",
+    label: "Personalised learning plan",
+    desc: "See your tailored learning plan instantly. Upgrade to PRO to click into modules and track progress.",
     icon: BookOpen,
   },
   {
-    label: "Policy & Compliance",
-    desc: "Automated enforcement with restriction workflows and explainability",
+    label: "AiQ PRO — unlock everything",
+    desc: "Modules, AI Coach, knowledge base, and downloadable reports. £50/month or £480/year.",
     icon: Shield,
   },
 ];
@@ -156,14 +156,13 @@ export default function LoginPage() {
               marginBottom: "14px",
             }}
           >
-            The AI capability standard
+            Know exactly where you
             <br />
-            for HR professionals
+            stand on AI in HR
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "14px", lineHeight: 1.7 }}>
-            AiQ doesn't ask you to define hallucination. It puts you in realistic
-            work situations — under time pressure, with incomplete information — and
-            reads how you actually behave.
+            A free, scenario-based capability assessment built for HR professionals.
+            Get your full score, diagnostics, and a personalised learning plan — no credit card required.
           </p>
 
           <div className="mt-10 space-y-6">
@@ -203,9 +202,9 @@ export default function LoginPage() {
             style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
           >
             {[
-              { value: "6", label: "Capabilities" },
-              { value: "3", label: "Verified tiers" },
-              { value: "90d", label: "Credential expiry" },
+              { value: "6", label: "Domains" },
+              { value: "15", label: "Minutes" },
+              { value: "Free", label: "To start" },
             ].map((s) => (
               <div key={s.label}>
                 <p
@@ -228,7 +227,7 @@ export default function LoginPage() {
         </div>
 
         <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
-          &copy; {new Date().getFullYear()} AiQ. Enterprise Capability Intelligence Platform.
+          &copy; {new Date().getFullYear()} AiQ. HR Capability Intelligence.
         </p>
       </div>
 

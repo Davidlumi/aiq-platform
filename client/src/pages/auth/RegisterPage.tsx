@@ -39,9 +39,9 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 const FEATURES = [
-  { label: "Adaptive AI capability assessment", desc: "20-minute scenario-based test across 6 domains", icon: Brain },
-  { label: "Verified capability score", desc: "Headline score with your strongest and weakest areas", icon: Shield },
-  { label: "Personalised learning plan", desc: "Unlock a 30-module programme matched to your gaps", icon: BookOpen },
+  { label: "Free capability assessment", desc: "15-minute scenario-based test across 6 domains — full scores and diagnostics included", icon: Brain },
+  { label: "Verified capability score", desc: "Headline score plus per-domain breakdown and a plain-English diagnosis of your gaps", icon: Shield },
+  { label: "Personalised learning plan", desc: "See your tailored plan instantly. Upgrade to PRO to unlock modules, AI Coach, and downloads", icon: BookOpen },
 ];
 
 export default function RegisterPage() {
@@ -207,7 +207,7 @@ export default function RegisterPage() {
           <div className="mb-6">
             <h1 className="text-xl font-semibold text-foreground mb-1">Create your free account</h1>
             <p className="text-sm text-muted-foreground">
-              Get your AI capability score in 20 minutes — no credit card required.
+              Get your full AI capability score in 15 minutes — no credit card required.
             </p>
           </div>
 

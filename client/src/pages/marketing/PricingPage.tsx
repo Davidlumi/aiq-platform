@@ -21,38 +21,38 @@ const amber    = "#F59E0B";
 const FREE_FEATURES: { label: string; included: boolean }[] = [
   { label: "Full 15-minute scenario-based assessment", included: true },
   { label: "Headline capability score (0–10)", included: true },
-  { label: "Named weak domains (no per-domain scores)", included: true },
+  { label: "Per-domain scores across all 6 domains", included: true },
+  { label: "Full diagnostic narrative per domain", included: true },
   { label: "Comparison to HR professional average", included: true },
   { label: "Retake once per month", included: true },
-  { label: "Per-domain scores across all 6 domains", included: false },
-  { label: "Full diagnostic narrative per domain", included: false },
-  { label: "Personalised learning programme", included: false },
-  { label: "AI Coach access", included: false },
-  { label: "Monthly reassessment to prove progress", included: false },
+  { label: "Personalised learning plan (view only)", included: true },
+  { label: "Click into learning modules", included: false },
+  { label: "AiQ Coach access", included: false },
+  { label: "Knowledge base (articles, guides, frameworks)", included: false },
   { label: "Progress tracking over time", included: false },
-  { label: "Downloadable capability report", included: false },
+  { label: "Downloadable capability report (PDF)", included: false },
 ];
 
 const PAID_FEATURES: { label: string; included: boolean }[] = [
   { label: "Full 15-minute scenario-based assessment", included: true },
   { label: "Headline capability score (0–10)", included: true },
-  { label: "Named weak domains", included: true },
-  { label: "Comparison to HR professional average", included: true },
-  { label: "Retake once per month", included: true },
   { label: "Per-domain scores across all 6 domains", included: true },
   { label: "Full diagnostic narrative per domain", included: true },
-  { label: "Personalised learning programme", included: true },
-  { label: "AI Coach access", included: true },
-  { label: "Monthly reassessment to prove progress", included: true },
+  { label: "Comparison to HR professional average", included: true },
+  { label: "Retake once per month", included: true },
+  { label: "Personalised learning plan (view only)", included: true },
+  { label: "Click into learning modules", included: true },
+  { label: "AiQ Coach access", included: true },
+  { label: "Knowledge base (articles, guides, frameworks)", included: true },
   { label: "Progress tracking over time", included: true },
-  { label: "Downloadable capability report", included: true },
+  { label: "Downloadable capability report (PDF)", included: true },
 ];
 
 const BETA_HONEST = [
   { label: "Empirical norm data", status: "in-progress", note: "Benchmarks are currently synthetic reference data. Real norms will replace them once we have 200+ completions per role family." },
   { label: "Psychometric validation study", status: "planned", note: "Criterion validity study planned for Q3 2026 with an independent academic partner." },
   { label: "Team plans", status: "planned", note: "Team pricing with aggregated capability dashboards is on the roadmap. Get notified when it launches." },
-  { label: "PDF report export", status: "planned", note: "Downloadable PDF reports for individual assessments are on the roadmap." },
+  { label: "PDF report export", status: "in-progress", note: "Downloadable PDF capability reports are available for PRO subscribers. Richer formatting and branding options are on the roadmap." },
   { label: "Email notifications", status: "in-progress", note: "In-app notifications are live. Email delivery is being configured." },
 ];
 

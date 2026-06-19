@@ -255,7 +255,7 @@ function HowItWorksStrip() {
   const steps = [
     { num: "01", icon: Brain, color: indigo, title: "Take the assessment", body: "15 minutes of scenario-based questions calibrated to your role and seniority. Adaptive difficulty. Anti-gaming detection. No self-reporting." },
     { num: "02", icon: Search, color: cyan, title: "Get your capability score", body: "A headline score plus a breakdown across all six domains — with a plain-English diagnosis of your specific strengths and gaps." },
-    { num: "03", icon: BookOpen, color: greenHex, title: "Close the gaps", body: "A personalised learning programme generated from your results. Targeted modules, AI Coach sessions, and monthly reassessment to prove progress." },
+    { num: "03", icon: BookOpen, color: greenHex, title: "Close the gaps", body: "Your results reveal a personalised learning plan. Free users see the full plan. Upgrade to PRO to click into modules, access the AI Coach, and track progress over time." },
   ];
   return (
     <section style={{ background: navy }} className="py-24 px-6">
@@ -297,19 +297,19 @@ function FreePaidComparison() {
   const freeFeatures = [
     "Full 15-minute scenario-based assessment",
     "Headline capability score (0–10)",
-    "Named weak domains (no per-domain scores)",
+    "Per-domain scores across all 6 domains",
+    "Full diagnostic narrative per domain",
     "Comparison to HR professional average",
     "Retake once per month",
   ];
   const paidFeatures = [
-    "Everything in Free",
-    "Per-domain scores across all 6 domains",
-    "Full diagnostic narrative per domain",
-    "Personalised learning programme",
-    "AI Coach access",
-    "Monthly reassessment to prove progress",
+    "Everything in Free, plus:",
+    "Click into personalised learning modules",
+    "Full modules library (30+ lessons, simulations, videos)",
+    "AiQ Coach — AI coaching for your capability gaps",
+    "Knowledge base (articles, guides, frameworks)",
     "Progress tracking over time",
-    "Downloadable capability report",
+    "Downloadable capability report (PDF)",
   ];
   return (
     <section style={{ background: slate }} className="py-24 px-6">
@@ -352,10 +352,12 @@ function FreePaidComparison() {
               <p className="text-slate-400 text-sm mt-1">or £480/year — save 20%</p>
             </div>
             <div className="flex flex-col gap-3 mb-8">
-              {paidFeatures.map((f) => (
+              {paidFeatures.map((f, i) => (
                 <div key={f} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: greenHex }} />
-                  <span className="text-slate-300 text-sm">{f}</span>
+                  {i === 0
+                    ? <span className="w-4 h-4 mt-0.5 shrink-0" />
+                    : <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: greenHex }} />}
+                  <span className={`text-sm ${i === 0 ? "text-slate-500 italic" : "text-slate-300"}`}>{f}</span>
                 </div>
               ))}
             </div>
