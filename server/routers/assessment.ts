@@ -866,6 +866,9 @@ export const assessmentRouter = router({
               content: `Generate the narrative context paragraph for this assessment session.`,
             },
           ],
+          // Narrative is 2-3 sentences (~80 tokens). Cap tightly to avoid wasted wait time.
+          maxTokens: 512,
+          thinkingBudget: 0,
         });
         const narrativeText = narrativeResponse.choices?.[0]?.message?.content;
         if (typeof narrativeText === "string" && narrativeText.trim().length > 20) {
@@ -975,6 +978,118 @@ export const assessmentRouter = router({
         targetId: sessionId,
         metadataJson: JSON.stringify({ blueprintId: input.blueprintId, engineVersion: "adaptive-v2", isBaseline }),
       });
+
+      // ── Q1 pre-generation: fire-and-forget so Q1 is ready when the user lands ──
+      // Mirrors the same async pattern used by submitAnswer for Q2+.
+      // The generated item is stored in pendingNextItem; session.query serves it instantly.
+      (async () => {
+        try {
+          const q1ScoringCfg = await getActiveScoringConfig();
+          const q1OrgContextRow = await db
+            .select({
+              currentAiToolsJson: ailOrgContext.currentAiToolsJson,
+              aiMaturityLevel: ailOrgContext.aiMaturityLevel,
+              strategicPrioritiesJson: ailOrgContext.strategicPrioritiesJson,
+              riskAppetiteOverall: ailOrgContext.riskAppetiteOverall,
+            })
+            .from(ailOrgContext)
+            .where(eq(ailOrgContext.tenantId, ctx.user.tenantId))
+            .limit(1);
+          const q1OrgCtx = q1OrgContextRow[0] ? {
+            aiTools: (() => { try { return JSON.parse(q1OrgContextRow[0].currentAiToolsJson ?? "[]") as string[]; } catch { return null; } })(),
+            aiAmbition: q1OrgContextRow[0].aiMaturityLevel === "mature" ? "ambitious" : q1OrgContextRow[0].aiMaturityLevel === "cautious" ? "conservative" : "moderate",
+            strategicPriorities: (() => { try { return JSON.parse(q1OrgContextRow[0].strategicPrioritiesJson ?? "[]") as string[]; } catch { return null; } })(),
+            governanceSensitivity: (q1OrgContextRow[0].riskAppetiteOverall === "risk_averse" ? "critical" : q1OrgContextRow[0].riskAppetiteOverall === "risk_tolerant" ? "medium" : "high") as "low" | "medium" | "high" | "critical",
+          } : null;
+          const q1UserRow = await db
+            .select({ sector: users.sector, seniorityLevel: users.seniorityLevel, aiUsageLevel: users.aiUsageLevel, jobFunction: users.jobFunction })
+            .from(users)
+            .where(eq(users.id, ctx.user.id))
+            .limit(1);
+          const q1UserProfile = {
+            sector: q1UserRow[0]?.sector ?? null,
+            seniority: q1UserRow[0]?.seniorityLevel ?? null,
+            aiUsageLevel: q1UserRow[0]?.aiUsageLevel ?? null,
+            jobFunction: q1UserRow[0]?.jobFunction ?? null,
+          };
+          const q1SessionMeta: Record<string, unknown> = {
+            blueprintId: input.blueprintId,
+            roleHint: input.roleHint ?? null,
+            isBaseline,
+            priorCapabilityScores,
+            personaStartingDifficulty,
+            personaTimePressure,
+            consecutiveStrongAnswers: 0,
+            recentCapabilities: [],
+            recentWorkflows: [],
+            ethicsPressureCount: 0,
+            ethicsEscalationLevel: 0,
+            priorSeenStaticItemIds,
+          };
+          const q1Phase = determineSessionPhase(0, q1ScoringCfg.evidenceTargetItems);
+          const { generationVars: q1Vars } = buildAdaptiveContext(
+            [],
+            0,
+            input.roleHint ?? null,
+            q1ScoringCfg,
+            q1UserProfile,
+            priorCapabilityScores,
+            q1OrgCtx,
+            q1SessionMeta
+          );
+          if (q1OrgCtx) {
+            (q1Vars as any).orgAiTools = q1OrgCtx.aiTools;
+            (q1Vars as any).orgAiAmbition = q1OrgCtx.aiAmbition;
+            (q1Vars as any).orgStrategicPriorities = q1OrgCtx.strategicPriorities;
+          }
+          const q1Generated = await generateAdaptiveItem(q1Vars);
+          const q1QgResult = isLlmCheckerEnabled()
+            ? runQualityGate(q1Generated)
+            : { passed: true, failedCheckers: [] as import("../assessment/llmQualityGate").QualityCheckerName[], details: {} as Record<import("../assessment/llmQualityGate").QualityCheckerName, { passed: boolean; reason?: string }>, routedToReview: false };
+          if (!q1QgResult.passed) {
+            const q1ReviewRow = buildReviewQueueRow(q1Generated, q1QgResult, sessionId);
+            await db.insert(llmItemReviewQueue).values(q1ReviewRow).catch(() => {});
+            console.warn("[Q1 pre-gen] Item failed quality gate, routed to review:", q1QgResult.failedCheckers);
+          } else {
+            const q1PendingItem = await persistAndBuildNextItem(
+              q1Generated,
+              input.blueprintId,
+              0,
+              q1Phase,
+              q1Vars.evidenceObjective,
+              db
+            );
+            await db
+              .update(assessmentSessions)
+              .set({
+                sessionMetadataJson: {
+                  blueprintId: input.blueprintId,
+                  roleHint: input.roleHint ?? null,
+                  engineVersion: "adaptive-v2",
+                  isBaseline,
+                  priorCapabilityScores,
+                  personaAdaptationActive,
+                  priorSeenStaticItemIds,
+                  personaStartingDifficulty,
+                  personaTimePressure,
+                  consecutiveStrongAnswers: 0,
+                  recentCapabilities: [],
+                  recentWorkflows: [],
+                  pendingNextItem: q1PendingItem,
+                  ethicsPressureCount: 0,
+                  ethicsEscalationLevel: 0,
+                  pinnedModelVersion: "adaptive-v2",
+                  narrativeContext,
+                  learningAwareContext,
+                },
+              })
+              .where(eq(assessmentSessions.id, sessionId));
+            console.log("[Q1 pre-gen] Q1 pre-generated and stored for session", sessionId);
+          }
+        } catch (err) {
+          console.warn("[Q1 pre-gen] Failed (non-fatal):", err);
+        }
+      })();
 
       return { sessionId, resumed: false };
     }),

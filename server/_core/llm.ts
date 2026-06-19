@@ -62,6 +62,8 @@ export type InvokeParams = {
   tool_choice?: ToolChoice;
   maxTokens?: number;
   max_tokens?: number;
+  /** Override the thinking budget_tokens for this call. Pass 0 to fully disable thinking. */
+  thinkingBudget?: number;
   outputSchema?: OutputSchema;
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
@@ -296,10 +298,13 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
+  // Honour per-call overrides; fall back to safe defaults.
+  // max_tokens: callers should pass the smallest value that fits their output.
+  // thinkingBudget: 0 = fully disabled (fastest), 128 = minimal (default).
+  const resolvedMaxTokens = params.maxTokens ?? params.max_tokens ?? 32768;
+  const resolvedThinkingBudget = params.thinkingBudget !== undefined ? params.thinkingBudget : 128;
+  payload.max_tokens = resolvedMaxTokens;
+  payload.thinking = { budget_tokens: resolvedThinkingBudget };
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,

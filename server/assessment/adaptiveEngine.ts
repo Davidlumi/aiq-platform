@@ -772,6 +772,10 @@ Return ONLY valid JSON.`;
             },
           },
         },
+        // Question JSON is ~600 tokens max. Cap tightly to cut TTFT.
+        // Thinking disabled: the JSON schema + few-shot examples make thinking redundant.
+        maxTokens: 2048,
+        thinkingBudget: 0,
       });
 
       const content = response.choices?.[0]?.message?.content;
