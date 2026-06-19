@@ -35,7 +35,7 @@ import { DOMAIN_LABELS, DOMAIN_COLOURS, DOMAIN_BG_COLOURS, DOMAIN_KEYS, type Dom
 import { getDomainIcon } from "@/lib/brand-icons";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
-import { UpgradeModal } from "@/components/UpgradeModal";
+import { PricingModal } from "@/components/PricingModal";
 
 // ─── Level thresholds (v2: bar colour = domain colour, passed in) ─────────────
 
@@ -1050,6 +1050,7 @@ export default function AssessmentResultsPage() {
                 <button
                   onClick={() => setUpgradeOpen(true)}
                   className="btn-pro-pulse inline-flex items-center gap-1.5 bg-[#10B981] hover:bg-[#0d9e6e] text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  aria-haspopup="dialog"
                 >
                   <Target className="w-4 h-4" />
                   Upgrade to PRO
@@ -1149,6 +1150,11 @@ export default function AssessmentResultsPage() {
       </> /* end paid-only sections */
       )}
 
+      {/* Pricing modal — triggered from upsell card */}
+      <PricingModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+      />
     </div>
   );
 }
