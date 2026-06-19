@@ -279,6 +279,221 @@ function DomainCard({
   );
 }
 
+// ─── Countdown widget ────────────────────────────────────────────────────────
+function ReassessmentCountdown({ dueDate, lastAssessmentDate }: { dueDate: string | null; lastAssessmentDate: string | null }) {
+  const now = Date.now();
+
+  // If no due date yet, show a prompt to take the first reassessment in 30 days
+  const due = dueDate ? new Date(dueDate).getTime() : (lastAssessmentDate ? new Date(lastAssessmentDate).getTime() + 30 * 86400000 : null);
+  const daysLeft = due ? Math.max(0, Math.ceil((due - now) / 86400000)) : null;
+  const isOverdue = due ? due < now : false;
+  const totalDays = 30; // display relative to 30-day cycle
+  const pct = due ? Math.max(0, Math.min(100, ((totalDays - daysLeft!) / totalDays) * 100)) : 0;
+
+  const colour = isOverdue ? "#EF4444" : daysLeft !== null && daysLeft <= 7 ? "#F59E0B" : "#10B981";
+  const bgColour = isOverdue ? "#FEF2F2" : daysLeft !== null && daysLeft <= 7 ? "#FFFBEB" : "#F0FDF4";
+  const borderColour = isOverdue ? "#FECACA" : daysLeft !== null && daysLeft <= 7 ? "#FDE68A" : "#BBF7D0";
+
+  return (
+    <div
+      className="rounded-xl border p-5"
+      style={{ backgroundColor: bgColour, borderColor: borderColour, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <RotateCcw className="w-4 h-4 flex-shrink-0" style={{ color: colour }} />
+            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: colour }}>
+              {isOverdue ? "Reassessment overdue" : "Next reassessment"}
+            </span>
+          </div>
+          {daysLeft !== null ? (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold text-gray-900">{isOverdue ? "0" : daysLeft}</span>
+              <span className="text-sm text-gray-500">{isOverdue ? "days overdue" : `day${daysLeft === 1 ? "" : "s"} to go`}</span>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">Complete your first assessment to start tracking</p>
+          )}
+          {due && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              {isOverdue ? "Was due" : "Due"} {new Date(due).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          )}
+        </div>
+        {/* Circular progress ring */}
+        {daysLeft !== null && (
+          <div className="relative flex-shrink-0" style={{ width: 56, height: 56 }}>
+            <svg width={56} height={56} viewBox="0 0 56 56">
+              <circle cx={28} cy={28} r={22} fill="none" stroke="#E5E7EB" strokeWidth={5} />
+              <circle
+                cx={28} cy={28} r={22}
+                fill="none"
+                stroke={colour}
+                strokeWidth={5}
+                strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 22}`}
+                strokeDashoffset={`${2 * Math.PI * 22 * (1 - pct / 100)}`}
+                transform="rotate(-90 28 28)"
+                style={{ transition: "stroke-dashoffset 0.6s ease" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs font-bold" style={{ color: colour }}>
+                {isOverdue ? "!" : `${Math.round(pct)}%`}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* Progress bar */}
+      {daysLeft !== null && (
+        <div className="mt-3">
+          <div className="w-full h-1.5 rounded-full bg-white/60 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, backgroundColor: colour }}
+            />
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            Regular reassessment every 30 days keeps your profile accurate and your development on track
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Improvement tracker ──────────────────────────────────────────────────────
+function ImprovementTracker({ history }: { history: Array<{ date: string; overallScore: number; rating: string }> }) {
+  if (history.length < 1) return null;
+  const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const first = sorted[0];
+  const latest = sorted[sorted.length - 1];
+  const delta = latest.overallScore - first.overallScore;
+  const isImproving = delta > 0;
+  const isFlat = delta === 0;
+
+  const w = 320, h = 80;
+  const scores = sorted.map(h => h.overallScore);
+  const minS = Math.max(0, Math.min(...scores) - 10);
+  const maxS = Math.min(100, Math.max(...scores) + 10);
+  const pts = sorted.map((item, i) => {
+    const x = sorted.length === 1 ? w / 2 : (i / (sorted.length - 1)) * (w - 20) + 10;
+    const y = h - 10 - ((item.overallScore - minS) / (maxS - minS)) * (h - 20);
+    return { x, y, ...item };
+  });
+  const lineColour = isImproving ? "#10B981" : isFlat ? "#9CA3AF" : "#EF4444";
+  const polyline = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  // Area fill
+  const areaPath = `M ${pts[0].x.toFixed(1)},${h} ` +
+    pts.map(p => `L ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ") +
+    ` L ${pts[pts.length - 1].x.toFixed(1)},${h} Z`;
+
+  const RATING_LABELS: Record<string, string> = {
+    ai_ready: "AI Ready",
+    developing: "Developing",
+    not_yet_ready: "Not Yet Ready",
+    foundation_gap: "Foundation Gap",
+    insufficient_evidence: "Insufficient Evidence",
+  };
+
+  return (
+    <div
+      className="rounded-xl bg-white border border-gray-100 p-5"
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+    >
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <SectionHeader
+            icon={<TrendingUp className="w-4 h-4 text-emerald-500" />}
+            title="Score improvement"
+            subtitle={`${sorted.length} assessment${sorted.length !== 1 ? "s" : ""} completed`}
+          />
+        </div>
+        <div className="text-right flex-shrink-0">
+          <div className="flex items-baseline gap-1 justify-end">
+            <span className="text-2xl font-bold text-gray-900">{latest.overallScore}</span>
+            <span className="text-sm text-gray-400">/100</span>
+          </div>
+          {sorted.length > 1 && (
+            <div className="flex items-center gap-1 justify-end mt-0.5">
+              {isImproving ? (
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+              ) : isFlat ? (
+                <Minus className="w-3.5 h-3.5 text-gray-400" />
+              ) : (
+                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+              )}
+              <span
+                className="text-sm font-semibold"
+                style={{ color: isImproving ? "#10B981" : isFlat ? "#9CA3AF" : "#EF4444" }}
+              >
+                {delta > 0 ? "+" : ""}{Math.round(delta)} pts
+              </span>
+              <span className="text-xs text-gray-400">since first</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="w-full overflow-hidden">
+        <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ height: 80 }}>
+          <defs>
+            <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={lineColour} stopOpacity={0.15} />
+              <stop offset="100%" stopColor={lineColour} stopOpacity={0.01} />
+            </linearGradient>
+          </defs>
+          {/* Area */}
+          <path d={areaPath} fill="url(#area-grad)" />
+          {/* Line */}
+          <polyline
+            points={polyline}
+            fill="none"
+            stroke={lineColour}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Dots */}
+          {pts.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r={3.5} fill="white" stroke={lineColour} strokeWidth={2} />
+          ))}
+        </svg>
+      </div>
+
+      {/* Assessment history list */}
+      <div className="mt-3 space-y-1.5">
+        {sorted.slice().reverse().map((item, i) => {
+          const isLatest = i === 0;
+          return (
+            <div key={item.date} className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: isLatest ? lineColour : "#D1D5DB" }}
+                />
+                <span className="text-gray-500">
+                  {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+                {isLatest && (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Latest</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-700">{item.overallScore}/100</span>
+                <span className="text-gray-400 hidden sm:inline">{RATING_LABELS[item.rating] ?? item.rating}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Score sparkline ──────────────────────────────────────────────────────────
 function ScoreSparkline({ history }: { history: Array<{ date: string; overallScore: number }> }) {
   if (history.length < 2) return null;
@@ -444,6 +659,14 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         )}
       </div>
 
+      {/* ── Reassessment countdown — users with data ── */}
+      {hasData && (
+        <ReassessmentCountdown
+          dueDate={data?.nextReassessmentDate ?? null}
+          lastAssessmentDate={data?.lastAssessmentDate ?? null}
+        />
+      )}
+
       {/* ── CTA banner — new users only ── */}
       {!hasData && (
         <div className="flex items-center gap-5 p-5 rounded-xl border border-blue-100 bg-blue-50">
@@ -605,6 +828,11 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           })}
         </div>
       </div>
+
+      {/* ── Improvement tracker — users with data ── */}
+      {hasData && data && data.assessmentHistory.length >= 1 && (
+        <ImprovementTracker history={data.assessmentHistory} />
+      )}
 
       {/* ── Bottom row: locked panels for new users ── */}
       {!hasData && (
