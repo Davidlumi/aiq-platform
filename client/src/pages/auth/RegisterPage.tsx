@@ -3,12 +3,13 @@
  *
  * Changes from enterprise register:
  * - No organisation code field — creates a personal tenant automatically
- * - T&C checkbox pre-ticked (per platform design decision)
+ * - T&C checkbox unticked by default (UK GDPR/PECR compliance — Planet49)
  * - Post-submit "check your email" state with resend option
  * - Calls trpc.auth.selfRegister instead of trpc.auth.register
  */
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "wouter";
@@ -48,6 +49,8 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const {
     register,
@@ -55,7 +58,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { acceptedTerms: true },
+    defaultValues: { acceptedTerms: false },
   });
 
   const selfRegisterMutation = trpc.auth.selfRegister.useMutation({
@@ -72,6 +75,10 @@ export default function RegisterPage() {
 
   const onSubmit = (values: FormValues) => {
     setServerError(null);
+    if (!turnstileToken) {
+      setServerError("Please complete the bot protection check before submitting.");
+      return;
+    }
     selfRegisterMutation.mutate({
       email: values.email,
       password: values.password,
@@ -79,7 +86,13 @@ export default function RegisterPage() {
       lastName: values.lastName,
       acceptedTerms: true,
       origin: window.location.origin,
+      turnstileToken,
     });
+  };
+
+  const handleTurnstileError = () => {
+    setTurnstileToken(null);
+    setServerError("Bot protection check failed. Please refresh and try again.");
   };
 
   // ── Post-submit: check your email state ──────────────────────────────────
@@ -254,7 +267,7 @@ export default function RegisterPage() {
               {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
             </div>
 
-            {/* T&C checkbox — pre-ticked per platform design decision */}
+            {/* T&C checkbox — unticked by default (UK GDPR/PECR) */}
             <div className="flex items-start gap-2.5 pt-1">
               <input
                 id="acceptedTerms"
@@ -271,10 +284,22 @@ export default function RegisterPage() {
             </div>
             {errors.acceptedTerms && <p className="text-xs text-destructive -mt-2">{errors.acceptedTerms.message}</p>}
 
+            {/* C-3: Cloudflare Turnstile bot protection */}
+            <div className="flex justify-center pt-1">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ""}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={handleTurnstileError}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: "dark", size: "normal" }}
+              />
+            </div>
+
             <Button
               type="submit"
               className="w-full h-10 font-semibold text-sm mt-1"
-              disabled={selfRegisterMutation.isPending}
+              disabled={selfRegisterMutation.isPending || !turnstileToken}
             >
               {selfRegisterMutation.isPending ? "Creating account…" : "Create free account"}
             </Button>

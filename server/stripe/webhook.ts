@@ -130,9 +130,11 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
     return;
   }
 
-  // ── Test event passthrough ────────────────────────────────────────────────
-  if (event.id.startsWith("evt_test_")) {
-    console.log("[Webhook] Test event detected, returning verification response");
+  // ── Test event passthrough (D-2) ──────────────────────────────────────────
+  // The event is already signature-verified above. We gate on event.livemode
+  // rather than the evt_test_ prefix (which is not a security boundary).
+  if (event.livemode === false) {
+    console.log(`[Webhook] Test event detected (livemode=false): ${event.type} (${event.id})`);
     res.json({ verified: true });
     return;
   }

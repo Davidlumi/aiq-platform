@@ -358,10 +358,30 @@ export const authRouter = router({
       lastName: z.string().min(1).max(100),
       acceptedTerms: z.literal(true, { message: "You must accept the terms and conditions" }),
       origin: z.string().url().optional(), // frontend passes window.location.origin for verify URL
+      turnstileToken: z.string().min(1, "Bot protection token is required"),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // C-3: Verify Cloudflare Turnstile token before any DB work
+      const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+      if (turnstileSecret) {
+        const cfBody = new URLSearchParams();
+        cfBody.append("secret", turnstileSecret);
+        cfBody.append("response", input.turnstileToken);
+        const cfRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+          method: "POST",
+          body: cfBody,
+        });
+        const cfData = await cfRes.json() as { success: boolean; "error-codes"?: string[] };
+        if (!cfData.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Bot protection check failed. Please try again.",
+          });
+        }
+      }
 
       const normalisedEmail = input.email.toLowerCase().trim();
 
