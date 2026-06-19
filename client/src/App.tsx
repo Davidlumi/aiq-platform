@@ -154,9 +154,10 @@ function CpoProtectedRouteWithStrategyNav({
     assessment?: boolean;
   } | undefined;
 
-  // Reward-only tenants are redirected to their reward journey entry point
+  // Reward-only tenants: reward routes are hidden in Phase 1.
+  // Send to /dashboard (RoleDashboard renders IndividualDashboardV2 for them — no loop).
   if (!entitlements?.strategyCompany && entitlements?.strategyReward) {
-    return <Redirect to="/strategy/reward-prework" />;
+    return <Redirect to="/dashboard" />;
   }
   // No strategy entitlement at all — send to dashboard
   if (!entitlements?.strategyCompany) {
