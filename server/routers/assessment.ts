@@ -1479,7 +1479,49 @@ export const assessmentRouter = router({
               (generationVars as any).orgAiAmbition = preGenOrgCtx.aiAmbition;
               (generationVars as any).orgStrategicPriorities = preGenOrgCtx.strategicPriorities;
             }
-            const generated = await generateAdaptiveItem(generationVars);
+            // Quality-gate aware generation: retry once if the first item fails the gate
+            // so pendingNextItem is always written and the user never waits.
+            let generated = await generateAdaptiveItem(generationVars);
+            let qgResultPreGen = isLlmCheckerEnabled()
+              ? runQualityGate(generated)
+              : { passed: true, failedCheckers: [] as import("../assessment/llmQualityGate").QualityCheckerName[], details: {} as Record<import("../assessment/llmQualityGate").QualityCheckerName, { passed: boolean; reason?: string }>, routedToReview: false };
+            if (!qgResultPreGen.passed) {
+              // Route to review and regenerate so we still have a pending item
+              const reviewRowPreGen = buildReviewQueueRow(generated, qgResultPreGen, input.sessionId);
+              await db.insert(llmItemReviewQueue).values(reviewRowPreGen).catch(() => {});
+              console.warn("[pre-gen] Item failed quality gate (attempt 1), retrying:", qgResultPreGen.failedCheckers);
+              try {
+                generated = await generateAdaptiveItem(generationVars);
+                qgResultPreGen = isLlmCheckerEnabled()
+                  ? runQualityGate(generated)
+                  : { passed: true, failedCheckers: [] as import("../assessment/llmQualityGate").QualityCheckerName[], details: {} as Record<import("../assessment/llmQualityGate").QualityCheckerName, { passed: boolean; reason?: string }>, routedToReview: false };
+                if (!qgResultPreGen.passed) {
+                  const reviewRowRetry = buildReviewQueueRow(generated, qgResultPreGen, input.sessionId);
+                  await db.insert(llmItemReviewQueue).values(reviewRowRetry).catch(() => {});
+                  console.warn("[pre-gen] Item failed quality gate (attempt 2), falling back to static");
+                  // Use emergency fallback so pendingNextItem is always populated
+                  const priorSeenIds = (sessionMeta.priorSeenStaticItemIds as string[]) ?? [];
+                  const answeredItemIds = rawAnswers.map((a: { itemId: string }) => a.itemId);
+                  const fallbackItem = await getEmergencyFallbackItem(
+                    session[0].blueprintId,
+                    answeredItemIds,
+                    newAnsweredCount,
+                    db,
+                    priorSeenIds
+                  );
+                  if (fallbackItem) {
+                    await db
+                      .update(assessmentSessions)
+                      .set({ sessionMetadataJson: { ...sessionMeta, pendingNextItem: fallbackItem } })
+                      .where(eq(assessmentSessions.id, input.sessionId));
+                  }
+                  return; // skip normal pendingItem write below
+                }
+              } catch (retryErr) {
+                console.error("[pre-gen] Retry generation failed:", retryErr);
+                return;
+              }
+            }
             const pendingItem = await persistAndBuildNextItem(
               generated,
               session[0].blueprintId,

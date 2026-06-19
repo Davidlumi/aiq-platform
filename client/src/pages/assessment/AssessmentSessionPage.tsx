@@ -994,9 +994,13 @@ export default function AssessmentSessionPage() {
   // Rationale loading: true from submit click until rationale content is ready to reveal
   const [rationaleLoading, setRationaleLoading] = useState(false);
 
-  // Poll every 3 seconds while generating (no nextItem) to pick up pre-generated item
+  // Track the displayOrder of the question we are waiting for so polling
+  // continues until the server returns a question with a HIGHER displayOrder
+  // (not just any truthy nextItem, which could be the same question we just answered).
   const [isGenerating, setIsGenerating] = useState(false);
+  const expectedNextOrder = useRef<number | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // T2-5: Rationale reveal state - shown after answer submission
   const [rationaleData, setRationaleData] = useState<{
     rationaleText: string | null;
@@ -1040,6 +1044,10 @@ export default function AssessmentSessionPage() {
 
   const submitMutation = trpc.assessment.submitAnswer.useMutation({
     onSuccess: (data) => {
+      // Record which displayOrder we expect next so the polling effect knows when to stop
+      const currentOrder = sessionData?.nextItem?.displayOrder ?? 0;
+      expectedNextOrder.current = currentOrder + 1;
+
       // T2-5: Show rationale if available before advancing to next question
       const hasRationale = data.allOptionsRationale?.some((o: any) => o.rationaleText);
       if (hasRationale) {
@@ -1057,7 +1065,7 @@ export default function AssessmentSessionPage() {
           });
           setRationaleLoading(false);
         }, 600);
-        // Pre-fetch next item in background while user reads rationale
+        // Start polling for next item while user reads rationale
         setIsGenerating(true);
         refetch();
       } else {
@@ -1103,31 +1111,57 @@ export default function AssessmentSessionPage() {
     }
   }, [rationaleData]);
 
-  // When we get a nextItem, stop the generating state
+  // Stop generating state only when a genuinely NEW question arrives
+  // (displayOrder > the one we were on when the user submitted).
   useEffect(() => {
-    if (sessionData?.nextItem) {
+    const currentOrder = sessionData?.nextItem?.displayOrder ?? null;
+    if (
+      isGenerating &&
+      currentOrder !== null &&
+      expectedNextOrder.current !== null &&
+      currentOrder >= expectedNextOrder.current
+    ) {
       setIsGenerating(false);
+      expectedNextOrder.current = null;
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
     }
-  }, [sessionData?.nextItem]);
+  }, [sessionData?.nextItem?.displayOrder, isGenerating]);
 
-  // Poll every 2.5s while generating to pick up the pre-generated item
+  // Poll every 1.5 s while waiting for the pre-generated item.
+  // Give up after 12 s — the session query will then fall back to synchronous generation.
   useEffect(() => {
-    if (isGenerating && !sessionData?.nextItem) {
-      pollingRef.current = setInterval(() => {
-        refetch();
-      }, 2500);
-    }
+    if (!isGenerating) return;
+    pollingRef.current = setInterval(() => {
+      refetch();
+    }, 1500);
+    // Safety timeout: stop polling after 12 s regardless
+    pollingTimeoutRef.current = setTimeout(() => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      setIsGenerating(false);
+      expectedNextOrder.current = null;
+      refetch(); // one final fetch to pick up whatever the server has
+    }, 12000);
     return () => {
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
+      }
     };
-  }, [isGenerating, sessionData?.nextItem, refetch]);
+  }, [isGenerating, refetch]);
 
   // --- ALL REMAINING HOOKS - must be declared before any early return -----------
 
