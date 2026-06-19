@@ -245,6 +245,7 @@ const individualRouter = router({
         date: string;
         overallScore: number;
         rating: RatingKey;
+        domainScores: Record<DomainKey, number> | null;
       }> = [];
 
       let latestBreakdown: unknown = null;
@@ -266,11 +267,13 @@ const individualRouter = router({
           const overall = parseFloat(String(score[0].overallScore));
           const state = extractReadinessState(score[0].scoreBreakdownJson);
           const rating = stateToRating(state);
+          const histDomainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
           assessmentHistory.push({
             sessionId: sess.id,
             date: sess.completedAt?.toISOString() ?? new Date().toISOString(),
             overallScore: Math.round(overall),
             rating,
+            domainScores: histDomainScores,
           });
           // Keep latest
           latestBreakdown = score[0].scoreBreakdownJson;

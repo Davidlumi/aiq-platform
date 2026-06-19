@@ -365,7 +365,7 @@ function ReassessmentCountdown({ dueDate, lastAssessmentDate }: { dueDate: strin
 }
 
 // ─── Improvement tracker ──────────────────────────────────────────────────────
-function ImprovementTracker({ history }: { history: Array<{ date: string; overallScore: number; rating: string }> }) {
+function ImprovementTracker({ history }: { history: Array<{ date: string; overallScore: number; rating: string; domainScores?: Record<string, number> | null }> }) {
   if (history.length < 1) return null;
   const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const first = sorted[0];
@@ -373,6 +373,24 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
   const delta = latest.overallScore - first.overallScore;
   const isImproving = delta > 0;
   const isFlat = delta === 0;
+
+  // Domain-level deltas (only when ≥ 2 assessments with domain scores)
+  const domainDeltas: Array<{ key: string; label: string; delta: number; latestScore: number }> = [];
+  if (sorted.length >= 2 && first.domainScores && latest.domainScores) {
+    for (const key of DOMAIN_KEYS) {
+      const firstScore = first.domainScores[key];
+      const latestScore = latest.domainScores[key];
+      if (firstScore != null && latestScore != null) {
+        domainDeltas.push({
+          key,
+          label: DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS],
+          delta: Math.round(latestScore - firstScore),
+          latestScore: Math.round(latestScore),
+        });
+      }
+    }
+    domainDeltas.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  }
 
   const w = 320, h = 80;
   const scores = sorted.map(h => h.overallScore);
@@ -463,6 +481,40 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
           ))}
         </svg>
       </div>
+
+      {/* Domain breakdown — only when ≥ 2 assessments with domain data */}
+      {domainDeltas.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Domain breakdown</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {domainDeltas.map(({ key, label, delta: d, latestScore }) => {
+              const isPos = d > 0;
+              const isNeg = d < 0;
+              const barColour = isPos ? "#10B981" : isNeg ? "#EF4444" : "#9CA3AF";
+              const bgColour = isPos ? "#F0FDF4" : isNeg ? "#FEF2F2" : "#F9FAFB";
+              const textColour = isPos ? "#059669" : isNeg ? "#DC2626" : "#6B7280";
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between px-3 py-2 rounded-lg"
+                  style={{ backgroundColor: bgColour }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: barColour }} />
+                    <span className="text-xs text-gray-700 font-medium truncate">{label}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    <span className="text-xs text-gray-500">{latestScore}/100</span>
+                    <span className="text-xs font-bold" style={{ color: textColour }}>
+                      {d > 0 ? "+" : ""}{d === 0 ? "—" : `${d} pts`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Assessment history list */}
       <div className="mt-3 space-y-1.5">
