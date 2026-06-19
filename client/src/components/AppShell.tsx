@@ -476,7 +476,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       ? `${(user as any).firstName} ${(user as any).lastName}`
       : (user as any)?.email ?? "User";
 
-  const roleLabel = VIEW_AS_LABELS[viewAs];
+  const roleLabel = VIEW_AS_LABELS[viewAs ?? "cpo"];
 
   function isActive(path: string) {
     if (path === "/dashboard") return location === "/dashboard" || location === "/";
@@ -683,7 +683,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-border bg-muted hover:bg-accent/50 transition-colors text-muted-foreground"
             >
               <Eye className="w-3.5 h-3.5 shrink-0 text-primary" />
-              <span className="flex-1 text-left">View as: <span className="text-primary font-semibold">{VIEW_AS_LABELS[viewAs]}</span></span>
+              <span className="flex-1 text-left">View as: <span className="text-primary font-semibold">{VIEW_AS_LABELS[viewAs ?? "cpo"]}</span></span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${viewAsOpen ? 'rotate-180' : ''}`} />
             </button>
             {viewAsOpen && (
