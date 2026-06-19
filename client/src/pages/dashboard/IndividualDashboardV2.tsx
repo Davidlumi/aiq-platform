@@ -39,7 +39,14 @@ import {
   DOMAIN_SHORT_LABELS,
   DOMAIN_COLOURS,
   DOMAIN_ICON_NAMES,
+  DOMAIN_DESCRIPTIONS,
 } from "@/lib/domains";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatScore } from "@/lib/peakon-colors";
 
 // ─── Domain icon map ──────────────────────────────────────────────────────────
@@ -375,7 +382,7 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
   const isFlat = delta === 0;
 
   // Domain-level deltas (only when ≥ 2 assessments with domain scores)
-  const domainDeltas: Array<{ key: string; label: string; delta: number; latestScore: number }> = [];
+  const domainDeltas: Array<{ key: string; label: string; fullLabel: string; description: string; delta: number; latestScore: number; previousScore: number }> = [];
   if (sorted.length >= 2 && first.domainScores && latest.domainScores) {
     for (const key of DOMAIN_KEYS) {
       const firstScore = first.domainScores[key];
@@ -384,8 +391,11 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
         domainDeltas.push({
           key,
           label: DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS],
+          fullLabel: DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS],
+          description: DOMAIN_DESCRIPTIONS[key as keyof typeof DOMAIN_DESCRIPTIONS] ?? "",
           delta: Math.round(latestScore - firstScore),
           latestScore: Math.round(latestScore),
+          previousScore: Math.round(firstScore),
         });
       }
     }
@@ -486,33 +496,56 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
       {domainDeltas.length > 0 && (
         <div className="mt-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Domain breakdown</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {domainDeltas.map(({ key, label, delta: d, latestScore }) => {
-              const isPos = d > 0;
-              const isNeg = d < 0;
-              const barColour = isPos ? "#10B981" : isNeg ? "#EF4444" : "#9CA3AF";
-              const bgColour = isPos ? "#F0FDF4" : isNeg ? "#FEF2F2" : "#F9FAFB";
-              const textColour = isPos ? "#059669" : isNeg ? "#DC2626" : "#6B7280";
-              return (
-                <div
-                  key={key}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg"
-                  style={{ backgroundColor: bgColour }}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: barColour }} />
-                    <span className="text-xs text-gray-700 font-medium truncate">{label}</span>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                    <span className="text-xs text-gray-500">{latestScore}/100</span>
-                    <span className="text-xs font-bold" style={{ color: textColour }}>
-                      {d > 0 ? "+" : ""}{d === 0 ? "—" : `${d} pts`}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <TooltipProvider delayDuration={200}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {domainDeltas.map(({ key, label, fullLabel, description, delta: d, latestScore, previousScore }) => {
+                const isPos = d > 0;
+                const isNeg = d < 0;
+                const barColour = isPos ? "#10B981" : isNeg ? "#EF4444" : "#9CA3AF";
+                const bgColour = isPos ? "#F0FDF4" : isNeg ? "#FEF2F2" : "#F9FAFB";
+                const textColour = isPos ? "#059669" : isNeg ? "#DC2626" : "#6B7280";
+                return (
+                  <Tooltip key={key}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="flex items-center justify-between px-3 py-2 rounded-lg cursor-default"
+                        style={{ backgroundColor: bgColour }}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: barColour }} />
+                          <span className="text-xs text-gray-700 font-medium truncate">{label}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          <span className="text-xs text-gray-500">{latestScore}/100</span>
+                          <span className="text-xs font-bold" style={{ color: textColour }}>
+                            {d > 0 ? "+" : ""}{d === 0 ? "\u2014" : `${d} pts`}
+                          </span>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[260px] p-3 space-y-1.5">
+                      <p className="text-xs font-semibold text-gray-900">{fullLabel}</p>
+                      <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
+                      <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Previous</p>
+                          <p className="text-sm font-bold text-gray-700">{previousScore}<span className="text-[10px] font-normal text-gray-400">/100</span></p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Current</p>
+                          <p className="text-sm font-bold text-gray-700">{latestScore}<span className="text-[10px] font-normal text-gray-400">/100</span></p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide">Change</p>
+                          <p className="text-sm font-bold" style={{ color: textColour }}>{d > 0 ? "+" : ""}{d === 0 ? "—" : `${d}`}</p>
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </div>
       )}
 
