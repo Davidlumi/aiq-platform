@@ -271,14 +271,14 @@ const individualRouter = router({
           assessmentHistory.push({
             sessionId: sess.id,
             date: sess.completedAt?.toISOString() ?? new Date().toISOString(),
-            overallScore: Math.round(overall),
+            overallScore: parseFloat(overall.toFixed(2)),
             rating,
             domainScores: histDomainScores,
           });
           // Keep latest
           latestBreakdown = score[0].scoreBreakdownJson;
           latestSignalScores = score[0].signalScoresJson;
-          latestOverallScore = Math.round(overall);
+          latestOverallScore = parseFloat(overall.toFixed(2));
           latestRating = rating;
           latestConfidence = extractCompositeConfidence(score[0].scoreBreakdownJson);
           domainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
@@ -308,7 +308,7 @@ const individualRouter = router({
           name: DOMAIN_LABELS[key],
           description: DOMAIN_DESCRIPTIONS[key],
           colour: DOMAIN_COLOURS[key],
-          score: Math.round(score),
+          score: parseFloat(score.toFixed(2)),
           rating: domainRating,
           signalCount: detail?.signalCount ?? 0,
           hasEvidence: (detail?.signalCount ?? 0) >= 3,
@@ -343,9 +343,9 @@ const individualRouter = router({
         return {
           domain: key,
           domainName: DOMAIN_LABELS[key],
-          currentScore: current !== null ? Math.round(current) : null,
-          targetScore: target !== null ? Math.round(target) : null,
-          gapValue: gap !== null ? Math.round(gap) : null,
+          currentScore: current !== null ? parseFloat(current.toFixed(2)) : null,
+          targetScore: target !== null ? parseFloat(target.toFixed(2)) : null,
+          gapValue: gap !== null ? parseFloat(gap.toFixed(2)) : null,
         };
       });
       // Also include any gap entries that don't map to DOMAIN_KEYS (e.g. HR-specific keys)
@@ -443,12 +443,12 @@ const individualRouter = router({
       const u = userRow[0];
       const domainScores = extractCapabilityScores(scoreData.scoreBreakdownJson);
       const domainRatings = extractDomainRatings(scoreData.scoreBreakdownJson);
-      const overallScore = Math.round(scoreData.overallScore);
+      const overallScore = parseFloat(parseFloat(String(scoreData.overallScore)).toFixed(2));
       const readinessState = extractReadinessState(scoreData.scoreBreakdownJson);
       const rating = stateToRating(readinessState);
       const ratingLabel = generateRatingExplanation(rating, domainScores);
       const domainLines = domainScores
-        ? DOMAIN_KEYS.map(k => `${DOMAIN_LABELS[k]}: ${Math.round(domainScores[k])}/100`).join(", ")
+        ? DOMAIN_KEYS.map(k => `${DOMAIN_LABELS[k]}: ${parseFloat(domainScores[k].toFixed(1))}/10`).join(", ")
         : "";
       const jobFunction = u?.jobFunction ?? "HR professional";
       const prompt = `You are an expert AI capability coach. Write a single concise paragraph (3-4 sentences, max 80 words) summarising this person's AI capability profile. Be specific, warm, and actionable. Do not use bullet points or headers.
@@ -456,7 +456,7 @@ const individualRouter = router({
 Profile:
 - Name: ${u?.firstName ?? "the user"}
 - Role: ${jobFunction}
-- Overall score: ${overallScore}/100 (${ratingLabel})
+- Overall score: ${overallScore}/10 (${ratingLabel})
 - Domain scores: ${domainLines}
 
 Focus on their strongest area, their biggest development opportunity, and one concrete next step.`;

@@ -65,7 +65,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatScore } from "@/lib/peakon-colors";
+import { PeakonScoreCell, RatingBadge, DashboardCard } from "@/components/dashboard/DashboardUI";
+/** Format a 0–10 score for display: "9.1" */
+function formatScore(score: number): string {
+  return score.toFixed(1);
+}
 
 // ─── Domain icon map ──────────────────────────────────────────────────────────
 const DOMAIN_ICONS: Record<string, React.ElementType> = {
@@ -82,12 +86,14 @@ function getDomainIcon(key: string): React.ElementType {
   return DOMAIN_ICONS[name] ?? Sparkles;
 }
 
-// ─── Level helpers ────────────────────────────────────────────────────────────
+// ─── Level helpers (0–10 scale, matching brand.ts thresholds) ────────────────
+// Scores from the server are on a 0–10 scale (e.g. 9.10 = Expert)
 function getLevelFromScore(score: number): number {
-  if (score >= 80) return 5;
-  if (score >= 60) return 4;
-  if (score >= 40) return 3;
-  if (score >= 20) return 2;
+  // score is 0–10
+  if (score >= 7.5) return 5;
+  if (score >= 6.0) return 4;
+  if (score >= 5.0) return 3;
+  if (score >= 3.5) return 2;
   return 1;
 }
 
@@ -101,7 +107,7 @@ function getLevelColour(level: number): { bg: string; text: string; accent: stri
     2: { bg: "#FEF3C7", text: "#92400E", accent: "#F59E0B" },
     3: { bg: "#DCFCE7", text: "#166534", accent: "#22C55E" },
     4: { bg: "#D1FAE5", text: "#065F46", accent: "#10B981" },
-    5: { bg: "#BBFBDA", text: "#14532D", accent: "#16A34A" },
+    5: { bg: "#D1FAE5", text: "#065F46", accent: "#16A34A" },
   };
   return map[level] ?? map[2];
 }
@@ -120,70 +126,102 @@ function describeArc(cx: number, cy: number, r: number, startAngle: number, endA
 }
 
 // ─── Gauge ────────────────────────────────────────────────────────────────────
+// score is 0–10
 function CapabilityGauge({ score, empty = false }: { score: number; empty?: boolean }) {
   const level = getLevelFromScore(score);
   const levelLabel = getLevelLabel(level);
   const colours = getLevelColour(level);
 
-  const cx = 130, cy = 120, r = 90, sw = 16;
+  const cx = 150, cy = 140, r = 108, sw = 18;
   const gradId = "gauge-fill-grad";
 
-  // Needle: -180° (left) to 0° (right), mapped to score 0–100
-  const needleAngle = empty ? -90 : -180 + (score / 100) * 180;
+  // Needle: -180° (left) to 0° (right), mapped to score 0–10
+  const needleAngle = empty ? -90 : -180 + (score / 10) * 180;
   const needleRad = (needleAngle * Math.PI) / 180;
-  const needleLen = r - 8;
+  const needleLen = r - 12;
   const nx = cx + needleLen * Math.cos(needleRad);
   const ny = cy + needleLen * Math.sin(needleRad);
 
-  const fillAngle = empty ? -180 : -180 + (score / 100) * 180;
+  const fillAngle = empty ? -180 : -180 + (score / 10) * 180;
   const fillD = describeArc(cx, cy, r, -180, fillAngle);
   const trackD = describeArc(cx, cy, r, -180, 0);
 
+  // Scale tick marks at 0, 2.5, 5, 7.5, 10
+  const ticks = [0, 2.5, 5, 7.5, 10];
+
   return (
     <div className="flex flex-col items-center w-full">
-      <svg width={260} height={148} viewBox="0 0 260 148" className="overflow-visible w-full max-w-[260px]">
+      <svg width={300} height={172} viewBox="0 0 300 172" className="overflow-visible w-full max-w-[300px]">
         <defs>
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%"   stopColor="#EF4444" />
-            <stop offset="35%"  stopColor="#F59E0B" />
-            <stop offset="70%"  stopColor="#22C55E" />
+            <stop offset="30%"  stopColor="#F59E0B" />
+            <stop offset="65%"  stopColor="#22C55E" />
             <stop offset="100%" stopColor="#16A34A" />
           </linearGradient>
         </defs>
 
-        {/* Track */}
-        <path d={trackD} fill="none" stroke="#E5E7EB" strokeWidth={sw} strokeLinecap="round" />
+        {/* Track (background arc) */}
+        <path d={trackD} fill="none" stroke="#F3F4F6" strokeWidth={sw} strokeLinecap="round" />
 
-        {/* Fill */}
+        {/* Coloured fill arc */}
         {!empty && (
           <path d={fillD} fill="none" stroke={`url(#${gradId})`} strokeWidth={sw} strokeLinecap="round" />
         )}
 
+        {/* Tick marks */}
+        {ticks.map(t => {
+          const angle = -180 + (t / 10) * 180;
+          const rad = (angle * Math.PI) / 180;
+          const inner = r - sw / 2 - 2;
+          const outer = r - sw / 2 - 10;
+          const x1 = cx + inner * Math.cos(rad);
+          const y1 = cy + inner * Math.sin(rad);
+          const x2 = cx + outer * Math.cos(rad);
+          const y2 = cy + outer * Math.sin(rad);
+          const lx = cx + (outer - 12) * Math.cos(rad);
+          const ly = cy + (outer - 12) * Math.sin(rad);
+          return (
+            <g key={t}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#D1D5DB" strokeWidth={1.5} strokeLinecap="round" />
+              <text x={lx} y={ly + 4} textAnchor="middle" fontSize={9} fill="#9CA3AF" fontFamily="sans-serif">{t}</text>
+            </g>
+          );
+        })}
+
         {/* Needle */}
         <line
           x1={cx} y1={cy} x2={nx} y2={ny}
-          stroke={empty ? "#D1D5DB" : "#374151"}
-          strokeWidth={2.5}
+          stroke={empty ? "#D1D5DB" : colours.accent}
+          strokeWidth={3}
           strokeLinecap="round"
         />
-        <circle cx={cx} cy={cy} r={5}
-          fill={empty ? "#D1D5DB" : "#374151"}
-        />
+        {/* Needle hub */}
+        <circle cx={cx} cy={cy} r={9} fill="white" stroke={empty ? "#D1D5DB" : colours.accent} strokeWidth={2.5} />
+        <circle cx={cx} cy={cy} r={4} fill={empty ? "#D1D5DB" : colours.accent} />
       </svg>
 
-      {/* Label */}
-      <div className="text-center -mt-2">
+      {/* Score label — sits just below the gauge */}
+      <div className="text-center -mt-3">
         {empty ? (
           <>
-            <p className="text-base font-semibold text-gray-400">Not enough data yet</p>
-            <p className="text-xs text-gray-400 mt-0.5">Complete your assessment to see your position</p>
+            <p className="text-base font-semibold text-gray-400">No data yet</p>
+            <p className="text-xs text-gray-400 mt-0.5">Complete your assessment to see your score</p>
           </>
         ) : (
           <>
-            <p className="text-2xl font-bold" style={{ color: colours.accent }}>{levelLabel}</p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Score {Math.round(score)}/100
-            </p>
+            <div className="flex items-baseline gap-1 justify-center">
+              <span className="text-4xl font-extrabold tracking-tight" style={{ color: colours.accent }}>
+                {formatScore(score)}
+              </span>
+              <span className="text-lg font-semibold text-gray-400">/10</span>
+            </div>
+            <div
+              className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-sm font-semibold"
+              style={{ backgroundColor: colours.bg, color: colours.text }}
+            >
+              {levelLabel}
+            </div>
           </>
         )}
       </div>
@@ -231,21 +269,21 @@ function DomainCard({
   domainKey,
   name,
   score,
+  rating,
   hasData,
   onClick,
 }: {
   domainKey: string;
   name: string;
   score: number | null;
+  rating?: string;
   hasData: boolean;
   onClick: () => void;
 }) {
   const Icon = getDomainIcon(domainKey);
   const colour = DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "#3B82F6";
-  const level = score !== null && score > 0 ? getLevelFromScore(score) : null;
-  const levelLabel = level !== null ? getLevelLabel(level) : null;
-  const levelColour = level !== null ? getLevelColour(level) : null;
-  const fillPct = score !== null && score > 0 ? Math.round(score) : 0;
+  // score is 0–10; convert to 0–100% for the progress bar
+  const fillPct = score !== null && score > 0 ? Math.round((score / 10) * 100) : 0;
 
   return (
     <button
@@ -263,19 +301,21 @@ function DomainCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-gray-700 leading-tight truncate">{name}</p>
-          {levelLabel && levelColour ? (
-            <span
-              className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5"
-              style={{ backgroundColor: levelColour.bg, color: levelColour.text }}
-            >
-              {levelLabel}
-            </span>
+          {hasData && rating ? (
+            <div className="mt-0.5">
+              <RatingBadge rating={rating} size="sm" />
+            </div>
           ) : (
             <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded mt-0.5 bg-gray-100 text-gray-400">
               No data
             </span>
           )}
         </div>
+      </div>
+
+      {/* Peakon score cell — multiply by 10 to convert 0-10 → 0-100 scale */}
+      <div className="flex items-center justify-center py-1">
+        <PeakonScoreCell score={hasData && score !== null && score > 0 ? score * 10 : null} size="md" />
       </div>
 
       {/* Progress bar */}
@@ -288,10 +328,10 @@ function DomainCard({
         ) : null}
       </div>
 
-      {/* Score or locked */}
+      {/* Score label */}
       <div className="flex items-center justify-between">
         {hasData && score !== null && score > 0 ? (
-          <span className="text-xs text-gray-400 font-medium">{Math.round(score)}/100</span>
+          <span className="text-xs text-gray-400 font-medium">{score.toFixed(1)}<span className="text-gray-300">/10</span></span>
         ) : (
           <span className="flex items-center gap-1 text-xs text-gray-300">
             <Lock className="w-3 h-3" />
@@ -938,7 +978,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
 
         {/* Where you stand */}
         <div
-          className="lg:col-span-2 rounded-xl bg-white border border-gray-100 p-5 flex flex-col"
+          className="lg:col-span-2 rounded-xl bg-white border border-gray-100 p-5 flex flex-col gap-4"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
         >
           <SectionHeader
@@ -950,31 +990,33 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             title="Where you stand"
           />
 
-          <div className="flex-1 flex flex-col items-center justify-center py-2">
+          {/* Peakon-style score hero */}
+          <div className="flex flex-col items-center gap-3 py-2">
+            <PeakonScoreCell
+              score={hasData && data?.overallScore ? data.overallScore * 10 : null}
+              size="xl"
+              className="!w-28 !h-20 !text-4xl !rounded-2xl"
+            />
+            {hasData && data?.overallRating ? (
+              <RatingBadge rating={data.overallRating} size="lg" />
+            ) : (
+              <span className="text-sm text-gray-400">Complete assessment to see your score</span>
+            )}
+          </div>
+
+          {/* Gauge — still useful for visual context */}
+          <div className="flex-1 flex flex-col items-center justify-center">
             <CapabilityGauge score={data?.overallScore ?? 0} empty={!hasData} />
           </div>
 
           {hasData && data && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="pt-3 border-t border-gray-100">
               <div className="flex items-center justify-between text-xs text-gray-400">
                 <span>{data.assessmentHistory.length} assessment{data.assessmentHistory.length !== 1 ? "s" : ""} completed</span>
                 {data.assessmentHistory.length >= 2 && (
                   <ScoreSparkline history={data.assessmentHistory} />
                 )}
               </div>
-              {data.nextReassessmentDate && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Next reassessment: {new Date(data.nextReassessmentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                </p>
-              )}
-            </div>
-          )}
-
-          {!hasData && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-xs text-gray-400 text-center">
-                Your position appears once you complete the assessment
-              </p>
             </div>
           )}
         </div>
@@ -1063,6 +1105,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                   DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS]
                 }
                 score={domain?.score ?? null}
+                rating={domain?.rating}
                 hasData={hasData && (domain?.score ?? 0) > 0}
                 onClick={() => {
                   if (hasData && domain) {
