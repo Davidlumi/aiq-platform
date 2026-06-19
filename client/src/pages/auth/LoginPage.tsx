@@ -11,16 +11,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff, AlertCircle, Shield, Brain, BookOpen } from "lucide-react";
 
 const schema = z.object({
-  tenantSlug: z.string().min(1, "Organisation code is required"),
   email: z.string().email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
 type FormData = z.infer<typeof schema>;
 
-/** AiQ logo mark - dark slate circle, white A+Q, green i dot */
+/** AiQ logo mark */
 function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; variant?: "default" | "hero" }) {
-  const accent = variant === "hero" ? "var(--primary)" : "var(--primary)";
+  const accent = "var(--primary)";
   return (
     <svg
       width={size}
@@ -54,11 +53,6 @@ function AiQLogoMark({ size = 48, variant = "default" }: { size?: number; varian
   );
 }
 
-const DEMO_CREDENTIALS = [
-  { role: "Reward Leader", email: "reward@dunder.com", org: "dunder" },
-  { role: "CPO", email: "cpo@mifflin.com", org: "mifflin" },
-];
-
 const FEATURES = [
   {
     label: "Adaptive Assessment Engine",
@@ -87,11 +81,9 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { tenantSlug: "" },
   });
 
   const loginMutation = trpc.auth.login.useMutation({
@@ -112,17 +104,6 @@ export default function LoginPage() {
     setServerError(null);
     loginMutation.mutate(data);
   };
-
-  function fillDemo(cred: (typeof DEMO_CREDENTIALS)[0]) {
-    setValue("email", cred.email);
-    setValue("password", "Reward2024!");
-    setValue("tenantSlug", cred.org);
-    setServerError(null);
-    // Auto-submit after filling
-    setTimeout(() => {
-      loginMutation.mutate({ email: cred.email, password: "Reward2024!", tenantSlug: cred.org });
-    }, 50);
-  }
 
   return (
     <div className="min-h-screen flex" style={{ background: "#F7F8FA" }}>
@@ -181,7 +162,7 @@ export default function LoginPage() {
           </h2>
           <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "14px", lineHeight: 1.7 }}>
             AiQ doesn't ask you to define hallucination. It puts you in realistic
-            work situations - under time pressure, with incomplete information - and
+            work situations — under time pressure, with incomplete information — and
             reads how you actually behave.
           </p>
 
@@ -284,27 +265,6 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Organisation code */}
-            <div className="space-y-1.5">
-              <Label htmlFor="tenantSlug" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>
-                Organisation code
-              </Label>
-              <Input
-                id="tenantSlug"
-                {...register("tenantSlug")}
-                placeholder="e.g. dunder"
-                className="h-11"
-                autoComplete="organization"
-              />
-              {errors.tenantSlug ? (
-                <p className="text-xs text-destructive">{errors.tenantSlug.message}</p>
-              ) : (
-                <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                  The short code provided by your administrator
-                </p>
-              )}
-            </div>
-
             {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="email" style={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>
@@ -317,6 +277,7 @@ export default function LoginPage() {
                 placeholder="you@company.com"
                 className="h-11"
                 autoComplete="email"
+                autoFocus
               />
               {errors.email && (
                 <p className="text-xs text-destructive">{errors.email.message}</p>
@@ -385,72 +346,9 @@ export default function LoginPage() {
                 className="hover:underline cursor-pointer"
                 style={{ fontSize: "13px", color: "var(--primary)", fontWeight: 500 }}
               >
-                Create account
+                Create account — it's free
               </span>
             </Link>
-          </div>
-
-          {/* Demo credentials */}
-          <div
-            className="mt-8 rounded-xl p-4"
-            style={{ border: "1px solid #E2E8F0", background: "#ffffff" }}
-          >
-            <p
-              className="uppercase tracking-wider mb-3"
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#6B7280",
-                letterSpacing: "0.08em",
-              }}
-            >
-              Demo credentials - password:{" "}
-              <span
-                style={{
-                  fontFamily: "monospace",
-                  color: "var(--primary)",
-                  fontWeight: 500,
-                  textTransform: "none",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                Reward2024!
-              </span>
-            </p>
-            <div className="space-y-1">
-              {DEMO_CREDENTIALS.map((cred) => (
-                <button
-                  key={cred.email}
-                  type="button"
-                  onClick={() => fillDemo(cred)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all group"
-                  style={{ background: "#F8FAFC" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "#ECFDF5";
-                    (e.currentTarget as HTMLElement).style.transform = "translateX(2px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
-                    (e.currentTarget as HTMLElement).style.transform = "translateX(0)";
-                  }}
-                >
-                  <span className="text-xs font-semibold" style={{ color: "#374151" }}>
-                    {cred.role}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-xs px-1.5 py-0.5 rounded"
-                      style={{ fontFamily: "monospace", color: "#64748B", background: "#E2E8F0", fontSize: "10px" }}
-                    >
-                      {cred.org}
-                    </span>
-                    <span className="text-xs" style={{ fontFamily: "monospace", color: "#9CA3AF" }}>
-                      {cred.email}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>

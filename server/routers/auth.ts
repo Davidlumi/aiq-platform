@@ -103,35 +103,26 @@ export const authRouter = router({
       z.object({
         email: z.string().email(),
         password: z.string().min(1),
-        tenantSlug: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      // Resolve tenant (case-insensitive slug lookup)
-      let tenantId: string;
-      if (input.tenantSlug) {
-        const normalised = input.tenantSlug.trim().toLowerCase();
-        const tenant = await db
-          .select()
-          .from(tenants)
-          .where(sql`LOWER(${tenants.slug}) = ${normalised}`)
-          .limit(1);
-        if (!tenant[0]) throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Organisation code not recognised. Please check the code provided by your administrator.",
-        });
-        tenantId = tenant[0].id;
-      } else {
-        // No tenant slug provided — require it
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Organisation code is required" });
-      }
-
-      const user = await getUserByEmail(tenantId, input.email);
+      // Look up user by email alone — no org code required for self-serve accounts
+      const normalisedEmail = input.email.toLowerCase().trim();
+      const userRows = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, normalisedEmail))
+        .limit(1);
+      const user = userRows[0];
       if (!user) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid email or password" });
+      }
+
+      if (user.status === "pending") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Please verify your email address before signing in. Check your inbox for a verification link." });
       }
 
       if (user.status === "suspended" || user.status === "deactivated") {
