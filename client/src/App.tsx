@@ -698,12 +698,11 @@ function RootRedirect() {
 
 function RoleDashboard() {
   const { user } = useAuth();
-  const { viewAs } = useViewAs();
+  // Clear any stale viewAs override from localStorage — demo switcher is hidden
+  useEffect(() => {
+    localStorage.removeItem("aiq_view_as");
+  }, []);
   if (!user) return null;
-  // Demo role switcher overrides the real role
-  if (viewAs === "individual") return <IndividualDashboardV2 />;
-  if (viewAs === "manager") return <ManagerDashboardV2 />;
-  if (viewAs === "cpo") return <LeaderDashboardV2 />;
 
   const entitlements = (user as any)?.entitlements as {
     strategyCompany?: boolean;
