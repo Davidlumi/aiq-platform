@@ -1282,9 +1282,9 @@ const managerRouter = router({
 
 const leaderRouter = router({
   /** Hero finding — 5 patterns */
-  heroFinding: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  heroFinding: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -1400,9 +1400,9 @@ const leaderRouter = router({
   }),
 
   /** Function position summary */
-  main: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  main: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -1569,9 +1569,9 @@ const leaderRouter = router({
   }),
 
   /** Per-domain function-wide trajectory (6 time series) */
-  domainTrajectory: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  domainTrajectory: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -1660,9 +1660,9 @@ const leaderRouter = router({
   }),
 
   /** Strategic findings — 8 deterministic patterns */
-  strategicFindings: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  strategicFindings: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -1894,9 +1894,9 @@ const leaderRouter = router({
   }),
 
   /** Strategic Alignment — maps business priorities to capability readiness */
-  strategicAlignment: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  strategicAlignment: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -2070,9 +2070,9 @@ const leaderRouter = router({
   }),
 
   /** Teams view */
-  teams: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  teams: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -2144,9 +2144,9 @@ const leaderRouter = router({
   }),
 
   /** Team × Domain heatmap — returns per-team per-domain average scores */
-  teamsHeatmap: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  teamsHeatmap: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -2206,9 +2206,9 @@ const leaderRouter = router({
   }),
 
   /** BA-01/BA-02: Readiness vs Ambition gap — org-level and per-priority */
-  ambitionGap: protectedProcedure.input(z.object({ roleFamily: z.string().optional() }).optional()).query(async ({ ctx, input }) => {
+  ambitionGap: protectedProcedure.input(z.object({ roleFamily: z.string().optional(), demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();
@@ -2335,9 +2335,9 @@ const leaderRouter = router({
    * Function-level heatmap: groups users by role_family, returns avg domain scores
    * per function + individual member scores for drill-down.
    */
-  functionHeatmap: protectedProcedure.query(async ({ ctx }) => {
+  functionHeatmap: protectedProcedure.input(z.object({ demoMode: z.boolean().optional() }).optional()).query(async ({ ctx, input }) => {
     const myRoles = await getUserRoleKeys(ctx.user.id, ctx.user.tenantId);
-    if (!myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
+    if (!input?.demoMode && !myRoles.some(r => ["platform_super_admin", "tenant_admin", "hr_leader"].includes(r))) {
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const db = await getDb();

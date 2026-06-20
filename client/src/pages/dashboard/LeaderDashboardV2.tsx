@@ -8,6 +8,7 @@ import { formatScore } from "@/lib/peakon-colors";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useGate } from "@/contexts/GateContext";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { LeaderDashboardSkeleton } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -339,15 +340,21 @@ function FunctionHeatmap({
 
 export default function LeaderDashboardV2() {
   const gate = useGate();
+  const { viewAs } = useViewAs();
 
   // All hooks must be declared unconditionally before any early return
   const [roleFamily, setRoleFamily] = useState<string | undefined>(undefined);
-  const queryInput = useMemo(() => (roleFamily ? { roleFamily } : undefined), [roleFamily]);
+  // When rendered via the demo role-switcher (viewAs=cpo), pass demoMode:true to bypass server role check
+  const demoMode = viewAs === "cpo" ? true : undefined;
+  const queryInput = useMemo(
+    () => ({ ...(roleFamily ? { roleFamily } : {}), ...(demoMode ? { demoMode } : {}) }),
+    [roleFamily, demoMode]
+  );
 
   const { data: hero, isLoading: heroLoading } = trpc.dashboardV2.leader.heroFinding.useQuery(queryInput);
   const { data: main, isLoading: mainLoading } = trpc.dashboardV2.leader.main.useQuery(queryInput);
   const { data: findings } = trpc.dashboardV2.leader.strategicFindings.useQuery(queryInput);
-  const { data: heatmapData } = trpc.dashboardV2.leader.functionHeatmap.useQuery();
+  const { data: heatmapData } = trpc.dashboardV2.leader.functionHeatmap.useQuery(demoMode ? { demoMode } : undefined);
   const { data: ambitionGap } = trpc.dashboardV2.leader.ambitionGap.useQuery(queryInput);
 
   const isLoading = heroLoading || mainLoading;

@@ -513,43 +513,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const showHrAiStrategy = hasStrategyCompany && (isCpoUser || isRewardMode);
 
   const SidebarInner = () => (
-    <div className="flex flex-col h-full aiq-sidebar-bg border-r border-sidebar-border">
-      {/* Logo header */}
-      <div
-        className={cn(
-          "flex items-center h-14 px-4 shrink-0 border-b border-sidebar-border",
-          collapsed ? "justify-center" : "justify-between"
-        )}
-      >
-        <div className="flex items-center gap-2.5">
-          <AiQLogoMark size={collapsed ? 28 : 32} />
-          <AiQWordmark collapsed={collapsed} />
-        </div>
-        {!collapsed && (
-          <button
-            onClick={() => setCollapsed(true)}
-            className="p-1.5 rounded transition-colors hidden lg:flex text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
-            aria-label="Collapse sidebar"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Expand button when collapsed */}
-      {collapsed && (
-        <div className="flex justify-center py-2 border-b border-sidebar-border">
-          <button
-            onClick={() => setCollapsed(false)}
-            className="p-1.5 rounded transition-colors text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
-            aria-label="Expand sidebar"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Navigation */}
+    <div className="flex flex-col h-full aiq-sidebar-bg">
+      {/* Navigation — logo is now in the full-width top bar */}
       <nav className="flex-1 overflow-y-auto py-3" aria-label="Main navigation">
         {sections.map((section) => (
           <div key={section.key} className="mb-1">
@@ -789,147 +754,170 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden aiq-main-bg">
+    <div className="flex flex-col h-screen overflow-hidden">
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
 
-      {/* Desktop sidebar */}
-      <aside
-        className={cn(
-          "hidden lg:flex flex-col transition-all shrink-0",
-          collapsed ? "w-14" : "w-60"
-        )}
-        style={{ transitionDuration: "200ms", transitionTimingFunction: "ease-out" }}
-        aria-label="Sidebar"
-      >
-        <SidebarInner />
-      </aside>
-
-      {/* Mobile backdrop */}
-      {mobileOpen && (
+      {/* ─── FULL-WIDTH TOP BAR — spans entire viewport including sidebar column ─── */}
+      <header className="flex items-center h-14 px-4 gap-3 shrink-0 aiq-topbar z-30">
+        {/* Logo area — fixed width matching sidebar */}
         <div
-          className="fixed inset-0 z-40 lg:hidden bg-foreground/60"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+          className={cn(
+            "hidden lg:flex items-center gap-2.5 shrink-0 transition-all",
+            collapsed ? "w-10" : "w-52"
+          )}
+          style={{ transitionDuration: "200ms" }}
+        >
+          <Link href="/dashboard" className="flex items-center gap-2.5 no-underline">
+            <AiQLogoMark size={collapsed ? 28 : 30} />
+            {!collapsed && (
+              <div className="flex flex-col leading-none select-none">
+                <span className="text-[10px] font-medium tracking-[0.12em] uppercase text-white/50" style={{ lineHeight: 1, marginBottom: "2px" }}>HR</span>
+                <span className="text-[17px] font-semibold tracking-tight text-white" style={{ lineHeight: 1 }}>Ai<span className="text-[#93C5FD]">Q</span></span>
+              </div>
+            )}
+          </Link>
+        </div>
 
-      {/* Mobile sidebar drawer */}
-      <aside
-        className={cn(
-          "fixed top-0 left-0 h-full w-60 z-50 transition-transform lg:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-        style={{ transitionDuration: "200ms", transitionTimingFunction: "ease-out" }}
-        aria-label="Sidebar"
-      >
-        <SidebarInner />
-      </aside>
+        {/* Sidebar collapse toggle — desktop only */}
+        <button
+          onClick={() => setCollapsed(v => !v)}
+          className="hidden lg:flex p-1.5 rounded transition-colors text-white/50 hover:text-white hover:bg-white/10"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden aiq-main-bg">
-        {/* Top bar — Lumi-style deep indigo coloured bar */}
-        <header className="flex items-center h-14 px-4 lg:px-6 gap-3 shrink-0 aiq-topbar sticky top-0 z-20">
-          {/* Mobile menu button */}
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="lg:hidden p-2 rounded transition-colors text-white/70 hover:text-white hover:bg-white/10"
+          aria-label="Open navigation menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        {/* Mobile logo */}
+        <div className="lg:hidden flex items-center gap-1.5">
+          <AiQLogoMark size={26} />
+          <span className="text-white font-semibold text-sm tracking-tight">HR <span className="text-[#93C5FD]">AiQ</span></span>
+        </div>
+
+        {/* Search bar */}
+        <div className="hidden md:flex flex-1 max-w-md ml-2">
+          <div className="relative w-full">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search capabilities, modules, articles…"
+              className="w-full h-9 pl-9 pr-4 rounded-lg bg-white/10 border border-white/20 text-sm text-white placeholder:text-white/50 focus:outline-none focus:bg-white/15 focus:border-white/40 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1" />
+
+        <div className="flex items-center gap-1">
+          {/* Notifications */}
           <button
-            onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-2 rounded transition-colors text-white/70 hover:text-white hover:bg-white/10"
-            aria-label="Open navigation menu"
+            className="p-2 rounded-lg transition-colors text-white/70 hover:text-white hover:bg-white/10"
+            aria-label="Notifications"
           >
-            <Menu className="w-5 h-5" />
+            <Bell className="w-5 h-5" />
           </button>
 
-          {/* Mobile-only logo */}
-          <div className="lg:hidden flex items-center gap-1.5">
-            <AiQLogoMark size={26} />
-            <span className="text-white font-semibold text-sm tracking-tight">HR <span className="text-[#93C5FD]">AiQ</span></span>
-          </div>
+          {/* Divider */}
+          <div className="w-px h-6 bg-white/20 mx-1" />
 
-          {/* Search bar */}
-          <div className="hidden md:flex flex-1 max-w-md">
-            <div className="relative w-full">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search capabilities, modules, articles…"
-                className="w-full h-9 pl-9 pr-4 rounded-lg bg-white/10 border border-white/20 text-sm text-white placeholder:text-white/50 focus:outline-none focus:bg-white/15 focus:border-white/40 transition-all"
-              />
-            </div>
-          </div>
+          {/* User avatar + dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/10"
+                aria-label="Account menu"
+              >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-white/20 text-white border border-white/30">
+                  {initials}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium leading-none text-white">{displayName}</p>
+                  <p className="text-xs leading-none mt-0.5 text-white/60">{roleLabel}</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{displayName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{(user as any)?.email}</p>
+                  <p className="text-xs font-medium text-primary">{roleLabel}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile and settings</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/billing">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Billing</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={logout}
+                className="text-destructive focus:text-destructive focus:bg-destructive/5"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
 
-          <div className="flex-1" />
+      {/* ─── BODY ROW: sidebar + content ─── */}
+      <div className="flex flex-1 min-h-0 overflow-hidden aiq-main-bg">
 
-          <div className="flex items-center gap-1">
-            {/* Notifications */}
-            <button
-              className="p-2 rounded-lg transition-colors text-white/70 hover:text-white hover:bg-white/10"
-              aria-label="Notifications"
-            >
-              <Bell className="w-5 h-5" />
-            </button>
+        {/* Desktop sidebar — no logo header, just nav */}
+        <aside
+          className={cn(
+            "hidden lg:flex flex-col transition-all shrink-0 aiq-sidebar-bg border-r border-sidebar-border",
+            collapsed ? "w-14" : "w-60"
+          )}
+          style={{ transitionDuration: "200ms", transitionTimingFunction: "ease-out" }}
+          aria-label="Sidebar"
+        >
+          <SidebarInner />
+        </aside>
 
-            {/* Divider */}
-            <div className="w-px h-6 bg-white/20 mx-1" />
+        {/* Mobile backdrop */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-40 lg:hidden bg-foreground/60"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+        )}
 
-            {/* User avatar + dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/10"
-                  aria-label="Account menu"
-                >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-white/20 text-white border border-white/30">
-                    {initials}
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium leading-none text-white">
-                      {displayName}
-                    </p>
-                    <p className="text-xs leading-none mt-0.5 text-white/60">
-                      {roleLabel}
-                    </p>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{(user as any)?.email}</p>
-                    <p className="text-xs font-medium text-primary">{roleLabel}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile and settings</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/billing">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Billing</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+        {/* Mobile sidebar drawer */}
+        <aside
+          className={cn(
+            "fixed top-14 left-0 h-[calc(100vh-3.5rem)] w-60 z-50 transition-transform lg:hidden",
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+          style={{ transitionDuration: "200ms", transitionTimingFunction: "ease-out" }}
+          aria-label="Sidebar"
+        >
+          <SidebarInner />
+        </aside>
 
-                <DropdownMenuItem
-                  onClick={logout}
-                  className="text-destructive focus:text-destructive focus:bg-destructive/5"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-
-        {/* Page content */}
+        {/* Main content */}
         <main id="main-content" className="flex-1 min-h-0 overflow-y-auto relative" tabIndex={-1}>
-
           <div className="relative z-10 px-6 md:px-10 py-6">
             {isTransitioning ? (
               <PageTransitionSkeleton />
