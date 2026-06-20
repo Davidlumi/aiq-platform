@@ -11,6 +11,13 @@
  * proper card shadows, solid colours (no opacity hacks).
  */
 import { useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useIsPro } from "@/hooks/useIsPro";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import {
@@ -908,6 +915,35 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
 
   const hasData = data !== undefined && data.overallScore !== null;
 
+  // Domain tile sort order
+  type DomainSort = "default" | "score_desc" | "score_asc" | "rating";
+  const [domainSort, setDomainSort] = useState<DomainSort>("default");
+
+  // Rating order for sorting (best → worst)
+  const RATING_ORDER: Record<string, number> = {
+    ai_ready: 0,
+    developing: 1,
+    not_yet_ready: 2,
+    foundation_gap: 3,
+    insufficient_evidence: 4,
+  };
+
+  const sortedDomainKeys = useMemo(() => {
+    if (domainSort === "default") return DOMAIN_KEYS;
+    return [...DOMAIN_KEYS].sort((a, b) => {
+      const da = data?.domains.find(d => d.key === a);
+      const db = data?.domains.find(d => d.key === b);
+      if (domainSort === "score_desc") return (db?.score ?? -1) - (da?.score ?? -1);
+      if (domainSort === "score_asc") return (da?.score ?? 11) - (db?.score ?? 11);
+      if (domainSort === "rating") {
+        const ra = RATING_ORDER[da?.rating ?? "insufficient_evidence"] ?? 4;
+        const rb = RATING_ORDER[db?.rating ?? "insufficient_evidence"] ?? 4;
+        return ra - rb;
+      }
+      return 0;
+    });
+  }, [domainSort, data?.domains]);
+
   const { data: aiSummaryData, isLoading: aiSummaryLoading } = trpc.dashboardV2.individual.aiSummary.useQuery(
     undefined,
     { enabled: hasData, staleTime: 10 * 60 * 1000, retry: false },
@@ -1108,16 +1144,33 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           <h2 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-label, 13px)", fontWeight: 600, color: "var(--ink-soft, #5B5560)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Capability domains
           </h2>
-          {hasData && (
-            <Link href="/assessment">
-              <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                Full breakdown <ArrowRight className="w-3 h-3" />
-              </button>
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Sort dropdown */}
+            <Select value={domainSort} onValueChange={v => setDomainSort(v as DomainSort)}>
+              <SelectTrigger
+                className="h-7 gap-1.5 border-0 bg-transparent shadow-none focus:ring-0"
+                style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--ink-soft, #5B5560)", padding: "0 8px", minWidth: 0, width: "auto" }}
+              >
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="default">Default order</SelectItem>
+                <SelectItem value="score_desc">Score ↓ high to low</SelectItem>
+                <SelectItem value="score_asc">Score ↑ low to high</SelectItem>
+                <SelectItem value="rating">Rating (best first)</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasData && (
+              <Link href="/assessment">
+                <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                  Full breakdown <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {DOMAIN_KEYS.map(key => {
+          {sortedDomainKeys.map(key => {
             const domain = data?.domains.find(d => d.key === key);
             const colour = DOMAIN_COLOURS[key as keyof typeof DOMAIN_COLOURS] ?? "#3B82F6";
             const score = domain?.score ?? null;
