@@ -97,17 +97,18 @@ export const DOMAIN_DESCRIPTIONS: Record<DomainKey, string> = {
 };
 
 // ─── Capability Levels ───────────────────────────────────────────────────────
-// 5-level scale: 1 Emerging → 2 Developing → 3 Capable → 4 Strong → 5 Expert
+// 5-level scale: 1 Emerging → 2 Developing → 3 Proficient → 4 Advanced → 5 Expert
 // Scores are 0–10 (precise level) or 0–100 (raw assessment score).
+// Cut-points are UNCHANGED from HEATMAP_THRESHOLDS — only label strings updated.
 
 export type LevelKey = 1 | 2 | 3 | 4 | 5;
 
-/** Display label for each level */
+/** Display label for each level (D1 — research-aligned progression) */
 export const LEVEL_LABELS: Record<LevelKey, string> = {
   1: "Emerging",
   2: "Developing",
-  3: "Capable",
-  4: "Strong",
+  3: "Proficient",
+  4: "Advanced",
   5: "Expert",
 };
 
@@ -127,14 +128,15 @@ export const LEVEL_COLOURS: Record<LevelKey, { bg: string; text: string; hex: st
 
 /**
  * Heatmap score-to-level thresholds (scores are 0–10).
+ * D1 canonical table — cut-points are LOCKED. Labels updated to research-aligned progression.
  * Used in the team capability heatmap and any score-coloured cell.
  */
 export const HEATMAP_THRESHOLDS = [
-  { min: 7.5, level: 5 as LevelKey },  // AI Ready
-  { min: 6.0, level: 4 as LevelKey },  // Strong
-  { min: 5.0, level: 3 as LevelKey },  // Capable
+  { min: 7.5, level: 5 as LevelKey },  // Expert
+  { min: 6.0, level: 4 as LevelKey },  // Advanced
+  { min: 5.0, level: 3 as LevelKey },  // Proficient
   { min: 3.5, level: 2 as LevelKey },  // Developing
-  { min: 0,   level: 1 as LevelKey },  // Emerging / Gap
+  { min: 0,   level: 1 as LevelKey },  // Emerging
 ];
 
 /** Convert a 0–10 score to a LevelKey */
@@ -155,6 +157,43 @@ export function scoreColours(score: number): { bg: string; text: string; hex: st
   return LEVEL_COLOURS[scoreToLevel(score)];
 }
 
+// ─── D2: One band function, used everywhere ───────────────────────────────────
+// bandOf(score) → band label string (the ONLY labelling path on the dashboard)
+// gapToNext(score) → next band name + points to boundary (or top-band state)
+
+/** D2 — Single band label function. Reads HEATMAP_THRESHOLDS. */
+export function bandOf(score: number): string {
+  return LEVEL_LABELS[scoreToLevel(score)];
+}
+
+export type GapToNext =
+  | { isTop: false; nextBand: string; gap: number; pctThroughBand: number }
+  | { isTop: true };
+
+/**
+ * D2 — Returns the gap to the next band boundary.
+ * Tiebreak (D7b): when two domains share the same gap, caller picks the one
+ * with the higher current score (closer to a more advanced band).
+ * Returns { isTop: true } when score is already Expert (≥7.5).
+ */
+export function gapToNext(score: number): GapToNext {
+  const level = scoreToLevel(score);
+  if (level === 5) return { isTop: true };
+  // Find the threshold for the NEXT level up
+  const nextLevel = (level + 1) as LevelKey;
+  const nextThreshold = HEATMAP_THRESHOLDS.find(t => t.level === nextLevel)!;
+  const currentThreshold = HEATMAP_THRESHOLDS.find(t => t.level === level)!;
+  const bandWidth = nextThreshold.min - currentThreshold.min;
+  const gap = parseFloat((nextThreshold.min - score).toFixed(2));
+  const pctThroughBand = Math.min(100, Math.round(((score - currentThreshold.min) / bandWidth) * 100));
+  return {
+    isTop: false,
+    nextBand: LEVEL_LABELS[nextLevel],
+    gap,
+    pctThroughBand,
+  };
+}
+
 // ─── Readiness States (3-band legacy) ────────────────────────────────────────
 // Used in the People table and HR dashboard for quick traffic-light status.
 
@@ -167,5 +206,5 @@ export const READINESS_COLOURS: Record<string, string> = {
 export const READINESS_LABELS: Record<string, string> = {
   safe:    "Expert",
   at_risk: "Developing",
-  unsafe:  "Not Yet Ready",
+  unsafe:  "Emerging",
 };

@@ -67,6 +67,8 @@ import {
   DOMAIN_ICON_NAMES,
   scoreToLevel,
   LEVEL_LABELS,
+  bandOf,
+  gapToNext,
 } from "@/lib/domains";
 import {
   Tooltip,
@@ -107,16 +109,18 @@ function getLevelFromScore(score: number): number {
 }
 
 function getLevelLabel(level: number): string {
-  return ["", "Emerging", "Developing", "Capable", "Strong", "Expert"][level] ?? "Developing";
+  // Canonical labels from shared/brand.ts LEVEL_LABELS
+  return LEVEL_LABELS[level as keyof typeof LEVEL_LABELS] ?? "Developing";
 }
 
 function getLevelColour(level: number): { bg: string; text: string; accent: string } {
+  // 1=Emerging 2=Developing 3=Proficient 4=Advanced 5=Expert
   const map: Record<number, { bg: string; text: string; accent: string }> = {
-    1: { bg: "#FEE2E2", text: "#991B1B", accent: "#EF4444" },
-    2: { bg: "#FEF3C7", text: "#92400E", accent: "#F59E0B" },
-    3: { bg: "#DCFCE7", text: "#166534", accent: "#22C55E" },
-    4: { bg: "#D1FAE5", text: "#065F46", accent: "#10B981" },
-    5: { bg: "#D1FAE5", text: "#065F46", accent: "#16A34A" },
+    1: { bg: "#FEE2E2", text: "#991B1B", accent: "#EF4444" },   // red
+    2: { bg: "#FEF3C7", text: "#92400E", accent: "#F59E0B" },   // amber
+    3: { bg: "#DBEAFE", text: "#1E40AF", accent: "#3B82F6" },   // blue (Proficient)
+    4: { bg: "#EDE9FE", text: "#4C1D95", accent: "#7C3AED" },   // violet (Advanced)
+    5: { bg: "#D1FAE5", text: "#065F46", accent: "#10B981" },   // emerald (Expert)
   };
   return map[level] ?? map[2];
 }
@@ -917,6 +921,36 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
 
   const hasData = data !== undefined && data.overallScore !== null;
 
+  // ── C1: Band-up moment detection ─────────────────────────────────────────
+  // Detect if the latest assessment moved the user to a higher band vs the previous one
+  const bandUpEvent = useMemo(() => {
+    if (!data || data.assessmentHistory.length < 2) return null;
+    const hist = [...data.assessmentHistory].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+    const prev = hist[hist.length - 2];
+    const latest = hist[hist.length - 1];
+    const prevLevel = scoreToLevel(prev.overallScore);
+    const latestLevel = scoreToLevel(latest.overallScore);
+    if (latestLevel > prevLevel) {
+      return {
+        fromBand: LEVEL_LABELS[prevLevel as keyof typeof LEVEL_LABELS],
+        toBand: LEVEL_LABELS[latestLevel as keyof typeof LEVEL_LABELS],
+        toLevel: latestLevel,
+        date: latest.date,
+      };
+    }
+    return null;
+  }, [data]);
+
+  const [bandUpDismissed, setBandUpDismissed] = useState(false);
+
+  // ── C1: Learning streak ───────────────────────────────────────────────────
+  const { data: streakData } = trpc.adaptiveLearning.getLearningStreak.useQuery(
+    undefined,
+    { enabled: hasData, staleTime: 5 * 60 * 1000 },
+  );
+
   // Domain tile sort order
   type DomainSort = "default" | "score_desc" | "score_asc" | "rating";
   const [domainSort, setDomainSort] = useState<DomainSort>("default");
@@ -975,159 +1009,322 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         )}
       </div>
 
-      {/* ── Reassessment countdown — users with data ── */}
-      {hasData && (
-        <ReassessmentCountdown
-          dueDate={data?.nextReassessmentDate ?? null}
-          lastAssessmentDate={data?.lastAssessmentDate ?? null}
-        />
-      )}
+      {/* ReassessmentCountdown removed — hero card now has inline reassess button */}
 
-      {/* ── CTA banner — new users only ── */}
-      {!hasData && (
-        <div className="flex items-center gap-5 p-5 rounded-xl border border-blue-100 bg-blue-50">
-          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <ClipboardList className="w-6 h-6 text-blue-600" />
+      {/* ── C1: Band-up moment banner ── */}
+      {bandUpEvent && !bandUpDismissed && (() => {
+        const lc = getLevelColour(bandUpEvent.toLevel);
+        return (
+          <div
+            className="flex items-center gap-4 px-5 py-4 rounded-xl"
+            style={{
+              background: lc.bg,
+              border: `1px solid ${lc.accent}40`,
+            }}
+          >
+            <div
+              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ background: lc.accent + "20", border: `1.5px solid ${lc.accent}` }}
+            >
+              <Star className="w-5 h-5" style={{ color: lc.accent }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p style={{ fontSize: 14, fontWeight: 700, color: lc.text, fontFamily: "var(--font-head)" }}>
+                You reached {bandUpEvent.toBand}
+              </p>
+              <p style={{ fontSize: 12, color: lc.text, opacity: 0.75 }}>
+                Moved up from {bandUpEvent.fromBand} · {new Date(bandUpEvent.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </p>
+            </div>
+            <button
+              onClick={() => setBandUpDismissed(true)}
+              className="flex-shrink-0 p-1 rounded-md hover:bg-black/10 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="w-4 h-4" style={{ color: lc.text, opacity: 0.6 }} />
+            </button>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900">Take your AI capability assessment</p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              15 minutes · 6 capability domains · A precise score that tells you exactly where you stand
-            </p>
+        );
+      })()}
+
+      {/* ── HERO LEVEL CARD — deep-indigo, full-width ── */}
+      {(() => {
+        const score = data?.overallScore ?? 0;
+        const level = getLevelFromScore(score);
+        const lc = getLevelColour(level);
+        const gap = hasData ? gapToNext(score) : null;
+        // Focus-next: domain with SMALLEST gap to its next band (D7b spec)
+        // Tiebreak: higher current score (closer to a more advanced band)
+        // Exclude domains already at Expert (no next band)
+        const focusDomain = hasData
+          ? [...(data?.domains ?? [])]
+              .filter(d => {
+                if (d.score === null || d.score <= 0) return false;
+                const g = gapToNext(d.score);
+                return !('isTop' in g && g.isTop); // exclude Expert domains
+              })
+              .sort((a, b) => {
+                const ga = gapToNext(a.score ?? 0);
+                const gb = gapToNext(b.score ?? 0);
+                const gapA = ('gap' in ga) ? ga.gap : Infinity;
+                const gapB = ('gap' in gb) ? gb.gap : Infinity;
+                if (Math.abs(gapA - gapB) > 0.001) return gapA - gapB; // smallest gap first
+                return (b.score ?? 0) - (a.score ?? 0); // tiebreak: higher score first
+              })[0]
+          : null;
+        const focusLabel = focusDomain
+          ? (DOMAIN_SHORT_LABELS[focusDomain.key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[focusDomain.key as keyof typeof DOMAIN_LABELS])
+          : null;
+
+        return (
+          <div
+            className="relative overflow-hidden"
+            style={{
+              borderRadius: "var(--lumi-radius, 16px)",
+              background: hasData
+                ? "linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 60%, #2563EB 100%)"
+                : "linear-gradient(135deg, #374151 0%, #4B5563 100%)",
+              boxShadow: "0 4px 24px rgba(30,58,138,0.25)",
+              padding: "28px 32px",
+              color: "white",
+            }}
+          >
+            {/* Subtle dot-grid overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+
+            <div className="relative z-10">
+              {/* Top row: level badge + score + reassess */}
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  {/* Level badge */}
+                  <span
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold"
+                    style={{ backgroundColor: lc.bg, color: lc.text }}
+                  >
+                    {hasData ? getLevelLabel(level) : "No data"}
+                  </span>
+                  {hasData && (
+                    <span className="text-blue-200 text-sm">
+                      {data!.assessmentHistory.length} assessment{data!.assessmentHistory.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+                {hasData && (
+                  <Link href="/assessment">
+                    <button
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:bg-white/20"
+                      style={{ border: "1px solid rgba(255,255,255,0.3)", color: "white" }}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reassess
+                    </button>
+                  </Link>
+                )}
+              </div>
+
+              {/* Composite score headline */}
+              <div className="mb-6">
+                {hasData ? (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <span
+                        className="tabular-nums"
+                        style={{ fontSize: 56, fontWeight: 900, lineHeight: 1, fontFamily: "var(--font-mono, JetBrains Mono, monospace)", color: "white" }}
+                      >
+                        {score.toFixed(1)}
+                      </span>
+                      <span style={{ fontSize: 24, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>/10</span>
+                    </div>
+                    <p style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 4, fontFamily: "var(--font-head)" }}>
+                      Composite AI capability score
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 20, fontWeight: 700, color: "white", fontFamily: "var(--font-head)" }}>No assessment yet</p>
+                    <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>Complete your assessment to see your score</p>
+                  </>
+                )}
+              </div>
+
+              {/* Gap-to-next band progress bar */}
+              {hasData && gap && !('isTop' in gap && gap.isTop) && 'gap' in gap && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+                      Progress to <strong style={{ color: "white" }}>{gap.nextBand}</strong>
+                    </span>
+                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+                      {gap.gap.toFixed(1)} pts to go
+                    </span>
+                  </div>
+                  <div style={{ height: 8, borderRadius: 4, background: "rgba(255,255,255,0.15)" }}>
+                    <div
+                      style={{
+                        height: "100%",
+                        borderRadius: 4,
+                        background: "white",
+                        width: `${Math.round(gap.pctThroughBand)}%`,
+                        transition: "width 0.6s ease",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              {hasData && gap && 'isTop' in gap && gap.isTop && (
+                <div className="mb-6">
+                  <div
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                    style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)" }}
+                  >
+                    <Star className="w-4 h-4 text-yellow-300" />
+                    <span style={{ fontSize: 13, color: "white", fontWeight: 600 }}>Top band — Expert level achieved</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Six domain rows */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mb-6">
+                {DOMAIN_KEYS.map(key => {
+                  const domain = data?.domains.find(d => d.key === key);
+                  const colour = DOMAIN_COLOURS[key as keyof typeof DOMAIN_COLOURS] ?? "#60A5FA";
+                  const domScore = domain?.score ?? null;
+                  const fillPct = domScore !== null && domScore > 0 ? Math.round((domScore / 10) * 100) : 0;
+                  const shortLabel = DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS];
+                  return (
+                    <button
+                      key={key}
+                      className="flex items-center gap-2 text-left group hover:opacity-90 transition-opacity py-1"
+                      onClick={() => {
+                        if (hasData && domain) setSelectedDomain({ key, score: domain.score ?? 0 });
+                        else navigate("/assessment");
+                      }}
+                    >
+                      <span style={{ width: 120, fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 500, flexShrink: 0 }}>
+                        {shortLabel}
+                      </span>
+                      <div className="flex-1" style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.15)" }}>
+                        {hasData && domScore !== null && domScore > 0 ? (
+                          <div
+                            style={{ height: "100%", width: `${fillPct}%`, borderRadius: 3, backgroundColor: colour, transition: "width 0.5s ease" }}
+                          />
+                        ) : null}
+                      </div>
+                      <span
+                        className="tabular-nums"
+                        style={{ width: 32, textAlign: "right", fontSize: 12, fontWeight: 700, color: hasData && domScore ? colour : "rgba(255,255,255,0.3)", flexShrink: 0 }}
+                      >
+                        {hasData && domScore !== null && domScore > 0 ? domScore.toFixed(1) : "—"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Focus-next nudge */}
+              {hasData && focusDomain && focusLabel && (
+                <div
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)" }}
+                >
+                  <Lightbulb className="w-4 h-4 text-yellow-300 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "white" }}>Focus next: {focusLabel}</p>
+                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.65)" }}>
+                      {(() => {
+                        const fg = gapToNext(focusDomain.score ?? 0);
+                        if ('gap' in fg) {
+                          return `${fg.gap.toFixed(1)} pts to ${fg.nextBand} · closest band-up available`;
+                        }
+                        return `Score ${focusDomain.score?.toFixed(1)}`;
+                      })()}
+                    </p>
+                  </div>
+                  <Link href="/learning">
+                    <button
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:bg-white/20"
+                      style={{ border: "1px solid rgba(255,255,255,0.3)", color: "white", flexShrink: 0 }}
+                    >
+                      View plan <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </Link>
+                </div>
+              )}
+
+              {/* CTA for no-data state */}
+              {!hasData && (
+                <Link href="/assessment">
+                  <Button size="sm" className="gap-1.5 bg-white text-blue-700 hover:bg-blue-50">
+                    <ClipboardList className="w-3.5 h-3.5" />
+                    Take your assessment
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
-          <Link href="/assessment">
-            <Button size="sm" className="gap-1.5 whitespace-nowrap shrink-0">
-              Start assessment
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </Link>
-        </div>
-      )}
+        );
+      })()}
 
-      {/* ── Main two-column row: Gauge + Domain breakdown ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-
-        {/* WHERE YOU STAND — clean Lumi gauge card */}
+      {/* ── C1: Learning streak + stats row ── */}
+      {hasData && streakData && (streakData.currentStreak > 0 || streakData.totalModulesCompleted > 0) && (
         <div
-          className="lg:col-span-2 bg-white flex flex-col"
+          className="flex items-center gap-4 px-5 py-3 rounded-xl"
           style={{
-            borderRadius: "var(--lumi-radius, 16px)",
+            background: "white",
             border: "1px solid var(--lumi-border, #EAE5DE)",
             boxShadow: "var(--shadow-card)",
-            padding: "var(--card-pad, 24px)",
           }}
         >
-          {/* Card header */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-card-title, 16px)", fontWeight: 600, color: "var(--ink, #211B26)" }}>
-              Where you stand
-            </h2>
-          </div>
-
-          {/* Gauge — score number rendered inside the arc */}
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <CapabilityGauge score={data?.overallScore ?? 0} empty={!hasData} />
-          </div>
-
-          {/* Footer: assessment count */}
-          {hasData && data && (
-            <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--lumi-border, #EAE5DE)" }}>
-              <div className="flex items-center justify-between" style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--ink-faint, #8E8893)" }}>
-                <span>{data.assessmentHistory.length} assessment{data.assessmentHistory.length !== 1 ? "s" : ""} completed</span>
-                {data.assessmentHistory.length >= 2 && (
-                  <ScoreSparkline history={data.assessmentHistory} />
-                )}
+          {streakData.currentStreak > 0 && (
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: "#FEF3C7" }}
+              >
+                <span style={{ fontSize: 16 }}>&#128293;</span>
+              </div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #211B26)" }}>{streakData.currentStreak}-week streak</p>
+                <p style={{ fontSize: 11, color: "var(--ink-faint, #8E8893)" }}>Keep learning to maintain it</p>
               </div>
             </div>
           )}
-
-          {!hasData && (
-            <div className="mt-4">
-              <Link href="/assessment">
-                <Button size="sm" className="w-full gap-1.5">
-                  <ClipboardList className="w-3.5 h-3.5" />
-                  Take assessment
-                </Button>
-              </Link>
+          {streakData.currentStreak > 0 && streakData.totalModulesCompleted > 0 && (
+            <div style={{ width: 1, height: 32, background: "var(--lumi-border, #EAE5DE)", flexShrink: 0 }} />
+          )}
+          {streakData.totalModulesCompleted > 0 && (
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: "#DBEAFE" }}
+              >
+                <GraduationCap className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #211B26)" }}>{streakData.totalModulesCompleted} module{streakData.totalModulesCompleted !== 1 ? "s" : ""} completed</p>
+                <p style={{ fontSize: 11, color: "var(--ink-faint, #8E8893)" }}>
+                  {streakData.totalMinsLearned > 0 ? `${Math.round(streakData.totalMinsLearned / 60)}h ${streakData.totalMinsLearned % 60}m learned` : "Keep going"}
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="flex-1" />
+          {streakData.nextMilestone && streakData.totalModulesCompleted < streakData.nextMilestone.target && (
+            <div className="flex items-center gap-2">
+              <div style={{ fontSize: 11, color: "var(--ink-faint, #8E8893)", textAlign: "right" }}>
+                <span style={{ fontWeight: 600, color: "var(--ink-soft, #5B5560)" }}>{streakData.nextMilestone.label}</span>
+                {" "}— {streakData.nextMilestone.target - streakData.totalModulesCompleted} more to go
+              </div>
             </div>
           )}
         </div>
-
-        {/* DOMAIN BREAKDOWN — Lumi-style bar chart card */}
-        <div
-          className="lg:col-span-3 bg-white flex flex-col"
-          style={{
-            borderRadius: "var(--lumi-radius, 16px)",
-            border: "1px solid var(--lumi-border, #EAE5DE)",
-            boxShadow: "var(--shadow-card)",
-            padding: "var(--card-pad, 24px)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <h2 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-card-title, 16px)", fontWeight: 600, color: "var(--ink, #211B26)" }}>
-              Domain breakdown
-            </h2>
-            {hasData && (
-              <Link href="/assessment">
-                <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                  Full results →
-                </button>
-              </Link>
-            )}
-          </div>
-
-          <div className="flex-1 flex flex-col justify-center gap-3">
-            {DOMAIN_KEYS.map(key => {
-              const domain = data?.domains.find(d => d.key === key);
-              const colour = DOMAIN_COLOURS[key as keyof typeof DOMAIN_COLOURS] ?? "#3B82F6";
-              const score = domain?.score ?? null;
-              const fillPct = score !== null && score > 0 ? Math.round((score / 10) * 100) : 0;
-              const label = DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS];
-              return (
-                <button
-                  key={key}
-                  className="flex items-center gap-3 text-left group hover:opacity-90 transition-opacity"
-                  onClick={() => {
-                    if (hasData && domain) setSelectedDomain({ key, score: domain.score ?? 0 });
-                    else navigate("/assessment");
-                  }}
-                >
-                  {/* Domain name */}
-                  <span
-                    className="shrink-0 text-right"
-                    style={{ width: 140, fontSize: "var(--fs-label, 13px)", color: "var(--ink-soft, #5B5560)", fontWeight: 500 }}
-                  >
-                    {label}
-                  </span>
-                  {/* Bar track */}
-                  <div className="flex-1 relative" style={{ height: 10, borderRadius: 5, background: "var(--surface-sunk, #F4F1EC)" }}>
-                    {hasData && score !== null && score > 0 ? (
-                      <div
-                        className="absolute inset-y-0 left-0 transition-all duration-500"
-                        style={{ width: `${fillPct}%`, borderRadius: 5, backgroundColor: colour }}
-                      />
-                    ) : null}
-                  </div>
-                  {/* Score */}
-                  <span
-                    className="shrink-0 tabular-nums"
-                    style={{ width: 36, textAlign: "right", fontSize: "var(--fs-label, 13px)", fontWeight: 600, color: hasData && score ? colour : "var(--ink-faint, #8E8893)" }}
-                  >
-                    {hasData && score !== null && score > 0 ? score.toFixed(1) : "—"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {!hasData && (
-            <div className="mt-4 flex items-center gap-1.5" style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--ink-faint, #8E8893)" }}>
-              <Lock className="w-3.5 h-3.5" />
-              <span>Domain scores unlock after your assessment</span>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* ── 6 Domain tiles (Lumi style) ── */}
       <div>
@@ -1168,6 +1365,10 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             const fillPct = score !== null && score > 0 ? Math.round((score / 10) * 100) : 0;
             const tileHasData = hasData && (score ?? 0) > 0;
             const label = DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS];
+            // G1: Per-domain last-assessed date — find the most recent assessment that had this domain
+            const lastDomainDate = data?.assessmentHistory
+              .filter(h => h.domainScores && (h.domainScores as any)[key] != null && (h.domainScores as any)[key] > 0)
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.date ?? null;
             return (
               <button
                 key={key}
@@ -1226,6 +1427,16 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                     />
                   ) : null}
                 </div>
+
+                {/* G1: Per-domain as-of date */}
+                {tileHasData && lastDomainDate && (
+                  <span
+                    className="block mt-2"
+                    style={{ fontSize: 10, color: "var(--ink-faint, #8E8893)" }}
+                  >
+                    {new Date(lastDomainDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </span>
+                )}
               </button>
             );
           })}

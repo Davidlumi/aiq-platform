@@ -5433,3 +5433,16 @@ test
 - [x] Rebuild domain tiles — coloured top border, score number, rating chip, progress bar
 - [x] Update page header typography to Plus Jakarta Sans / Lumi ink colours
 - [x] Gauge card — clean layout with rating badge in header, score inside arc
+
+## Hero Card Rebuild + Gamification (Session)
+- [x] GATE B0: bandOf() and gapToNext() functions in shared/brand.ts, re-exported via client/src/lib/domains.ts
+- [x] GATE B1: Deep-indigo hero level card (level badge, composite score, gap-to-next progress bar, 6 domain rows, focus-next nudge, reassess button)
+- [x] GATE B2: Focus-next logic fixed to use SMALLEST gap to next band (not lowest raw score), with tiebreak by higher current score (D7b spec)
+- [x] GATE B3: Removed ReassessmentCountdown widget (hero has inline reassess button), removed old CTA banner (hero has no-data CTA)
+- [x] GATE B3: Removed old two-column gauge + domain breakdown bar-chart (replaced by hero card)
+- [x] GATE B4 G1: Per-domain last-assessed dates shown on each domain tile
+- [x] GATE C1: Band-up moment banner (detects band change between last two assessments, shows tasteful coloured banner with dismiss)
+- [x] GATE C1: Learning streak widget (shows current streak + modules completed + next milestone)
+- [x] getLevelColour() updated with distinct colours: Emerging=red, Developing=amber, Proficient=blue, Advanced=violet, Expert=emerald
+- [x] TypeScript: 0 errors
+- [x] Tests: 89/89 test files, 2110 tests passing

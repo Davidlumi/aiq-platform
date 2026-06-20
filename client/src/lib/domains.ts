@@ -21,6 +21,8 @@ export {
   scoreColours,
   READINESS_COLOURS,
   READINESS_LABELS,
+  bandOf,
+  gapToNext,
 } from "@shared/brand";
 
 export type { DomainKey as CapabilityKey, LevelKey } from "@shared/brand";
