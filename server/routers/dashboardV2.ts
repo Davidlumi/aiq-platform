@@ -264,24 +264,38 @@ const individualRouter = router({
           .where(eq(assessmentScores.sessionId, sess.id))
           .limit(1);
         if (score[0]) {
-          const overall = parseFloat(String(score[0].overallScore));
+          // Normalise to 0–10 scale regardless of how the score was stored.
+          // Legacy real-user scores are stored on 0–100; seeded/new scores on 0–10.
+          const rawOverall = parseFloat(String(score[0].overallScore));
+          const overall = rawOverall > 10 ? parseFloat((rawOverall / 10).toFixed(2)) : parseFloat(rawOverall.toFixed(2));
           const state = extractReadinessState(score[0].scoreBreakdownJson);
           const rating = stateToRating(state);
-          const histDomainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
+          const rawDomainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
+          // Normalise domain scores to 0–10 if they appear to be on 0–100 scale
+          const histDomainScores = rawDomainScores
+            ? Object.fromEntries(
+                Object.entries(rawDomainScores).map(([k, v]) => [k, v > 10 ? parseFloat((v / 10).toFixed(2)) : v])
+              ) as Record<DomainKey, number>
+            : null;
           assessmentHistory.push({
             sessionId: sess.id,
             date: sess.completedAt?.toISOString() ?? new Date().toISOString(),
-            overallScore: parseFloat(overall.toFixed(2)),
+            overallScore: overall,
             rating,
             domainScores: histDomainScores,
           });
           // Keep latest
           latestBreakdown = score[0].scoreBreakdownJson;
           latestSignalScores = score[0].signalScoresJson;
-          latestOverallScore = parseFloat(overall.toFixed(2));
+          latestOverallScore = overall;
           latestRating = rating;
           latestConfidence = extractCompositeConfidence(score[0].scoreBreakdownJson);
-          domainScores = extractCapabilityScores(score[0].scoreBreakdownJson);
+          const rawDs = extractCapabilityScores(score[0].scoreBreakdownJson);
+          domainScores = rawDs
+            ? Object.fromEntries(
+                Object.entries(rawDs).map(([k, v]) => [k, v > 10 ? parseFloat((v / 10).toFixed(2)) : v])
+              ) as Record<DomainKey, number>
+            : null;
           domainRatings = extractDomainRatings(score[0].scoreBreakdownJson);
         }
       }
@@ -300,8 +314,9 @@ const individualRouter = router({
       const domains = DOMAIN_KEYS.map(key => {
         const score = domainScores?.[key] ?? 0;
         const detail = domainRatings?.[key];
+        // Scores are stored on a 0–10 scale; thresholds mirror the overall readiness logic
         const domainRating = detail ? stateToRating(
-          score >= 75 ? "safe" : score >= 55 ? "at_risk" : score >= 40 ? "unsafe" : "foundation_gap"
+          score >= 7.5 ? "safe" : score >= 5.5 ? "at_risk" : score >= 4.0 ? "unsafe" : "foundation_gap"
         ) : "insufficient_evidence";
         return {
           key,

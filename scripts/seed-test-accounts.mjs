@@ -77,12 +77,41 @@ async function insertAssessmentSession(id, userId, tenantId, state, completedAt)
 }
 
 async function insertAssessmentScore(sessionId, overallScore, domainScores) {
+  // Build the nested breakdown structure expected by dashboardV2.ts:
+  //   extractCapabilityScores() reads breakdown.capabilityScores[key].score
+  //   extractReadinessState()   reads breakdown.readiness.state
+  const capabilityScores = {};
+  for (const [key, score] of Object.entries(domainScores)) {
+    const band = score >= 7.5 ? "good" : score >= 5.0 ? "developing" : "needs_work";
+    capabilityScores[key] = { score, band, signalCount: 8 };
+  }
+  // Derive readiness state from overall score
+  const readinessState = overallScore >= 8.0 ? "safe"
+    : overallScore >= 6.5 ? "at_risk"
+    : overallScore >= 5.0 ? "unsafe"
+    : "foundation_gap";
+  const readinessLabels = {
+    safe: "AI Ready",
+    at_risk: "Developing",
+    unsafe: "Not Yet Ready",
+    foundation_gap: "Foundation Gap",
+  };
+  const breakdown = {
+    capabilityScores,
+    readiness: {
+      state: readinessState,
+      label: readinessLabels[readinessState],
+      participantDescription: `Your assessment shows ${readinessLabels[readinessState]} capability across the 6 AI domains.`,
+      compositeConfidence: 0.85,
+    },
+    totalAnswers: 45,
+  };
   await conn.execute(
     `INSERT INTO assessment_scores
        (id, session_id, overall_score, score_breakdown_json, scoring_config_version)
      VALUES (?,?,?,?,1)
-     ON DUPLICATE KEY UPDATE overall_score=VALUES(overall_score)`,
-    [nanoid(), sessionId, overallScore, JSON.stringify(domainScores)]
+     ON DUPLICATE KEY UPDATE overall_score=VALUES(overall_score), score_breakdown_json=VALUES(score_breakdown_json)`,
+    [nanoid(), sessionId, overallScore, JSON.stringify(breakdown)]
   );
 }
 

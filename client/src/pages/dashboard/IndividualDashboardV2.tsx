@@ -499,8 +499,8 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
         </div>
         <div className="text-right flex-shrink-0">
           <div className="flex items-baseline gap-1 justify-end">
-            <span className="text-2xl font-bold text-gray-900">{latest.overallScore}</span>
-            <span className="text-sm text-gray-400">/100</span>
+            <span className="text-2xl font-bold text-gray-900">{latest.overallScore.toFixed(1)}</span>
+            <span className="text-sm text-gray-400">/10</span>
           </div>
           {sorted.length > 1 && (
             <div className="flex items-center gap-1 justify-end mt-0.5">
@@ -515,7 +515,7 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
                 className="text-sm font-semibold"
                 style={{ color: isImproving ? "#10B981" : isFlat ? "#9CA3AF" : "#EF4444" }}
               >
-                {delta > 0 ? "+" : ""}{Math.round(delta)} pts
+                {delta > 0 ? "+" : ""}{delta.toFixed(1)} pts
               </span>
               <span className="text-xs text-gray-400">since first</span>
             </div>
@@ -574,7 +574,7 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
                           <span className="text-xs text-gray-700 font-medium truncate">{label}</span>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                          <span className="text-xs text-gray-500">{latestScore}/100</span>
+                          <span className="text-xs text-gray-500">{latestScore.toFixed(1)}/10</span>
                           <span className="text-xs font-bold" style={{ color: textColour }}>
                             {d > 0 ? "+" : ""}{d === 0 ? "\u2014" : `${d} pts`}
                           </span>
@@ -587,11 +587,11 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
                       <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
                         <div className="text-center">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wide">Previous</p>
-                          <p className="text-sm font-bold text-gray-700">{previousScore}<span className="text-[10px] font-normal text-gray-400">/100</span></p>
+                          <p className="text-sm font-bold text-gray-700">{previousScore.toFixed(1)}<span className="text-[10px] font-normal text-gray-400">/10</span></p>
                         </div>
                         <div className="text-center">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wide">Current</p>
-                          <p className="text-sm font-bold text-gray-700">{latestScore}<span className="text-[10px] font-normal text-gray-400">/100</span></p>
+                          <p className="text-sm font-bold text-gray-700">{latestScore.toFixed(1)}<span className="text-[10px] font-normal text-gray-400">/10</span></p>
                         </div>
                         <div className="text-center">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wide">Change</p>
@@ -626,7 +626,7 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-700">{item.overallScore}/100</span>
+                <span className="font-semibold text-gray-700">{item.overallScore.toFixed(1)}/10</span>
                 <span className="text-gray-400 hidden sm:inline">{RATING_LABELS[item.rating] ?? item.rating}</span>
               </div>
             </div>
@@ -708,8 +708,9 @@ function DomainDetailModal({
   const domainDesc = domainKey ? DOMAIN_DESCRIPTIONS[domainKey as keyof typeof DOMAIN_DESCRIPTIONS] ?? "" : "";
   const DomainIcon = domainKey ? DOMAIN_ICONS[DOMAIN_ICON_NAMES[domainKey as keyof typeof DOMAIN_ICON_NAMES] ?? ""] ?? Sparkles : Sparkles;
   const colour = domainKey ? DOMAIN_COLOURS[domainKey as keyof typeof DOMAIN_COLOURS] ?? "#6366f1" : "#6366f1";
-  const levelLabel = domainScore >= 75 ? "Strong" : domainScore >= 55 ? "Capable" : domainScore >= 40 ? "Developing" : "Foundation";
-  const levelColour = domainScore >= 75 ? "#22c55e" : domainScore >= 55 ? "#3b82f6" : domainScore >= 40 ? "#f59e0b" : "#ef4444";
+  // domainScore is 0–10 scale
+  const levelLabel = domainScore >= 7.5 ? "Strong" : domainScore >= 5.5 ? "Capable" : domainScore >= 4.0 ? "Developing" : "Foundation";
+  const levelColour = domainScore >= 7.5 ? "#22c55e" : domainScore >= 5.5 ? "#3b82f6" : domainScore >= 4.0 ? "#f59e0b" : "#ef4444";
 
   return (
     <Dialog open={!!domainKey} onOpenChange={open => !open && onClose()}>
@@ -735,14 +736,14 @@ function DomainDetailModal({
           {/* Score row */}
           <div className="flex items-center gap-3 mt-4">
             <div className="flex items-center gap-1.5">
-              <span className="text-2xl font-bold" style={{ color: levelColour }}>{domainScore}</span>
-              <span className="text-sm text-gray-400">/100</span>
+              <span className="text-2xl font-bold" style={{ color: levelColour }}>{domainScore.toFixed(1)}</span>
+              <span className="text-sm text-gray-400">/10</span>
             </div>
             <Badge variant="outline" className="text-xs font-medium" style={{ color: levelColour, borderColor: `${levelColour}40`, background: `${levelColour}10` }}>
               {levelLabel}
             </Badge>
             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${domainScore}%`, background: levelColour }} />
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(domainScore / 10) * 100}%`, background: levelColour }} />
             </div>
           </div>
         </div>
@@ -873,8 +874,8 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       const topScore = top.score ?? 0;
       result.push({
         label: top.name,
-        description: `Your strongest capability area — score ${Math.round(topScore)}/100`,
-        direction: topScore >= 65 ? "above" : topScore >= 50 ? "on_target" : "below",
+        description: `Your strongest capability area — score ${topScore.toFixed(1)}/10`,
+        direction: topScore >= 6.5 ? "above" : topScore >= 5.0 ? "on_target" : "below",
       });
     }
 
@@ -883,8 +884,8 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       const botScore = bottom.score ?? 0;
       result.push({
         label: bottom.name,
-        description: `Biggest development opportunity — score ${Math.round(botScore)}/100`,
-        direction: botScore < 50 ? "below" : botScore < 65 ? "on_target" : "above",
+        description: `Biggest development opportunity — score ${botScore.toFixed(1)}/10`,
+        direction: botScore < 5.0 ? "below" : botScore < 6.5 ? "on_target" : "above",
       });
     }
 

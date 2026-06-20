@@ -5404,3 +5404,12 @@ test
 - [x] AssessmentSessionPage: detect first completion, show interstitial for free users, navigate to results on dismiss
 - [x] AssessmentResultsPage: PRO upsell card (dark gradient, feature list, Stripe CTA) between cross-cutting and dev plan sections
 - [x] UpgradeModal wired from both the interstitial and the results page upsell card
+
+## Bug Fixes — Dashboard Blank Cards (Jun 20 2026)
+
+- [x] Fix domain card rating thresholds in dashboardV2.ts from 0–100 scale to 0–10 scale (>= 7.5 safe, >= 5.5 at_risk, >= 4.0 unsafe)
+- [x] Fix ImprovementTracker /100 display labels to /10 throughout (overallScore, domainScores, history list)
+- [x] Fix DomainDetailModal level thresholds from 0–100 to 0–10 scale and progress bar width calculation
+- [x] Fix signal descriptions to use /10 scale and correct direction thresholds
+- [x] Add score normalization in dashboardV2.ts individual.main: legacy 0–100 DB scores divided by 10 before returning to frontend
+- [x] Fix domain score normalization in assessmentHistory and domainScores for legacy real-user data
