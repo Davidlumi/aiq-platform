@@ -5423,3 +5423,13 @@ test
 - [x] Replace IBM Plex Sans font with Inter (body) + Sora (headings) across all CSS type scale classes
 - [x] Remove IBM Plex Sans from index.html font loading, keep Inter/Sora/JetBrains Mono only
 - [x] Update --font-sans CSS variable to Inter, add --font-display variable for Sora
+
+## Visual Parity Brief (Lumi Design System)
+- [x] Install Plus Jakarta Sans font (heading face)
+- [x] Install Lumi token block into index.css (typefaces, type scale, spacing, radii, colours, shadows)
+- [x] Update AppShell layout — 224px sidebar (w-56), 1320px max-width content, warm paper background
+- [x] Update DashboardCard to Lumi card geometry (24px padding, 16px radius, warm border, shadow-card)
+- [x] Replace Signals panel with Domain breakdown bar chart (Lumi right-panel style)
+- [x] Rebuild domain tiles — coloured top border, score number, rating chip, progress bar
+- [x] Update page header typography to Plus Jakarta Sans / Lumi ink colours
+- [x] Gauge card — clean layout with rating badge in header, score inside arc

@@ -922,17 +922,17 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-h2, 22px)", fontWeight: 700, color: "var(--ink, #211B26)", lineHeight: 1.25 }}>
             {hasData ? `${firstName}'s capability profile` : `Welcome, ${firstName}`}
           </h1>
           {data?.lastAssessmentDate ? (
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--ink-faint, #8E8893)", marginTop: 4 }}>
               Last assessed {new Date(data.lastAssessmentDate).toLocaleDateString("en-GB", {
                 day: "numeric", month: "long", year: "numeric",
               })}
             </p>
           ) : (
-            <p className="text-xs text-gray-400 mt-0.5">No assessment completed yet</p>
+            <p style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--ink-faint, #8E8893)", marginTop: 4 }}>No assessment completed yet</p>
           )}
         </div>
         {hasData && (
@@ -974,45 +974,38 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         </div>
       )}
 
-      {/* ── Main two-column row: Gauge + Signals ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      {/* ── Main two-column row: Gauge + Domain breakdown ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Where you stand */}
+        {/* WHERE YOU STAND — clean Lumi gauge card */}
         <div
-          className="lg:col-span-2 rounded-xl bg-white border border-gray-100 p-5 flex flex-col gap-4"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+          className="lg:col-span-2 bg-white flex flex-col"
+          style={{
+            borderRadius: "var(--lumi-radius, 16px)",
+            border: "1px solid var(--lumi-border, #EAE5DE)",
+            boxShadow: "var(--shadow-card)",
+            padding: "var(--card-pad, 24px)",
+          }}
         >
-          <SectionHeader
-            icon={
-              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-              </div>
-            }
-            title="Where you stand"
-          />
-
-          {/* Peakon-style score hero */}
-          <div className="flex flex-col items-center gap-3 py-2">
-            <PeakonScoreCell
-              score={hasData && data?.overallScore ? data.overallScore * 10 : null}
-              size="xl"
-              className="!w-28 !h-20 !text-4xl !rounded-2xl"
-            />
-            {hasData && data?.overallRating ? (
-              <RatingBadge rating={data.overallRating} size="lg" />
-            ) : (
-              <span className="text-sm text-gray-400">Complete assessment to see your score</span>
+          {/* Card header */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-card-title, 16px)", fontWeight: 600, color: "var(--ink, #211B26)" }}>
+              Where you stand
+            </h2>
+            {hasData && data?.overallRating && (
+              <RatingBadge rating={data.overallRating} size="md" />
             )}
           </div>
 
-          {/* Gauge — still useful for visual context */}
+          {/* Gauge — score number rendered inside the arc */}
           <div className="flex-1 flex flex-col items-center justify-center">
             <CapabilityGauge score={data?.overallScore ?? 0} empty={!hasData} />
           </div>
 
+          {/* Footer: assessment count */}
           {hasData && data && (
-            <div className="pt-3 border-t border-gray-100">
-              <div className="flex items-center justify-between text-xs text-gray-400">
+            <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--lumi-border, #EAE5DE)" }}>
+              <div className="flex items-center justify-between" style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--ink-faint, #8E8893)" }}>
                 <span>{data.assessmentHistory.length} assessment{data.assessmentHistory.length !== 1 ? "s" : ""} completed</span>
                 {data.assessmentHistory.length >= 2 && (
                   <ScoreSparkline history={data.assessmentHistory} />
@@ -1020,102 +1013,167 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               </div>
             </div>
           )}
+
+          {!hasData && (
+            <div className="mt-4">
+              <Link href="/assessment">
+                <Button size="sm" className="w-full gap-1.5">
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  Take assessment
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* Signals */}
+        {/* DOMAIN BREAKDOWN — Lumi-style bar chart card */}
         <div
-          className="lg:col-span-3 rounded-xl bg-white border border-gray-100 p-5 flex flex-col"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+          className="lg:col-span-3 bg-white flex flex-col"
+          style={{
+            borderRadius: "var(--lumi-radius, 16px)",
+            border: "1px solid var(--lumi-border, #EAE5DE)",
+            boxShadow: "var(--shadow-card)",
+            padding: "var(--card-pad, 24px)",
+          }}
         >
-          <SectionHeader
-            icon={<span className="text-base leading-none">🚩</span>}
-            title={`Signals · ${hasData ? signals.length : 0}`}
-            subtitle="flags worth a look — we flag, you decide"
-            action={
-              hasData && signals.length > 0 ? (
-                <Link href="/assessment">
-                  <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 font-medium">
-                    Full results <ArrowRight className="w-3 h-3" />
-                  </button>
-                </Link>
-              ) : undefined
-            }
-          />
+          <div className="flex items-center justify-between mb-5">
+            <h2 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-card-title, 16px)", fontWeight: 600, color: "var(--ink, #211B26)" }}>
+              Domain breakdown
+            </h2>
+            {hasData && (
+              <Link href="/assessment">
+                <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                  Full results <ArrowRight className="w-3 h-3" />
+                </button>
+              </Link>
+            )}
+          </div>
 
-          {hasData && signals.length > 0 ? (
-            <div className="flex-1 space-y-2.5">
-              {signals.map((s, i) => (
-                <SignalRow key={i} signal={s} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col gap-2.5">
-              {/* Blurred placeholder rows */}
-              {[{ w: "78%", w2: "55%" }, { w: "62%", w2: "45%" }, { w: "70%", w2: "50%" }].map((row, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-100 bg-gray-50"
+          <div className="flex-1 flex flex-col justify-center gap-3">
+            {DOMAIN_KEYS.map(key => {
+              const domain = data?.domains.find(d => d.key === key);
+              const colour = DOMAIN_COLOURS[key as keyof typeof DOMAIN_COLOURS] ?? "#3B82F6";
+              const score = domain?.score ?? null;
+              const fillPct = score !== null && score > 0 ? Math.round((score / 10) * 100) : 0;
+              const label = DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS];
+              return (
+                <button
+                  key={key}
+                  className="flex items-center gap-3 text-left group hover:opacity-90 transition-opacity"
+                  onClick={() => {
+                    if (hasData && domain) setSelectedDomain({ key, score: domain.score ?? 0 });
+                    else navigate("/assessment");
+                  }}
                 >
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 rounded bg-gray-200" style={{ width: row.w, filter: "blur(3px)" }} />
-                    <div className="h-2.5 rounded bg-gray-100" style={{ width: row.w2, filter: "blur(3px)" }} />
+                  {/* Domain name */}
+                  <span
+                    className="shrink-0 text-right"
+                    style={{ width: 140, fontSize: "var(--fs-label, 13px)", color: "var(--ink-soft, #5B5560)", fontWeight: 500 }}
+                  >
+                    {label}
+                  </span>
+                  {/* Bar track */}
+                  <div className="flex-1 relative" style={{ height: 10, borderRadius: 5, background: "var(--surface-sunk, #F4F1EC)" }}>
+                    {hasData && score !== null && score > 0 ? (
+                      <div
+                        className="absolute inset-y-0 left-0 transition-all duration-500"
+                        style={{ width: `${fillPct}%`, borderRadius: 5, backgroundColor: colour }}
+                      />
+                    ) : null}
                   </div>
-                  <div className="h-5 w-20 rounded-full bg-gray-200" style={{ filter: "blur(3px)" }} />
-                </div>
-              ))}
-              <div className="flex flex-col items-center gap-2 pt-2">
-                <div className="flex items-center gap-1.5 text-gray-400">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">Signals unlock with your assessment</span>
-                </div>
-                <Link href="/assessment">
-                  <Button variant="outline" size="sm" className="text-xs gap-1.5 mt-1">
-                    <ClipboardList className="w-3.5 h-3.5" />
-                    Take assessment
-                  </Button>
-                </Link>
-              </div>
+                  {/* Score */}
+                  <span
+                    className="shrink-0 tabular-nums"
+                    style={{ width: 36, textAlign: "right", fontSize: "var(--fs-label, 13px)", fontWeight: 600, color: hasData && score ? colour : "var(--ink-faint, #8E8893)" }}
+                  >
+                    {hasData && score !== null && score > 0 ? score.toFixed(1) : "—"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {!hasData && (
+            <div className="mt-4 flex items-center gap-1.5" style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--ink-faint, #8E8893)" }}>
+              <Lock className="w-3.5 h-3.5" />
+              <span>Domain scores unlock after your assessment</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── 6 Domain cards ── */}
+      {/* ── 6 Domain tiles (Lumi style) ── */}
       <div>
-        <SectionHeader
-          title="Capability domains"
-          action={
-            hasData ? (
-              <Link href="/assessment">
-                <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 font-medium">
-                  Full breakdown <ArrowRight className="w-3 h-3" />
-                </button>
-              </Link>
-            ) : undefined
-          }
-        />
+        <div className="flex items-center justify-between mb-3">
+          <h2 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-label, 13px)", fontWeight: 600, color: "var(--ink-soft, #5B5560)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Capability domains
+          </h2>
+          {hasData && (
+            <Link href="/assessment">
+              <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                Full breakdown <ArrowRight className="w-3 h-3" />
+              </button>
+            </Link>
+          )}
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {DOMAIN_KEYS.map(key => {
             const domain = data?.domains.find(d => d.key === key);
+            const colour = DOMAIN_COLOURS[key as keyof typeof DOMAIN_COLOURS] ?? "#3B82F6";
+            const score = domain?.score ?? null;
+            const fillPct = score !== null && score > 0 ? Math.round((score / 10) * 100) : 0;
+            const tileHasData = hasData && (score ?? 0) > 0;
+            const label = DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ?? DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS];
             return (
-              <DomainCard
+              <button
                 key={key}
-                domainKey={key}
-                name={
-                  DOMAIN_SHORT_LABELS[key as keyof typeof DOMAIN_SHORT_LABELS] ??
-                  DOMAIN_LABELS[key as keyof typeof DOMAIN_LABELS]
-                }
-                score={domain?.score ?? null}
-                rating={domain?.rating}
-                hasData={hasData && (domain?.score ?? 0) > 0}
                 onClick={() => {
-                  if (hasData && domain) {
-                    setSelectedDomain({ key: key, score: domain.score ?? 0 });
-                  } else {
-                    navigate("/assessment");
-                  }
+                  if (tileHasData && domain) setSelectedDomain({ key, score: domain.score ?? 0 });
+                  else navigate("/assessment");
                 }}
-              />
+                className="group text-left bg-white flex flex-col transition-all hover:shadow-md"
+                style={{
+                  borderRadius: "var(--lumi-radius, 16px)",
+                  border: "1px solid var(--lumi-border, #EAE5DE)",
+                  boxShadow: "var(--shadow-card)",
+                  borderTop: `3px solid ${colour}`,
+                  padding: "14px 16px 16px",
+                }}
+              >
+                {/* Domain name */}
+                <span
+                  className="block mb-2 leading-tight"
+                  style={{ fontSize: "var(--fs-caption, 12px)", fontWeight: 600, color: "var(--ink-soft, #5B5560)" }}
+                >
+                  {label}
+                </span>
+
+                {/* Score number */}
+                <span
+                  className="block tabular-nums"
+                  style={{ fontSize: 28, fontWeight: 800, lineHeight: 1, color: tileHasData ? colour : "var(--ink-faint, #8E8893)", fontFamily: "var(--font-mono, JetBrains Mono, monospace)" }}
+                >
+                  {tileHasData && score !== null ? score.toFixed(1) : "—"}
+                </span>
+
+                {/* Rating chip */}
+                <div className="mt-2 mb-3">
+                  {tileHasData && domain?.rating ? (
+                    <RatingBadge rating={domain.rating} size="sm" />
+                  ) : (
+                    <span style={{ fontSize: 10, color: "var(--ink-faint, #8E8893)", fontWeight: 500 }}>No data</span>
+                  )}
+                </div>
+
+                {/* Progress bar */}
+                <div className="w-full" style={{ height: 6, borderRadius: 3, background: "var(--surface-sunk, #F4F1EC)" }}>
+                  {tileHasData && score !== null && score > 0 ? (
+                    <div
+                      style={{ height: "100%", width: `${fillPct}%`, borderRadius: 3, backgroundColor: colour, transition: "width 0.5s ease" }}
+                    />
+                  ) : null}
+                </div>
+              </button>
             );
           })}
         </div>

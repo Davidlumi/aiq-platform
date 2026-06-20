@@ -232,17 +232,31 @@ export function DashboardCard({
   noPadding?: boolean;
 }) {
   return (
-    <div className={cn("bg-card rounded-xl border border-border", className)} style={{ boxShadow: "var(--card-shadow)" }}>  
+    <div
+      className={cn("bg-white border", className)}
+      style={{
+        borderRadius: "var(--lumi-radius, 16px)",
+        borderColor: "var(--lumi-border, #EAE5DE)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
       {(title || action) && (
-        <div className="flex items-center justify-between px-6 pt-5 pb-0">
+        <div className="flex items-center justify-between" style={{ padding: "var(--card-pad, 24px) var(--card-pad, 24px) 0" }}>
           <div>
-            {title && <h3 className="text-sm font-semibold text-foreground">{title}</h3>}
-            {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+            {title && (
+              <h3
+                className="font-semibold text-foreground"
+                style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-card-title, 16px)", lineHeight: "var(--lh-card-title, 22px)" }}
+              >
+                {title}
+              </h3>
+            )}
+            {subtitle && <p className="text-muted-foreground mt-0.5" style={{ fontSize: "var(--fs-caption, 12px)" }}>{subtitle}</p>}
           </div>
           {action}
         </div>
       )}
-      <div className={noPadding ? "" : "px-6 py-5"}>{children}</div>
+      <div style={noPadding ? {} : { padding: "var(--card-pad, 24px)" }}>{children}</div>
     </div>
   );
 }

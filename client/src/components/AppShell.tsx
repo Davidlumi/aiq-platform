@@ -887,7 +887,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <aside
           className={cn(
             "hidden lg:flex flex-col transition-all shrink-0 aiq-sidebar-bg border-r border-sidebar-border",
-            collapsed ? "w-14" : "w-60"
+            collapsed ? "w-14" : "w-56"
           )}
           style={{ transitionDuration: "200ms", transitionTimingFunction: "ease-out" }}
           aria-label="Sidebar"
@@ -918,7 +918,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Main content */}
         <main id="main-content" className="flex-1 min-h-0 overflow-y-auto relative" tabIndex={-1}>
-          <div className="relative z-10 px-6 md:px-10 py-6">
+          <div className="relative z-10 px-6 py-6" style={{ maxWidth: 1320, margin: '0 auto' }}>
             {isTransitioning ? (
               <PageTransitionSkeleton />
             ) : (

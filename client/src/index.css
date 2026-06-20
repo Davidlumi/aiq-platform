@@ -245,11 +245,59 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   RUNTIME CSS CUSTOM PROPERTIES — AiQ v1.4 Light Mode
-   Remapped to AiQ design tokens. Dark mode disabled by product decision.
+   RUNTIME CSS CUSTOM PROPERTIES — AiQ + Lumi Token Block
+   Values extracted verbatim from Lumi's app.css :root block.
+   AiQ keeps: domain hexes, readiness state colours, blue primary.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
+  /* ---- Lumi typefaces ---- */
+  --font-head: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* ---- Lumi type scale (1.25 ratio, named roles) ---- */
+  --fs-display: 30px;    --lh-display: 40px;    --fw-display: 700;
+  --fs-section: 22px;    --lh-section: 30px;    --fw-section: 600;
+  --fs-card-title: 16px; --lh-card-title: 22px; --fw-card-title: 600;
+  --fs-metric: 28px;     --lh-metric: 32px;     --fw-metric: 600;
+  --fs-metric-lg: 40px;  --lh-metric-lg: 44px;
+  --fs-body: 15px;       --lh-body: 22px;
+  --fs-label: 13px;      --lh-label: 18px;
+  --fs-caption: 12px;    --lh-caption: 16px;
+
+  /* ---- Lumi spacing scale (4px base) ---- */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+
+  /* ---- Lumi radii / elevation ---- */
+  --lumi-radius: 16px;
+  --lumi-radius-sm: 10px;
+  --lumi-border: #EAE5DE;
+  --chrome-edge: #D4CCC0;
+  --shadow-card: 0 1px 2px rgba(33,27,38,.04), 0 4px 12px rgba(33,27,38,.05);
+  --shadow-lift: 0 6px 20px rgba(33,27,38,.08);
+  --shadow-pop:  0 8px 28px rgba(33,27,38,.14), 0 2px 6px rgba(33,27,38,.08);
+
+  /* ---- Lumi neutrals (warm paper, warm near-black ink) ---- */
+  --paper: #FBF9F6;  --surface: #FFFFFF;  --surface-sunk: #F4F1EC;
+  --ink: #211B26;    --ink-soft: #5B5560;  --ink-faint: #8E8893;
+
+  /* ---- Lumi primary / structure ---- */
+  --blue: #2048B0;  --blue-deep: #1E3A8A;  --blue-bright: #2E62D9;
+  --blue-tint: #EBF0FA;  --blue-tint-2: #D7E0F4;  --navy: #1F2A44;
+
+  /* ---- Lumi performance verdict colours ---- */
+  --favourable: #2E7D52;   --favourable-tint: #E4F0E9;
+  --neutral-perf: #C77F06; --neutral-perf-tint: #FBEFD9;  --amber-bright: #F5A60A;
+  --unfavourable: #C0392B; --unfavourable-tint: #F7E4E1;
+
+  /* ---- Lumi gauge arc tones ---- */
+  --gauge-below: color-mix(in srgb, var(--amber-bright) 42%, var(--surface));
+  --gauge-on:    color-mix(in srgb, var(--favourable) 40%, var(--surface));
+  --gauge-above: color-mix(in srgb, var(--unfavourable) 38%, var(--surface));
+
+  /* ---- Lumi card geometry ---- */
+  --card-pad: var(--s5);   /* = 24px */
+  --ease: 160ms ease;
   --background:              #F4F5F7;
   --foreground:              #1A1D21;
   --card:                    #FFFFFF;
@@ -709,15 +757,15 @@
   background-size: 24px 24px;
 }
 
-/* Main content area — AiQ light page background */
+/* Main content area — Lumi warm paper background */
 .aiq-main-bg {
-  background: #F4F5F7;   /* --aiq-page */
+  background: var(--paper, #FBF9F6);
 }
 
-/* Sidebar — AiQ light: white with right border */
+/* Sidebar — Lumi: warm white surface */
 .aiq-sidebar-bg {
-  background: #FFFFFF;
-  border-right: 1px solid #E4E7EB;
+  background: var(--surface, #FFFFFF);
+  border-right: 1px solid var(--lumi-border, #EAE5DE);
 }
 
 /* Header bar — AiQ light: white with bottom border (legacy, kept for compat) */
