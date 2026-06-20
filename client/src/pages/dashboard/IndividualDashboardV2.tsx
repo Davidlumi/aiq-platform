@@ -63,8 +63,10 @@ import {
   DOMAIN_LABELS,
   DOMAIN_SHORT_LABELS,
   DOMAIN_COLOURS,
-  DOMAIN_ICON_NAMES,
   DOMAIN_DESCRIPTIONS,
+  DOMAIN_ICON_NAMES,
+  scoreToLevel,
+  LEVEL_LABELS,
 } from "@/lib/domains";
 import {
   Tooltip,
@@ -919,15 +921,6 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
   type DomainSort = "default" | "score_desc" | "score_asc" | "rating";
   const [domainSort, setDomainSort] = useState<DomainSort>("default");
 
-  // Rating order for sorting (best → worst)
-  const RATING_ORDER: Record<string, number> = {
-    ai_ready: 0,
-    developing: 1,
-    not_yet_ready: 2,
-    foundation_gap: 3,
-    insufficient_evidence: 4,
-  };
-
   const sortedDomainKeys = useMemo(() => {
     if (domainSort === "default") return DOMAIN_KEYS;
     return [...DOMAIN_KEYS].sort((a, b) => {
@@ -936,9 +929,10 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       if (domainSort === "score_desc") return (db?.score ?? -1) - (da?.score ?? -1);
       if (domainSort === "score_asc") return (da?.score ?? 11) - (db?.score ?? 11);
       if (domainSort === "rating") {
-        const ra = RATING_ORDER[da?.rating ?? "insufficient_evidence"] ?? 4;
-        const rb = RATING_ORDER[db?.rating ?? "insufficient_evidence"] ?? 4;
-        return ra - rb;
+        // Sort by canonical 5-level band (best → worst)
+        const la = scoreToLevel(da?.score ?? 0);
+        const lb = scoreToLevel(db?.score ?? 0);
+        return lb - la;
       }
       return 0;
     });
@@ -1028,9 +1022,6 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             <h2 style={{ fontFamily: "var(--font-head)", fontSize: "var(--fs-card-title, 16px)", fontWeight: 600, color: "var(--ink, #211B26)" }}>
               Where you stand
             </h2>
-            {hasData && data?.overallRating && (
-              <RatingBadge rating={data.overallRating} size="md" />
-            )}
           </div>
 
           {/* Gauge — score number rendered inside the arc */}
@@ -1079,7 +1070,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             {hasData && (
               <Link href="/assessment">
                 <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                  Full results <ArrowRight className="w-3 h-3" />
+                  Full results →
                 </button>
               </Link>
             )}
@@ -1163,7 +1154,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             {hasData && (
               <Link href="/assessment">
                 <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-                  Full breakdown <ArrowRight className="w-3 h-3" />
+                  Full results →
                 </button>
               </Link>
             )}
@@ -1209,11 +1200,20 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                   {tileHasData && score !== null ? score.toFixed(1) : "—"}
                 </span>
 
-                {/* Rating chip */}
+                {/* Level chip — canonical 5-band from brand.ts */}
                 <div className="mt-2 mb-3">
-                  {tileHasData && domain?.rating ? (
-                    <RatingBadge rating={domain.rating} size="sm" />
-                  ) : (
+                  {tileHasData && score !== null ? (() => {
+                    const lv = scoreToLevel(score);
+                    const lc = getLevelColour(lv);
+                    return (
+                      <span
+                        className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                        style={{ backgroundColor: lc.bg, color: lc.text }}
+                      >
+                        {LEVEL_LABELS[lv]}
+                      </span>
+                    );
+                  })() : (
                     <span style={{ fontSize: 10, color: "var(--ink-faint, #8E8893)", fontWeight: 500 }}>No data</span>
                   )}
                 </div>
@@ -1232,8 +1232,8 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
         </div>
       </div>
 
-      {/* ── Improvement tracker — users with data ── */}
-      {hasData && data && data.assessmentHistory.length >= 1 && (
+      {/* ── Improvement tracker — only when ≥ 2 assessments ── */}
+      {hasData && data && data.assessmentHistory.length >= 2 && (
         <ImprovementTracker history={data.assessmentHistory} />
       )}
 
@@ -1284,7 +1284,10 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               <div className="h-3.5 rounded bg-gray-100 animate-pulse" style={{ width: "85%" }} />
             </div>
           ) : aiSummaryData?.summary ? (
-            <p className="text-sm text-gray-600 leading-relaxed">{aiSummaryData.summary}</p>
+            <div>
+              <p className="text-sm text-gray-600 leading-relaxed">{aiSummaryData.summary}</p>
+              <p className="mt-2 text-[10px] text-gray-400 italic">AI-generated summary · review before sharing</p>
+            </div>
           ) : (
             <p className="text-sm text-gray-400 italic">Profile summary will appear here after your assessment is processed.</p>
           )}
@@ -1324,7 +1327,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               </div>
             ))}
           </div>
-          {data.planSummary.completionPercentage === 0 && (
+          {data.planSummary.completionPercentage === 0 ? (
             !isPro ? (
               <button
                 onClick={() => setUpgradeOpen(true)}
@@ -1338,7 +1341,9 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 Start your first module to begin tracking progress
               </p>
             )
-          )}
+          ) : data.planSummary.completionPercentage >= 100 ? (
+            <p className="text-xs text-emerald-600 mt-3 text-center font-semibold">🎉 All modules completed!</p>
+          ) : null}
         </div>
       )}
 
