@@ -5413,3 +5413,13 @@ test
 - [x] Fix signal descriptions to use /10 scale and correct direction thresholds
 - [x] Add score normalization in dashboardV2.ts individual.main: legacy 0–100 DB scores divided by 10 before returning to frontend
 - [x] Fix domain score normalization in assessmentHistory and domainScores for legacy real-user data
+
+## Design System — Lumi-Style App Shell (Jun 20 2026)
+
+- [x] Replace white top bar with deep indigo/blue coloured top bar (gradient #1E3A8A → #1D4ED8 → #2563EB) matching Lumi reference
+- [x] Add search bar to top bar (white/10 background, placeholder text)
+- [x] Update top bar user avatar and name to white text on indigo background
+- [x] Update sidebar nav active state to blue-50/blue-700/border-l-blue-600 (Lumi-style highlight)
+- [x] Replace IBM Plex Sans font with Inter (body) + Sora (headings) across all CSS type scale classes
+- [x] Remove IBM Plex Sans from index.html font loading, keep Inter/Sora/JetBrains Mono only
+- [x] Update --font-sans CSS variable to Inter, add --font-display variable for Sora
