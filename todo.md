@@ -5459,3 +5459,17 @@ test
 - [x] AppShell: Team Admin link in user dropdown (desktop + mobile)
 - [x] TypeScript: 0 errors
 - [x] Tests: 89/89 files, 2110/2110 passing
+
+## PRO Gating Verification (AiQ Bible)
+- [x] isPro utility hook (useIsPro based on entitlementAssessmentPaid) — already implemented
+- [x] ProGate component — locked overlay with upgrade CTA — already implemented
+- [x] UpgradeModal — full-screen upgrade prompt with pricing — already implemented
+- [x] Gate LearningPlanPage module clicks — already implemented
+- [x] Gate ModulePlayerPage (redirect free users to /billing with upgrade prompt) — already implemented
+- [x] Gate CoachPage (redirect free users to upgrade) — already implemented
+- [x] Gate ModulesPage (redirect free users to upgrade) — already implemented
+- [x] Gate KnowledgeBasePage articles/guides/glossary — already implemented
+- [x] Gate DownloadPdfButton (show upgrade prompt for free users) — already implemented
+- [x] AppShell lock icons on PRO-only nav items — already implemented
+- [x] Light-mode forced (defaultTheme="light", switchable=false) — already implemented
+- [x] CSS variables in :root already use AiQ v1.4 light values
