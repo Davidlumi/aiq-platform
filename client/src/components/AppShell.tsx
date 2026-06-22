@@ -173,8 +173,8 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
       aria-label="AiQ logo"
       role="img"
     >
-      {/* AiQ blue circle — primary brand colour */}
-      <circle cx="100" cy="100" r="90" fill="#1D6FD0" />
+      {/* AiQ coral circle — primary brand colour */}
+      <circle cx="100" cy="100" r="90" fill="#E8472A" />
       <text
         x="100"
         y="122"
@@ -185,11 +185,11 @@ function AiQLogoMark({ size = 36 }: { size?: number }) {
         textAnchor="middle"
         letterSpacing="-3"
       >
-        A<tspan fill="#93C5FD">i</tspan>Q
+        A<tspan fill="#FFCFC7">i</tspan>Q
       </text>
       <path
         d="M 58 140 Q 100 158 142 140"
-        stroke="#93C5FD"
+        stroke="#FFCFC7"
         strokeWidth="6"
         strokeLinecap="round"
         fill="none"
@@ -548,8 +548,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             "w-full flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
                             collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
                             isDomainActive
-                              ? "bg-blue-50 text-blue-700 font-semibold border-l-blue-600"
-                              : "text-muted-foreground hover:bg-slate-100 hover:text-foreground border-l-transparent"
+                              ? "bg-accent text-primary font-semibold border-l-primary"
+                              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground border-l-transparent"
                           )}
                           title={collapsed ? "HR AI Strategy" : undefined}
                           aria-expanded={hrAiStrategyOpen}
@@ -626,8 +626,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                               "flex items-center gap-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer select-none",
                               collapsed ? "justify-center px-2" : "px-3 border-l-[3px]",
                               active
-                                ? "bg-blue-50 text-blue-700 font-semibold border-l-blue-600"
-                                : "text-muted-foreground hover:bg-slate-100 hover:text-foreground border-l-transparent",
+                                ? "bg-accent text-primary font-semibold border-l-primary"
+                                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground border-l-transparent",
                             )}
                             title={collapsed ? item.label : undefined}
                             aria-current={active ? "page" : undefined}
@@ -777,8 +777,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <AiQLogoMark size={collapsed ? 28 : 30} />
             {!collapsed && (
               <div className="flex flex-col leading-none select-none">
-                <span className="text-[10px] font-medium tracking-[0.12em] uppercase text-white/50" style={{ lineHeight: 1, marginBottom: "2px" }}>HR</span>
-                <span className="text-[17px] font-semibold tracking-tight text-white" style={{ lineHeight: 1 }}>Ai<span className="text-[#93C5FD]">Q</span></span>
+                <span className="text-[10px] font-medium tracking-[0.12em] uppercase text-foreground/40" style={{ lineHeight: 1, marginBottom: "2px" }}>HR</span>
+                <span className="text-[17px] font-semibold tracking-tight text-foreground" style={{ lineHeight: 1 }}>Ai<span className="text-primary">Q</span></span>
               </div>
             )}
           </Link>
@@ -787,7 +787,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Sidebar collapse toggle — desktop only */}
         <button
           onClick={() => setCollapsed(v => !v)}
-          className="hidden lg:flex p-1.5 rounded transition-colors text-white/50 hover:text-white hover:bg-white/10"
+          className="hidden lg:flex p-1.5 rounded transition-colors text-foreground/40 hover:text-foreground hover:bg-foreground/8"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -796,7 +796,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden p-2 rounded transition-colors text-white/70 hover:text-white hover:bg-white/10"
+          className="lg:hidden p-2 rounded transition-colors text-foreground/60 hover:text-foreground hover:bg-foreground/8"
           aria-label="Open navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -805,19 +805,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-1.5">
           <AiQLogoMark size={26} />
-          <span className="text-white font-semibold text-sm tracking-tight">HR <span className="text-[#93C5FD]">AiQ</span></span>
+          <span className="text-foreground font-semibold text-sm tracking-tight">HR <span className="text-primary">AiQ</span></span>
         </div>
 
         {/* Search bar */}
         <div className="hidden md:flex flex-1 max-w-md ml-2">
           <div className="relative w-full">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
             <input
               type="text"
               placeholder="Search capabilities, modules, articles…"
-              className="w-full h-9 pl-9 pr-4 rounded-lg bg-white/10 border border-white/20 text-sm text-white placeholder:text-white/50 focus:outline-none focus:bg-white/15 focus:border-white/40 transition-all"
+              className="w-full h-9 pl-9 pr-4 rounded-lg bg-foreground/5 border border-border text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:bg-foreground/8 focus:border-primary/40 transition-all"
             />
           </div>
         </div>
@@ -827,28 +827,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-1">
           {/* Notifications */}
           <button
-            className="p-2 rounded-lg transition-colors text-white/70 hover:text-white hover:bg-white/10"
+            className="p-2 rounded-lg transition-colors text-foreground/50 hover:text-foreground hover:bg-foreground/8"
             aria-label="Notifications"
           >
             <Bell className="w-5 h-5" />
           </button>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-white/20 mx-1" />
+          <div className="w-px h-6 bg-border mx-1" />
 
           {/* User avatar + dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/10"
+                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors hover:bg-foreground/8"
                 aria-label="Account menu"
               >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-white/20 text-white border border-white/30">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-primary/10 text-primary border border-primary/20">
                   {initials}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium leading-none text-white">{displayName}</p>
-                  <p className="text-xs leading-none mt-0.5 text-white/60">{roleLabel}</p>
+                  <p className="text-sm font-medium leading-none text-foreground">{displayName}</p>
+                  <p className="text-xs leading-none mt-0.5 text-muted-foreground">{roleLabel}</p>
                 </div>
               </button>
             </DropdownMenuTrigger>

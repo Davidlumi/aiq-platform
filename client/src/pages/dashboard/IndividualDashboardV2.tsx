@@ -1083,9 +1083,9 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             style={{
               borderRadius: "var(--lumi-radius, 16px)",
               background: hasData
-                ? "linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 60%, #2563EB 100%)"
+                ? "linear-gradient(135deg, #C03520 0%, #E8472A 60%, #F05A3C 100%)"
                 : "linear-gradient(135deg, #374151 0%, #4B5563 100%)",
-              boxShadow: "0 4px 24px rgba(30,58,138,0.25)",
+              boxShadow: "0 4px 24px rgba(232,71,42,0.30)",
               padding: "28px 32px",
               color: "white",
             }}

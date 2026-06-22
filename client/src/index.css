@@ -161,7 +161,7 @@
   --card-shadow-hover:
     0 4px 16px rgb(0 0 0 / 0.10),
     0 1px 4px rgb(0 0 0 / 0.06),
-    0 0 0 1px rgb(29 111 208 / 0.15); /* blue ring on hover */
+    0 0 0 1px rgb(232 71 42 / 0.15); /* blue ring on hover */
 
   /* ── MOTION ── */
   --duration-fast:   150ms;
@@ -191,25 +191,25 @@
   --color-ring:                    var(--ring);
 
   /* ── SHADCN COMPATIBILITY — AiQ v1.4 light values ── */
-  --background:              #F4F5F7;
+  --background:              #FFF8F6;
   --foreground:              #1A1D21;
   --card:                    #FFFFFF;
   --card-foreground:         #1A1D21;
   --popover:                 #FFFFFF;
   --popover-foreground:      #1A1D21;
-  --primary:                 #1D6FD0;
+  --primary:                 #E8472A;
   --primary-foreground:      #FFFFFF;
-  --secondary:               #F7F8FA;
+  --secondary:               #FFF4F2;
   --secondary-foreground:    #1A1D21;
-  --muted:                   #F7F8FA;
-  --muted-foreground:        #5B626B;
-  --accent:                  #E6F1FB;
-  --accent-foreground:       #0C447C;
+  --muted:                   #FFF4F2;
+  --muted-foreground:        #6B5E5B;
+  --accent:                  #FFF0EE;
+  --accent-foreground:       #C03520;
   --destructive:             #A32D2D;
   --destructive-foreground:  #FFFFFF;
-  --border:                  #E4E7EB;
-  --input:                   #E4E7EB;
-  --ring:                    #1D6FD0;
+  --border:                  #EDE8E6;
+  --input:                   #EDE8E6;
+  --ring:                    #E8472A;
 
   /* ── CHART COLOURS — AiQ v1.4 domain palette ── */
   --color-chart-1: #3B82F6;   /* --aiq-ai */
@@ -236,12 +236,12 @@
   --color-sidebar-ring:             var(--sidebar-ring);
   --sidebar:                  #FFFFFF;
   --sidebar-foreground:       #1A1D21;
-  --sidebar-primary:          #1D6FD0;
+  --sidebar-primary:          #E8472A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent:           #E6F1FB;
-  --sidebar-accent-foreground: #0C447C;
-  --sidebar-border:           #E4E7EB;
-  --sidebar-ring:             #1D6FD0;
+  --sidebar-accent:           #FFF0EE;
+  --sidebar-accent-foreground: #C03520;
+  --sidebar-border:           #EDE8E6;
+  --sidebar-ring:             #E8472A;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -278,11 +278,11 @@
   --shadow-pop:  0 8px 28px rgba(33,27,38,.14), 0 2px 6px rgba(33,27,38,.08);
 
   /* ---- Lumi neutrals (warm paper, warm near-black ink) ---- */
-  --paper: #FBF9F6;  --surface: #FFFFFF;  --surface-sunk: #F4F1EC;
+  --paper: #FFF8F6;  --surface: #FFFFFF;  --surface-sunk: #F4F1EC;
   --ink: #211B26;    --ink-soft: #5B5560;  --ink-faint: #8E8893;
 
   /* ---- Lumi primary / structure ---- */
-  --blue: #2048B0;  --blue-deep: #1E3A8A;  --blue-bright: #2E62D9;
+  --blue: #2048B0;  --blue-deep: #FFFFFF;  --blue-bright: #2E62D9;
   --blue-tint: #EBF0FA;  --blue-tint-2: #D7E0F4;  --navy: #1F2A44;
 
   /* ---- Lumi performance verdict colours ---- */
@@ -298,25 +298,25 @@
   /* ---- Lumi card geometry ---- */
   --card-pad: var(--s5);   /* = 24px */
   --ease: 160ms ease;
-  --background:              #F4F5F7;
+  --background:              #FFF8F6;
   --foreground:              #1A1D21;
   --card:                    #FFFFFF;
   --card-foreground:         #1A1D21;
   --popover:                 #FFFFFF;
   --popover-foreground:      #1A1D21;
-  --primary:                 #1D6FD0;
+  --primary:                 #E8472A;
   --primary-foreground:      #FFFFFF;
-  --secondary:               #F7F8FA;
+  --secondary:               #FFF4F2;
   --secondary-foreground:    #1A1D21;
-  --muted:                   #F7F8FA;
-  --muted-foreground:        #5B626B;
-  --accent:                  #E6F1FB;
-  --accent-foreground:       #0C447C;
+  --muted:                   #FFF4F2;
+  --muted-foreground:        #6B5E5B;
+  --accent:                  #FFF0EE;
+  --accent-foreground:       #C03520;
   --destructive:             #A32D2D;
   --destructive-foreground:  #FFFFFF;
-  --border:                  #E4E7EB;
-  --input:                   #E4E7EB;
-  --ring:                    #1D6FD0;
+  --border:                  #EDE8E6;
+  --input:                   #EDE8E6;
+  --ring:                    #E8472A;
   --radius:                  8px;
   --chart-1:                 #3B82F6;
   --chart-2:                 #F59E0B;
@@ -325,12 +325,12 @@
   --chart-5:                 #F43F5E;
   --sidebar:                 #FFFFFF;
   --sidebar-foreground:      #1A1D21;
-  --sidebar-primary:         #1D6FD0;
+  --sidebar-primary:         #E8472A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent:          #E6F1FB;
-  --sidebar-accent-foreground: #0C447C;
-  --sidebar-border:          #E4E7EB;
-  --sidebar-ring:            #1D6FD0;
+  --sidebar-accent:          #FFF0EE;
+  --sidebar-accent-foreground: #C03520;
+  --sidebar-border:          #EDE8E6;
+  --sidebar-ring:            #E8472A;
 }
 
 /* Score level badge colors — AiQ light mode */
@@ -349,25 +349,25 @@
 
 /* Dark mode — maps to AiQ light (dark mode disabled by product decision) */
 .dark {
-  --background:              #F4F5F7;
+  --background:              #FFF8F6;
   --foreground:              #1A1D21;
   --card:                    #FFFFFF;
   --card-foreground:         #1A1D21;
   --popover:                 #FFFFFF;
   --popover-foreground:      #1A1D21;
-  --primary:                 #1D6FD0;
+  --primary:                 #E8472A;
   --primary-foreground:      #FFFFFF;
-  --secondary:               #F7F8FA;
+  --secondary:               #FFF4F2;
   --secondary-foreground:    #1A1D21;
-  --muted:                   #F7F8FA;
-  --muted-foreground:        #5B626B;
-  --accent:                  #E6F1FB;
-  --accent-foreground:       #0C447C;
+  --muted:                   #FFF4F2;
+  --muted-foreground:        #6B5E5B;
+  --accent:                  #FFF0EE;
+  --accent-foreground:       #C03520;
   --destructive:             #A32D2D;
   --destructive-foreground:  #FFFFFF;
-  --border:                  #E4E7EB;
-  --input:                   #E4E7EB;
-  --ring:                    #1D6FD0;
+  --border:                  #EDE8E6;
+  --input:                   #EDE8E6;
+  --ring:                    #E8472A;
   --chart-1:                 #3B82F6;
   --chart-2:                 #F59E0B;
   --chart-3:                 #10B981;
@@ -375,18 +375,18 @@
   --chart-5:                 #F43F5E;
   --sidebar:                 #FFFFFF;
   --sidebar-foreground:      #1A1D21;
-  --sidebar-primary:         #1D6FD0;
+  --sidebar-primary:         #E8472A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent:          #E6F1FB;
-  --sidebar-accent-foreground: #0C447C;
-  --sidebar-border:          #E4E7EB;
-  --sidebar-ring:            #1D6FD0;
+  --sidebar-accent:          #FFF0EE;
+  --sidebar-accent-foreground: #C03520;
+  --sidebar-border:          #EDE8E6;
+  --sidebar-ring:            #E8472A;
 }
 
 /* Light mode — AiQ v1.4 light design system (blue primary, light grey page) */
 .light {
   /* ── AiQ v1.4 light — page background and foreground ── */
-  --background:              #F4F5F7;
+  --background:              #FFF8F6;
   --foreground:              #1A1D21;
   --card:                    #FFFFFF;
   --card-foreground:         #1A1D21;
@@ -394,27 +394,27 @@
   --popover-foreground:      #1A1D21;
 
   /* ── PRIMARY — AiQ blue ── */
-  --primary:                 #1D6FD0;
+  --primary:                 #E8472A;
   --primary-foreground:      #FFFFFF;
 
   /* ── SECONDARY / MUTED ── */
-  --secondary:               #F7F8FA;
+  --secondary:               #FFF4F2;
   --secondary-foreground:    #1A1D21;
-  --muted:                   #F7F8FA;
-  --muted-foreground:        #5B626B;
+  --muted:                   #FFF4F2;
+  --muted-foreground:        #6B5E5B;
 
   /* ── ACCENT — AiQ blue tint ── */
-  --accent:                  #E6F1FB;
-  --accent-foreground:       #0C447C;
+  --accent:                  #FFF0EE;
+  --accent-foreground:       #C03520;
 
   /* ── SEMANTIC ── */
   --destructive:             #A32D2D;
   --destructive-foreground:  #FFFFFF;
 
   /* ── BORDERS ── */
-  --border:                  #E4E7EB;
-  --input:                   #E4E7EB;
-  --ring:                    #1D6FD0;
+  --border:                  #EDE8E6;
+  --input:                   #EDE8E6;
+  --ring:                    #E8472A;
 
   /* ── CHARTS ── */
   --chart-1:                 #3B82F6;
@@ -426,12 +426,12 @@
   /* ── SIDEBAR — AiQ white sidebar ── */
   --sidebar:                 #FFFFFF;
   --sidebar-foreground:      #1A1D21;
-  --sidebar-primary:         #1D6FD0;
+  --sidebar-primary:         #E8472A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent:          #E6F1FB;
-  --sidebar-accent-foreground: #0C447C;
-  --sidebar-border:          #E4E7EB;
-  --sidebar-ring:            #1D6FD0;
+  --sidebar-accent:          #FFF0EE;
+  --sidebar-accent-foreground: #C03520;
+  --sidebar-border:          #EDE8E6;
+  --sidebar-ring:            #E8472A;
   /* Score level badge colors — light mode: vibrant but soft, readable on white */
   --score-ai-ready-bg:       #d1fae5;   /* emerald-100 */
   --score-ai-ready-text:     #047857;   /* emerald-700 — strong contrast */
@@ -551,7 +551,7 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); border-radius: 3px; }
 
   :focus-visible {
-    outline: 2px solid #1D6FD0;
+    outline: 2px solid #E8472A;
     outline-offset: 2px;
   }
 }
@@ -617,18 +617,18 @@
 
   /* Nav item — AiQ light tokens */
   .nav-item {
-    color: #5B626B;   /* --aiq-text-muted */
+    color: #6B5E5B;   /* --aiq-text-muted */
   }
   .nav-item:hover {
-    background-color: #E6F1FB;   /* --aiq-accent-fill */
+    background-color: #FFF0EE;   /* --aiq-accent-fill */
     color: #1A1D21;   /* --aiq-text */
   }
   .nav-item-active {
-    background-color: #E6F1FB;
-    color: #1D6FD0;   /* --aiq-accent */
+    background-color: #FFF0EE;
+    color: #E8472A;   /* --aiq-accent */
   }
   .nav-item-active::before {
-    background-color: #1D6FD0;
+    background-color: #E8472A;
   }
 
   .nav-section-label {
@@ -751,7 +751,7 @@
   /* AiQ v1.4: very subtle dot grid — adds depth without noise */
   background-image: radial-gradient(
     circle,
-    rgb(29 111 208 / 0.07) 1px,
+    rgb(232 71 42 / 0.06) 1px,
     transparent 1px
   );
   background-size: 24px 24px;
@@ -759,7 +759,7 @@
 
 /* Main content area — Lumi warm paper background */
 .aiq-main-bg {
-  background: var(--paper, #FBF9F6);
+  background: var(--paper, #FFF8F6);
 }
 
 /* Sidebar — Lumi: warm white surface */
@@ -771,28 +771,28 @@
 /* Header bar — AiQ light: white with bottom border (legacy, kept for compat) */
 .aiq-header-glass {
   background: #FFFFFF;
-  border-bottom: 1px solid #E4E7EB;
+  border-bottom: 1px solid #EDE8E6;
   box-shadow: 0 1px 4px rgba(16,24,40,0.04);
 }
 
 /* Top bar — Lumi-style deep indigo/blue coloured bar */
 .aiq-topbar {
-  background: #1E3A8A;  /* deep indigo-900 */
-  background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 60%, #2563EB 100%);
-  box-shadow: 0 2px 8px rgba(30,58,138,0.25), 0 1px 3px rgba(0,0,0,0.12);
+  background: #FFFFFF;  /* white top bar */
+  border-bottom: 1px solid #EDE8E6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 /* Card — AiQ light: white surface with soft shadow */
 .aiq-card-elevated {
   background: #FFFFFF;
-  border: 1px solid #E4E7EB;
+  border: 1px solid #EDE8E6;
   box-shadow: var(--aiq-shadow-card);
 }
 
 /* Global shadcn Card override — AiQ light elevation */
 .card {
   box-shadow: var(--aiq-shadow-card) !important;
-  border-color: #E4E7EB !important;
+  border-color: #EDE8E6 !important;
 }
 
 /* Ambient glow blob — decorative background element */
@@ -894,7 +894,7 @@ html {
 
 /* Better focus rings for accessibility */
 :focus-visible {
-  outline: 2px solid #1D6FD0;
+  outline: 2px solid #E8472A;
   outline-offset: 2px;
 }
 
@@ -1023,7 +1023,7 @@ tr {
   background: linear-gradient(
     90deg,
     #EDEFF2 0%,
-    #F7F8FA 40%,
+    #FFF4F2 40%,
     #EDEFF2 80%
   );
   background-size: 200% 100%;
@@ -1034,7 +1034,7 @@ tr {
   background: linear-gradient(
     90deg,
     #EDEFF2 0%,
-    #E6F1FB 40%,
+    #FFF0EE 40%,
     #EDEFF2 80%
   );
   background-size: 200% 100%;
@@ -1196,11 +1196,11 @@ tr {
   line-height: 1.4;
   white-space: nowrap;
 }
-.aiq-badge-blue   { background: #E6F1FB; color: #0C447C; border: 1px solid #C5D4E8; }
+.aiq-badge-blue   { background: #FFF0EE; color: #C03520; border: 1px solid #C5D4E8; }
 .aiq-badge-green  { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
 .aiq-badge-amber  { background: #FFFBEB; color: #92400E; border: 1px solid #FCD34D; }
 .aiq-badge-red    { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
-.aiq-badge-grey   { background: #F7F8FA; color: #374151; border: 1px solid #E4E7EB; }
+.aiq-badge-grey   { background: #FFF4F2; color: #374151; border: 1px solid #EDE8E6; }
 .aiq-badge-violet { background: #F5F3FF; color: #4C1D95; border: 1px solid #DDD6FE; }
 
 /* Divider with label */
@@ -1256,7 +1256,7 @@ tr {
 
 /* Selection highlight — AiQ blue */
 ::selection {
-  background: rgb(29 111 208 / 0.15);
+  background: rgb(232 71 42 / 0.15);
   color: var(--foreground);
 }
 /* force redeploy Sat Jun 20 05:47:21 UTC 2026 */
