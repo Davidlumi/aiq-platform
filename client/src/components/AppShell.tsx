@@ -103,8 +103,8 @@ const MANAGER_ROLES = ["manager"];
 const HR_AI_STRATEGY_DOMAINS: DomainChild[] = [];
 
 const NAV_ITEMS: NavItem[] = [
-  // -- Core (always visible) ---------------------------------------------------
-  { label: "Home",             path: "/dashboard",      icon: LayoutDashboard, section: "core" },
+  // -- Core (always visible, no section header) --------------------------------
+  { label: "My Dashboard",     path: "/dashboard",      icon: LayoutDashboard, section: "core" },
   // -- My Development (shown when tenant has assessment entitlement) ------------
   // Entitlement filter applied in component; roles array not used for section visibility.
   { label: "Skills Check",     path: "/assessment",     icon: ClipboardList, section: "mydev" },
