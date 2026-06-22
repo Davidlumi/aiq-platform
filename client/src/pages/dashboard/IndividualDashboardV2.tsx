@@ -32,7 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
-import { IndividualDashboardSkeleton } from "@/components/ui/loading";
+import { IndividualDashboardSkeleton, ShimmerBlock } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import {
   Lock,
@@ -57,6 +57,7 @@ import {
   ExternalLink,
   Star,
   X,
+  Play,
 } from "lucide-react";
 import {
   DOMAIN_KEYS,
@@ -977,6 +978,44 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
     undefined,
     { enabled: hasData, staleTime: 10 * 60 * 1000, retry: false },
   );
+
+  // ── Dev plan priorities ───────────────────────────────────────────────────
+  const planQuery = trpc.adaptiveLearning.getAdaptivePlan.useQuery(
+    {},
+    { enabled: hasData, staleTime: 5 * 60 * 1000 },
+  );
+
+  // Derive top-3 domains below their next band threshold (worst-first)
+  const devPriorities = useMemo(() => {
+    if (!data) return [];
+    return data.domains
+      .filter(d => d.score !== null && d.score > 0)
+      .map(d => {
+        const score = d.score ?? 0;
+        const gap = gapToNext(score);
+        const nextThreshold = gap.isTop ? score + 0.5 : score + gap.gap;
+        return { key: d.key, name: d.name, score, colour: DOMAIN_COLOURS[d.key as keyof typeof DOMAIN_COLOURS] ?? "#6366f1", nextThreshold };
+      })
+      .filter(d => {
+        const gap = gapToNext(d.score);
+        return !gap.isTop; // exclude Expert domains
+      })
+      .sort((a, b) => a.score - b.score) // worst first
+      .slice(0, 3);
+  }, [data]);
+
+  // Group plan items by module.capability (= domain key)
+  const planItems = useMemo(() => {
+    const items = (planQuery.data as any)?.items ?? [];
+    const grouped: Record<string, any[]> = {};
+    for (const item of items) {
+      const cap = item.module?.capability ?? "unknown";
+      if (!grouped[cap]) grouped[cap] = [];
+      grouped[cap].push(item);
+    }
+    return grouped;
+  }, [planQuery.data]);
+
   const firstName = (user as any)?.firstName ?? "there";
 
   if (isLoading) return <IndividualDashboardSkeleton />;
@@ -1510,55 +1549,124 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       )}
 
       {/* ── Development plan — users with data ── */}
-      {hasData && data?.planSummary && (
+      {hasData && (
         <div
           className="rounded-xl bg-white border border-border p-5"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
         >
           <SectionHeader
             icon={<BookOpen className="w-4 h-4 text-primary" />}
-            title="Your development plan"
+            title={`Your development plan · ${devPriorities.length} ${devPriorities.length === 1 ? "priority" : "priorities"}`}
             action={
               <Link href="/learning">
-                <button className="text-xs text-primary hover:text-[#C03520] transition-colors flex items-center gap-1 font-medium">
-                  View plan <ArrowRight className="w-3 h-3" />
+                <button className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-3 py-1.5 rounded-md border border-primary/20 hover:border-primary/40 bg-primary/5">
+                  View full learning plan <ChevronRight className="w-3 h-3" />
                 </button>
               </Link>
             }
           />
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { value: data.planSummary.moduleCount, label: "Modules recommended" },
-              { value: `${Math.round(data.planSummary.totalEstimatedMinutes / 60)}h`, label: "Estimated learning time" },
-              {
-                value: `${Math.round(data.planSummary.completionPercentage)}%`,
-                label: "Plan completed",
-                highlight: data.planSummary.completionPercentage > 0,
-              },
-            ].map(({ value, label, highlight }) => (
-              <div key={label} className="text-center p-3 rounded-lg bg-muted border border-border/60">
-                <p className={`text-2xl font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{label}</p>
-              </div>
-            ))}
-          </div>
-          {data.planSummary.completionPercentage === 0 ? (
-            !isPro ? (
-              <button
-                onClick={() => setUpgradeOpen(true)}
-                className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-[#10B981] hover:text-[#0d9e6e] transition-colors"
-              >
-                <Lock className="w-3 h-3" />
-                Upgrade to PRO to start your first module
-              </button>
-            ) : (
-              <p className="text-xs text-gray-400 mt-3 text-center">
-                Start your first module to begin tracking progress
-              </p>
-            )
-          ) : data.planSummary.completionPercentage >= 100 ? (
-            <p className="text-xs text-emerald-600 mt-3 text-center font-semibold">🎉 All modules completed!</p>
-          ) : null}
+
+          {/* Plan stats row */}
+          {data?.planSummary && (
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                { value: data.planSummary.moduleCount, label: "Modules" },
+                { value: `${Math.round(data.planSummary.totalEstimatedMinutes / 60)}h`, label: "Est. time" },
+                {
+                  value: `${Math.round(data.planSummary.completionPercentage)}%`,
+                  label: "Completed",
+                  highlight: data.planSummary.completionPercentage > 0,
+                },
+              ].map(({ value, label, highlight }) => (
+                <div key={label} className="text-center p-3 rounded-lg bg-muted border border-border/60">
+                  <p className={`text-xl font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Dev priorities list */}
+          {isLoading || planQuery.isLoading ? (
+            <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="flex items-center gap-4 px-5 py-4">
+                  <ShimmerBlock className="w-2 h-2 rounded-full shrink-0" />
+                  <ShimmerBlock className="h-3 w-32" />
+                  <ShimmerBlock className="h-3 w-12" />
+                  <div className="flex-1" />
+                  <ShimmerBlock className="h-3 w-40" />
+                  <ShimmerBlock className="h-7 w-16 rounded-md" />
+                </div>
+              ))}
+            </div>
+          ) : devPriorities.length === 0 ? (
+            <div className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
+              {data?.planSummary?.completionPercentage !== undefined && data.planSummary.completionPercentage >= 100
+                ? <p className="text-emerald-600 font-semibold text-center">🎉 All modules completed!</p>
+                : <p>All your domain scores are at or above target. Consider revisiting in 6 months.</p>
+              }
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
+              {devPriorities.map(domain => {
+                const items = planItems[domain.key] ?? [];
+                const totalMins = items.reduce((sum: number, item: any) => sum + (item.module?.durationMins ?? 0), 0);
+                const timeStr = totalMins >= 60
+                  ? `~${(totalMins / 60).toFixed(1)} hours`
+                  : totalMins > 0 ? `~${totalMins} mins` : null;
+                const firstModule = items[0]?.module;
+                const secondModule = items[1]?.module;
+                const extraCount = Math.max(0, items.length - 2);
+                return (
+                  <div key={domain.key} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
+                    {/* Coloured dot + domain name + score → target */}
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: domain.colour }} />
+                      <span className="text-sm font-medium text-foreground truncate">{domain.name}</span>
+                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                        {domain.score.toFixed(1)} → {domain.nextThreshold.toFixed(1)}
+                      </span>
+                    </div>
+                    {/* Module info */}
+                    <div className="text-xs text-muted-foreground flex-1 min-w-0">
+                      {timeStr && <span className="mr-2">{timeStr}</span>}
+                      {firstModule ? (
+                        <>
+                          <span>{firstModule.title}</span>
+                          {secondModule && <span>, {secondModule.title}</span>}
+                          {extraCount > 0 && <span className="text-foreground/30"> +{extraCount} more</span>}
+                        </>
+                      ) : (
+                        <span className="text-foreground/30 italic">No modules assigned yet</span>
+                      )}
+                    </div>
+                    {/* Start button */}
+                    {firstModule ? (
+                      !isPro ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-3 text-xs shrink-0"
+                          onClick={() => setUpgradeOpen(true)}
+                        >
+                          <Lock className="w-3 h-3 mr-1" /> Unlock
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="h-7 px-3 text-xs bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+                          onClick={() => navigate(`/learning/module/${firstModule.id}`)}
+                        >
+                          <Play className="w-3 h-3 mr-1" /> Start
+                        </Button>
+                      )
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

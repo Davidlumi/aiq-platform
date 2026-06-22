@@ -401,10 +401,10 @@ function Router() {
         <AssessmentRoute component={AssessmentPage} />
       </Route>
       <Route path="/assessment/results">
-        <ProtectedRoute component={AssessmentResultsPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/assessment/:sessionId/results">
-        <ProtectedRoute component={AssessmentResultsPage} />
+        <Redirect to="/dashboard" />
       </Route>
       <Route path="/assessment/:sessionId">
         <ProtectedRoute component={AssessmentSessionPage} />
