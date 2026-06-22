@@ -302,7 +302,7 @@ function DomainCard({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col gap-3 p-4 rounded-xl bg-white border border-[#C8B8B2] hover:border-primary/40 hover:shadow-md transition-all text-left group min-w-0"
+      className="flex flex-col gap-3 p-4 rounded-xl bg-white border border-border hover:border-primary/40 hover:shadow-md transition-all text-left group min-w-0"
       style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
     >
       {/* Icon + name */}
@@ -500,7 +500,7 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
 
   return (
     <div
-      className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+      className="rounded-xl bg-white border border-border p-5"
       style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
     >
       <div className="flex items-start justify-between gap-4 mb-4">
@@ -598,7 +598,7 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
                     <TooltipContent side="top" className="max-w-[260px] p-3 space-y-1.5">
                       <p className="text-xs font-semibold text-gray-900">{fullLabel}</p>
                       <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
-                      <div className="flex items-center gap-3 pt-1 border-t border-[#C8B8B2]/50">
+                      <div className="flex items-center gap-3 pt-1 border-t border-border/50">
                         <div className="text-center">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wide">Previous</p>
                           <p className="text-sm font-bold text-gray-700">{previousScore.toFixed(1)}<span className="text-[10px] font-normal text-gray-400">/10</span></p>
@@ -807,7 +807,7 @@ function DomainDetailModal({
                         {data.resources.map((r, i) => {
                           const RIcon = RESOURCE_TYPE_ICONS[r.type] ?? BookOpen;
                           return (
-                            <div key={i} className="flex gap-3 p-3 rounded-lg bg-[#F0E8E4] border border-[#C8B8B2]/60">
+                            <div key={i} className="flex gap-3 p-3 rounded-lg bg-muted border border-border/60">
                               <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${colour}15` }}>
                                 <RIcon className="w-3.5 h-3.5" style={{ color: colour }} />
                               </div>
@@ -1461,7 +1461,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           ].map(({ title, icon }) => (
             <div
               key={title}
-              className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+              className="rounded-xl bg-white border border-border p-5"
               style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
             >
               <div className="flex items-center justify-between mb-3">
@@ -1485,7 +1485,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       {/* ── AI capability summary ── */}
       {hasData && (
         <div
-          className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+          className="rounded-xl bg-white border border-border p-5"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
         >
           <SectionHeader
@@ -1512,7 +1512,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       {/* ── Development plan — users with data ── */}
       {hasData && data?.planSummary && (
         <div
-          className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+          className="rounded-xl bg-white border border-border p-5"
           style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
         >
           <SectionHeader
@@ -1536,7 +1536,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 highlight: data.planSummary.completionPercentage > 0,
               },
             ].map(({ value, label, highlight }) => (
-              <div key={label} className="text-center p-3 rounded-lg bg-[#F0E8E4] border border-[#C8B8B2]/60">
+              <div key={label} className="text-center p-3 rounded-lg bg-muted border border-border/60">
                 <p className={`text-2xl font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{label}</p>
               </div>

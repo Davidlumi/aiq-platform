@@ -24,9 +24,9 @@
 
 :root {
   /* ---- Surfaces ---- */
-  --aiq-page:            #E8DDD9;  /* app background — warm coral-tinted grey */
+  --aiq-page:            #F5F6F8;  /* app background — Peakon clean light grey */
   --aiq-surface:         #FFFFFF;  /* cards, panels             */
-  --aiq-sunken:          #F0E8E4;  /* wells, metric backgrounds */
+  --aiq-sunken:          #F3F4F6;  /* wells, metric backgrounds */
 
   /* ---- Text (ratio = contrast on white) ---- */
   --aiq-text:            #1A1D21;  /* primary        16.9:1     */
@@ -34,8 +34,8 @@
   --aiq-text-faint:      #8B919A;  /* large/UI only   3.1:1     */
 
   /* ---- Borders ---- */
-  --aiq-border:          #C8B8B2;  /* default hairline — warm visible border */
-  --aiq-border-strong:   #B8A49C;  /* inputs, emphasis          */
+  --aiq-border:          #E5E7EB;  /* default hairline — Peakon subtle grey */
+  --aiq-border-strong:   #D1D5DB;  /* inputs, emphasis          */
 
   /* ---- Accent (single brand accent) ---- */
   --aiq-accent:          #E8472A;  /* coral brand accent        */
