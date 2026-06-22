@@ -289,9 +289,9 @@ function AssessmentRoute({
 }
 
 /**
- * KnowledgeRoute — blocks tenants without any strategy entitlement (Decision 4.7).
- * Knowledge (modules + coach) requires strategyCompany OR strategyReward.
- * Redirects to /dashboard if neither is set.
+ * KnowledgeRoute — allows users with any strategy OR assessment entitlement.
+ * Assessment-only users are let through; page-level ProGate handles the isPro upgrade prompt.
+ * Only users with no entitlements at all are redirected to /dashboard.
  */
 function KnowledgeRoute({
   component: Component,
@@ -314,7 +314,9 @@ function KnowledgeRoute({
     strategyReward?: boolean;
     assessment?: boolean;
   } | undefined;
-  const hasKnowledge = entitlements?.strategyCompany || entitlements?.strategyReward;
+  // Allow through if user has any strategy entitlement OR assessment entitlement.
+  // Assessment-only users reach the page; page-level ProGate handles the isPro upgrade prompt.
+  const hasKnowledge = entitlements?.strategyCompany || entitlements?.strategyReward || entitlements?.assessment;
   if (!hasKnowledge) {
     return <Redirect to="/dashboard" />;
   }

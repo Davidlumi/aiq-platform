@@ -5216,17 +5216,17 @@ test
 
 ## Section I Wiring (Realignment Option 2 — Priority 1)
 
-- [ ] Audit Section I current fields in StrategyDiagnosticPage and backgroundInputs.ts
-- [ ] Wire businessDirection: ChipSelect (single-select, sector-specific options) + KeywordExpand (plain-tone prompt)
-- [ ] Wire peopleChallenges: ChipMultiSelect (chip library) + KeywordExpand (plain-tone prompt)
-- [ ] Wire employeeExperienceState: ChipSelect + KeywordExpand (plain-tone prompt)
-- [ ] Wire geographicDistribution: ChipMultiSelect (multi-select chips)
-- [ ] Keep existing selects (hrMaturity, digitalMaturity, etc.) unchanged
-- [ ] Calibrate all Section I aiDraft prompts to plain, specific, honest tone (no superlatives, no press-release register)
-- [ ] Confirm Regen on owned field flips basis back to ai_drafted (not a provenance lie)
-- [ ] Verify Section I renders on fresh tenant
-- [ ] TypeScript: 0 errors after Section I wiring
-- [ ] Tests: 77/77 still pass after Section I wiring
+- [x] Audit Section I current fields in StrategyDiagnosticPage and backgroundInputs.ts
+- [x] Wire businessDirection: ChipSelect (single-select, sector-specific options) + KeywordExpand (plain-tone prompt)
+- [x] Wire peopleChallenges: ChipMultiSelect (chip library) + KeywordExpand (plain-tone prompt)
+- [x] Wire employeeExperienceState: ChipSelect + KeywordExpand (plain-tone prompt)
+- [x] Wire geographicDistribution: ChipMultiSelect (multi-select chips)
+- [x] Keep existing selects (hrMaturity, digitalMaturity, etc.) unchanged
+- [x] Calibrate all Section I aiDraft prompts to plain, specific, honest tone (no superlatives, no press-release register)
+- [x] Confirm Regen on owned field flips basis back to ai_drafted (not a provenance lie)
+- [x] Verify Section I renders on fresh tenant
+- [x] TypeScript: 0 errors after Section I wiring
+- [x] Tests: 77/77 still pass after Section I wiring
 
 ## Design Pack Adoption — Visual Layer Only (AiQ v1.4 tokens)
 
@@ -5254,20 +5254,20 @@ test
 
 ## Full App AiQ Light Design Migration
 
-- [ ] Remap :root and .dark CSS variables in index.css to AiQ v1.4 light values
-- [ ] Force ThemeProvider defaultTheme="light" and disable dark switching for authenticated app
-- [ ] Restyle AppShell sidebar and header to AiQ light tokens (remove dark navy classes)
-- [ ] Restyle StrategyTopNav to AiQ light tokens
-- [ ] Update SectionPageLayout dark-mode remnants
-- [ ] Update DashboardLayout to AiQ light tokens
-- [ ] TypeScript: 0 errors after migration
-- [ ] Tests: 112/112 still pass after migration
-- [ ] Capture screenshots of key pages after migration
+- [x] Remap :root and .dark CSS variables in index.css to AiQ v1.4 light values
+- [x] Force ThemeProvider defaultTheme="light" and disable dark switching for authenticated app
+- [x] Restyle AppShell sidebar and header to AiQ light tokens (remove dark navy classes)
+- [x] Restyle StrategyTopNav to AiQ light tokens
+- [x] Update SectionPageLayout dark-mode remnants
+- [x] Update DashboardLayout to AiQ light tokens
+- [x] TypeScript: 0 errors after migration
+- [x] Tests: 112/112 still pass after migration
+- [x] Capture screenshots of key pages after migration
 
 ## Entitlement System Build (Founder-Locked 10 Jun 2026)
 
 - [x] Schema: add entitlement_strategy_company, entitlement_strategy_reward, entitlement_assessment columns to tenants
-- [ ] Schema: add "learner" to aiqRole enum
+- [x] Schema: add "learner" to aiqRole enum
 - [x] Schema: run migration SQL via webdev_execute_sql
 - [x] Schema: seed tenant defaults per locked table (Lumi HR, Mifflin, Dunder, Test)
 - [x] Context: load tenant entitlements into tRPC ctx (context.ts)
@@ -5363,17 +5363,17 @@ test
 - [x] TypeScript: 0 errors
 
 ## Freemium Model Implementation
-- [ ] Add isPro utility hook (based on entitlementAssessmentPaid)
-- [ ] Create ProGate component — locked overlay with upgrade CTA
-- [ ] Create UpgradeModal — full-screen upgrade prompt with pricing
-- [ ] Gate LearningPlanPage module clicks (show ProGate, not navigate)
-- [ ] Gate ModulePlayerPage (redirect free users to /billing with upgrade prompt)
-- [ ] Gate CoachPage (redirect free users to upgrade)
-- [ ] Gate ModulesPage (redirect free users to upgrade)
-- [ ] Gate KnowledgeBasePage articles/guides/glossary (redirect free users)
-- [ ] Gate DownloadPdfButton (show upgrade prompt for free users)
-- [ ] Update KnowledgeRoute to allow assessment users but gate on isPro for content
-- [ ] Update AppShell to show lock icon on PRO-only nav items for free users
+- [x] Add isPro utility hook (based on entitlementAssessmentPaid)
+- [x] Create ProGate component — locked overlay with upgrade CTA
+- [x] Create UpgradeModal — full-screen upgrade prompt with pricing
+- [x] Gate LearningPlanPage module clicks (show ProGate, not navigate)
+- [x] Gate ModulePlayerPage (redirect free users to /billing with upgrade prompt)
+- [x] Gate CoachPage (redirect free users to upgrade)
+- [x] Gate ModulesPage (redirect free users to upgrade)
+- [x] Gate KnowledgeBasePage articles/guides/glossary (redirect free users)
+- [x] Gate DownloadPdfButton (show upgrade prompt for free users)
+- [x] Update KnowledgeRoute to allow assessment users but gate on isPro for content
+- [x] Update AppShell to show lock icon on PRO-only nav items for free users
 
 ## Freemium Model (implemented)
 - [x] useIsPro hook reads entitlements.assessmentPaid from auth.me
