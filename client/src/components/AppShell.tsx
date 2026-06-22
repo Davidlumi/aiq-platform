@@ -739,6 +739,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <span>Billing</span>
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/team-admin">
+                <Users2 className="mr-2 h-4 w-4" />
+                <span>Team admin</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
@@ -865,6 +871,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <Link href="/billing">
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Billing</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/team-admin">
+                  <Users2 className="mr-2 h-4 w-4" />
+                  <span>Team admin</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

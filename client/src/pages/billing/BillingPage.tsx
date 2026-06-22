@@ -275,6 +275,57 @@ export default function BillingPage() {
           </span>
         </div>
       )}
+
+      {/* Data deletion */}
+      <DataDeletionSection />
+    </div>
+  );
+}
+
+function DataDeletionSection() {
+  const [confirming, setConfirming] = React.useState(false);
+  const { data: existing, refetch } = trpc.commercial.getDataDeletionStatus.useQuery();
+  const requestDeletion = trpc.commercial.requestDataDeletion.useMutation({
+    onSuccess: () => {
+      toast.success("Data deletion request submitted. We'll process it within 30 days.");
+      setConfirming(false);
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const hasPending = existing?.status === "pending";
+
+  return (
+    <div className="border border-destructive/20 rounded-xl p-5 space-y-3" style={{ background: "rgba(239,68,68,0.03)" }}>
+      <div className="flex items-center gap-2">
+        <Shield className="w-4 h-4 text-destructive" />
+        <p className="text-sm font-semibold text-foreground">Data & privacy</p>
+      </div>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        You can request permanent deletion of all your capability data, assessment history, and learning records.
+        This is separate from cancelling your subscription. Deletion requests are processed within 30 days.
+      </p>
+      {hasPending ? (
+        <div className="flex items-center gap-2 text-xs" style={{ color: "#F59E0B" }}>
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>Deletion request pending — submitted {existing?.requestedAt ? new Date(existing.requestedAt).toLocaleDateString("en-GB") : ""}. We'll email you when complete.</span>
+        </div>
+      ) : confirming ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-destructive">This cannot be undone. All your data will be permanently deleted.</p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="destructive" className="text-xs" onClick={() => requestDeletion.mutate({})} disabled={requestDeletion.isPending}>
+              {requestDeletion.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes, delete my data"}
+            </Button>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => setConfirming(false)}>Cancel</Button>
+          </div>
+        </div>
+      ) : (
+        <Button size="sm" variant="outline" className="text-xs border-destructive/30 text-destructive hover:bg-destructive/5" onClick={() => setConfirming(true)}>
+          Request data deletion
+        </Button>
+      )}
     </div>
   );
 }

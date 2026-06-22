@@ -3214,3 +3214,148 @@ export const processedWebhookEvents = mysqlTable("processed_webhook_events", {
   processedAt: timestamp("processed_at").defaultNow().notNull(),
 });
 export type ProcessedWebhookEvent = typeof processedWebhookEvents.$inferSelect;
+
+// =============================================================================
+// COMMERCIAL LAYER — Team Seats, Journey Ladder, XP Ledger
+// =============================================================================
+
+// --- Team Subscriptions & Seats ----------------------------------------------
+/**
+ * team_subscriptions: one row per team billing account.
+ * CRITICAL PRIVACY RULE: this table stores ONLY billing/seat data.
+ * No capability scores, no domain data, no assessment results ever appear here.
+ *
+ * Volume pricing (AiQ Bible §7):
+ *   3–9 seats:   £42/seat/month
+ *   10–24 seats: £38/seat/month
+ *   25+ seats:   £34/seat/month
+ * When seat count crosses a band boundary, the WHOLE team reprices.
+ */
+export const teamSubscriptions = mysqlTable("team_subscriptions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull().unique(),
+  billingAdminUserId: varchar("billing_admin_user_id", { length: 36 }).notNull(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+  stripeSubscriptionStatus: varchar("stripe_subscription_status", { length: 50 }),
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end"),
+  stripeCancelAtPeriodEnd: boolean("stripe_cancel_at_period_end").default(false),
+  seatCount: int("seat_count").notNull().default(3),
+  priceBandKey: varchar("price_band_key", { length: 30 }),
+  perSeatPencePm: int("per_seat_pence_pm").notNull().default(4200),
+  isActive: boolean("is_active").notNull().default(false),
+  paidAccessGraceUntil: timestamp("paid_access_grace_until"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type TeamSubscription = typeof teamSubscriptions.$inferSelect;
+
+/**
+ * team_seat_members: maps users to a team subscription.
+ * PRIVACY: this table has NO capability columns. Period.
+ */
+export const teamSeatMembers = mysqlTable("team_seat_members", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  teamSubscriptionId: varchar("team_subscription_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }),
+  inviteEmail: varchar("invite_email", { length: 320 }).notNull(),
+  inviteToken: varchar("invite_token", { length: 255 }),
+  inviteExpiresAt: timestamp("invite_expires_at"),
+  status: mysqlEnum("status", ["invited", "active", "removed"]).notNull().default("invited"),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+  removedAt: timestamp("removed_at"),
+}, (t) => ({
+  teamUserIdx: index("idx_tsm_team_user").on(t.teamSubscriptionId, t.userId),
+  inviteEmailIdx: index("idx_tsm_invite_email").on(t.inviteEmail),
+}));
+export type TeamSeatMember = typeof teamSeatMembers.$inferSelect;
+
+/**
+ * user_billing_roles: marks a user as a billing admin for a team.
+ * Billing admins manage seats/billing but CANNOT read capability data.
+ */
+export const userBillingRoles = mysqlTable("user_billing_roles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  teamSubscriptionId: varchar("team_subscription_id", { length: 36 }).notNull(),
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+});
+export type UserBillingRole = typeof userBillingRoles.$inferSelect;
+
+// --- Journey Ladder (15 levels, effort-based) --------------------------------
+/**
+ * AiQ Bible §5: The Journey ladder is SEPARATE from capability scores.
+ * 15 levels earned by effort (completions, streaks, breadth, reassessments).
+ *
+ * Levels: Curious → Explorer → Learner → Starter → User → Practitioner →
+ *         Operator → Skilled → Power User → Specialist → Champion →
+ *         Pacesetter → Leader → Veteran → Trailblazer
+ */
+export const journeyProgress = mysqlTable("journey_progress", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  currentLevel: int("current_level").notNull().default(1),
+  totalXp: int("total_xp").notNull().default(0),
+  levelStartXp: int("level_start_xp").notNull().default(0),
+  domainsEngagedJson: json("domains_engaged_json").$type<string[]>().$default(() => ([])),
+  lastLevelUpAt: timestamp("last_level_up_at"),
+  prevLevel: int("prev_level"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type JourneyProgress = typeof journeyProgress.$inferSelect;
+
+/**
+ * xp_ledger: immutable log of every XP event.
+ * XP event types: module_complete (50), pathway_complete (200),
+ *   assessment_complete (100), domain_reassessment (75), band_up (150),
+ *   streak_week (25), breadth_bonus (100), on_time_reassessment (50)
+ */
+export const xpLedger = mysqlTable("xp_ledger", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  xpAmount: int("xp_amount").notNull(),
+  refId: varchar("ref_id", { length: 36 }),
+  metaJson: json("meta_json").$type<Record<string, unknown>>().$default(() => ({})),
+  idempotencyKey: varchar("idempotency_key", { length: 255 }).unique(),
+  awardedAt: timestamp("awarded_at").defaultNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_xp_user").on(t.userId),
+  eventTypeIdx: index("idx_xp_event_type").on(t.eventType),
+}));
+export type XpLedger = typeof xpLedger.$inferSelect;
+
+/**
+ * journey_milestones: records milestone badges earned.
+ * Only REAL milestones — no participation-trophy spam (AiQ Bible §6).
+ */
+export const journeyMilestones = mysqlTable("journey_milestones", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  milestoneType: varchar("milestone_type", { length: 50 }).notNull(),
+  label: varchar("label", { length: 200 }).notNull(),
+  refId: varchar("ref_id", { length: 36 }),
+  metaJson: json("meta_json").$type<Record<string, unknown>>().$default(() => ({})),
+  seenAt: timestamp("seen_at"),
+  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+}, (t) => ({
+  userIdx: index("idx_jm_user").on(t.userId),
+  unseenIdx: index("idx_jm_unseen").on(t.userId, t.seenAt),
+}));
+export type JourneyMilestone = typeof journeyMilestones.$inferSelect;
+
+/**
+ * data_deletion_requests: tracks user requests to delete their data.
+ * AiQ Bible §7: "Cancel anytime; data kept for restart; separate explicit delete flow."
+ */
+export const dataDeletionRequests = mysqlTable("data_deletion_requests", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tenantId: varchar("tenant_id", { length: 36 }).notNull(),
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "completed"]).notNull().default("pending"),
+  processedAt: timestamp("processed_at"),
+  reason: text("reason"),
+});
+export type DataDeletionRequest = typeof dataDeletionRequests.$inferSelect;

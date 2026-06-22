@@ -5446,3 +5446,16 @@ test
 - [x] getLevelColour() updated with distinct colours: Emerging=red, Developing=amber, Proficient=blue, Advanced=violet, Expert=emerald
 - [x] TypeScript: 0 errors
 - [x] Tests: 89/89 test files, 2110 tests passing
+
+## Commercial Layer (AiQ Bible)
+- [x] Database schema: team_seats, journey_progress, xp_ledger, journey_milestones, data_deletion_requests tables
+- [x] Server: commercial router (team management, journey XP engine, data deletion, subscription status)
+- [x] Server: Stripe team checkout + webhook updates for team subscriptions
+- [x] Server: products.ts updated with team pricing bands and volume repricing
+- [x] Frontend: PricingPage rebuilt (individual + team tiers, live seat calculator, volume pricing)
+- [x] Frontend: BillingPage data deletion request section
+- [x] Frontend: TeamAdminPage (seat management, invite, remove, privacy-first — no capability data)
+- [x] Frontend: JourneyLadderWidget in IndividualDashboard (XP bar, level badge, 15-level grid, milestones)
+- [x] AppShell: Team Admin link in user dropdown (desktop + mobile)
+- [x] TypeScript: 0 errors
+- [x] Tests: 89/89 files, 2110/2110 passing

@@ -15,10 +15,10 @@
   ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663479317430/6QhAyfvWVgMWYWiBVkrTMQ",
-    "access_key_id": "ASIAZV3A2ECZLMXTOVKY",
-    "secret_access_key": "y0FwS8GnteCLsvgm8m1us3gQjsYVez4ekJS/XFgB",
-    "session_token": "IQoJb3JpZ2luX2VjEPX//////////wEaCXVzLWVhc3QtMSJHMEUCIQDP6fElvQXouHxal2j8uRswtv3ocQwixmsw3a4bNCNi3wIgEZVYcGwuiXXJDw+vad9RrxswI6BEs5oh26Lx0G5jHLAq/wMIvf//////////ARAEGgw2NjUzODYwOTg4NjYiDNZ499eRPROKnaQBfCrTA1pTI/fpS/jtssbk+3MQ8nrTxFpc+0O36UVvMt4wgt006k2oBiNJpW53G3Ui0AUz3EgfCyh/gqzBNBz3LYvPJJ+wTwGDYr/1DJum2umdQazNgWcICVin9of1w8oG4r8vvPEghhro5X2Ja5XjjUPnU28RLtfQd4wcxvh1ZAzAxeTKPdrKVmnDHwfuijre3ghoKFBeIwtMWQQKZ/5KbK41skxLu0tkByPE5FCoYjmv1LW0pXUmuC65APcPiplYC97OoNHMPz3pa/ciClVOUPslcS0oG0Q+BAJALQT+dm3AffT04oFvrkRKpx4CncNoAiXne4Ba6fuRDfUlpi1ocwQh+0WfhI+f7lxdLP3MzrWVOR3vnAe9j9fBd65QaP5c9a7fUaPi6PDCRu/LXsTU5CnCHSAvbOnTX/pQKlHMBE0FrANQZFL5/f1ywvldZ2VxX0D9T/JbCj5D40iUF/mKV+TD450zcdXnwaKEAZ2dVDsbQw0o1ZtWLqtL+x1HN2CtB/zF/5zA5DVF5RpmP74MTtvpFa59veCkvgk+ja/yBBBDmTxFuoEEIg1PKEX10iEttLFuynBxUA2/ixgSJ8UjnbJmqMMiKFEzctvjejqH18D1jkdMU2jPMNfg1NEGOp0BTPRUYulVrRc2jlx2RYuFdaaWrtJ3y1TwR4CFxyC7elsBBhutWNDPSaA54JxbKP7wB09GWe5/ov83u6xPfjA5OKILc70bM1YTS6DWScYGwR8niNxSA1uIsRR0qZFQJD/xnF7sezTs4WDqhDMvXXxXeVswKr5AODPmUx1+L4/nEGSn5qd2MhkkTlq3USrLdBdSDa9vCxn/X1owdL3NiA==",
-    "expiration": "2026-06-20T00:04:39.000Z",
+    "access_key_id": "ASIAZV3A2ECZEY77B3CD",
+    "secret_access_key": "R5Sfjw72YZ70B4D70UWZ2rJ4196yrDfwSdsYEj9q",
+    "session_token": "IQoJb3JpZ2luX2VjED4aCXVzLWVhc3QtMSJHMEUCIQCPa2m1r4m/xkNG45sVwwbaiXqo1EmRIEOzyT5u+Pnh+QIgWUkSHf60wcSskCu4T0dzxfJjNlkIARfGo0b+c6vJeP0q9gMIBhAEGgw2NjUzODYwOTg4NjYiDBr+knDiCnwodkr6YirTAwOS7CTX70NkEIhPNYZqXcdDrunGC5elED4bWlVO4LWIgOTO1XGHurxCu+OF8tknSznZ2sgITCfM5pnkevpIhsYt/NYdxF3AV7Dqb2Mtk3y8zUH1wZlCtl7NoB4JyxXWvTj/fVtVKdopjo0xGIbE6xExYKjjvgumm1pc/vcv8AKdf+ZDJlgjWTmZMqrCOFqzYG5OsDlyS6y7rbdBQZf7c1me4JOnUJgA8+norPemckyQmjleQv0zAfZtYlq+STVIMULXpNpQzQQmMpMW0kU3QfrghFtalB3lHcPn04IcxOZYeZ61XNZJBVtMNbgiDmXcPiuJLEbyjIzTyjw71/OYKJN3ci78CTbKEbwTHDZkjiaRUIV3jmBs8oKxG+djrXatl1SrKruw58QbhWPNF2tesVClc5xO/6w5uyQI8wolPH3q9r/9vRYoBDnL9iZiPiWnqDwgj/ZkS33mB0t3COgy9z5vf2VDFq65kRPc3dxNxoPx1/lspRd5EgAfXir/TZbya9/uh5stfQ2Z1hxa/8jdF6j+6MakYupQR7QdpQaTEPn8YIeMx+F/fxZf6LxDx6YnF+E+eHqp7f02P6Cg+BsOl8v2j5BdV4lVOBR6B18smgvvd8TuMK7n5NEGOp0BpO0YOY1IhzYspBKGU6DOmPQMbplnXsDQ7z6XPan1dICxLBPozJjncwza6mBBY2NXx/03Y2rJRyOJ+MoKPV3liKhzz8yt5D2cP7TcaCcHJ2dF9u61EWRJk9a/i2ybmNJDiqVA2SShxlHutWUsP/jxEomxslPm0uSVqFBdyI/hBmROwSx+uVsSQTu0SFaSBjREFI29mklBf9zngBf4HQ==",
+    "expiration": "2026-06-23T01:07:58.000Z",
     "backend": "GIT_BACKEND_S3"
   },
   "name": "aiq-platform",

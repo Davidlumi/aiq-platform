@@ -77,6 +77,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PeakonScoreCell, RatingBadge, DashboardCard } from "@/components/dashboard/DashboardUI";
+import { JourneyLadderWidget } from "@/components/dashboard/JourneyLadderWidget";
 /** Format a 0–10 score for display: "9.1" */
 function formatScore(score: number): string {
   return score.toFixed(1);
@@ -1325,6 +1326,9 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
           )}
         </div>
       )}
+
+      {/* ── Journey Ladder widget ── */}
+      {hasData && <JourneyLadderWidget />}
 
       {/* ── 6 Domain tiles (Lumi style) ── */}
       <div>
