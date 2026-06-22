@@ -777,8 +777,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <AiQLogoMark size={collapsed ? 28 : 30} />
             {!collapsed && (
               <div className="flex flex-col leading-none select-none">
-                <span className="text-[10px] font-medium tracking-[0.12em] uppercase text-foreground/40" style={{ lineHeight: 1, marginBottom: "2px" }}>HR</span>
-                <span className="text-[17px] font-semibold tracking-tight text-foreground" style={{ lineHeight: 1 }}>Ai<span className="text-primary">Q</span></span>
+                <span className="text-[10px] font-medium tracking-[0.12em] uppercase text-white/60" style={{ lineHeight: 1, marginBottom: "2px" }}>HR</span>
+                <span className="text-[17px] font-semibold tracking-tight text-white" style={{ lineHeight: 1 }}>Ai<span className="text-white/80">Q</span></span>
               </div>
             )}
           </Link>
@@ -787,7 +787,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Sidebar collapse toggle — desktop only */}
         <button
           onClick={() => setCollapsed(v => !v)}
-          className="hidden lg:flex p-1.5 rounded transition-colors text-foreground/40 hover:text-foreground hover:bg-foreground/8"
+          className="hidden lg:flex p-1.5 rounded transition-colors text-white/60 hover:text-white hover:bg-white/15"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -796,7 +796,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden p-2 rounded transition-colors text-foreground/60 hover:text-foreground hover:bg-foreground/8"
+          className="lg:hidden p-2 rounded transition-colors text-white/80 hover:text-white hover:bg-white/15"
           aria-label="Open navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -805,19 +805,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-1.5">
           <AiQLogoMark size={26} />
-          <span className="text-foreground font-semibold text-sm tracking-tight">HR <span className="text-primary">AiQ</span></span>
+          <span className="text-white font-semibold text-sm tracking-tight">HR <span className="text-white/80">AiQ</span></span>
         </div>
 
         {/* Search bar */}
         <div className="hidden md:flex flex-1 max-w-md ml-2">
           <div className="relative w-full">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
             <input
               type="text"
               placeholder="Search capabilities, modules, articles…"
-              className="w-full h-9 pl-9 pr-4 rounded-lg bg-foreground/5 border border-border text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:bg-foreground/8 focus:border-primary/40 transition-all"
+              className="w-full h-9 pl-9 pr-4 rounded-lg bg-white/15 border border-white/25 text-sm text-white placeholder:text-white/55 focus:outline-none focus:bg-white/20 focus:border-white/40 transition-all"
             />
           </div>
         </div>
@@ -827,28 +827,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-1">
           {/* Notifications */}
           <button
-            className="p-2 rounded-lg transition-colors text-foreground/50 hover:text-foreground hover:bg-foreground/8"
+            className="p-2 rounded-lg transition-colors text-white/70 hover:text-white hover:bg-white/15"
             aria-label="Notifications"
           >
             <Bell className="w-5 h-5" />
           </button>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-border mx-1" />
+          <div className="w-px h-6 bg-white/25 mx-1" />
 
           {/* User avatar + dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors hover:bg-foreground/8"
+                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/15"
                 aria-label="Account menu"
               >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-primary/10 text-primary border border-primary/20">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-white/20 text-white border border-white/30">
                   {initials}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium leading-none text-foreground">{displayName}</p>
-                  <p className="text-xs leading-none mt-0.5 text-muted-foreground">{roleLabel}</p>
+                  <p className="text-sm font-medium leading-none text-white">{displayName}</p>
+                  <p className="text-xs leading-none mt-0.5 text-white/65">{roleLabel}</p>
                 </div>
               </button>
             </DropdownMenuTrigger>

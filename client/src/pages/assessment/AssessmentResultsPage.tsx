@@ -258,10 +258,10 @@ function ScoreDoughnut({ score, size = 120 }: { score: number; size?: number }) 
         transform={`rotate(-90 ${cx} ${cy})`}
         style={{ transition: "stroke-dasharray 0.8s ease" }}
       />
-      <text x={cx} y={cy - 4} textAnchor="middle" fill="#F7F8FA" fontSize={size * 0.22} fontWeight="700" fontFamily="Sora, sans-serif">
+      <text x={cx} y={cy - 4} textAnchor="middle" fill="#1A1A1A" fontSize={size * 0.22} fontWeight="700" fontFamily="Sora, sans-serif">
         {displayScore}
       </text>
-      <text x={cx} y={cy + size * 0.14} textAnchor="middle" fill="rgba(247,248,250,0.45)" fontSize={size * 0.1} fontFamily="Sora, sans-serif">
+      <text x={cx} y={cy + size * 0.14} textAnchor="middle" fill="rgba(0,0,0,0.35)" fontSize={size * 0.1} fontFamily="Sora, sans-serif">
         /10
       </text>
     </svg>
@@ -608,10 +608,10 @@ export default function AssessmentResultsPage() {
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
 
       {/* ── U-3: Developmental-use-only statement ──────────────────────── */}
-      <div className="flex items-start gap-3 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-3 text-xs text-amber-200/80 leading-relaxed">
-        <span className="mt-0.5 shrink-0 text-amber-400" aria-hidden="true">⚠</span>
+      <div className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-50 px-4 py-3 text-xs text-amber-800 leading-relaxed">
+        <span className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true">⚠</span>
         <p>
-          <strong className="text-amber-300 font-semibold">For development purposes only.</strong>{" "}
+          <strong className="text-amber-800 font-semibold">For development purposes only.</strong>{" "}
           This assessment is designed to support individual learning and professional development. It has not been independently validated for use in recruitment, promotion, redundancy, or any other employment decision. Scores should not be used as the sole basis for any consequential HR decision. See our{" "}
           <a href="/methodology" className="underline underline-offset-2 hover:text-amber-100 transition-colors">methodology disclosure</a>{" "}
           for full limitations.
@@ -687,9 +687,9 @@ export default function AssessmentResultsPage() {
 
         {/* In-progress indicator — visible resume banner (#17 save/resume) */}
         {inProgressSession && (
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-blue-500/20 bg-blue-500/5">
-            <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center shrink-0">
-              <Play className="w-3 h-3 text-blue-400" />
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg border border-primary/20 bg-primary/5">
+            <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+              <Play className="w-3 h-3 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-xs font-medium text-foreground/80">
@@ -703,7 +703,7 @@ export default function AssessmentResultsPage() {
             </div>
             <Button
               size="sm" variant="outline"
-              className="h-7 px-3 text-xs border-blue-500/30 text-blue-400 hover:text-blue-300 hover:border-blue-500/50 bg-transparent"
+              className="h-7 px-3 text-xs border-primary/30 text-primary hover:text-[#C03520] hover:border-primary/50 bg-transparent"
               onClick={() => navigate(`/assessment/${(inProgressSession as any).id}`)}
             >
               <Play className="w-3 h-3 mr-1" /> Resume
@@ -904,8 +904,8 @@ export default function AssessmentResultsPage() {
             {/* Where to grow */}
             <div className="bg-card border border-border rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-blue-500/15 flex items-center justify-center">
-                  <Target className="w-3.5 h-3.5 dark:text-blue-400 text-blue-600" />
+                <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center">
+                  <Target className="w-3.5 h-3.5 text-primary" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground">Where to grow</h3>
               </div>
@@ -1121,7 +1121,7 @@ export default function AssessmentResultsPage() {
                     {!firstModule && (
                       <button
                         type="button"
-                        className="text-xs text-[#60A5FA] underline underline-offset-2 hover:text-[#93C5FD] transition-colors shrink-0"
+                        className="text-xs text-primary underline underline-offset-2 hover:text-[#C03520] transition-colors shrink-0"
                         onClick={() => toast.info("Talk to your L\u0026D team about adding modules for this domain.")}
                       >
                         Talk to your L&D team →

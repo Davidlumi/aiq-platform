@@ -24,9 +24,9 @@
 
 :root {
   /* ---- Surfaces ---- */
-  --aiq-page:            #F4F5F7;  /* app background            */
+  --aiq-page:            #E8DDD9;  /* app background — warm coral-tinted grey */
   --aiq-surface:         #FFFFFF;  /* cards, panels             */
-  --aiq-sunken:          #F7F8FA;  /* wells, metric backgrounds */
+  --aiq-sunken:          #F0E8E4;  /* wells, metric backgrounds */
 
   /* ---- Text (ratio = contrast on white) ---- */
   --aiq-text:            #1A1D21;  /* primary        16.9:1     */
@@ -34,13 +34,13 @@
   --aiq-text-faint:      #8B919A;  /* large/UI only   3.1:1     */
 
   /* ---- Borders ---- */
-  --aiq-border:          #E4E7EB;  /* default hairline          */
-  --aiq-border-strong:   #D7DCE3;  /* inputs, emphasis          */
+  --aiq-border:          #C8B8B2;  /* default hairline — warm visible border */
+  --aiq-border-strong:   #B8A49C;  /* inputs, emphasis          */
 
   /* ---- Accent (single brand accent) ---- */
-  --aiq-accent:          #1D6FD0;  /* 4.5:1 on white            */
-  --aiq-accent-fill:     #E6F1FB;  /* tinted background         */
-  --aiq-accent-text:     #0C447C;  /* text on accent-fill       */
+  --aiq-accent:          #E8472A;  /* coral brand accent        */
+  --aiq-accent-fill:     #FCDDD8;  /* tinted background         */
+  --aiq-accent-text:     #C03520;  /* text on accent-fill       */
 
   /* ---- Semantic — fill / border / text triples (STATUS ONLY) ---- */
   --aiq-warn-fill:       #FEF6E7;
@@ -67,8 +67,8 @@
   /* ---- Chart ramps ---- */
   /* Series order (categorical, non-domain): use in this sequence, stop at N */
   /* 1 #3B82F6  2 #F59E0B  3 #10B981  4 #A855F7  5 #F43F5E  6 #6366F1 */
-  --aiq-seq-1: #E6F1FB; --aiq-seq-2: #B5D4F4; --aiq-seq-3: #85B7EB;
-  --aiq-seq-4: #378ADD; --aiq-seq-5: #185FA5; --aiq-seq-6: #0C447C;   /* sequential, low→high */
+  --aiq-seq-1: #FCDDD8; --aiq-seq-2: #F9B8A8; --aiq-seq-3: #F49278;
+  --aiq-seq-4: #EE6B4A; --aiq-seq-5: #C03520; --aiq-seq-6: #8B2214;   /* sequential, low→high */
   --aiq-div-1: #A32D2D; --aiq-div-2: #E24B4A; --aiq-div-3: #F59E0B;
   --aiq-div-4: #639922; --aiq-div-5: #176034;                         /* diverging, bad→good  */
 
@@ -81,7 +81,7 @@
   /* Flat by default: cards use the hairline border, NOT shadow.    */
   /* Two exceptions only: the focus ring, and OVERLAYS (modals,     */
   /* popovers) which need depth to read as above the page.          */
-  --aiq-focus-ring: 0 0 0 4px rgba(29,111,208,0.16);
+  --aiq-focus-ring: 0 0 0 4px rgba(232,71,42,0.20);
   --aiq-shadow-card: 0 1px 2px rgba(16,24,40,0.04), 0 8px 24px -8px rgba(16,24,40,0.08);
   --aiq-shadow-lift: 0 2px 4px rgba(16,24,40,0.05), 0 16px 32px -12px rgba(16,24,40,0.12);
   --aiq-shadow-overlay: 0 8px 30px rgba(16,20,26,0.16);
@@ -126,7 +126,7 @@
   --aiq-basis-owned-border:     var(--aiq-ok-border);
   --aiq-basis-owned-text:       var(--aiq-ok-text);
   --aiq-basis-benchmark-fill:   var(--aiq-accent-fill);      /* benchmark_default */
-  --aiq-basis-benchmark-border: var(--aiq-border-strong);
+  --aiq-basis-benchmark-border: var(--aiq-accent);           /* coral border */
   --aiq-basis-benchmark-text:   var(--aiq-accent-text);
 }
 

@@ -119,7 +119,7 @@ function getLevelColour(level: number): { bg: string; text: string; accent: stri
   const map: Record<number, { bg: string; text: string; accent: string }> = {
     1: { bg: "#FEE2E2", text: "#991B1B", accent: "#EF4444" },   // red
     2: { bg: "#FEF3C7", text: "#92400E", accent: "#F59E0B" },   // amber
-    3: { bg: "#DBEAFE", text: "#1E40AF", accent: "#3B82F6" },   // blue (Proficient)
+    3: { bg: "#FCDDD8", text: "#C03520", accent: "#E8472A" },   // coral (Proficient)
     4: { bg: "#EDE9FE", text: "#4C1D95", accent: "#7C3AED" },   // violet (Advanced)
     5: { bg: "#D1FAE5", text: "#065F46", accent: "#10B981" },   // emerald (Expert)
   };
@@ -302,7 +302,7 @@ function DomainCard({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col gap-3 p-4 rounded-xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all text-left group min-w-0"
+      className="flex flex-col gap-3 p-4 rounded-xl bg-white border border-[#C8B8B2] hover:border-primary/40 hover:shadow-md transition-all text-left group min-w-0"
       style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
     >
       {/* Icon + name */}
@@ -500,8 +500,8 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
 
   return (
     <div
-      className="rounded-xl bg-white border border-gray-100 p-5"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+      className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
     >
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
@@ -598,7 +598,7 @@ function ImprovementTracker({ history }: { history: Array<{ date: string; overal
                     <TooltipContent side="top" className="max-w-[260px] p-3 space-y-1.5">
                       <p className="text-xs font-semibold text-gray-900">{fullLabel}</p>
                       <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
-                      <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+                      <div className="flex items-center gap-3 pt-1 border-t border-[#C8B8B2]/50">
                         <div className="text-center">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wide">Previous</p>
                           <p className="text-sm font-bold text-gray-700">{previousScore.toFixed(1)}<span className="text-[10px] font-normal text-gray-400">/10</span></p>
@@ -800,14 +800,14 @@ function DomainDetailModal({
                     {/* Resources */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
-                        <Star className="w-4 h-4 text-indigo-500" />
+                        <Star className="w-4 h-4 text-primary" />
                         <span className="text-sm font-semibold text-gray-700">Recommended resources</span>
                       </div>
                       <div className="space-y-2.5">
                         {data.resources.map((r, i) => {
                           const RIcon = RESOURCE_TYPE_ICONS[r.type] ?? BookOpen;
                           return (
-                            <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <div key={i} className="flex gap-3 p-3 rounded-lg bg-[#F0E8E4] border border-[#C8B8B2]/60">
                               <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${colour}15` }}>
                                 <RIcon className="w-3.5 h-3.5" style={{ color: colour }} />
                               </div>
@@ -1111,7 +1111,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                     {hasData ? getLevelLabel(level) : "No data"}
                   </span>
                   {hasData && (
-                    <span className="text-blue-200 text-sm">
+                    <span className="text-white/70 text-sm">
                       {data!.assessmentHistory.length} assessment{data!.assessmentHistory.length !== 1 ? "s" : ""}
                     </span>
                   )}
@@ -1261,7 +1261,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
               {/* CTA for no-data state */}
               {!hasData && (
                 <Link href="/assessment">
-                  <Button size="sm" className="gap-1.5 bg-white text-blue-700 hover:bg-blue-50">
+                  <Button size="sm" className="gap-1.5 bg-white text-primary hover:bg-[#FCDDD8]">
                     <ClipboardList className="w-3.5 h-3.5" />
                     Take your assessment
                   </Button>
@@ -1303,9 +1303,9 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "#DBEAFE" }}
+                style={{ background: "#FCDDD8" }}
               >
-                <GraduationCap className="w-4 h-4 text-blue-600" />
+                <GraduationCap className="w-4 h-4 text-primary" />
               </div>
               <div>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink, #211B26)" }}>{streakData.totalModulesCompleted} module{streakData.totalModulesCompleted !== 1 ? "s" : ""} completed</p>
@@ -1354,7 +1354,7 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
             </Select>
             {hasData && (
               <Link href="/assessment">
-                <button style={{ fontSize: "var(--fs-caption, 12px)", color: "var(--blue, #2048B0)", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+                <button style={{ fontSize: "var(--fs-caption, 12px)", color: "#E8472A", fontWeight: 500 }} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
                   Full results →
                 </button>
               </Link>
@@ -1456,13 +1456,13 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       {!hasData && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { title: "You lead", icon: <TrendingUp className="w-4 h-4 text-blue-500" /> },
-            { title: "Biggest gaps", icon: <BookOpen className="w-4 h-4 text-blue-500" /> },
+            { title: "You lead", icon: <TrendingUp className="w-4 h-4 text-primary" /> },
+            { title: "Biggest gaps", icon: <BookOpen className="w-4 h-4 text-primary" /> },
           ].map(({ title, icon }) => (
             <div
               key={title}
-              className="rounded-xl bg-white border border-gray-100 p-5"
-              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+              className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -1485,8 +1485,8 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       {/* ── AI capability summary ── */}
       {hasData && (
         <div
-          className="rounded-xl bg-white border border-gray-100 p-5"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+          className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
         >
           <SectionHeader
             icon={<Sparkles className="w-4 h-4 text-violet-500" />}
@@ -1512,15 +1512,15 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
       {/* ── Development plan — users with data ── */}
       {hasData && data?.planSummary && (
         <div
-          className="rounded-xl bg-white border border-gray-100 p-5"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+          className="rounded-xl bg-white border border-[#C8B8B2] p-5"
+          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.10)" }}
         >
           <SectionHeader
-            icon={<BookOpen className="w-4 h-4 text-blue-500" />}
+            icon={<BookOpen className="w-4 h-4 text-primary" />}
             title="Your development plan"
             action={
               <Link href="/learning">
-                <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 font-medium">
+                <button className="text-xs text-primary hover:text-[#C03520] transition-colors flex items-center gap-1 font-medium">
                   View plan <ArrowRight className="w-3 h-3" />
                 </button>
               </Link>
@@ -1536,8 +1536,8 @@ export default function IndividualDashboardV2({ userId }: { userId?: string }) {
                 highlight: data.planSummary.completionPercentage > 0,
               },
             ].map(({ value, label, highlight }) => (
-              <div key={label} className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-                <p className={`text-2xl font-bold ${highlight ? "text-blue-600" : "text-gray-800"}`}>{value}</p>
+              <div key={label} className="text-center p-3 rounded-lg bg-[#F0E8E4] border border-[#C8B8B2]/60">
+                <p className={`text-2xl font-bold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{label}</p>
               </div>
             ))}
