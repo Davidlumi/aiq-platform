@@ -5473,3 +5473,10 @@ test
 - [x] AppShell lock icons on PRO-only nav items — already implemented
 - [x] Light-mode forced (defaultTheme="light", switchable=false) — already implemented
 - [x] CSS variables in :root already use AiQ v1.4 light values
+
+## Domain Detail Pages & Dashboard Fix
+- [x] Fix domain tile "No data" / "—" rendering bug in IndividualDashboardV2 capability domains section
+- [x] Build DomainDetailPage with score history chart, AI commentary, strengths/gaps analysis, recommended modules
+- [x] Add server tRPC procedure: dashboardV2.individual.domainDetail (per-domain history, AI commentary, plan items)
+- [x] Register 6 domain routes in App.tsx (/domain/:key)
+- [x] Add 6 domain sidebar nav entries in AppShell.tsx under a "Capability Domains" section

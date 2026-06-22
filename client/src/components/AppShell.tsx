@@ -64,6 +64,12 @@ import {
   HelpCircle,
   Hash,
   CreditCard,
+  Zap,
+  CheckSquare,
+  Workflow,
+  UserCheck,
+  ShieldCheck,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGate } from "@/contexts/GateContext";
@@ -111,6 +117,13 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Learning Plan",    path: "/learning",       icon: BookOpen,      section: "mydev" },
   { label: "Modules",          path: "/modules",        icon: Library,       section: "mydev" },
   { label: "AiQ Coach",        path: "/coach",          icon: MessageSquare, section: "mydev" },
+  // -- Capability Domains (shown when tenant has assessment entitlement) --------
+  { label: "AI Interaction",        path: "/domain/ai_interaction",         icon: Zap,         section: "domains" },
+  { label: "Output Evaluation",     path: "/domain/ai_output_evaluation",   icon: CheckSquare, section: "domains" },
+  { label: "Workflow Design",       path: "/domain/ai_workflow_design",     icon: Workflow,    section: "domains" },
+  { label: "Workforce Readiness",   path: "/domain/workforce_ai_readiness", icon: UserCheck,   section: "domains" },
+  { label: "Ethics & Trust",        path: "/domain/ai_ethics_trust",        icon: ShieldCheck, section: "domains" },
+  { label: "Change Leadership",     path: "/domain/ai_change_leadership",   icon: TrendingUp,  section: "domains" },
 
   // -- Knowledge (always visible) -----------------------------------------------
   { label: "Articles",         path: "/knowledge/articles",  icon: Newspaper,    section: "knowledge" },
@@ -155,6 +168,7 @@ const NAV_ITEMS: NavItem[] = [
 const SECTION_LABELS: Record<string, string> = {
   core:        "",
   mydev:       "My Development",
+  domains:     "Capability Domains",
   knowledge:   "Knowledge",
   aistrategy:  "AI Strategy",
   admin:       "Admin",
@@ -458,6 +472,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       // My Development section: visible to all authenticated users
       // (individual pages handle entitlement-based locking internally)
       if (item.section === "mydev") return true;
+      // Capability Domains section: visible when user has assessment entitlement
+      if (item.section === "domains") return hasAssessment;
       // Knowledge section: always visible to authenticated users
       if (item.section === "knowledge") return true;
       // AI Strategy section: gated on strategyCompany entitlement + CPO role

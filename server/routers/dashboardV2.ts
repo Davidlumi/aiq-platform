@@ -53,16 +53,23 @@ import { getSectorBenchmark, getAllSectorBenchmarks } from "../contentLibrary";
 function extractCapabilityScores(breakdown: unknown): Record<DomainKey, number> | null {
   if (!breakdown || typeof breakdown !== "object") return null;
   const bd = breakdown as Record<string, unknown>;
-  const cap = bd.capabilityScores;
-  if (!cap || typeof cap !== "object") return null;
+  // Prefer nested capabilityScores; fall back to flat top-level format (seeded demo data)
+  const cap: Record<string, unknown> = (
+    bd.capabilityScores && typeof bd.capabilityScores === "object"
+      ? bd.capabilityScores
+      : bd
+  ) as Record<string, unknown>;
+  // Bail out if no domain key is present at all
+  if (!DOMAIN_KEYS.some(k => cap[k] !== undefined)) return null;
   const result = {} as Record<DomainKey, number>;
   for (const key of DOMAIN_KEYS) {
-    const entry = (cap as Record<string, unknown>)[key];
+    const entry = cap[key];
     if (entry && typeof entry === "object" && "score" in (entry as any)) {
       result[key] = Number((entry as any).score) || 0;
+    } else if (typeof entry === "number") {
+      result[key] = entry;
     } else {
-      const v = (cap as Record<string, unknown>)[key];
-      result[key] = typeof v === "number" ? v : 0;
+      result[key] = 0;
     }
   }
   return result;
@@ -71,8 +78,13 @@ function extractCapabilityScores(breakdown: unknown): Record<DomainKey, number> 
 function extractDomainRatings(breakdown: unknown): Record<DomainKey, { score: number; band: string; signalCount: number }> | null {
   if (!breakdown || typeof breakdown !== "object") return null;
   const bd = breakdown as Record<string, unknown>;
-  const cap = bd.capabilityScores;
-  if (!cap || typeof cap !== "object") return null;
+  // Prefer nested capabilityScores; fall back to flat top-level format (seeded demo data)
+  const cap: Record<string, unknown> = (
+    bd.capabilityScores && typeof bd.capabilityScores === "object"
+      ? bd.capabilityScores
+      : bd
+  ) as Record<string, unknown>;
+  if (!DOMAIN_KEYS.some(k => cap[k] !== undefined)) return null;
   // totalAnswers at top level is used as a proxy for evidence depth
   const totalAnswers = Number(bd.totalAnswers) || 0;
   const result = {} as Record<DomainKey, { score: number; band: string; signalCount: number }>;
@@ -624,20 +636,44 @@ Focus on their strongest area, their biggest development opportunity, and one co
         }
       }
 
+            // Score history for this domain across all assessments
+      const allSessions = await db
+        .select({ id: assessmentSessions.id, completedAt: assessmentSessions.completedAt })
+        .from(assessmentSessions)
+        .where(and(eq(assessmentSessions.userId, targetUserId), eq(assessmentSessions.state, "completed")))
+        .orderBy(asc(assessmentSessions.completedAt));
+      const scoreHistory: Array<{ date: string; score: number }> = [];
+      for (const sess of allSessions) {
+        const s = await db.select().from(assessmentScores).where(eq(assessmentScores.sessionId, sess.id)).limit(1);
+        if (s[0]) {
+          const rawDs = extractCapabilityScores(s[0].scoreBreakdownJson);
+          if (rawDs) {
+            const raw = rawDs[domainKey] ?? 0;
+            // Normalise: seeded data is 0-10, scoring engine is 0-100
+            const normalised = raw > 10 ? parseFloat((raw / 10).toFixed(2)) : parseFloat(raw.toFixed(2));
+            scoreHistory.push({
+              date: sess.completedAt?.toISOString() ?? new Date().toISOString(),
+              score: normalised,
+            });
+          }
+        }
+      }
+      // Normalise current score to 0-10 for display
+      const normScore = score > 10 ? parseFloat((score / 10).toFixed(2)) : parseFloat(score.toFixed(2));
       return {
         domainKey,
         domainName: DOMAIN_LABELS[domainKey],
         domainColour: DOMAIN_COLOURS[domainKey],
-        score: Math.round(score),
+        score: normScore,
         rating: domainRating,
         confidenceBand: confidenceBand(null),
         narrativeExplanation: narrative,
         gapStatement,
         signals: domainSignals,
         developmentModules,
+        scoreHistory,
       };
     }),
-
   /** Domain drill-down: Deep — scenario evidence */
   domainEvidence: protectedProcedure
     .input(z.object({ userId: z.string().optional(), domainKey: z.string(), sessionId: z.string().optional() }))

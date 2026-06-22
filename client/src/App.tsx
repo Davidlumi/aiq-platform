@@ -28,6 +28,7 @@ import StrategyLayout from "./components/StrategyLayout";
 
 // Role-specific dashboards (v2)
 import IndividualDashboardV2 from "./pages/dashboard/IndividualDashboardV2";
+import DomainDetailPage from "./pages/dashboard/DomainDetailPage";
 import ManagerDashboardV2 from "./pages/dashboard/ManagerDashboardV2";
 import LeaderDashboardV2 from "./pages/dashboard/LeaderDashboardV2";
 import ImplementationTrackerPage from "./pages/dashboard/ImplementationTrackerPage";
@@ -396,6 +397,9 @@ function Router() {
       </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={RoleDashboard} />
+      </Route>
+      <Route path="/domain/:domainKey">
+        <ProtectedRoute component={DomainDetailPage} />
       </Route>
       <Route path="/assessment">
         <AssessmentRoute component={AssessmentPage} />
